@@ -7,6 +7,7 @@ import { escapeHtml, sendEmail } from "@/lib/email";
 import { brandName, money, refCode } from "@/lib/format";
 import { checkAdminPassword, endAdminSession, requireAdmin, startAdminSession } from "@/lib/session";
 import { stripe } from "@/lib/stripe";
+import { describe } from "@/lib/strengths";
 
 export type FormState = { error?: string; ok?: string };
 
@@ -82,8 +83,13 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
   };
 
   if (!record.full_name || !record.email) return { error: "Name and email are required." };
-  if (status === "listed" && (!record.headline || !record.role_category || (record.strengths as string[]).length === 0)) {
-    return { error: "To list a candidate, fill in the headline, role and at least one strength." };
+  if (status === "listed") {
+    const missing = [
+      !record.headline && "headline",
+      !record.role_category && "role",
+      (record.strengths as string[]).length === 0 && !describe(record.working_genius as string | null) && "Working Genius result (or your own Wired for words)",
+    ].filter(Boolean);
+    if (missing.length) return { error: `To list this candidate, fill in: ${missing.join(", ")}. Nothing was saved.` };
   }
 
   let candidateId = id;
@@ -114,8 +120,11 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
   }
 
   revalidatePath("/admin");
-  if (!id) redirect(`/admin/candidates/${candidateId}?saved=1`);
-  return { ok: "Saved." };
+  revalidatePath("/candidates");
+  if (!id) redirect(`/admin/candidates/${candidateId}?saved=${status}`);
+  return {
+    ok: status === "listed" ? "Saved. They're live in the catalog." : `Saved as ${status}. Owners won't see them until the status is Listed.`,
+  };
 }
 
 // ---------- Fees ----------

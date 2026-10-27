@@ -162,7 +162,7 @@ export function CandidateForm({ c, tierFeeLabel }: { c: Candidate | null; tierFe
             <legend>Status and fee</legend>
             <label className="field">
               <span>Status</span>
-              <select className="select" name="status" defaultValue={c?.status ?? "draft"}>
+              <select className="select" name="status" defaultValue={c?.status ?? "listed"}>
                 <option value="applied">New application</option>
                 <option value="draft">Draft, not shown</option>
                 <option value="listed">Listed, shown in the catalog</option>

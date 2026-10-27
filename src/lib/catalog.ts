@@ -1,5 +1,4 @@
 import { db, FeeTier, PublicCandidate, PUBLIC_CANDIDATE_COLUMNS } from "./db";
-import { isSampleId, SAMPLES } from "./samples";
 import { profileOf, TRAITS, wiredFor } from "./strengths";
 
 const DEFAULT_TIERS: FeeTier[] = [
@@ -19,9 +18,9 @@ export async function getTiers(): Promise<FeeTier[]> {
   }
 }
 
-// Every real listed candidate, or the samples while there are none (or while the
-// database can't be reached), so the catalog always has something to browse.
-export async function allListed(): Promise<{ rows: PublicCandidate[]; sample: boolean }> {
+// Every listed candidate. If the database can't be reached, the catalog shows
+// as empty rather than breaking.
+export async function allListed(): Promise<{ rows: PublicCandidate[] }> {
   try {
     const { data, error } = await db()
       .from("candidates")
@@ -30,11 +29,11 @@ export async function allListed(): Promise<{ rows: PublicCandidate[]; sample: bo
       .order("listed_at", { ascending: false });
     if (error) throw error;
     const rows = (data ?? []) as unknown as PublicCandidate[];
-    if (rows.length) return { rows, sample: false };
+    return { rows };
   } catch (e) {
-    console.error("catalog query failed, showing samples", e);
+    console.error("catalog query failed", e);
   }
-  return { rows: SAMPLES, sample: true };
+  return { rows: [] };
 }
 
 // ---------- How they work best ----------
@@ -177,7 +176,6 @@ export function similarTo(c: PublicCandidate, rows: PublicCandidate[], n = 4) {
 
 export async function getListed(id: string): Promise<PublicCandidate | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
-  if (isSampleId(id)) return SAMPLES.find((s) => s.id === id) ?? null;
   try {
     const { data } = await db()
       .from("candidates")

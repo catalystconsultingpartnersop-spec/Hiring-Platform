@@ -33,7 +33,13 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
           )}
         </p>
         <h1>{c.full_name}</h1>
-        {sp.saved === "1" && <p className="notice notice-good" style={{ marginTop: 14 }}>Saved.</p>}
+        {typeof sp.saved === "string" && (
+          <p className={`notice ${sp.saved === "listed" ? "notice-good" : "notice-gold"}`} style={{ marginTop: 14 }}>
+            {sp.saved === "listed"
+              ? "Saved. They're live in the catalog."
+              : "Saved as a draft. Owners won't see them until you set the status to Listed."}
+          </p>
+        )}
         {(unlocks ?? []).length > 0 && (
           <p style={{ marginTop: 10 }}>
             Signed for by:{" "}

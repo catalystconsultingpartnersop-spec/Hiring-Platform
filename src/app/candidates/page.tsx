@@ -31,7 +31,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
   const f: CatalogFilters = {};
   for (const k of KEYS) if (typeof sp[k] === "string" && sp[k]) f[k] = sp[k] as string;
 
-  const [{ rows: all, sample }, tiers] = await Promise.all([allListed(), getTiers()]);
+  const [{ rows: all }, tiers] = await Promise.all([allListed(), getTiers()]);
   const feeOf = (c: (typeof all)[number]) => feeFor(c, tiers);
   const rows = applyFilters(all, f, feeOf);
 
@@ -145,11 +145,6 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
         </FiltersToggle>
 
         <section aria-live="polite">
-          {sample && (
-            <p className={styles.sampleNote}>
-              These are sample profiles showing how browsing works. Real candidates replace them as they&rsquo;re listed.
-            </p>
-          )}
           <div className={styles.resultsHead}>
             <h1>
               {shortlistView ? "Your shortlist" : f.role ?? "All candidates"}
@@ -182,7 +177,9 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
               <p>
                 {shortlistView
                   ? "Your shortlist is empty. Tap the heart on any candidate to save them here while you browse."
-                  : "No one matches all of those filters. Remove one to see more people."}
+                  : all.length === 0
+                    ? "New candidates are being coached and will be listed here soon. Check back shortly."
+                    : "No one matches all of those filters. Remove one to see more people."}
               </p>
               <Link className="btn btn-small" href="/candidates" style={{ marginTop: 14 }}>
                 See all candidates

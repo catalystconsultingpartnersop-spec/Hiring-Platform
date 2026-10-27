@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { CandidateCard, HowTheyWork, Strengths, WorksBest } from "@/components/CandidateCard";
 import { ShortlistButton } from "@/components/Shortlist";
 import { allListed, getListed, getTiers, similarTo } from "@/lib/catalog";
-import { isSampleId } from "@/lib/samples";
 import { wiredFor } from "@/lib/strengths";
 import { Candidate, db, Hire, PublicCandidate, Unlock } from "@/lib/db";
 import { dateShort, feeFor, LEVEL_LABEL, lines, money, refCode, salaryRange, WORK_MODE_LABEL } from "@/lib/format";
@@ -21,7 +20,7 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
 
   let owner = null;
   try {
-    owner = isSampleId(id) ? null : await currentOwner();
+    owner = await currentOwner();
   } catch {
     owner = null;
   }
@@ -132,7 +131,6 @@ function Teaser({
   fee: number | null;
   similar: { c: PublicCandidate; fee: number | null }[];
 }) {
-  const sample = isSampleId(c.id);
   return (
     <div className={`wrap ${styles.page}`}>
       <Link href="/candidates" className={`small ${styles.back}`}>
@@ -155,9 +153,7 @@ function Teaser({
               <ShortlistButton id={c.id} label />
             </div>
             <p className={`small muted ${styles.sideNote}`}>
-              {sample
-                ? "This is a sample profile, so there's no one to unlock yet."
-                : "You'll sign a short agreement first. Seeing their name and contact details costs nothing."}
+              You&rsquo;ll sign a short agreement first. Seeing their name and contact details costs nothing.
             </p>
           </div>
         </aside>
