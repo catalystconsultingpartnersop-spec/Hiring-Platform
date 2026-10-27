@@ -38,6 +38,7 @@ export async function sendEmail(opts: {
       await logActivity("system", "email_failed", { to: opts.to, subject: opts.subject, error: msg });
       return { ok: false, error: msg };
     }
+    await logActivity("system", "email_ok", { to: opts.to });
     return { ok: true };
   } catch (e) {
     console.error("email failed", e);
@@ -67,12 +68,14 @@ export async function lastEmailProblem(): Promise<string | null> {
     const since = new Date(Date.now() - 864e5).toISOString();
     const { data } = await db()
       .from("activity_log")
-      .select("details")
-      .eq("action", "email_failed")
+      .select("action, details")
+      .in("action", ["email_failed", "email_ok"])
       .gte("at", since)
       .order("at", { ascending: false })
       .limit(1);
-    return (data?.[0]?.details as { error?: string } | undefined)?.error ?? null;
+    const last = data?.[0];
+    if (!last || last.action === "email_ok") return null; // working now
+    return (last.details as { error?: string } | undefined)?.error ?? null;
   } catch {
     return null;
   }
