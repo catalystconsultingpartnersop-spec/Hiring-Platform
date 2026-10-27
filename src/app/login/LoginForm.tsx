@@ -24,7 +24,7 @@ export function LoginForm({ next }: { next: string }) {
           {state.error}
         </p>
       )}
-      <button className="btn" type="submit" disabled={pending} style={{ marginTop: 20 }}>
+      <button className="btn" type="submit" disabled={pending} style={{ marginTop: 20, width: "100%" }}>
         {pending ? "Sending…" : "Email me a sign-in link"}
       </button>
     </form>
