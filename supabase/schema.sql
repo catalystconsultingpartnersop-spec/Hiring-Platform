@@ -140,3 +140,21 @@ grant all on all tables in schema public to service_role;
 grant all on all sequences in schema public to service_role;
 revoke all on all tables in schema public from anon, authenticated;
 revoke all on all sequences in schema public from anon, authenticated;
+
+-- ---------- Team (same as migrations/002_team.sql) ----------
+create table if not exists staff (
+  id uuid primary key default gen_random_uuid(),
+  email text not null unique,
+  full_name text,
+  role text not null default 'rep' check (role in ('admin', 'rep')),
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  last_login_at timestamptz
+);
+
+alter table candidates add column if not exists added_by uuid references staff(id);
+alter table login_tokens add column if not exists kind text not null default 'owner';
+
+alter table staff enable row level security;
+grant all on staff to service_role;
+revoke all on staff from anon, authenticated;

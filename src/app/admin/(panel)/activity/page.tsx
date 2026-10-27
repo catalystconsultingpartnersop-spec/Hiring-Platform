@@ -1,9 +1,11 @@
+import { requireAdmin } from "@/lib/session";
 import { db } from "@/lib/db";
 import styles from "../admin.module.css";
 
 type Row = { id: number; at: string; actor: string; action: string; details: Record<string, unknown> };
 
 export default async function ActivityPage() {
+  await requireAdmin();
   const { data } = await db().from("activity_log").select("*").order("at", { ascending: false }).limit(300);
   const rows = (data ?? []) as Row[];
   return (

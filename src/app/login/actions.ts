@@ -49,6 +49,7 @@ export async function verifyLink(form: FormData) {
     .from("login_tokens")
     .update({ used_at: now })
     .eq("token_hash", hashToken(token))
+    .eq("kind", "owner")
     .is("used_at", null)
     .gt("expires_at", now)
     .select("email, next_path")

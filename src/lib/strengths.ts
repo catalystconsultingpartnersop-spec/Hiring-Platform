@@ -218,3 +218,11 @@ export function wiredFor(c: { strengths: string[]; working_genius: string | null
 }
 
 export const TRAIT_LIST = ORDER.map((k) => ({ key: k, ...TRAITS[k] }));
+
+// A starting headline when staff don't write one, e.g. "Sharp finisher for
+// estimating roles".
+export function suggestedHeadline(role: string, raw: string | null | undefined) {
+  const d = describe(raw);
+  const r = role.trim().toLowerCase();
+  return d ? `${d.name} for ${r} roles` : `${cap(role.trim())} candidate`;
+}

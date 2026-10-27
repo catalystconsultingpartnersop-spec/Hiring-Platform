@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { currentOwner, isAdmin } from "@/lib/session";
+import { currentOwner, currentStaff } from "@/lib/session";
 
 // Resumes live in private storage. This hands out a 2-minute download link, and
 // only to the admin or an owner who has signed for this candidate.
@@ -8,7 +8,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/resume/[id]">) 
   const { id } = await ctx.params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return new NextResponse("Not found", { status: 404 });
 
-  let allowed = await isAdmin();
+  let allowed = !!(await currentStaff());
   if (!allowed) {
     const owner = await currentOwner();
     if (owner) {

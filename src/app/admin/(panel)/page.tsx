@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { db, dbConfigProblem, Hire } from "@/lib/db";
+import { requireStaff } from "@/lib/session";
 import { dateShort, money, refCode } from "@/lib/format";
 import { markHired, refundHire, setUnlockFee } from "../actions";
 import styles from "./admin.module.css";
@@ -23,6 +24,7 @@ type CandRow = {
   role_category: string | null;
   created_at: string;
   listed_at: string | null;
+  staff: { full_name: string | null; email: string } | null;
 };
 
 type UnlockRow = {
@@ -38,6 +40,8 @@ type UnlockRow = {
 
 export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
   const sp = await searchParams;
+  const me = await requireStaff();
+  const admin = me.role === "admin";
   const problem = dbConfigProblem();
   if (problem) {
     return (
@@ -52,7 +56,7 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
   const [{ data: all, error: candErr }, { data: unlockData, error: unlockErr }] = await Promise.all([
     db()
       .from("candidates")
-      .select("id, status, full_name, email, headline, role_category, created_at, listed_at")
+      .select("id, status, full_name, email, headline, role_category, created_at, listed_at, staff(full_name, email)")
       .order("created_at", { ascending: false }),
     db()
       .from("unlocks")
@@ -60,7 +64,7 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
       .order("signed_at", { ascending: false })
       .limit(100),
   ]);
-  const cands = (all ?? []) as CandRow[];
+  const cands = (all ?? []) as unknown as CandRow[];
   const unlocks = (unlockData ?? []) as unknown as UnlockRow[];
   const count = (s: string) => cands.filter((c) => c.status === s).length;
   const shown = cands.filter((c) => c.status === view);
@@ -89,14 +93,18 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
           <strong>{count("listed")}</strong>
           <span>Listed now</span>
         </Link>
-        <div className={styles.stat}>
-          <strong>{unlocks.length}</strong>
-          <span>Agreements signed</span>
-        </div>
-        <div className={styles.stat}>
-          <strong>{money(paidTotal)}</strong>
-          <span>Fees collected</span>
-        </div>
+        {admin && (
+          <div className={styles.stat}>
+            <strong>{unlocks.length}</strong>
+            <span>Agreements signed</span>
+          </div>
+        )}
+        {admin && (
+          <div className={styles.stat}>
+            <strong>{money(paidTotal)}</strong>
+            <span>Fees collected</span>
+          </div>
+        )}
       </div>
 
       <h2 className={styles.h2}>Candidates</h2>
@@ -118,7 +126,8 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
               <tr>
                 <th>Name</th>
                 <th>Profile</th>
-                <th>{view === "listed" ? "Listed" : "Applied"}</th>
+                <th>Added by</th>
+                <th>{view === "listed" ? "Listed" : "Added"}</th>
               </tr>
             </thead>
             <tbody>
@@ -135,6 +144,7 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
                       {c.role_category ? `, ${c.role_category}` : ""}
                     </div>
                   </td>
+                  <td>{c.staff ? c.staff.full_name || c.staff.email : <span className="muted">Applied online</span>}</td>
                   <td>{dateShort(view === "listed" ? c.listed_at : c.created_at)}</td>
                 </tr>
               ))}
@@ -143,8 +153,8 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
         </div>
       )}
 
-      <h2 className={styles.h2}>Signed agreements</h2>
-      {unlocks.length === 0 ? (
+      {admin && <h2 className={styles.h2}>Signed agreements</h2>}
+      {!admin ? null : unlocks.length === 0 ? (
         <p className="panel panel-wash">No owner has signed yet. Signed agreements and payments show up here.</p>
       ) : (
         <div className="table-wrap">

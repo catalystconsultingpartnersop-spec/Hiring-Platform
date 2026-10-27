@@ -1,3 +1,4 @@
+import { requireStaff } from "@/lib/session";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTiers } from "@/lib/catalog";
@@ -6,6 +7,7 @@ import { dateShort, feeFor, money, refCode } from "@/lib/format";
 import { CandidateForm } from "../CandidateForm";
 
 export default async function EditCandidate({ params, searchParams }: PageProps<"/admin/candidates/[id]">) {
+  const me = await requireStaff();
   const { id } = await params;
   const sp = await searchParams;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
@@ -49,7 +51,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
           </p>
         )}
       </div>
-      <CandidateForm c={c} tierFeeLabel={tierFee != null ? money(tierFee) : "set by hand"} />
+      <CandidateForm c={c} tierFeeLabel={tierFee != null ? money(tierFee) : "set by hand"} isAdmin={me.role === "admin"} />
     </>
   );
 }

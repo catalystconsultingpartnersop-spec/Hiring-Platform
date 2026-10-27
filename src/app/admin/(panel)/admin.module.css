@@ -12,7 +12,15 @@
 .bar a { text-decoration: none; color: var(--ink-2); }
 .bar a:hover { color: var(--ink); }
 
-.out { margin-left: auto; }
+.me { margin-left: auto; font-weight: 400; color: var(--ink-3); font-size: 14px; }
+.out { margin-left: 0; }
+.bar a.addLink {
+  background: var(--marigold);
+  color: var(--ink);
+  padding: 7px 14px;
+  border-radius: 999px;
+}
+.bar a.addLink:hover { background: #ffc21a; color: var(--ink); }
 .out button {
   background: none;
   border: none;

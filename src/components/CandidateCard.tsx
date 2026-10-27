@@ -48,7 +48,6 @@ export function HowTheyWork({ c }: { c: PublicCandidate }) {
       <ul>
         <li>{d.thrives}</li>
         {d.alsoBrings && <li>{d.alsoBrings}</li>}
-        {d.bestAlongside && <li>{d.bestAlongside}</li>}
       </ul>
     </section>
   );

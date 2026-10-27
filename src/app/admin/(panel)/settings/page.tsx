@@ -1,8 +1,10 @@
+import { requireAdmin } from "@/lib/session";
 import { getTiers } from "@/lib/catalog";
 import { addTier, removeTier } from "../../actions";
 import { TiersForm } from "./TiersForm";
 
 export default async function SettingsPage() {
+  await requireAdmin();
   const tiers = await getTiers();
   return (
     <div style={{ maxWidth: 640 }}>

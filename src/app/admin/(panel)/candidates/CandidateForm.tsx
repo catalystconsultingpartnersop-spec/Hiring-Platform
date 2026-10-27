@@ -1,22 +1,33 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { describe } from "@/lib/strengths";
+import { startTransition, useActionState, useState } from "react";
 import type { Candidate } from "@/lib/db";
+import { describe, parseResult, suggestedHeadline, type Letter } from "@/lib/strengths";
 import { FormState, saveCandidate } from "../../actions";
-import styles from "../admin.module.css";
+import styles from "./form.module.css";
 
-const ROLE_SUGGESTIONS = [
+const ROLES = [
   "Sales",
   "Bookkeeping",
   "Accounting",
   "Executive assistant",
   "Office manager",
+  "Administrative",
   "Customer service",
   "Operations",
   "Project management",
+  "Estimating",
   "Marketing",
-  "Administrative",
+];
+
+// Staff-facing names for the six letters (owners never see these).
+const LETTERS: { key: Letter; name: string }[] = [
+  { key: "W", name: "Wonder" },
+  { key: "I", name: "Invention" },
+  { key: "D", name: "Discernment" },
+  { key: "G", name: "Galvanizing" },
+  { key: "E", name: "Enablement" },
+  { key: "T", name: "Tenacity" },
 ];
 
 const APPLICATION_LABELS: Record<string, string> = {
@@ -26,151 +37,383 @@ const APPLICATION_LABELS: Record<string, string> = {
   work_mode: "Work setting",
   salary: "Salary",
   about: "About them",
-  working_genius: "Working Genius",
+  working_genius: "Assessment result they gave",
   never_show_to: "Never show to",
 };
 
-export function CandidateForm({ c, tierFeeLabel }: { c: Candidate | null; tierFeeLabel: string }) {
+function Req() {
+  return (
+    <span className="req" aria-hidden="true">
+      {" "}
+      *
+    </span>
+  );
+}
+
+export function CandidateForm({
+  c,
+  tierFeeLabel,
+  isAdmin,
+}: {
+  c: Candidate | null;
+  tierFeeLabel: string;
+  isAdmin: boolean;
+}) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveCandidate.bind(null, c?.id ?? null), {});
   const v = <K extends keyof Candidate>(k: K) => (c?.[k] ?? "") as string;
+
+  // Contact details can be filled in from the resume.
+  const [contact, setContact] = useState({
+    full_name: v("full_name"),
+    email: v("email"),
+    phone: v("phone"),
+    linkedin_url: v("linkedin_url"),
+  });
+  const [reading, setReading] = useState<"" | "reading" | "done" | "none">("");
+  const [readNote, setReadNote] = useState("");
+
+  const [order, setOrder] = useState<Letter[]>(parseResult(v("working_genius")));
+  const [role, setRole] = useState(v("role_category"));
+  const [level, setLevel] = useState(v("level"));
+  const [mode, setMode] = useState(v("work_mode"));
+
+  const code = order.join("");
+  const d = describe(code);
+  const autoHeadline = role ? suggestedHeadline(role, code) : "";
   const app = c?.application ?? {};
   const hasApp = Object.values(app).some(Boolean);
 
+  async function readResume(file: File | undefined) {
+    if (!file) return;
+    setReading("reading");
+    setReadNote("");
+    const body = new FormData();
+    body.append("resume", file);
+    try {
+      const res = await fetch("/api/admin/read-resume", { method: "POST", body });
+      const json = await res.json();
+      const found = (json.found ?? {}) as Record<string, string>;
+      const filled: string[] = [];
+      const next = { ...contact };
+      const label = { full_name: "name", email: "email", phone: "phone", linkedin_url: "LinkedIn" } as const;
+      for (const k of ["full_name", "email", "phone", "linkedin_url"] as const) {
+        if (!contact[k] && found[k]) {
+          next[k] = found[k];
+          filled.push(label[k]);
+        }
+      }
+      setContact(next);
+      setReading(filled.length ? "done" : "none");
+      setReadNote(
+        json.note ??
+          (filled.length
+            ? `Filled in their ${filled.join(", ")} from the resume. Check they're right.`
+            : "Nothing new to fill in from this resume."),
+      );
+    } catch {
+      setReading("none");
+      setReadNote("Couldn't read this file. Fill in the details by hand.");
+    }
+  }
+
+  function tap(l: Letter) {
+    setOrder((cur) => (cur.includes(l) ? cur.slice(0, cur.indexOf(l)) : cur.length < 6 ? [...cur, l] : cur));
+  }
+
   return (
-    <form action={action} encType="multipart/form-data">
-      <div className={styles.formGrid}>
-        <div>
-          <fieldset className={styles.fieldset}>
-            <legend>Public card</legend>
-            <p className="small muted" style={{ marginBottom: 16 }}>
-              Everything here is shown to anyone browsing. Describe, don&rsquo;t identify: no names, employers,
-              schools or exact job titles.
-            </p>
-            <label className="field">
-              <span>Headline</span>
-              <input className="input" name="headline" defaultValue={v("headline")} placeholder="Field sales closer who thrives on job sites" />
-            </label>
-            <div className="grid-2" style={{ marginTop: 18 }}>
-              <label className="field">
-                <span>Role</span>
-                <input className="input" name="role_category" list="roles" defaultValue={v("role_category")} />
-                <datalist id="roles">
-                  {ROLE_SUGGESTIONS.map((r) => (
-                    <option key={r} value={r} />
-                  ))}
-                </datalist>
-              </label>
-              <label className="field">
-                <span>Industry</span>
-                <input className="input" name="industry" defaultValue={v("industry")} placeholder="Construction" />
-              </label>
-              <label className="field">
-                <span>Experience</span>
-                <select className="select" name="level" defaultValue={v("level")}>
-                  <option value="">Not set</option>
-                  <option value="beginner">Beginner with potential</option>
-                  <option value="experienced">Experienced</option>
-                  <option value="senior">Senior</option>
-                </select>
-              </label>
-              <label className="field">
-                <span>Work setting</span>
-                <select className="select" name="work_mode" defaultValue={v("work_mode")}>
-                  <option value="">Not set</option>
-                  <option value="on-site">On-site</option>
-                  <option value="hybrid">Hybrid</option>
-                  <option value="remote">Remote</option>
-                  <option value="flexible">Flexible</option>
-                </select>
-              </label>
-              <label className="field">
-                <span>Location (broad)</span>
-                <input className="input" name="location_region" defaultValue={v("location_region")} placeholder="Northern New Jersey" />
-              </label>
-              <AssessmentField initial={v("working_genius")} />
-              <label className="field">
-                <span>Salary from ($)</span>
-                <input className="input" name="salary_min" inputMode="numeric" defaultValue={c?.salary_min ?? ""} />
-              </label>
-              <label className="field">
-                <span>Salary to ($)</span>
-                <input className="input" name="salary_max" inputMode="numeric" defaultValue={c?.salary_max ?? ""} />
-              </label>
-            </div>
-            <label className="field" style={{ marginTop: 18 }}>
-              <span>Wired for</span>
-              <input
-                className="input"
-                name="strengths"
-                defaultValue={c?.strengths.join(", ") ?? ""}
-                placeholder="rallying people, reading a room, pushing a deal over the line"
-              />
-              <small>Leave empty to use the words generated from their assessment. Separate your own with commas.</small>
-            </label>
-            <label className="field">
-              <span>Summary</span>
-              <textarea className="textarea" name="summary" defaultValue={v("summary")} />
-              <small>The teaser paragraph on the profile page.</small>
-            </label>
-            <label className="field">
-              <span>Highlights</span>
-              <textarea className="textarea" name="highlights" defaultValue={c?.highlights.join("\n") ?? ""} placeholder={"Grew a territory from 0 to 40 accounts in 18 months\nComfortable on a job site and in a boardroom"} />
-              <small>One per line.</small>
-            </label>
-          </fieldset>
+    <form
+      className={styles.form}
+      onSubmit={(e) => {
+        // Submitting this way keeps everything typed in place if the save is refused.
+        e.preventDefault();
+        const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+        const fd = new FormData(e.currentTarget, submitter);
+        startTransition(() => action(fd));
+      }}
+    >
+      <input type="hidden" name="working_genius" value={code} />
+      <p className="small muted">
+        Fields marked <span className="req">*</span> are needed to list someone. Everything else makes the profile
+        stronger.
+      </p>
 
-          <fieldset className={styles.fieldset}>
-            <legend>Private, shown after signing</legend>
-            <div className="grid-2">
-              <label className="field">
-                <span>Full name</span>
-                <input className="input" name="full_name" defaultValue={v("full_name")} required />
-              </label>
-              <label className="field">
-                <span>Email</span>
-                <input className="input" type="email" name="email" defaultValue={v("email")} required />
-              </label>
-              <label className="field">
-                <span>Phone</span>
-                <input className="input" name="phone" defaultValue={v("phone")} />
-              </label>
-              <label className="field">
-                <span>LinkedIn</span>
-                <input className="input" name="linkedin_url" defaultValue={v("linkedin_url")} />
-              </label>
-            </div>
-            <label className="field" style={{ marginTop: 18 }}>
-              <span>Full profile</span>
-              <textarea className="textarea" name="full_profile" defaultValue={v("full_profile")} style={{ minHeight: 180 }} />
-            </label>
-            <label className="field">
-              <span>Resume</span>
-              <input className="input" type="file" name="resume" accept=".pdf,.doc,.docx" />
-              {c?.resume_path ? (
-                <small>
-                  <a href={`/api/resume/${c.id}`}>Download the current resume</a>. Uploading a new file replaces it.
-                </small>
-              ) : (
-                <small>No resume on file.</small>
-              )}
-            </label>
-          </fieldset>
+      {/* 1. Resume and contact */}
+      <section className={styles.step}>
+        <h2>
+          <span className={styles.num}>1</span> Who they are
+        </h2>
+        <label className={`${styles.drop} ${reading === "reading" ? styles.dropBusy : ""}`}>
+          <input
+            type="file"
+            name="resume"
+            accept=".pdf,.doc,.docx"
+            onChange={(e) => readResume(e.target.files?.[0])}
+          />
+          <strong>{c?.resume_path ? "Replace their resume" : "Add their resume"}</strong>
+          <span>
+            {reading === "reading"
+              ? "Reading it…"
+              : "PDF or Word. We'll fill in their name, email, phone and LinkedIn for you."}
+          </span>
+        </label>
+        {readNote && (
+          <p className={`notice ${reading === "done" ? "notice-good" : ""}`} role="status" style={{ marginTop: 12 }}>
+            {readNote}
+          </p>
+        )}
+        {c?.resume_path && (
+          <p className="small" style={{ marginTop: 8 }}>
+            <a href={`/api/resume/${c.id}`}>Download the current resume</a>
+          </p>
+        )}
+        <div className="grid-2" style={{ marginTop: 18 }}>
+          <label className="field">
+            <span>
+              Full name
+              <Req />
+            </span>
+            <input
+              className="input"
+              name="full_name"
+              required
+              value={contact.full_name}
+              onChange={(e) => setContact({ ...contact, full_name: e.target.value })}
+            />
+          </label>
+          <label className="field">
+            <span>
+              Email
+              <Req />
+            </span>
+            <input
+              className="input"
+              type="email"
+              name="email"
+              required
+              value={contact.email}
+              onChange={(e) => setContact({ ...contact, email: e.target.value })}
+            />
+          </label>
+          <label className="field">
+            <span>Phone</span>
+            <input className="input" name="phone" value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} />
+          </label>
+          <label className="field">
+            <span>LinkedIn</span>
+            <input
+              className="input"
+              name="linkedin_url"
+              value={contact.linkedin_url}
+              onChange={(e) => setContact({ ...contact, linkedin_url: e.target.value })}
+            />
+          </label>
         </div>
+      </section>
 
-        <div>
-          <fieldset className={styles.fieldset}>
-            <legend>Status and fee</legend>
-            <label className="field">
-              <span>Status</span>
-              <select className="select" name="status" defaultValue={c?.status ?? "listed"}>
-                <option value="applied">New application</option>
-                <option value="draft">Draft, not shown</option>
-                <option value="listed">Listed, shown in the catalog</option>
-                <option value="paused">Paused, hidden</option>
-                <option value="hired">Hired</option>
-                <option value="archived">Archived</option>
-              </select>
-            </label>
+      {/* 2. Assessment */}
+      <section className={styles.step}>
+        <h2>
+          <span className={styles.num}>2</span> Their Working Genius result
+          <Req />
+        </h2>
+        <p className="small muted">Tap the six in order, strongest first. Tap one again to undo from there.</p>
+        <div className={styles.letters} role="group" aria-label="Working Genius order">
+          {LETTERS.map((l) => {
+            const pos = order.indexOf(l.key);
+            return (
+              <button
+                key={l.key}
+                type="button"
+                className={`${styles.letter} ${pos >= 0 ? styles.letterOn : ""} ${pos >= 0 && pos < 2 ? styles.letterTop : ""}`}
+                aria-pressed={pos >= 0}
+                onClick={() => tap(l.key)}
+              >
+                <span className={styles.pos}>{pos >= 0 ? pos + 1 : ""}</span>
+                <strong>{l.key}</strong>
+                <span>{l.name}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className={styles.codeRow}>
+          <span>
+            Result: <strong>{code ? `${code.slice(0, 2)} ${code.slice(2, 4)} ${code.slice(4)}`.trim() : "not set"}</strong>
+          </span>
+          {order.length > 0 && (
+            <button type="button" className="btn btn-ghost btn-small" onClick={() => setOrder([])}>
+              Clear
+            </button>
+          )}
+        </div>
+        {d && (
+          <div className={styles.preview} aria-live="polite">
+            <p className={styles.previewLabel}>What owners will see</p>
+            <p>
+              <strong>{d.name}.</strong> {d.line}
+            </p>
+            <p>Wired for {d.wiredFor.join(", ")}.</p>
+            <p>
+              {d.thrives} {d.alsoBrings}
+            </p>
+            {d.bestAlongside && (
+              <>
+                <p className={styles.previewLabel} style={{ marginTop: 12 }}>
+                  Only the team sees this
+                </p>
+                <p>{d.bestAlongside}</p>
+              </>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* 3. What they want */}
+      <section className={styles.step}>
+        <h2>
+          <span className={styles.num}>3</span> What they&rsquo;re looking for
+        </h2>
+        <label className="field">
+          <span>
+            Role
+            <Req />
+          </span>
+          <input
+            className="input"
+            name="role_category"
+            list="roles"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            placeholder="Pick or type, e.g. Sales"
+          />
+          <datalist id="roles">
+            {ROLES.map((r) => (
+              <option key={r} value={r} />
+            ))}
+          </datalist>
+        </label>
+        <div className={styles.chipField}>
+          <span>Experience</span>
+          <input type="hidden" name="level" value={level} />
+          <div className={styles.chips}>
+            {[
+              ["beginner", "Beginner with potential"],
+              ["experienced", "Experienced"],
+              ["senior", "Senior"],
+            ].map(([val, label]) => (
+              <button
+                key={val}
+                type="button"
+                className={level === val ? styles.chipOn : styles.chip}
+                aria-pressed={level === val}
+                onClick={() => setLevel(level === val ? "" : val)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={styles.chipField}>
+          <span>Work setting</span>
+          <input type="hidden" name="work_mode" value={mode} />
+          <div className={styles.chips}>
+            {[
+              ["on-site", "On-site"],
+              ["hybrid", "Hybrid"],
+              ["remote", "Remote"],
+              ["flexible", "Flexible"],
+            ].map(([val, label]) => (
+              <button
+                key={val}
+                type="button"
+                className={mode === val ? styles.chipOn : styles.chip}
+                aria-pressed={mode === val}
+                onClick={() => setMode(mode === val ? "" : val)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="grid-2" style={{ marginTop: 18 }}>
+          <label className="field">
+            <span>Location (broad, e.g. &ldquo;Northern New Jersey&rdquo;)</span>
+            <input className="input" name="location_region" defaultValue={v("location_region")} />
+          </label>
+          <label className="field">
+            <span>Industry</span>
+            <input className="input" name="industry" defaultValue={v("industry")} placeholder="e.g. Construction" />
+          </label>
+          <label className="field">
+            <span>Salary from ($)</span>
+            <input className="input" name="salary_min" inputMode="numeric" defaultValue={c?.salary_min ?? ""} placeholder="70000" />
+          </label>
+          <label className="field">
+            <span>Salary to ($)</span>
+            <input className="input" name="salary_max" inputMode="numeric" defaultValue={c?.salary_max ?? ""} placeholder="85000" />
+          </label>
+        </div>
+      </section>
+
+      {/* 4. Story */}
+      <section className={styles.step}>
+        <h2>
+          <span className={styles.num}>4</span> Their story
+        </h2>
+        <p className="small muted">
+          Owners see this before signing, so describe, don&rsquo;t identify: no names, employers, schools or exact titles.
+        </p>
+        <label className="field" style={{ marginTop: 14 }}>
+          <span>Headline</span>
+          <input
+            className="input"
+            name="headline"
+            defaultValue={v("headline")}
+            placeholder={autoHeadline ? `Leave blank to use: ${autoHeadline}` : "e.g. Bookkeeper who finds the mistake everyone else missed"}
+          />
+        </label>
+        <label className="field">
+          <span>Short summary</span>
+          <textarea
+            className="textarea"
+            name="summary"
+            defaultValue={v("summary")}
+            placeholder="Two or three sentences: what they've done and where they shine."
+          />
+        </label>
+        <label className="field">
+          <span>Highlights (one per line)</span>
+          <textarea
+            className="textarea"
+            name="highlights"
+            defaultValue={c?.highlights.join("\n") ?? ""}
+            placeholder={"Grew a territory to 40 accounts in 18 months\nComfortable on a job site and in a boardroom"}
+          />
+        </label>
+        <label className="field">
+          <span>Full profile (shown only after an owner signs)</span>
+          <textarea className="textarea" name="full_profile" defaultValue={v("full_profile")} />
+        </label>
+        <details className={styles.more}>
+          <summary>Write your own &ldquo;Wired for&rdquo; words instead</summary>
+          <label className="field" style={{ marginTop: 12 }}>
+            <span>Wired for</span>
+            <input className="input" name="strengths" defaultValue={c?.strengths.join(", ") ?? ""} placeholder={d ? d.wiredFor.join(", ") : ""} />
+            <small>Leave empty to use the words from their result. Separate with commas.</small>
+          </label>
+        </details>
+      </section>
+
+      {/* 5. Private */}
+      <section className={styles.step}>
+        <h2>
+          <span className={styles.num}>5</span> Private notes
+        </h2>
+        <div className="grid-2">
+          <label className="field">
+            <span>Never show to these companies</span>
+            <input className="input" name="never_show_to" defaultValue={v("never_show_to")} placeholder="e.g. their current employer" />
+          </label>
+          {isAdmin && (
             <label className="field">
               <span>Fee override ($)</span>
               <input
@@ -178,53 +421,66 @@ export function CandidateForm({ c, tierFeeLabel }: { c: Candidate | null; tierFe
                 name="fee_override"
                 inputMode="numeric"
                 defaultValue={c?.fee_override_cents != null ? c.fee_override_cents / 100 : ""}
-                placeholder={tierFeeLabel}
+                placeholder={`Default: ${tierFeeLabel}`}
               />
-              <small>Leave empty to use the fee tier: {tierFeeLabel}.</small>
             </label>
-            {!c && (
-              <label className="check" style={{ marginTop: 18 }}>
-                <input type="checkbox" name="consent" />
-                <span>The candidate agreed to be listed.</span>
-              </label>
-            )}
-          </fieldset>
-
-          <fieldset className={styles.fieldset}>
-            <legend>Only you see this</legend>
-            <label className="field">
-              <span>Never show to these companies</span>
-              <input className="input" name="never_show_to" defaultValue={v("never_show_to")} />
-              <small>Separate with commas. Owners from these companies can&rsquo;t unlock this candidate.</small>
-            </label>
-            <label className="field">
-              <span>Your notes</span>
-              <textarea className="textarea" name="admin_notes" defaultValue={v("admin_notes")} />
-            </label>
-          </fieldset>
-
-          {hasApp && (
-            <fieldset className={styles.fieldset}>
-              <legend>Their application</legend>
-              <dl className={styles.answers}>
-                {Object.entries(APPLICATION_LABELS)
-                  .filter(([k]) => app[k])
-                  .map(([k, label]) => (
-                    <div key={k}>
-                      <dt>{label}</dt>
-                      <dd>{app[k]}</dd>
-                    </div>
-                  ))}
-              </dl>
-            </fieldset>
           )}
         </div>
-      </div>
+        <label className="field" style={{ marginTop: 18 }}>
+          <span>Team notes</span>
+          <textarea className="textarea" name="admin_notes" defaultValue={v("admin_notes")} />
+        </label>
+        {!c && (
+          <label className="check" style={{ marginTop: 16 }}>
+            <input type="checkbox" name="consent" defaultChecked />
+            <span>They agreed to be listed.</span>
+          </label>
+        )}
+        {hasApp && (
+          <details className={styles.more} open>
+            <summary>What they wrote when they applied</summary>
+            <dl className={styles.answers}>
+              {Object.entries(APPLICATION_LABELS)
+                .filter(([k]) => app[k])
+                .map(([k, label]) => (
+                  <div key={k}>
+                    <dt>{label}</dt>
+                    <dd>{app[k]}</dd>
+                  </div>
+                ))}
+            </dl>
+          </details>
+        )}
+      </section>
 
       <div className={styles.saveBar}>
-        <button className="btn" type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save"}
-        </button>
+        {c ? (
+          <>
+            <label className={styles.statusPick}>
+              <span>Status</span>
+              <select className="select" name="status" defaultValue={c.status}>
+                <option value="listed">Listed: owners can see them</option>
+                <option value="draft">Draft: hidden</option>
+                <option value="paused">Paused: hidden</option>
+                <option value="applied">New application</option>
+                <option value="hired">Hired</option>
+                <option value="archived">Archived</option>
+              </select>
+            </label>
+            <button className="btn btn-gold" type="submit" disabled={pending}>
+              {pending ? "Saving…" : "Save"}
+            </button>
+          </>
+        ) : (
+          <>
+            <button className="btn btn-gold" type="submit" name="status" value="listed" disabled={pending}>
+              {pending ? "Saving…" : "List now"}
+            </button>
+            <button className="btn btn-ghost" type="submit" name="status" value="draft" disabled={pending}>
+              Save as draft
+            </button>
+          </>
+        )}
         {state.error && (
           <span className="notice notice-bad" role="alert">
             {state.error}
@@ -237,34 +493,5 @@ export function CandidateForm({ c, tierFeeLabel }: { c: Candidate | null; tierFe
         )}
       </div>
     </form>
-  );
-}
-
-function AssessmentField({ initial }: { initial: string }) {
-  const [val, setVal] = useState(initial);
-  const d = describe(val);
-  return (
-    <div className="field" style={{ gridColumn: "1 / -1" }}>
-      <label>
-        <span>Working Genius result</span>
-        <input className="input" name="working_genius" value={val} onChange={(e) => setVal(e.target.value)} placeholder="e.g. GTDEIW" />
-      </label>
-      <small>All six letters, strongest first. Owners see only the plain-language profile below.</small>
-      {val.trim() && (
-        <div className="assess-preview" aria-live="polite">
-          {d ? (
-            <>
-              <strong>{d.name}</strong>: {d.line}
-              <br />
-              Wired for: {d.wiredFor.join(", ")}
-              <br />
-              {d.thrives} {d.alsoBrings} {d.bestAlongside}
-            </>
-          ) : (
-            "Type at least the first two letters to see the profile."
-          )}
-        </div>
-      )}
-    </div>
   );
 }

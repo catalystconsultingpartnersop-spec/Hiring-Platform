@@ -4,10 +4,19 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db, logActivity } from "@/lib/db";
 import { escapeHtml, sendEmail } from "@/lib/email";
-import { brandName, money, refCode } from "@/lib/format";
-import { checkAdminPassword, endAdminSession, requireAdmin, startAdminSession } from "@/lib/session";
+import { brandName, money, refCode, siteUrl } from "@/lib/format";
+import {
+  checkAdminPassword,
+  endAdminSession,
+  hashToken,
+  newLoginToken,
+  requireAdmin,
+  requireStaff,
+  staffActor,
+  startStaffSession,
+} from "@/lib/session";
 import { stripe } from "@/lib/stripe";
-import { describe } from "@/lib/strengths";
+import { describe, suggestedHeadline } from "@/lib/strengths";
 
 export type FormState = { error?: string; ok?: string };
 
@@ -20,8 +29,73 @@ export async function adminLogin(_prev: FormState, form: FormData): Promise<Form
     await logActivity("system", "admin_login_failed");
     return { error: "That password isn't right." };
   }
-  await startAdminSession();
+  await startStaffSession("admin");
   await logActivity("admin", "admin_signed_in");
+  redirect("/admin");
+}
+
+// Staff (Heshy and reps) sign in with an emailed link.
+export async function requestStaffLink(_prev: FormState, form: FormData): Promise<FormState> {
+  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Enter a valid email address." };
+  const done: FormState = { ok: `If ${email} is on the team, a sign-in link is on its way. It works for 30 minutes.` };
+
+  const isOwnerEmail = email === (process.env.ADMIN_EMAIL ?? "").toLowerCase();
+  const { data: member } = await db().from("staff").select("id, active").eq("email", email).maybeSingle();
+  if (!isOwnerEmail && (!member || !member.active)) {
+    await logActivity("system", "staff_link_unknown_email", { email });
+    return done; // don't reveal who is on the team
+  }
+  const since = new Date(Date.now() - 3600e3).toISOString();
+  const { count } = await db()
+    .from("login_tokens")
+    .select("token_hash", { count: "exact", head: true })
+    .eq("email", email)
+    .eq("kind", "staff")
+    .gte("created_at", since);
+  if ((count ?? 0) >= 5) return { error: "Too many sign-in links requested. Wait an hour and try again." };
+
+  const { token, hash } = newLoginToken();
+  await db()
+    .from("login_tokens")
+    .insert({ token_hash: hash, email, kind: "staff", expires_at: new Date(Date.now() + 30 * 60e3).toISOString() });
+  await sendEmail({
+    to: email,
+    subject: `Your ${brandName()} team sign-in link`,
+    html: `<p>Click below to sign in to the ${escapeHtml(brandName())} back office. The link works once and expires in 30 minutes.</p>
+<p><a href="${siteUrl()}/admin/verify?token=${token}" style="display:inline-block;background:#17213a;color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Sign in</a></p>`,
+  });
+  return done;
+}
+
+export async function verifyStaffLink(form: FormData) {
+  const token = String(form.get("token") ?? "");
+  const now = new Date().toISOString();
+  const { data } = await db()
+    .from("login_tokens")
+    .update({ used_at: now })
+    .eq("token_hash", hashToken(token))
+    .eq("kind", "staff")
+    .is("used_at", null)
+    .gt("expires_at", now)
+    .select("email")
+    .maybeSingle();
+  if (!data) redirect("/admin/login?error=expired");
+
+  let { data: member } = await db().from("staff").select("id, active").eq("email", data.email).maybeSingle();
+  if (!member && data.email === (process.env.ADMIN_EMAIL ?? "").toLowerCase()) {
+    // Heshy's own email becomes the first admin automatically.
+    const { data: created } = await db()
+      .from("staff")
+      .insert({ email: data.email, full_name: "Heshy", role: "admin" })
+      .select("id, active")
+      .single();
+    member = created;
+  }
+  if (!member || !member.active) redirect("/admin/login?error=inactive");
+  await db().from("staff").update({ last_login_at: now }).eq("id", member.id);
+  await startStaffSession(member.id);
+  await logActivity(`staff:${data.email}`, "staff_signed_in");
   redirect("/admin");
 }
 
@@ -53,7 +127,8 @@ const RESUME_TYPES: Record<string, string> = {
 };
 
 export async function saveCandidate(id: string | null, _prev: FormState, form: FormData): Promise<FormState> {
-  await requireAdmin();
+  const me = await requireStaff();
+  const actor = staffActor(me);
   const get = (k: string) => String(form.get(k) ?? "").trim();
 
   const status = get("status") || "draft";
@@ -71,7 +146,7 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
     working_genius: get("working_genius") || null,
     summary: get("summary") || null,
     highlights: listFrom(get("highlights"), /\n/),
-    fee_override_cents: dollarsToCents(get("fee_override")),
+    ...(me.role === "admin" ? { fee_override_cents: dollarsToCents(get("fee_override")) } : {}),
     full_name: get("full_name"),
     email: get("email").toLowerCase(),
     phone: get("phone") || null,
@@ -82,12 +157,14 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
     updated_at: new Date().toISOString(),
   };
 
-  if (!record.full_name || !record.email) return { error: "Name and email are required." };
+  if (!record.full_name || !record.email) return { error: "Their name and email are required. Nothing was saved." };
+  if (!record.headline && record.role_category) {
+    record.headline = suggestedHeadline(record.role_category as string, record.working_genius as string | null);
+  }
   if (status === "listed") {
     const missing = [
-      !record.headline && "headline",
-      !record.role_category && "role",
-      (record.strengths as string[]).length === 0 && !describe(record.working_genius as string | null) && "Working Genius result (or your own Wired for words)",
+      !record.role_category && "the role they want",
+      (record.strengths as string[]).length === 0 && !describe(record.working_genius as string | null) && "their assessment letters (or your own Wired for words)",
     ].filter(Boolean);
     if (missing.length) return { error: `To list this candidate, fill in: ${missing.join(", ")}. Nothing was saved.` };
   }
@@ -98,14 +175,15 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
     if (status === "listed" && !before?.listed_at) record.listed_at = new Date().toISOString();
     const { error } = await db().from("candidates").update(record).eq("id", id);
     if (error) return { error: `Could not save: ${error.message}` };
-    if (before?.status !== status) await logActivity("admin", "candidate_status", { candidate: refCode(id), from: before?.status, to: status });
+    if (before?.status !== status) await logActivity(actor, "candidate_status", { candidate: refCode(id), from: before?.status, to: status });
   } else {
     if (status === "listed") record.listed_at = new Date().toISOString();
     record.consent_at = form.get("consent") === "on" ? new Date().toISOString() : null;
+    if (me.id) record.added_by = me.id;
     const { data, error } = await db().from("candidates").insert(record).select("id").single();
     if (error || !data) return { error: `Could not save: ${error?.message}` };
     candidateId = data.id;
-    await logActivity("admin", "candidate_created", { candidate: refCode(data.id) });
+    await logActivity(actor, "candidate_created", { candidate: refCode(data.id) });
   }
 
   const resume = form.get("resume");
@@ -204,4 +282,46 @@ export async function refundHire(hireId: string) {
     html: `<p>Hi ${escapeHtml(u.owners.full_name ?? "")},</p><p>We've refunded ${money(hire.amount_cents)} for candidate ${refCode(u.candidate_id)}. It usually shows on your card within 5–10 business days.</p><p>${escapeHtml(brandName())}</p>`,
   });
   revalidatePath("/admin");
+}
+
+// ---------- Team ----------
+
+export async function addStaff(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requireAdmin();
+  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  const full_name = String(form.get("full_name") ?? "").trim();
+  const role = form.get("role") === "admin" ? "admin" : "rep";
+  if (!full_name) return { error: "Enter their name." };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Enter a valid email address." };
+  const { error } = await db()
+    .from("staff")
+    .upsert({ email, full_name, role, active: true }, { onConflict: "email" });
+  if (error) return { error: `Could not add them: ${error.message}` };
+  await logActivity(staffActor(me), "staff_added", { email, role });
+  await sendEmail({
+    to: email,
+    subject: `You've been added to the ${brandName()} team`,
+    html: `<p>Hi ${escapeHtml(full_name.split(" ")[0])},</p>
+<p>You now have access to the ${escapeHtml(brandName())} back office, where you can add and update candidates.</p>
+<p><a href="${siteUrl()}/admin/login" style="display:inline-block;background:#17213a;color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Sign in</a></p>
+<p style="color:#4a5570;font-size:13px">Enter this email address on the sign-in page and we'll send you a link. No password needed.</p>`,
+  });
+  revalidatePath("/admin/team");
+  return { ok: `${full_name} was added and emailed a sign-in link.` };
+}
+
+export async function setStaffActive(id: string, active: boolean) {
+  const me = await requireAdmin();
+  if (me.id === id) return; // can't lock yourself out
+  await db().from("staff").update({ active }).eq("id", id);
+  await logActivity(staffActor(me), active ? "staff_reactivated" : "staff_removed", { staff_id: id });
+  revalidatePath("/admin/team");
+}
+
+export async function setStaffRole(id: string, role: "admin" | "rep") {
+  const me = await requireAdmin();
+  if (me.id === id) return;
+  await db().from("staff").update({ role }).eq("id", id);
+  await logActivity(staffActor(me), "staff_role_changed", { staff_id: id, role });
+  revalidatePath("/admin/team");
 }

@@ -45,7 +45,13 @@ const cookieOptions = (days: number) => ({
   maxAge: days * 86400,
 });
 
-// ---------- Admin ----------
+// ---------- Staff (Heshy and reps) ----------
+//
+// Heshy (role "admin") sees everything. Reps (role "rep") add and edit
+// candidates but never see fees, payments or refunds. Staff sign in with an
+// emailed link; Heshy can also use the ADMIN_PASSWORD as a backup.
+
+export type Staff = { id: string | null; email: string; name: string; role: "admin" | "rep" };
 
 export function checkAdminPassword(input: string) {
   const real = process.env.ADMIN_PASSWORD;
@@ -55,20 +61,50 @@ export function checkAdminPassword(input: string) {
   return timingSafeEqual(a, b);
 }
 
-export async function startAdminSession() {
-  (await cookies()).set(ADMIN_COOKIE, makeToken("admin", ADMIN_DAYS), cookieOptions(ADMIN_DAYS));
+// subject is "admin" for the password login, or the staff member's id.
+export async function startStaffSession(subject: string) {
+  (await cookies()).set(ADMIN_COOKIE, makeToken(subject, ADMIN_DAYS), cookieOptions(ADMIN_DAYS));
 }
 
 export async function endAdminSession() {
   (await cookies()).delete(ADMIN_COOKIE);
 }
 
-export async function isAdmin() {
-  return readToken((await cookies()).get(ADMIN_COOKIE)?.value) === "admin";
+export async function currentStaff(): Promise<Staff | null> {
+  const subject = readToken((await cookies()).get(ADMIN_COOKIE)?.value);
+  if (!subject) return null;
+  if (subject === "admin") {
+    return { id: null, email: process.env.ADMIN_EMAIL ?? "", name: "Admin", role: "admin" };
+  }
+  try {
+    const { data } = await db().from("staff").select("id, email, full_name, role, active").eq("id", subject).maybeSingle();
+    if (!data || !data.active) return null;
+    return { id: data.id, email: data.email, name: data.full_name || data.email, role: data.role };
+  } catch {
+    return null;
+  }
 }
 
-export async function requireAdmin() {
-  if (!(await isAdmin())) redirect("/admin/login");
+// Any signed-in staff member (admin or rep).
+export async function requireStaff(): Promise<Staff> {
+  const s = await currentStaff();
+  if (!s) redirect("/admin/login");
+  return s;
+}
+
+// Admin only: money, fees, refunds, the team.
+export async function requireAdmin(): Promise<Staff> {
+  const s = await requireStaff();
+  if (s.role !== "admin") redirect("/admin");
+  return s;
+}
+
+export async function isAdmin() {
+  return (await currentStaff())?.role === "admin";
+}
+
+export function staffActor(s: Staff) {
+  return s.role === "admin" && !s.id ? "admin" : `staff:${s.email}`;
 }
 
 // ---------- Owners ----------
