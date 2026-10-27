@@ -132,3 +132,11 @@ alter table activity_log enable row level security;
 insert into storage.buckets (id, name, public)
 values ('resumes', 'resumes', false)
 on conflict (id) do nothing;
+
+-- Only the server's secret key can read or write. Browsers (anon / signed-in
+-- Supabase users) get no access at all.
+grant usage on schema public to service_role;
+grant all on all tables in schema public to service_role;
+grant all on all sequences in schema public to service_role;
+revoke all on all tables in schema public from anon, authenticated;
+revoke all on all sequences in schema public from anon, authenticated;
