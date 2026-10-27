@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { addStaff, FormState } from "../../actions";
 
-export function AddStaffForm() {
+export function AddStaffForm({ canAddAdmin }: { canAddAdmin: boolean }) {
   const [state, action, pending] = useActionState<FormState, FormData>(addStaff, {});
   return (
     <form action={action} className="panel panel-wash" key={state.ok ?? "form"}>
@@ -22,7 +22,7 @@ export function AddStaffForm() {
         <span>Role</span>
         <select className="select" name="role" defaultValue="rep" style={{ maxWidth: 320 }}>
           <option value="rep">Rep: adds and updates candidates</option>
-          <option value="admin">Admin: everything, including money</option>
+          {canAddAdmin && <option value="admin">Admin: everything, including money</option>}
         </select>
       </label>
       {state.error && (

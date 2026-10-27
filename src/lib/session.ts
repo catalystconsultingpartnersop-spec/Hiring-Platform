@@ -51,7 +51,14 @@ const cookieOptions = (days: number) => ({
 // candidates but never see fees, payments or refunds. Staff sign in with an
 // emailed link; Heshy can also use the ADMIN_PASSWORD as a backup.
 
-export type Staff = { id: string | null; email: string; name: string; role: "admin" | "rep" };
+// owner: Heshy (the ADMIN_EMAIL). Always an admin, can't be switched off or
+// demoted by anyone, and the only one who can make or remove other admins.
+export type Staff = { id: string | null; email: string; name: string; role: "admin" | "rep"; owner: boolean };
+
+export function isOwnerEmail(email: string | null | undefined) {
+  const owner = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase();
+  return !!owner && (email ?? "").trim().toLowerCase() === owner;
+}
 
 export function checkAdminPassword(input: string) {
   const real = process.env.ADMIN_PASSWORD;
@@ -74,12 +81,14 @@ export async function currentStaff(): Promise<Staff | null> {
   const subject = readToken((await cookies()).get(ADMIN_COOKIE)?.value);
   if (!subject) return null;
   if (subject === "admin") {
-    return { id: null, email: process.env.ADMIN_EMAIL ?? "", name: "Admin", role: "admin" };
+    return { id: null, email: process.env.ADMIN_EMAIL ?? "", name: "Admin", role: "admin", owner: true };
   }
   try {
     const { data } = await db().from("staff").select("id, email, full_name, role, active").eq("id", subject).maybeSingle();
-    if (!data || !data.active) return null;
-    return { id: data.id, email: data.email, name: data.full_name || data.email, role: data.role };
+    if (!data) return null;
+    const owner = isOwnerEmail(data.email);
+    if (!data.active && !owner) return null;
+    return { id: data.id, email: data.email, name: data.full_name || data.email, role: owner ? "admin" : data.role, owner };
   } catch {
     return null;
   }

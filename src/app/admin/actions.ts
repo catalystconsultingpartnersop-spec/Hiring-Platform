@@ -12,7 +12,9 @@ import {
   hashPassword,
   hashToken,
   newLoginToken,
+  isOwnerEmail,
   requireAdmin,
+  type Staff,
   requireStaff,
   staffActor,
   startStaffSession,
@@ -358,6 +360,8 @@ export async function addStaff(_prev: FormState, form: FormData): Promise<FormSt
   const full_name = String(form.get("full_name") ?? "").trim();
   const role = form.get("role") === "admin" ? "admin" : "rep";
   if (!full_name) return { error: "Enter their name." };
+  if (isOwnerEmail(email)) return { error: "That's the owner's email. It's already on the team." };
+  if (role === "admin" && !me.owner) return { error: "Only Heshy can add admins." };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Enter a valid email address." };
   const { error } = await db()
     .from("staff")
@@ -380,9 +384,19 @@ export async function addStaff(_prev: FormState, form: FormData): Promise<FormSt
   return { ok: `${full_name} was added and emailed a sign-in link.` };
 }
 
+// Who an admin is allowed to change: never the owner, and only the owner
+// can change other admins.
+async function canManage(me: Staff, id: string, makingAdmin = false) {
+  if (me.id === id) return false; // can't lock yourself out
+  const { data } = await db().from("staff").select("email, role").eq("id", id).maybeSingle();
+  if (!data || isOwnerEmail(data.email)) return false;
+  if ((data.role === "admin" || makingAdmin) && !me.owner) return false;
+  return true;
+}
+
 export async function setStaffActive(id: string, active: boolean) {
   const me = await requireAdmin();
-  if (me.id === id) return; // can't lock yourself out
+  if (!(await canManage(me, id))) return;
   await db().from("staff").update({ active }).eq("id", id);
   await logActivity(staffActor(me), active ? "staff_reactivated" : "staff_removed", { staff_id: id });
   revalidatePath("/admin/team");
@@ -390,7 +404,7 @@ export async function setStaffActive(id: string, active: boolean) {
 
 export async function setStaffRole(id: string, role: "admin" | "rep") {
   const me = await requireAdmin();
-  if (me.id === id) return;
+  if (!(await canManage(me, id, role === "admin"))) return;
   await db().from("staff").update({ role }).eq("id", id);
   await logActivity(staffActor(me), "staff_role_changed", { staff_id: id, role });
   revalidatePath("/admin/team");
