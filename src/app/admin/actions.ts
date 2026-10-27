@@ -20,6 +20,7 @@ import {
 import { stripe } from "@/lib/stripe";
 import { cancelCall } from "@/lib/calls";
 import { describe, suggestedHeadline } from "@/lib/strengths";
+import { RESUME_CONTENT_TYPE, resumeKind } from "@/lib/resume";
 
 export type FormState = { error?: string; ok?: string };
 
@@ -179,11 +180,6 @@ const listFrom = (v: string, sep: RegExp) =>
     .map((s) => s.trim())
     .filter(Boolean);
 
-const RESUME_TYPES: Record<string, string> = {
-  "application/pdf": "pdf",
-  "application/msword": "doc",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
-};
 
 export async function saveCandidate(id: string | null, _prev: FormState, form: FormData): Promise<FormState> {
   const me = await requireStaff();
@@ -246,19 +242,30 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
   }
 
   const resume = form.get("resume");
+  let resumeProblem = "";
   if (resume instanceof File && resume.size > 0) {
-    if (!RESUME_TYPES[resume.type]) return { error: "Resume must be a PDF or Word file. Everything else was saved." };
-    const path = `${candidateId}/resume.${RESUME_TYPES[resume.type]}`;
-    const { error } = await db()
-      .storage.from("resumes")
-      .upload(path, Buffer.from(await resume.arrayBuffer()), { contentType: resume.type, upsert: true });
-    if (error) return { error: "Saved, but the resume upload failed. Try uploading it again." };
-    await db().from("candidates").update({ resume_path: path }).eq("id", candidateId);
+    const kind = resumeKind(resume);
+    if (!kind) resumeProblem = "the resume needs to be a PDF or Word file";
+    else if (resume.size > 4 * 1024 * 1024) resumeProblem = "the resume is over 4 MB";
+    else {
+      const path = `${candidateId}/resume.${kind}`;
+      const { error } = await db()
+        .storage.from("resumes")
+        .upload(path, Buffer.from(await resume.arrayBuffer()), { contentType: RESUME_CONTENT_TYPE[kind], upsert: true });
+      if (error) {
+        resumeProblem = `the resume didn't upload (${error.message})`;
+        await logActivity(actor, "resume_upload_failed", { candidate: refCode(candidateId!), error: error.message });
+      } else {
+        await db().from("candidates").update({ resume_path: path }).eq("id", candidateId);
+      }
+    }
   }
 
   revalidatePath("/admin");
   revalidatePath("/candidates");
-  if (!id) redirect(`/admin/candidates/${candidateId}?saved=${status}`);
+  // A new candidate always goes to their page, so saving again never makes a duplicate.
+  if (!id) redirect(`/admin/candidates/${candidateId}?saved=${status}${resumeProblem ? `&resume=${encodeURIComponent(resumeProblem)}` : ""}`);
+  if (resumeProblem) return { error: `Saved, but ${resumeProblem}. Try attaching it again.` };
   return {
     ok: status === "listed" ? "Saved. They're live in the catalog." : `Saved as ${status}. Owners won't see them until the status is Listed.`,
   };

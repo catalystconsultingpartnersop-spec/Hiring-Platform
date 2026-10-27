@@ -7,13 +7,9 @@ import { brandName, contactPhone, siteUrl } from "@/lib/format";
 import { readSignedToken, signedToken } from "@/lib/session";
 import { openSlots } from "@/lib/slots";
 import { formatInZone } from "@/lib/time";
+import { RESUME_CONTENT_TYPE, resumeKind } from "@/lib/resume";
 
 const MAX_RESUME = 4 * 1024 * 1024;
-const RESUME_TYPES: Record<string, string> = {
-  "application/pdf": "pdf",
-  "application/msword": "doc",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
-};
 
 export type ApplyState = {
   ok?: boolean;
@@ -44,10 +40,10 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
   const hasResume = resume instanceof File && resume.size > 0;
   if (hasResume) {
     if (resume.size > MAX_RESUME) return fail("That resume is over 4 MB. Try a smaller PDF, or skip it for now.");
-    if (!RESUME_TYPES[resume.type]) return fail("Resumes need to be a PDF or Word file. You can also skip it for now.");
+    if (!resumeKind(resume)) return fail("Resumes need to be a PDF or Word file. You can also skip it for now.");
   }
   const resumeBuf = hasResume ? Buffer.from(await resume.arrayBuffer()) : null;
-  const resumeExt = hasResume ? RESUME_TYPES[resume.type] : null;
+  const resumeExt = hasResume ? resumeKind(resume) : null;
   const first = full_name.split(" ")[0];
 
   let candidateId: string | null = null;
@@ -73,7 +69,7 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
   if (candidateId && resumeBuf) {
     try {
       const path = `${candidateId}/resume.${resumeExt}`;
-      const { error } = await db().storage.from("resumes").upload(path, resumeBuf, { contentType: (resume as File).type, upsert: true });
+      const { error } = await db().storage.from("resumes").upload(path, resumeBuf, { contentType: RESUME_CONTENT_TYPE[resumeExt!], upsert: true });
       if (error) throw error;
       await db().from("candidates").update({ resume_path: path }).eq("id", candidateId);
     } catch (e) {

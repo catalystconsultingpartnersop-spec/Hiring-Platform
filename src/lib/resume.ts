@@ -1,14 +1,31 @@
+// What kind of resume file this is, by its type or, if the browser didn't say,
+// by its file name. Returns the extension to store it under, or null.
+export function resumeKind(file: { type: string; name: string }): "pdf" | "docx" | "doc" | null {
+  const t = (file.type || "").toLowerCase();
+  const n = (file.name || "").toLowerCase();
+  if (t === "application/pdf" || n.endsWith(".pdf")) return "pdf";
+  if (t === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || n.endsWith(".docx")) return "docx";
+  if (t === "application/msword" || n.endsWith(".doc")) return "doc";
+  return null;
+}
+
+export const RESUME_CONTENT_TYPE = {
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  doc: "application/msword",
+} as const;
+
 // Pulls the basics (name, email, phone, LinkedIn) out of a resume so staff
 // don't have to type them. Best effort: anything not found is left blank.
 
-export async function resumeText(buf: Buffer, type: string): Promise<string> {
-  if (type === "application/pdf") {
+export async function resumeText(buf: Buffer, kind: "pdf" | "docx" | "doc"): Promise<string> {
+  if (kind === "pdf") {
     const { extractText, getDocumentProxy } = await import("unpdf");
     const pdf = await getDocumentProxy(new Uint8Array(buf));
     const { text } = await extractText(pdf, { mergePages: true });
     return Array.isArray(text) ? text.join("\n") : text;
   }
-  if (type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+  if (kind === "docx") {
     const mammoth = await import("mammoth");
     const { value } = await mammoth.extractRawText({ buffer: buf });
     return value;

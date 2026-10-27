@@ -85,13 +85,18 @@ export function CandidateForm({
 
   async function readResume(file: File | undefined) {
     if (!file) return;
+    if (file.size > 4 * 1024 * 1024) {
+      setReading("none");
+      setReadNote("This file is over 4 MB, which is too big to upload. Save it as a smaller PDF and try again.");
+      return;
+    }
     setReading("reading");
     setReadNote("");
     const body = new FormData();
     body.append("resume", file);
     try {
       const res = await fetch("/api/admin/read-resume", { method: "POST", body });
-      const json = await res.json();
+      const json = res.ok ? await res.json() : { note: `We couldn't read this file automatically (error ${res.status}), so fill in the details by hand. It will still be attached when you save.` };
       const found = (json.found ?? {}) as Record<string, string>;
       const filled: string[] = [];
       const next = { ...contact };
@@ -112,7 +117,7 @@ export function CandidateForm({
       );
     } catch {
       setReading("none");
-      setReadNote("Couldn't read this file. Fill in the details by hand.");
+      setReadNote("We couldn't read this file automatically, so fill in the details by hand. It will still be attached when you save.");
     }
   }
 

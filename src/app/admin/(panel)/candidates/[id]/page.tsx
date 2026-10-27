@@ -55,6 +55,11 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
               : "Saved as a draft. Owners won't see them until you set the status to Listed."}
           </p>
         )}
+        {typeof sp.resume === "string" && (
+          <p className="notice notice-bad" role="alert" style={{ marginTop: 10 }}>
+            Everything else was saved, but {sp.resume}. Attach it again in section 1 and save.
+          </p>
+        )}
         {callRows.length > 0 && (
           <p style={{ marginTop: 10 }}>
             Onboarding call:{" "}
