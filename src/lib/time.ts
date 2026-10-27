@@ -96,3 +96,8 @@ export function minutesLabel(min: number) {
 export function isPast(iso: string) {
   return Date.parse(iso) < Date.now();
 }
+
+// Current time, for server components (keeps render code free of Date.now()).
+export function nowMs() {
+  return Date.now();
+}

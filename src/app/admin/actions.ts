@@ -22,6 +22,7 @@ import {
 import { stripe } from "@/lib/stripe";
 import { cancelCall } from "@/lib/calls";
 import { chargeCardOnFile } from "@/lib/cards";
+import { commissionPercent, setSetting } from "@/lib/settings";
 import { describe, suggestedHeadline } from "@/lib/strengths";
 import { RESUME_CONTENT_TYPE, resumeKind } from "@/lib/resume";
 
@@ -326,7 +327,7 @@ export async function chargeAgreement(unlockId: string) {
   const me = await requireAdmin();
   const r = await chargeCardOnFile(unlockId, staffActor(me));
   revalidatePath("/admin");
-  redirect(r.ok ? "/admin?charged=1" : `/admin?charge_error=${encodeURIComponent(r.error)}`);
+  redirect(r.ok ? "/admin/agreements?charged=1" : `/admin/agreements?charge_error=${encodeURIComponent(r.error)}`);
 }
 
 export async function markHired(hireId: string) {
@@ -497,4 +498,53 @@ export async function cancelCallByStaff(callId: string) {
   if (!found) return;
   await cancelCall(callId, staffActor(found.me));
   revalidatePath("/admin/calls");
+}
+
+// ---------- Commissions ----------
+
+function refreshMoney() {
+  revalidatePath("/admin");
+  revalidatePath("/admin/payments");
+}
+
+export async function setCommissionPercent(form: FormData) {
+  const me = await requireAdmin();
+  const pct = Number(String(form.get("percent") ?? "").replace("%", "").trim());
+  if (!Number.isFinite(pct) || pct < 0 || pct > 100) return;
+  await setSetting("commission_percent", Math.round(pct * 100) / 100);
+  await logActivity(staffActor(me), "commission_rate_set", { percent: pct });
+  refreshMoney();
+}
+
+export async function setCommissionAmount(hireId: string, form: FormData) {
+  const me = await requireAdmin();
+  const raw = String(form.get("amount") ?? "").trim();
+  const cents = raw === "" ? null : dollarsToCents(raw);
+  if (raw !== "" && (cents == null || cents < 0)) return;
+  await db().from("hires").update({ commission_cents: cents }).eq("id", hireId);
+  await logActivity(staffActor(me), "commission_amount_set", { hire_id: hireId, cents });
+  refreshMoney();
+}
+
+export async function markCommissionPaid(hireId: string, form: FormData) {
+  const me = await requireAdmin();
+  const note = String(form.get("note") ?? "").trim().slice(0, 200) || null;
+  const pct = await commissionPercent();
+  const { data: h } = await db().from("hires").select("amount_cents, commission_cents").eq("id", hireId).single();
+  if (!h) return;
+  // Freeze the amount that was paid, so changing the default rate later doesn't change history.
+  const amount = h.commission_cents ?? Math.round((h.amount_cents * pct) / 100);
+  await db()
+    .from("hires")
+    .update({ commission_paid_at: new Date().toISOString(), commission_note: note, commission_cents: amount })
+    .eq("id", hireId);
+  await logActivity(staffActor(me), "commission_paid_out", { hire_id: hireId, cents: amount, note });
+  refreshMoney();
+}
+
+export async function undoCommissionPaid(hireId: string) {
+  const me = await requireAdmin();
+  await db().from("hires").update({ commission_paid_at: null, commission_note: null }).eq("id", hireId);
+  await logActivity(staffActor(me), "commission_paid_undone", { hire_id: hireId });
+  refreshMoney();
 }

@@ -61,7 +61,9 @@ export async function markHirePaid(hireId: string, paymentIntent: string | null,
   const ref = refCode(unlock!.candidate_id);
 
   await logActivity(`owner:${owner.email}`, "hire_paid", { hire_id: hireId, candidate: ref, amount_cents: hire.amount_cents });
-  await candidateHired(unlock!.candidate_id, owner, hire.amount_cents, details);
+  const rep = await candidateHired(unlock!.candidate_id, owner, hire.amount_cents, details);
+  // Credit the rep who brought the candidate in (for commission).
+  if (rep) await db().from("hires").update({ rep_id: rep.id }).eq("id", hireId);
 
   await sendEmail({
     to: owner.email,

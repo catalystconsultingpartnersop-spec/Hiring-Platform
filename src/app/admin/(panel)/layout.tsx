@@ -11,14 +11,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="wrap">
       <nav className={styles.bar} aria-label="Admin">
-        <Link href="/admin">Candidates</Link>
+        {admin && <Link href="/admin">Dashboard</Link>}
+        <Link href="/admin/candidates">Candidates</Link>
+        {admin && <Link href="/admin/agreements">Agreements</Link>}
+        {admin && <Link href="/admin/payments">Payments</Link>}
         <Link href="/admin/calls">{admin ? "Calls" : "My calls"}</Link>
         <Link href="/admin/hours">My hours</Link>
         <Link href="/admin/candidates/new" className={styles.addLink}>
           + Add candidate
         </Link>
-        {admin && <Link href="/admin/settings">Fees</Link>}
         {admin && <Link href="/admin/team">Team</Link>}
+        {admin && <Link href="/admin/settings">Fee settings</Link>}
         {admin && <Link href="/admin/activity">Activity</Link>}
         <Link href="/admin/password" className={styles.me} title="Change your password">
           {me.name}

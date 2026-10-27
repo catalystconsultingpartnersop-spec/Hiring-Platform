@@ -4,25 +4,25 @@ import { isOwnerEmail } from "./session";
 import { money, refCode, siteUrl } from "./format";
 import type { HireDetails } from "./hires";
 
-type Rep = { email: string; full_name: string | null };
+type Rep = { id: string; email: string; full_name: string | null; active: boolean };
 
-// The rep in charge of a candidate: whoever added them, otherwise whoever
-// took their onboarding call.
+// The rep who brought a candidate in: whoever added them, otherwise whoever
+// took their onboarding call. Used for commission and hire alerts.
 export async function repFor(candidateId: string): Promise<Rep | null> {
   const { data: c } = await db().from("candidates").select("added_by").eq("id", candidateId).maybeSingle();
   if (c?.added_by) {
-    const { data } = await db().from("staff").select("email, full_name, active").eq("id", c.added_by).maybeSingle();
-    if (data?.active) return data;
+    const { data } = await db().from("staff").select("id, email, full_name, active").eq("id", c.added_by).maybeSingle();
+    if (data) return data as Rep;
   }
   const { data: call } = await db()
     .from("onboarding_calls")
-    .select("staff(email, full_name, active)")
+    .select("staff(id, email, full_name, active)")
     .eq("candidate_id", candidateId)
+    .neq("status", "cancelled")
     .order("starts_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  const s = (call as unknown as { staff: (Rep & { active: boolean }) | null } | null)?.staff;
-  return s?.active ? s : null;
+  return (call as unknown as { staff: Rep | null } | null)?.staff ?? null;
 }
 
 // A candidate was hired: take them off the catalog and tell their rep.
@@ -40,9 +40,9 @@ export async function candidateHired(
   await logActivity("system", "candidate_marked_hired", { candidate: refCode(candidateId) });
 
   const rep = await repFor(candidateId);
-  if (!rep || isOwnerEmail(rep.email)) return; // Heshy already gets the payment email
+  if (!rep || !rep.active || isOwnerEmail(rep.email)) return rep; // Heshy already gets the payment email
   const { data: c } = await db().from("candidates").select("full_name, email, phone").eq("id", candidateId).single();
-  if (!c) return;
+  if (!c) return rep;
   const first = (rep.full_name ?? "").split(" ")[0] || "there";
   await sendEmail({
     to: rep.email,
@@ -59,4 +59,5 @@ ${details.startDate ? `<tr><td style="padding:4px 14px 4px 0;color:#4a5570">Expe
 <p><a href="${siteUrl()}/admin/candidates/${candidateId}">Open their profile</a></p>`,
   });
   await logActivity("system", "rep_notified_of_hire", { candidate: refCode(candidateId), rep: rep.email });
+  return rep;
 }

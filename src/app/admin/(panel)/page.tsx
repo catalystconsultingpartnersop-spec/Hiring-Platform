@@ -1,51 +1,26 @@
 import Link from "next/link";
-import { ConfirmButton } from "@/components/ConfirmButton";
-import { db, dbConfigProblem, Hire } from "@/lib/db";
-import { requireStaff } from "@/lib/session";
-import { EmailCheck } from "./EmailCheck";
+import { redirect } from "next/navigation";
+import { commissionOf, earnsCommission, latest, loadAgreements, repName, stageOf } from "@/lib/adminData";
+import { db, dbConfigProblem } from "@/lib/db";
 import { lastEmailProblem } from "@/lib/email";
 import { dateShort, money, refCode } from "@/lib/format";
-import { chargeAgreement, markHired, refundHire, setUnlockFee } from "../actions";
+import { requireStaff } from "@/lib/session";
+import { nowMs } from "@/lib/time";
+import { commissionPercent } from "@/lib/settings";
+import { EmailCheck } from "./EmailCheck";
 import styles from "./admin.module.css";
 
-const VIEWS = [
-  ["applied", "New applications"],
-  ["draft", "Drafts"],
-  ["listed", "Listed"],
-  ["paused", "Paused"],
-  ["hired", "Hired"],
-  ["archived", "Archived"],
-] as const;
+export const dynamic = "force-dynamic";
 
-type CandRow = {
-  id: string;
-  status: string;
-  full_name: string;
-  email: string;
-  headline: string | null;
-  role_category: string | null;
-  created_at: string;
-  listed_at: string | null;
-  staff: { full_name: string | null; email: string } | null;
-};
+const DAY = 864e5;
 
-type UnlockRow = {
-  id: string;
-  candidate_id: string;
-  signed_at: string;
-  signed_name: string;
-  fee_cents: number | null;
-  card_label: string | null;
-  confirmed_at: string | null;
-  candidates: { full_name: string };
-  owners: { email: string; full_name: string | null; company: string | null; phone: string | null };
-  hires: Hire[];
-};
-
-export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
+export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
   const sp = await searchParams;
   const me = await requireStaff();
-  const admin = me.role === "admin";
+  // Old links to the candidate tabs still work.
+  if (typeof sp.view === "string") redirect(`/admin/candidates?view=${sp.view}`);
+  if (me.role !== "admin") redirect(`/admin/candidates${sp.password ? "?password=set" : ""}`);
+
   const problem = dbConfigProblem();
   if (problem) {
     return (
@@ -55,232 +30,164 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
       </div>
     );
   }
-  const view = typeof sp.view === "string" && VIEWS.some(([v]) => v === sp.view) ? sp.view : "applied";
 
-  const [{ data: all, error: candErr }, { data: unlockData, error: unlockErr }] = await Promise.all([
-    db()
-      .from("candidates")
-      .select("id, status, full_name, email, headline, role_category, created_at, listed_at, staff(full_name, email)")
-      .order("created_at", { ascending: false }),
-    db()
-      .from("unlocks")
-      .select("*, candidates(full_name), owners(email, full_name, company, phone), hires(*)")
-      .order("signed_at", { ascending: false })
-      .limit(100),
-  ]);
-  const cands = (all ?? []) as unknown as CandRow[];
-  const unlocks = (unlockData ?? []) as unknown as UnlockRow[];
-  const count = (s: string) => cands.filter((c) => c.status === s).length;
-  const shown = cands.filter((c) => c.status === view);
-  const paidTotal = unlocks
-    .flatMap((u) => u.hires)
-    .filter((h) => h.status === "paid" || h.status === "hired")
-    .reduce((s, h) => s + h.amount_cents, 0);
+  const NOW = nowMs();
+  const now = new Date(NOW);
+  const [{ rows: agreements, error, people }, pct, { data: cands, error: candErr }, { data: calls }, emailProblem] =
+    await Promise.all([
+      loadAgreements(),
+      commissionPercent(),
+      db().from("candidates").select("id, status"),
+      db()
+        .from("onboarding_calls")
+        .select("id, starts_at")
+        .eq("status", "booked")
+        .gte("starts_at", now.toISOString())
+        .lte("starts_at", new Date(now.getTime() + 7 * DAY).toISOString()),
+      lastEmailProblem(),
+    ]);
+  const dbError = error ?? candErr;
+  const count = (s: string) => (cands ?? []).filter((c) => c.status === s).length;
 
-  const dbError = candErr ?? unlockErr;
+  const active = agreements.filter((a) => a.confirmed_at);
+  const considering = active.filter((a) => ["considering", "checkout"].includes(stageOf(a)));
+  const hires = agreements
+    .flatMap((a) => a.hires.filter((h) => h.paid_at).map((h) => ({ h, a, rep: people.get(h.rep_id ?? a.candidates.added_by ?? "") })))
+    .sort((x, y) => (y.h.paid_at ?? "").localeCompare(x.h.paid_at ?? ""));
+  const live = hires.filter(({ h }) => h.status === "paid" || h.status === "hired");
+  const net = live.reduce((s, { h }) => s + h.amount_cents, 0);
+  const owed = live.filter(({ h, rep }) => earnsCommission(h, rep) && !h.commission_paid_at);
+  const owedTotal = owed.reduce((s, { h }) => s + commissionOf(h, pct), 0);
+  const thisMonth = live.filter(({ h }) => (h.paid_at ?? "").slice(0, 7) === now.toISOString().slice(0, 7));
+  const needFee = active.filter((a) => a.fee_cents == null && stageOf(a) === "considering");
+  const toConfirm = agreements.filter((a) => stageOf(a) === "paid" && NOW - new Date(latest(a.hires)!.paid_at!).getTime() > 14 * DAY);
 
-  // Most recent email failure in the last day, so problems are visible here.
-  const emailProblem = admin ? await lastEmailProblem() : null;
   const rk = process.env.RESEND_API_KEY?.trim() ?? "";
   const emailSettings = [
     `RESEND_API_KEY ${rk ? `is set (starts with ${rk.slice(0, 3)}, ${rk.length} characters${rk !== process.env.RESEND_API_KEY ? ", has extra spaces" : ""})` : "is missing"}`,
     `EMAIL_FROM ${process.env.EMAIL_FROM ? `is "${process.env.EMAIL_FROM}"` : "is missing"}`,
     `ADMIN_EMAIL ${process.env.ADMIN_EMAIL ? `is ${process.env.ADMIN_EMAIL}` : "is missing"}`,
   ].join("; ");
-  if (dbError) console.error("admin dashboard query failed", dbError);
+
+  const todo: { text: React.ReactNode; href: string; cta: string }[] = [];
+  if (count("applied")) todo.push({ text: <>{count("applied")} new application{count("applied") > 1 ? "s" : ""} to review</>, href: "/admin/candidates?view=applied", cta: "Review" });
+  if (owed.length) todo.push({ text: <>{money(owedTotal)} in rep commission to pay out ({owed.length} hire{owed.length > 1 ? "s" : ""})</>, href: "/admin/payments?view=owed", cta: "Pay out" });
+  if (needFee.length) todo.push({ text: <>{needFee.length} agreement{needFee.length > 1 ? "s" : ""} need a fee set</>, href: "/admin/agreements?stage=considering", cta: "Set fee" });
+  if (toConfirm.length) todo.push({ text: <>{toConfirm.length} paid hire{toConfirm.length > 1 ? "s" : ""} not yet marked as started</>, href: "/admin/agreements?stage=paid", cta: "Check" });
 
   return (
     <>
+      <div className="page-head" style={{ paddingBottom: 0 }}>
+        <h1>Dashboard</h1>
+      </div>
       {dbError && (
-        <div className="notice notice-bad" role="alert" style={{ marginTop: 20 }}>
+        <div className="notice notice-bad" role="alert" style={{ marginTop: 12 }}>
           <strong>The database connection isn&rsquo;t working.</strong> Error:{" "}
           <code>{[dbError.code, dbError.message, dbError.hint].filter(Boolean).join(" | ")}</code>
         </div>
       )}
-      <div className={styles.stats}>
-        <Link className={`${styles.stat} ${count("applied") ? styles.statActive : ""}`} href="/admin?view=applied">
-          <strong>{count("applied")}</strong>
-          <span>New applications</span>
-        </Link>
-        <Link className={styles.stat} href="/admin?view=listed">
-          <strong>{count("listed")}</strong>
-          <span>Listed now</span>
-        </Link>
-        {admin && (
-          <div className={styles.stat}>
-            <strong>{unlocks.length}</strong>
-            <span>Agreements signed</span>
-          </div>
-        )}
-        {admin && (
-          <div className={styles.stat}>
-            <strong>{money(paidTotal)}</strong>
-            <span>Fees collected</span>
-          </div>
-        )}
-      </div>
-
-      {sp.charged === "1" && (
-        <p className="notice notice-good" role="status" style={{ marginTop: 20 }}>
-          Charged. The owner was emailed a receipt.
-        </p>
-      )}
-      {typeof sp.charge_error === "string" && (
-        <p className="notice notice-bad" role="alert" style={{ marginTop: 20 }}>
-          The card wasn&rsquo;t charged: {sp.charge_error}
-        </p>
-      )}
       {sp.password === "set" && (
-        <p className="notice notice-good" role="status" style={{ marginTop: 20 }}>
+        <p className="notice notice-good" role="status" style={{ marginTop: 12 }}>
           Password saved. Next time, sign in with your email and password.
         </p>
       )}
-      {admin && <EmailCheck problem={emailProblem} settings={emailSettings} />}
+      <EmailCheck problem={emailProblem} settings={emailSettings} />
 
-      <h2 className={styles.h2}>Candidates</h2>
-      <div className={styles.tabs}>
-        {VIEWS.map(([v, label]) => (
-          <Link key={v} href={`/admin?view=${v}`} aria-current={v === view ? "page" : undefined}>
-            {label} ({count(v)})
-          </Link>
-        ))}
+      <div className={styles.stats}>
+        <Link className={styles.stat} href="/admin/payments">
+          <strong>{money(net)}</strong>
+          <span>Fees collected · {money(thisMonth.reduce((s, { h }) => s + h.amount_cents, 0))} this month</span>
+        </Link>
+        <Link className={styles.stat} href="/admin/agreements">
+          <strong>{active.length}</strong>
+          <span>Agreements signed · {considering.length} considering</span>
+        </Link>
+        <Link className={`${styles.stat} ${owed.length ? styles.statActive : ""}`} href="/admin/payments?view=owed">
+          <strong>{money(owedTotal)}</strong>
+          <span>Commission owed to reps</span>
+        </Link>
+        <Link className={`${styles.stat} ${count("applied") ? styles.statActive : ""}`} href="/admin/candidates?view=applied">
+          <strong>{count("applied")}</strong>
+          <span>New applications</span>
+        </Link>
+        <Link className={styles.stat} href="/admin/candidates?view=listed">
+          <strong>{count("listed")}</strong>
+          <span>Listed now · {count("hired")} hired</span>
+        </Link>
+        <Link className={styles.stat} href="/admin/calls">
+          <strong>{calls?.length ?? 0}</strong>
+          <span>Onboarding calls next 7 days</span>
+        </Link>
       </div>
-      {shown.length === 0 ? (
-        <p className="panel panel-wash">
-          No one here. <Link href="/admin/candidates/new">Add a candidate</Link>
-        </p>
-      ) : (
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Profile</th>
-                <th>Added by</th>
-                <th>{view === "listed" ? "Listed" : "Added"}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((c) => (
-                <tr key={c.id}>
-                  <td>
-                    <Link href={`/admin/candidates/${c.id}`}>{c.full_name}</Link>
-                    <div className="small muted">{c.email}</div>
-                  </td>
-                  <td>
-                    {c.headline ?? <span className="muted">No profile yet</span>}
-                    <div className="small muted">
-                      {refCode(c.id)}
-                      {c.role_category ? `, ${c.role_category}` : ""}
-                    </div>
-                  </td>
-                  <td>{c.staff ? c.staff.full_name || c.staff.email : <span className="muted">Applied online</span>}</td>
-                  <td>{dateShort(view === "listed" ? c.listed_at : c.created_at)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
 
-      {admin && <h2 className={styles.h2}>Signed agreements</h2>}
-      {!admin ? null : unlocks.length === 0 ? (
-        <p className="panel panel-wash">No owner has signed yet. Signed agreements and payments show up here.</p>
-      ) : (
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Owner</th>
-                <th>Candidate</th>
-                <th>Signed</th>
-                <th>Fee</th>
-                <th>Payment</th>
-              </tr>
-            </thead>
-            <tbody>
-              {unlocks.map((u) => {
-                const hire = [...u.hires].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
-                return (
-                  <tr key={u.id}>
+      <div className={styles.split}>
+        <div className="panel">
+          <h2 className={styles.h3}>Recent hires</h2>
+          {hires.length === 0 ? (
+            <p className="small muted">No hires yet. They&rsquo;ll show here with the rep who brought them in.</p>
+          ) : (
+            <table className="table" style={{ fontSize: 14 }}>
+              <thead>
+                <tr>
+                  <th>Hired</th>
+                  <th>By</th>
+                  <th>Fee</th>
+                  <th>Rep</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hires.slice(0, 6).map(({ h, a, rep }) => (
+                  <tr key={h.id}>
                     <td>
-                      <strong>{u.owners.company}</strong>
+                      <Link href={`/admin/candidates/${a.candidate_id}`}>{a.candidates.full_name}</Link>
                       <div className="small muted">
-                        {u.owners.full_name}, <a href={`mailto:${u.owners.email}`}>{u.owners.email}</a>
-                        {u.owners.phone ? `, ${u.owners.phone}` : ""}
+                        {refCode(a.candidate_id)}, {dateShort(h.paid_at)}
                       </div>
                     </td>
+                    <td>{a.owners.company}</td>
                     <td>
-                      <Link href={`/admin/candidates/${u.candidate_id}`}>{u.candidates.full_name}</Link>
-                      <div className="small muted">{refCode(u.candidate_id)}</div>
+                      {money(h.amount_cents)}
+                      {h.status === "refunded" && <div className="small" style={{ color: "var(--rust)" }}>Refunded</div>}
                     </td>
                     <td>
-                      <Link href={`/account/agreements/${u.id}`}>{dateShort(u.signed_at)}</Link>
-                      <div className="small muted">
-                        {u.confirmed_at ? u.card_label ?? "Card on file" : "Card not added, not unlocked"}
-                      </div>
-                    </td>
-                    <td>
-                      {u.fee_cents != null ? (
-                        money(u.fee_cents)
-                      ) : (
-                        <form action={setUnlockFee.bind(null, u.id)} className={styles.inline}>
-                          <input className="input" name="fee" placeholder="$ amount" aria-label="Fee in dollars" />
-                          <button className="btn btn-small" type="submit">
-                            Set fee
-                          </button>
-                        </form>
-                      )}
-                    </td>
-                    <td>
-                      {!hire ? (
-                        <div className={styles.inline}>
-                          <span className="tag">Considering</span>
-                          {u.confirmed_at && u.card_label && u.fee_cents != null && (
-                            <form action={chargeAgreement.bind(null, u.id)}>
-                              <ConfirmButton
-                                className="btn btn-small btn-ghost"
-                                message={`Charge ${money(u.fee_cents)} to ${u.owners.company}'s ${u.card_label} now? They'll get a receipt by email.`}
-                              >
-                                Charge card
-                              </ConfirmButton>
-                            </form>
+                      {repName(rep) ?? <span className="muted">Online</span>}
+                      {earnsCommission(h, rep) && (
+                        <div className="small">
+                          {h.commission_paid_at ? (
+                            <span className="muted">Paid out</span>
+                          ) : (
+                            <span style={{ color: "#6b4f00" }}>{money(commissionOf(h, pct))} owed</span>
                           )}
                         </div>
-                      ) : hire.status === "pending" ? (
-                        <span className="tag">Checkout opened</span>
-                      ) : hire.status === "paid" ? (
-                        <div className={styles.inline}>
-                          <Link href={`/account/receipts/${hire.id}`} className="tag tag-good">
-                            Paid {dateShort(hire.paid_at)}
-                          </Link>
-                          <form action={markHired.bind(null, hire.id)}>
-                            <button className="btn btn-small" type="submit">
-                              Mark hired
-                            </button>
-                          </form>
-                          <form action={refundHire.bind(null, hire.id)}>
-                            <ConfirmButton
-                              className="btn btn-small btn-danger"
-                              message={`Refund ${money(hire.amount_cents)} to ${u.owners.company}? This can't be undone.`}
-                            >
-                              Refund
-                            </ConfirmButton>
-                          </form>
-                        </div>
-                      ) : hire.status === "hired" ? (
-                        <span className="tag tag-good">Hired {dateShort(hire.hired_at)}</span>
-                      ) : (
-                        <span className="tag">Refunded {dateShort(hire.refunded_at)}</span>
                       )}
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <p className="small" style={{ margin: "12px 0 0" }}>
+            <Link href="/admin/payments">All payments and commissions</Link>
+          </p>
         </div>
-      )}
+        <div className="panel">
+          <h2 className={styles.h3}>Needs your attention</h2>
+          {todo.length === 0 ? (
+            <p className="small muted">All caught up.</p>
+          ) : (
+            <ul className={styles.attention}>
+              {todo.map((t, i) => (
+                <li key={i}>
+                  <span>{t.text}</span>
+                  <Link href={t.href} className="small">
+                    {t.cta}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </>
   );
 }

@@ -101,3 +101,17 @@ a.stat:hover { outline: 1.5px solid var(--ink); }
 
 .log td { font-size: 13.5px; }
 .log code { font-size: 12.5px; white-space: pre-wrap; word-break: break-word; }
+
+.split { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; align-items: start; }
+@media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
+.h3 { font-family: var(--display); font-size: 18px; margin: 0 0 10px; }
+.bars { display: grid; gap: 8px; }
+.barRow { display: grid; grid-template-columns: 70px 1fr 64px; gap: 10px; align-items: center; font-size: 13.5px; }
+.barTrack { position: relative; height: 18px; background: var(--wash); border-radius: 4px; overflow: hidden; }
+.barSigned { position: absolute; inset: 0 auto 0 0; background: #c9d2e3; }
+.barHired { position: absolute; inset: 0 auto 0 0; background: var(--moss); }
+.legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--ink-2); margin-top: 8px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.attention { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.attention li { display: flex; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px; }
+.attention a { font-weight: 600; }
