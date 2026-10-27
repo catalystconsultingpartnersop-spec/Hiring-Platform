@@ -1,0 +1,100 @@
+.page { padding-top: 28px; }
+
+.back { display: inline-block; margin-bottom: 20px; color: var(--ink-2); }
+
+.page :global(.notice) { margin-bottom: 20px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 48px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .grid { grid-template-columns: 1fr; gap: 28px; }
+}
+
+.ref { color: var(--ink-3); font-size: 14px; font-variant-numeric: tabular-nums; }
+
+.headline {
+  font-size: clamp(30px, 4.6vw, 46px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin-top: 8px;
+  max-width: 20ch;
+}
+
+.wired { font-size: 19px; line-height: 1.8; margin-top: 18px; max-width: 60ch; }
+
+.summary { margin-top: 22px; max-width: 64ch; font-size: 17px; }
+.summary p + p { margin-top: 12px; }
+
+.highlights {
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+  max-width: 64ch;
+}
+.highlights li {
+  padding: 10px 0 10px 22px;
+  border-top: 1px solid var(--line);
+  position: relative;
+}
+.highlights li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 19px;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--marigold);
+}
+
+.facts {
+  margin: 32px 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 18px 24px;
+  padding: 22px;
+  background: var(--wash);
+  border-radius: var(--radius-lg);
+}
+.facts dt { font-size: 13px; color: var(--ink-2); }
+.facts dd { margin: 2px 0 0; font-weight: 600; }
+
+.side { position: sticky; top: 20px; }
+
+.fee {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 40px;
+  letter-spacing: -0.02em;
+  margin: 2px 0 8px;
+}
+
+.sideNote { margin-top: 14px; }
+.sideMsg { margin-top: 12px; }
+
+.identity {
+  padding: 22px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-lg);
+  margin-bottom: 28px;
+}
+.identity h1 { font-size: clamp(30px, 4vw, 40px); margin-top: 4px; }
+
+.contact {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-weight: 600;
+}
+
+.full { margin-top: 32px; max-width: 64ch; }
+.full h2 { font-size: 24px; margin-bottom: 10px; }
+.full p + p { margin-top: 12px; }

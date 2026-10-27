@@ -1,0 +1,252 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Strengths } from "@/components/CandidateCard";
+import { getListed, getTiers } from "@/lib/catalog";
+import { Candidate, db, Hire, PublicCandidate, Unlock } from "@/lib/db";
+import { dateShort, feeFor, LEVEL_LABEL, lines, money, refCode, salaryRange, WORK_MODE_LABEL } from "@/lib/format";
+import { latestHire, markPaidFromSession } from "@/lib/hires";
+import { currentOwner } from "@/lib/session";
+import { startHire } from "./actions";
+import styles from "./detail.module.css";
+
+export const dynamic = "force-dynamic";
+
+export default async function CandidatePage({ params, searchParams }: PageProps<"/candidates/[id]">) {
+  const { id } = await params;
+  const sp = await searchParams;
+  if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
+
+  const owner = await currentOwner();
+  let unlock: Unlock | null = null;
+  if (owner) {
+    const { data } = await db().from("unlocks").select("*").eq("owner_id", owner.id).eq("candidate_id", id).maybeSingle();
+    unlock = (data as Unlock) ?? null;
+  }
+
+  // Returning from Stripe: confirm the payment before showing the page.
+  let paidNotice = false;
+  if (unlock && typeof sp.paid === "string" && sp.paid.startsWith("cs_")) {
+    try {
+      const r = await markPaidFromSession(sp.paid);
+      paidNotice = r.ok;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  if (unlock) {
+    const { data } = await db().from("candidates").select("*").eq("id", id).single();
+    const hire = await latestHire(unlock.id);
+    return (
+      <Unlocked
+        c={data as Candidate}
+        unlock={unlock}
+        hire={hire}
+        justUnlocked={sp.unlocked === "1"}
+        paidNotice={paidNotice}
+        hireNote={typeof sp.hire === "string" ? sp.hire : ""}
+      />
+    );
+  }
+
+  const c = await getListed(id);
+  if (!c) notFound();
+  const tiers = await getTiers();
+  return <Teaser c={c} fee={feeFor(c, tiers)} />;
+}
+
+function Facts({ c }: { c: PublicCandidate }) {
+  const rows: [string, string | null][] = [
+    ["Role", c.role_category],
+    ["Industry", c.industry],
+    ["Experience", c.level ? LEVEL_LABEL[c.level] : null],
+    ["Location", c.location_region],
+    ["Work setting", c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null],
+    ["Salary expectation", salaryRange(c.salary_min, c.salary_max)],
+    ["Working Genius", c.working_genius],
+  ];
+  return (
+    <dl className={styles.facts}>
+      {rows
+        .filter(([, v]) => v)
+        .map(([k, v]) => (
+          <div key={k}>
+            <dt>{k}</dt>
+            <dd>{v}</dd>
+          </div>
+        ))}
+    </dl>
+  );
+}
+
+function Profile({ c }: { c: PublicCandidate }) {
+  return (
+    <>
+      <p className={styles.ref}>
+        {refCode(c.id)}
+        {c.listed_at ? ` · listed ${dateShort(c.listed_at)}` : ""}
+      </p>
+      <h1 className={styles.headline}>{c.headline}</h1>
+      {c.strengths.length > 0 && (
+        <p className={styles.wired}>
+          <span className="muted">Wired for </span>
+          <Strengths items={c.strengths} strong />
+        </p>
+      )}
+      {c.summary && (
+        <div className={styles.summary}>
+          {lines(c.summary).map((p, i) => (
+            <p key={i}>{p}</p>
+          ))}
+        </div>
+      )}
+      {c.highlights.length > 0 && (
+        <ul className={styles.highlights}>
+          {c.highlights.map((h, i) => (
+            <li key={i}>{h}</li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
+}
+
+function Teaser({ c, fee }: { c: PublicCandidate; fee: number | null }) {
+  return (
+    <div className={`wrap ${styles.page}`}>
+      <Link href="/candidates" className={`small ${styles.back}`}>
+        All candidates
+      </Link>
+      <div className={styles.grid}>
+        <article>
+          <Profile c={c} />
+          <Facts c={c} />
+        </article>
+        <aside className={styles.side}>
+          <div className="panel">
+            <p className="muted small">Flat fee if you hire</p>
+            <p className={styles.fee}>{fee != null ? money(fee) : "Ask us"}</p>
+            <p className="small muted">No percentage of salary. Paid only when you decide to hire.</p>
+            <Link className="btn btn-gold" href={`/candidates/${c.id}/unlock`} style={{ width: "100%", marginTop: 18 }}>
+              See who this is
+            </Link>
+            <p className={`small muted ${styles.sideNote}`}>
+              You&rsquo;ll sign a short agreement first. Seeing their name and contact details costs nothing.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function Unlocked({
+  c,
+  unlock,
+  hire,
+  justUnlocked,
+  paidNotice,
+  hireNote,
+}: {
+  c: Candidate;
+  unlock: Unlock;
+  hire: Hire | null;
+  justUnlocked: boolean;
+  paidNotice: boolean;
+  hireNote: string;
+}) {
+  const status = hire?.status;
+  return (
+    <div className={`wrap ${styles.page}`}>
+      <Link href="/account" className={`small ${styles.back}`}>
+        Your candidates
+      </Link>
+      {justUnlocked && <p className="notice notice-good">Signed. Here&rsquo;s who they are. A copy of the agreement is in your email.</p>}
+      {paidNotice && <p className="notice notice-good">Payment received. Go ahead and make the hire.</p>}
+      {hireNote === "cancelled" && <p className="notice">Payment cancelled. Nothing was charged.</p>}
+      {hireNote === "requested" && (
+        <p className="notice notice-gold">We&rsquo;ve been told you&rsquo;re ready to hire and will contact you with the fee.</p>
+      )}
+
+      <div className={styles.grid}>
+        <article>
+          <div className={styles.identity}>
+            <p className="muted small">Candidate {refCode(c.id)}</p>
+            <h1>{c.full_name}</h1>
+            <ul className={styles.contact}>
+              <li>
+                <a href={`mailto:${c.email}`}>{c.email}</a>
+              </li>
+              {c.phone && (
+                <li>
+                  <a href={`tel:${c.phone}`}>{c.phone}</a>
+                </li>
+              )}
+              {c.linkedin_url && (
+                <li>
+                  <a href={c.linkedin_url} target="_blank" rel="noopener noreferrer">
+                    LinkedIn profile
+                  </a>
+                </li>
+              )}
+              {c.resume_path && (
+                <li>
+                  <a href={`/api/resume/${c.id}`}>Download resume</a>
+                </li>
+              )}
+            </ul>
+          </div>
+          <Profile c={c} />
+          {c.full_profile && (
+            <section className={styles.full}>
+              <h2>Full profile</h2>
+              {lines(c.full_profile).map((p, i) => (
+                <p key={i}>{p}</p>
+              ))}
+            </section>
+          )}
+          <Facts c={c} />
+        </article>
+
+        <aside className={styles.side}>
+          <div className="panel">
+            {!status || status === "pending" ? (
+              <>
+                <p className="muted small">Your flat fee</p>
+                <p className={styles.fee}>{unlock.fee_cents != null ? money(unlock.fee_cents) : "Set with us"}</p>
+                <p className="small muted">
+                  When you decide to hire {c.full_name.split(" ")[0]}, pay here before confirming the hire. If it
+                  doesn&rsquo;t go through, you get a full refund.
+                </p>
+                <form action={startHire.bind(null, c.id)}>
+                  <button className="btn btn-gold" type="submit" style={{ width: "100%", marginTop: 18 }}>
+                    {status === "pending" ? "Finish payment" : "I've decided to hire"}
+                  </button>
+                </form>
+              </>
+            ) : status === "paid" ? (
+              <>
+                <span className="tag tag-good">Paid {dateShort(hire!.paid_at)}</span>
+                <p className={styles.sideMsg}>
+                  You&rsquo;re all set to hire {c.full_name.split(" ")[0]}. If the hire doesn&rsquo;t go through,
+                  reply to your receipt email and we&rsquo;ll refund {money(hire!.amount_cents)}.
+                </p>
+              </>
+            ) : status === "hired" ? (
+              <>
+                <span className="tag tag-good">Hired</span>
+                <p className={styles.sideMsg}>Congratulations on the hire.</p>
+              </>
+            ) : (
+              <>
+                <span className="tag">Refunded {dateShort(hire!.refunded_at)}</span>
+                <p className={styles.sideMsg}>The fee of {money(hire!.amount_cents)} was refunded.</p>
+              </>
+            )}
+            <p className={`small muted ${styles.sideNote}`}>Agreement signed {dateShort(unlock.signed_at)}.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}

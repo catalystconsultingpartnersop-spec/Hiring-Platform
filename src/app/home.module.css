@@ -1,0 +1,116 @@
+.hero {
+  background: var(--wash);
+  padding: clamp(40px, 7vw, 88px) 0;
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: clamp(28px, 5vw, 72px);
+  align-items: center;
+}
+
+.heroText h1 {
+  font-size: clamp(38px, 6vw, 66px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  max-width: 13ch;
+}
+
+.heroText p {
+  margin-top: 22px;
+  font-size: 18px;
+  color: var(--ink-2);
+  max-width: 46ch;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.heroCard {
+  transform: rotate(1.5deg);
+  box-shadow: 0 18px 40px -24px rgba(23, 33, 58, 0.45);
+  border-radius: var(--radius-lg);
+}
+
+.heroCard :global(.card) {
+  border-color: var(--ink);
+}
+
+.heroCard :global(.card h3) {
+  font-size: 26px;
+}
+
+@media (max-width: 860px) {
+  .heroGrid { grid-template-columns: 1fr; }
+  .heroCard { transform: none; }
+}
+
+.h2 {
+  font-size: clamp(28px, 4vw, 38px);
+}
+
+.steps {
+  list-style: none;
+  counter-reset: step;
+  padding: 0;
+  margin: 28px 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.steps li {
+  counter-increment: step;
+  border-top: 3px solid var(--ink);
+  padding-top: 18px;
+}
+
+.steps li::before {
+  content: counter(step);
+  display: block;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 44px;
+  line-height: 1;
+  color: var(--marigold);
+  margin-bottom: 12px;
+}
+
+.steps h3 { font-size: 22px; }
+.steps p { margin-top: 8px; color: var(--ink-2); }
+
+@media (max-width: 760px) {
+  .steps { grid-template-columns: 1fr; }
+}
+
+.diff {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.diffGrid {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 40px;
+}
+
+.diffList { margin: 0; display: grid; gap: 26px; }
+.diffList dt { font-family: var(--display); font-weight: 700; font-size: 21px; }
+.diffList dd { margin: 6px 0 0; color: #c9cfdc; max-width: 52ch; }
+
+@media (max-width: 760px) {
+  .diffGrid { grid-template-columns: 1fr; gap: 24px; }
+}
+
+.moreHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 22px;
+}

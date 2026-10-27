@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Hiring platform
 
-## Getting Started
+A candidate-first hiring catalog. Candidates are coached and assessed, then listed anonymously. Business owners browse, sign an agreement to see who someone is, and pay one flat fee through Stripe when they decide to hire.
 
-First, run the development server:
+## Pages
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+| Address | Who | What |
+| --- | --- | --- |
+| `/` | Everyone | Home page |
+| `/candidates` | Everyone | The catalog, with filters |
+| `/candidates/[id]` | Everyone / signed owners | Anonymous profile, or the full profile once signed |
+| `/candidates/[id]/unlock` | Owners | The agreement |
+| `/login` | Owners | Sign in by emailed link |
+| `/account` | Owners | Everyone they've signed for |
+| `/apply` | Candidates | Free application |
+| `/admin` | Heshy | Applications, listings, signatures, payments, refunds |
+| `/admin/settings` | Heshy | Fee tiers |
+| `/admin/activity` | Heshy | Log of everything that happened |
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Database.** Create a Supabase project. Open SQL Editor, paste all of `supabase/schema.sql`, and run it.
+2. **Environment variables.** Add every variable in `.env.example` to the Vercel project.
+3. **Deploy.** Connect this repo to Vercel.
+4. **Stripe webhook (recommended).** In Stripe, add a webhook to `SITE_URL/api/stripe/webhook` for `checkout.session.completed`, and put its signing secret in `STRIPE_WEBHOOK_SECRET`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Before the first real owner signs
 
-## Learn More
+- Have a lawyer review the agreement in `src/lib/agreement.ts`, then change `AGREEMENT_VERSION`.
+- Check employment-agency licensing in each state (and Israel) where you'll charge fees.
 
-To learn more about Next.js, take a look at the following resources:
+## How it's built
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js on Vercel, Supabase (Postgres + private file storage for resumes), Stripe Checkout, Resend for email. The browser never talks to the database; every read and write happens on the server with the service key, and every table has row-level security switched on with no public access.
