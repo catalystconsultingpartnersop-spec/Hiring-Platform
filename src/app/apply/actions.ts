@@ -63,7 +63,10 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
     })
     .select("id")
     .single();
-  if (error || !data) return { error: "Something went wrong sending your application. Try again." };
+  if (error || !data) {
+    console.error("application insert failed", error);
+    return { error: "Something went wrong sending your application. Try again." };
+  }
 
   if (hasResume) {
     const path = `${data.id}/resume.${RESUME_TYPES[resume.type]}`;

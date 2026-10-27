@@ -40,7 +40,7 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
   const sp = await searchParams;
   const view = typeof sp.view === "string" && VIEWS.some(([v]) => v === sp.view) ? sp.view : "applied";
 
-  const [{ data: all }, { data: unlockData }] = await Promise.all([
+  const [{ data: all, error: candErr }, { data: unlockData, error: unlockErr }] = await Promise.all([
     db()
       .from("candidates")
       .select("id, status, full_name, email, headline, role_category, created_at, listed_at")
@@ -60,8 +60,17 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
     .filter((h) => h.status === "paid" || h.status === "hired")
     .reduce((s, h) => s + h.amount_cents, 0);
 
+  const dbError = candErr ?? unlockErr;
+  if (dbError) console.error("admin dashboard query failed", dbError);
+
   return (
     <>
+      {dbError && (
+        <div className="notice notice-bad" role="alert" style={{ marginTop: 20 }}>
+          <strong>The database connection isn&rsquo;t working.</strong> Error:{" "}
+          <code>{[dbError.code, dbError.message, dbError.hint].filter(Boolean).join(" | ")}</code>
+        </div>
+      )}
       <div className={styles.stats}>
         <Link className={`${styles.stat} ${count("applied") ? styles.statActive : ""}`} href="/admin?view=applied">
           <strong>{count("applied")}</strong>
