@@ -1,5 +1,6 @@
 import { db, FeeTier, PublicCandidate, PUBLIC_CANDIDATE_COLUMNS } from "./db";
 import { isSampleId, SAMPLES } from "./samples";
+import { profileOf, TRAITS } from "./strengths";
 
 const DEFAULT_TIERS: FeeTier[] = [
   { id: "t1", max_salary: 100000, fee_cents: 500000, sort: 1 },
@@ -36,23 +37,11 @@ export async function allListed(): Promise<{ rows: PublicCandidate[]; sample: bo
   return { rows: SAMPLES, sample: true };
 }
 
-// ---------- Working Genius ----------
+// ---------- How they work best ----------
 
-export const GENIUSES = [
-  ["Wonder", "Asks the big questions"],
-  ["Invention", "Comes up with new ideas"],
-  ["Discernment", "Sound judgment and instinct"],
-  ["Galvanizing", "Rallies people to act"],
-  ["Enablement", "Helps others succeed"],
-  ["Tenacity", "Pushes work to the finish"],
-] as const;
-
-export function geniusesOf(c: PublicCandidate) {
-  return (c.working_genius ?? "")
-    .split(/[,/&]| and /i)
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .map((s) => s[0].toUpperCase() + s.slice(1).toLowerCase());
+// The candidate's two main strengths (letters), from their assessment result.
+export function strengthsOf(c: PublicCandidate): string[] {
+  return profileOf(c.working_genius).primary;
 }
 
 // ---------- Pay ranges ----------
@@ -78,13 +67,13 @@ export type CatalogFilters = {
   level?: string;
   mode?: string;
   region?: string;
-  genius?: string;
+  strength?: string;
   pay?: string;
   saved?: string;
   sort?: string;
 };
 
-const FILTER_KEYS = ["role", "level", "mode", "region", "genius", "pay"] as const;
+const FILTER_KEYS = ["role", "level", "mode", "region", "strength", "pay"] as const;
 type FilterKey = (typeof FILTER_KEYS)[number];
 
 function valueOf(c: PublicCandidate, key: FilterKey): string[] {
@@ -97,8 +86,8 @@ function valueOf(c: PublicCandidate, key: FilterKey): string[] {
       return c.work_mode ? [c.work_mode] : [];
     case "region":
       return c.location_region ? [c.location_region] : [];
-    case "genius":
-      return geniusesOf(c);
+    case "strength":
+      return strengthsOf(c);
     case "pay": {
       const b = payBand(c);
       return b ? [b] : [];
@@ -117,7 +106,18 @@ function matches(c: PublicCandidate, f: CatalogFilters, skip?: FilterKey) {
   }
   const q = f.q?.trim().toLowerCase();
   if (q) {
-    const hay = [c.headline, c.role_category, c.industry, c.summary, c.location_region, c.working_genius, ...c.strengths, ...c.highlights]
+    const prof = profileOf(c.working_genius);
+    const hay = [
+      c.headline,
+      c.role_category,
+      c.industry,
+      c.summary,
+      c.location_region,
+      prof.type?.name,
+      ...[...prof.primary, ...prof.secondary].map((l) => TRAITS[l].label),
+      ...c.strengths,
+      ...c.highlights,
+    ]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
@@ -159,7 +159,7 @@ export function facetCounts(rows: PublicCandidate[], f: CatalogFilters, key: Fil
 }
 
 export function similarTo(c: PublicCandidate, rows: PublicCandidate[], n = 4) {
-  const g = new Set(geniusesOf(c));
+  const g = new Set(strengthsOf(c));
   return rows
     .filter((r) => r.id !== c.id)
     .map((r) => ({
@@ -168,7 +168,7 @@ export function similarTo(c: PublicCandidate, rows: PublicCandidate[], n = 4) {
         (r.role_category === c.role_category ? 3 : 0) +
         (r.industry === c.industry ? 1 : 0) +
         (r.level === c.level ? 1 : 0) +
-        geniusesOf(r).filter((x) => g.has(x)).length,
+        strengthsOf(r).filter((x) => g.has(x)).length,
     }))
     .sort((a, b) => b.score - a.score)
     .slice(0, n)

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { db, Hire } from "@/lib/db";
+import { db, dbConfigProblem, Hire } from "@/lib/db";
 import { dateShort, money, refCode } from "@/lib/format";
 import { markHired, refundHire, setUnlockFee } from "../actions";
 import styles from "./admin.module.css";
@@ -38,6 +38,15 @@ type UnlockRow = {
 
 export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
   const sp = await searchParams;
+  const problem = dbConfigProblem();
+  if (problem) {
+    return (
+      <div className="notice notice-bad" role="alert" style={{ marginTop: 24 }}>
+        <strong>The site can&rsquo;t reach the database.</strong> {problem} Fix it in Vercel under Settings, then
+        Environment Variables, and redeploy.
+      </div>
+    );
+  }
   const view = typeof sp.view === "string" && VIEWS.some(([v]) => v === sp.view) ? sp.view : "applied";
 
   const [{ data: all, error: candErr }, { data: unlockData, error: unlockErr }] = await Promise.all([

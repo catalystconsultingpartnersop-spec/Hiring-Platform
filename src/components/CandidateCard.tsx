@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { PublicCandidate } from "@/lib/db";
-import { geniusesOf } from "@/lib/catalog";
+import { profileOf, TRAITS } from "@/lib/strengths";
 import { LEVEL_LABEL, WORK_MODE_LABEL, money, salaryRange } from "@/lib/format";
 import { ShortlistButton } from "./Shortlist";
 
@@ -18,16 +18,22 @@ export function Strengths({ items, strong = false }: { items: string[]; strong?:
   );
 }
 
-export function GeniusTags({ c }: { c: PublicCandidate }) {
-  const g = geniusesOf(c);
-  if (!g.length) return null;
+const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
+const joinAnd = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}` : xs[0] ?? "");
+
+// "Works best as a Driver: getting people moving and finishing the job."
+export function WorksBest({ c, detail = false }: { c: PublicCandidate; detail?: boolean }) {
+  const p = profileOf(c.working_genius);
+  if (!p.primary.length) return null;
+  const main = p.primary.map((l) => lower(TRAITS[l].label));
+  const also = p.secondary.map((l) => lower(TRAITS[l].label));
   return (
-    <div className="genius-tags" aria-label="Working Genius">
-      {g.map((x) => (
-        <span key={x} className="genius-tag">
-          {x}
-        </span>
-      ))}
+    <div className={detail ? "works-best works-best-lg" : "works-best"}>
+      {p.type && <span className="works-type">{p.type.name}</span>}
+      <p className="works-main">
+        Best at {joinAnd(main)}
+        {also.length > 0 && <span className="works-also">. Also strong at {joinAnd(also)}</span>}.
+      </p>
     </div>
   );
 }
@@ -76,7 +82,7 @@ export function CandidateCard({
           <Strengths items={c.strengths} />
         </p>
       )}
-      <GeniusTags c={c} />
+      <WorksBest c={c} />
       {meta.length > 0 && (
         <div className="card-meta">
           {meta.map((m) => (

@@ -40,12 +40,12 @@ export default async function Home() {
     { title: "Salespeople", href: "/candidates?role=Sales", items: pick((c) => c.role_category === "Sales") },
     {
       title: "Numbers people",
-      href: "/candidates?genius=Discernment",
+      href: "/candidates?strength=D",
       items: pick((c) => ["Bookkeeping", "Accounting"].includes(c.role_category ?? "")),
     },
     {
       title: "People who keep everything running",
-      href: "/candidates?genius=Tenacity",
+      href: "/candidates?strength=T",
       items: pick((c) => ["Executive assistant", "Office manager", "Operations", "Project management"].includes(c.role_category ?? "")),
     },
     { title: "Beginners with potential", href: "/candidates?level=beginner", items: pick((c) => c.level === "beginner") },

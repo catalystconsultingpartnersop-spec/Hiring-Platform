@@ -6,13 +6,44 @@ let client: SupabaseClient | null = null;
 
 export function db(): SupabaseClient {
   if (client) return client;
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variable.");
-  }
-  client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const problem = dbConfigProblem();
+  if (problem) throw new Error(problem);
+  client = createClient(supabaseUrl()!, process.env.SUPABASE_SERVICE_ROLE_KEY!.trim(), {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
   return client;
+}
+
+// Accept the Project URL however it was copied: with or without "/rest/v1" or a
+// trailing slash.
+function supabaseUrl() {
+  const raw = process.env.SUPABASE_URL?.trim();
+  if (!raw) return null;
+  return raw.replace(/\/+$/, "").replace(/\/rest\/v1$/, "").replace(/\/+$/, "");
+}
+
+// Plain-English description of what's wrong with the database settings, or null.
+export function dbConfigProblem(): string | null {
+  const url = supabaseUrl();
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!url) return "SUPABASE_URL is missing in Vercel.";
+  if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(url))
+    return `SUPABASE_URL should look like https://abcdefgh.supabase.co, but it is "${url}".`;
+  if (!key) return "SUPABASE_SERVICE_ROLE_KEY is missing in Vercel.";
+  if (key.startsWith("sb_publishable_"))
+    return "SUPABASE_SERVICE_ROLE_KEY is the publishable key. It needs the secret key (starts with sb_secret_).";
+  if (key.startsWith("eyJ")) {
+    try {
+      const role = JSON.parse(Buffer.from(key.split(".")[1], "base64url").toString()).role;
+      if (role !== "service_role")
+        return `SUPABASE_SERVICE_ROLE_KEY is the "${role}" key. It needs the secret / service_role key.`;
+    } catch {
+      return "SUPABASE_SERVICE_ROLE_KEY doesn't look like a valid key.";
+    }
+  } else if (!key.startsWith("sb_secret_")) {
+    return "SUPABASE_SERVICE_ROLE_KEY doesn't look like a Supabase secret key (it should start with sb_secret_).";
+  }
+  return null;
 }
 
 // Columns that are safe to show on an anonymous card. Anything not listed here

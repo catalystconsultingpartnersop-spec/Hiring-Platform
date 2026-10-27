@@ -6,7 +6,13 @@ export function escapeHtml(s: string) {
 
 // Sends an email through Resend. Without RESEND_API_KEY (e.g. on a laptop) it
 // prints the email to the server log instead, so nothing breaks while testing.
-export async function sendEmail(opts: { to: string; subject: string; html: string; replyTo?: string }) {
+export async function sendEmail(opts: {
+  to: string;
+  subject: string;
+  html: string;
+  replyTo?: string;
+  attachments?: { filename: string; content: Buffer }[];
+}) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
   if (!key || !from) {
@@ -21,6 +27,7 @@ export async function sendEmail(opts: { to: string; subject: string; html: strin
       subject: opts.subject,
       html: wrap(opts.html),
       replyTo: opts.replyTo ?? process.env.ADMIN_EMAIL,
+      attachments: opts.attachments,
     });
     if (error) {
       console.error("email failed", error);
@@ -33,10 +40,14 @@ export async function sendEmail(opts: { to: string; subject: string; html: strin
   }
 }
 
-export async function emailAdmin(subject: string, html: string) {
+export async function emailAdmin(
+  subject: string,
+  html: string,
+  extra: { replyTo?: string; attachments?: { filename: string; content: Buffer }[] } = {},
+) {
   const to = process.env.ADMIN_EMAIL;
   if (!to) return { ok: false };
-  return sendEmail({ to, subject, html });
+  return sendEmail({ to, subject, html, ...extra });
 }
 
 function wrap(body: string) {

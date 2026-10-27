@@ -87,8 +87,9 @@ export function CandidateForm({ c, tierFeeLabel }: { c: Candidate | null; tierFe
                 <input className="input" name="location_region" defaultValue={v("location_region")} placeholder="Northern New Jersey" />
               </label>
               <label className="field">
-                <span>Working Genius</span>
-                <input className="input" name="working_genius" defaultValue={v("working_genius")} placeholder="Galvanizing, Enablement" />
+                <span>Working Genius result</span>
+                <input className="input" name="working_genius" defaultValue={v("working_genius")} placeholder="e.g. GTDEIW" />
+                <small>All six letters, strongest first. Owners only see it as plain-language strengths.</small>
               </label>
               <label className="field">
                 <span>Salary from ($)</span>

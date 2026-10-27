@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CandidateCard, GeniusTags, Strengths } from "@/components/CandidateCard";
+import { CandidateCard, Strengths, WorksBest } from "@/components/CandidateCard";
 import { ShortlistButton } from "@/components/Shortlist";
 import { allListed, getListed, getTiers, similarTo } from "@/lib/catalog";
 import { isSampleId } from "@/lib/samples";
@@ -71,7 +71,6 @@ function Facts({ c }: { c: PublicCandidate }) {
     ["Location", c.location_region],
     ["Work setting", c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null],
     ["Salary expectation", salaryRange(c.salary_min, c.salary_max)],
-    ["Working Genius", c.working_genius],
   ];
   return (
     <dl className={styles.facts}>
@@ -102,7 +101,7 @@ function Profile({ c }: { c: PublicCandidate }) {
         </p>
       )}
       <div className={styles.tagsRow}>
-        <GeniusTags c={c} />
+        <WorksBest c={c} detail />
       </div>
       {c.summary && (
         <div className={styles.summary}>

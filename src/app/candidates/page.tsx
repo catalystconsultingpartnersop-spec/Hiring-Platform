@@ -5,18 +5,18 @@ import {
   applyFilters,
   CatalogFilters,
   facetCounts,
-  GENIUSES,
   getTiers,
   PAY_BANDS,
 } from "@/lib/catalog";
 import { feeFor, LEVEL_LABEL, WORK_MODE_LABEL } from "@/lib/format";
+import { TRAIT_LIST, TRAITS } from "@/lib/strengths";
 import styles from "./catalog.module.css";
 import { FiltersToggle } from "./FiltersToggle";
 import { SortSelect } from "./SortSelect";
 
 export const dynamic = "force-dynamic";
 
-const KEYS = ["q", "role", "level", "mode", "region", "genius", "pay", "saved", "sort"] as const;
+const KEYS = ["q", "role", "level", "mode", "region", "strength", "pay", "saved", "sort"] as const;
 
 function href(f: CatalogFilters, change: Partial<CatalogFilters>) {
   const next = { ...f, ...change };
@@ -41,7 +41,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
   const shortlistView = !!f.saved;
 
   const active: [keyof CatalogFilters, string][] = [];
-  if (f.genius) active.push(["genius", `Working Genius: ${f.genius}`]);
+  if (f.strength && f.strength in TRAITS) active.push(["strength", `Best at: ${TRAITS[f.strength as keyof typeof TRAITS].label}`]);
   if (f.level) active.push(["level", LEVEL_LABEL[f.level] ?? f.level]);
   if (f.pay) active.push(["pay", PAY_BANDS.find((b) => b[0] === f.pay)?.[1] ?? f.pay]);
   if (f.mode) active.push(["mode", WORK_MODE_LABEL[f.mode] ?? f.mode]);
@@ -85,16 +85,18 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
       <div className={`wrap ${styles.layout}`}>
         <FiltersToggle active={active.length}>
           <aside className={styles.rail} aria-label="Filters">
-            <Facet title="Working Genius" note="How they're wired to work">
-              {GENIUSES.map(([g, desc]) => {
-                const n = facetCounts(all, f, "genius").get(g) ?? 0;
-                return (
-                  <FacetLink key={g} on={f.genius === g} n={n} href={href(f, { genius: f.genius === g ? undefined : g })}>
-                    {g}
-                    <small>{desc}</small>
-                  </FacetLink>
-                );
-              })}
+            <Facet title="Best at" note="Their two strongest ways of working">
+              {TRAIT_LIST.map((t) => (
+                <FacetLink
+                  key={t.key}
+                  on={f.strength === t.key}
+                  n={facetCounts(all, f, "strength").get(t.key) ?? 0}
+                  href={href(f, { strength: f.strength === t.key ? undefined : t.key })}
+                >
+                  {t.label}
+                  <small>{t.short}</small>
+                </FacetLink>
+              ))}
             </Facet>
             <Facet title="Experience">
               {Object.entries(LEVEL_LABEL).map(([v, label]) => (
