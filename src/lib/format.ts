@@ -18,7 +18,7 @@ export function salaryRange(min: number | null, max: number | null) {
 // A short public reference, e.g. "C-3F2A9B", so owners and Heshy can talk about
 // a candidate without using their name.
 export function refCode(id: string) {
-  return `C-${id.replace(/-/g, "").slice(0, 6).toUpperCase()}`;
+  return `C-${id.replace(/-/g, "").slice(-6).toUpperCase()}`;
 }
 
 export const LEVEL_LABEL: Record<string, string> = {

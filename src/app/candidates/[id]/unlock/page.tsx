@@ -5,12 +5,29 @@ import { getListed, getTiers } from "@/lib/catalog";
 import { db } from "@/lib/db";
 import { brandName, feeFor, money, refCode } from "@/lib/format";
 import { requireOwner } from "@/lib/session";
+import { isSampleId } from "@/lib/samples";
 import { SignForm } from "./SignForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function UnlockPage({ params }: PageProps<"/candidates/[id]/unlock">) {
   const { id } = await params;
+  if (isSampleId(id)) {
+    return (
+      <div className="wrap narrow" style={{ paddingTop: 28 }}>
+        <div className="page-head">
+          <h1>This is a sample profile</h1>
+          <p>
+            With a real candidate, this is where you&rsquo;d sign a short agreement and then see their name, resume and
+            contact details. Nothing to pay until you decide to hire.
+          </p>
+        </div>
+        <Link className="btn" href="/candidates">
+          Keep browsing
+        </Link>
+      </div>
+    );
+  }
   const owner = await requireOwner(`/candidates/${id}/unlock`);
 
   const { data: existing } = await db()

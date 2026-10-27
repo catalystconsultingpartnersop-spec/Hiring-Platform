@@ -114,3 +114,6 @@
   align-items: baseline;
   margin-bottom: 22px;
 }
+
+.aisle { padding: 28px 0; }
+.aisle + .aisle { padding-top: 8px; }

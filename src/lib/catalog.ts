@@ -1,69 +1,197 @@
 import { db, FeeTier, PublicCandidate, PUBLIC_CANDIDATE_COLUMNS } from "./db";
+import { isSampleId, SAMPLES } from "./samples";
+
+const DEFAULT_TIERS: FeeTier[] = [
+  { id: "t1", max_salary: 100000, fee_cents: 500000, sort: 1 },
+  { id: "t2", max_salary: 200000, fee_cents: 1000000, sort: 2 },
+  { id: "t3", max_salary: null, fee_cents: null, sort: 3 },
+];
 
 export async function getTiers(): Promise<FeeTier[]> {
-  const { data, error } = await db().from("fee_tiers").select("*").order("sort");
-  if (error) throw error;
-  return (data ?? []) as FeeTier[];
+  try {
+    const { data, error } = await db().from("fee_tiers").select("*").order("sort");
+    if (error) throw error;
+    return data?.length ? (data as FeeTier[]) : DEFAULT_TIERS;
+  } catch (e) {
+    console.error("fee tiers unavailable, using defaults", e);
+    return DEFAULT_TIERS;
+  }
 }
+
+// Every real listed candidate, or the samples while there are none (or while the
+// database can't be reached), so the catalog always has something to browse.
+export async function allListed(): Promise<{ rows: PublicCandidate[]; sample: boolean }> {
+  try {
+    const { data, error } = await db()
+      .from("candidates")
+      .select(PUBLIC_CANDIDATE_COLUMNS)
+      .eq("status", "listed")
+      .order("listed_at", { ascending: false });
+    if (error) throw error;
+    const rows = (data ?? []) as unknown as PublicCandidate[];
+    if (rows.length) return { rows, sample: false };
+  } catch (e) {
+    console.error("catalog query failed, showing samples", e);
+  }
+  return { rows: SAMPLES, sample: true };
+}
+
+// ---------- Working Genius ----------
+
+export const GENIUSES = [
+  ["Wonder", "Asks the big questions"],
+  ["Invention", "Comes up with new ideas"],
+  ["Discernment", "Sound judgment and instinct"],
+  ["Galvanizing", "Rallies people to act"],
+  ["Enablement", "Helps others succeed"],
+  ["Tenacity", "Pushes work to the finish"],
+] as const;
+
+export function geniusesOf(c: PublicCandidate) {
+  return (c.working_genius ?? "")
+    .split(/[,/&]| and /i)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => s[0].toUpperCase() + s.slice(1).toLowerCase());
+}
+
+// ---------- Pay ranges ----------
+
+export const PAY_BANDS = [
+  ["under-60", "Under $60k", 0, 60000],
+  ["60-90", "$60k–$90k", 60000, 90000],
+  ["90-130", "$90k–$130k", 90000, 130000],
+  ["130-plus", "$130k and up", 130000, Infinity],
+] as const;
+
+function payBand(c: PublicCandidate) {
+  const s = c.salary_max ?? c.salary_min;
+  if (s == null) return null;
+  return PAY_BANDS.find(([, , lo, hi]) => s >= lo && s < hi)?.[0] ?? null;
+}
+
+// ---------- Filtering ----------
 
 export type CatalogFilters = {
   q?: string;
   role?: string;
-  industry?: string;
   level?: string;
   mode?: string;
   region?: string;
+  genius?: string;
+  pay?: string;
+  saved?: string;
+  sort?: string;
 };
 
-export async function listListed(filters: CatalogFilters = {}): Promise<PublicCandidate[]> {
-  let query = db()
-    .from("candidates")
-    .select(PUBLIC_CANDIDATE_COLUMNS)
-    .eq("status", "listed")
-    .order("listed_at", { ascending: false });
+const FILTER_KEYS = ["role", "level", "mode", "region", "genius", "pay"] as const;
+type FilterKey = (typeof FILTER_KEYS)[number];
 
-  if (filters.role) query = query.eq("role_category", filters.role);
-  if (filters.industry) query = query.eq("industry", filters.industry);
-  if (filters.level) query = query.eq("level", filters.level);
-  if (filters.mode) query = query.eq("work_mode", filters.mode);
-  if (filters.region) query = query.eq("location_region", filters.region);
-
-  const { data, error } = await query;
-  if (error) throw error;
-  let rows = (data ?? []) as unknown as PublicCandidate[];
-
-  // Free-text search over the public fields only.
-  const q = filters.q?.trim().toLowerCase();
-  if (q) {
-    rows = rows.filter((c) =>
-      [c.headline, c.role_category, c.industry, c.summary, c.location_region, c.working_genius, ...c.strengths, ...c.highlights]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(q),
-    );
+function valueOf(c: PublicCandidate, key: FilterKey): string[] {
+  switch (key) {
+    case "role":
+      return c.role_category ? [c.role_category] : [];
+    case "level":
+      return c.level ? [c.level] : [];
+    case "mode":
+      return c.work_mode ? [c.work_mode] : [];
+    case "region":
+      return c.location_region ? [c.location_region] : [];
+    case "genius":
+      return geniusesOf(c);
+    case "pay": {
+      const b = payBand(c);
+      return b ? [b] : [];
+    }
   }
-  return rows;
 }
 
-// Distinct values for the filter menus, taken from what's actually listed.
-export function filterOptions(rows: PublicCandidate[]) {
-  const uniq = (vals: (string | null)[]) =>
-    [...new Set(vals.filter((v): v is string => !!v))].sort((a, b) => a.localeCompare(b));
-  return {
-    roles: uniq(rows.map((r) => r.role_category)),
-    industries: uniq(rows.map((r) => r.industry)),
-    regions: uniq(rows.map((r) => r.location_region)),
-  };
+function matches(c: PublicCandidate, f: CatalogFilters, skip?: FilterKey) {
+  for (const k of FILTER_KEYS) {
+    if (k === skip || !f[k]) continue;
+    if (!valueOf(c, k).includes(f[k]!)) return false;
+  }
+  if (f.saved) {
+    const ids = f.saved.split(",");
+    if (!ids.includes(c.id)) return false;
+  }
+  const q = f.q?.trim().toLowerCase();
+  if (q) {
+    const hay = [c.headline, c.role_category, c.industry, c.summary, c.location_region, c.working_genius, ...c.strengths, ...c.highlights]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    if (!q.split(/\s+/).every((w) => hay.includes(w))) return false;
+  }
+  return true;
+}
+
+export function applyFilters(rows: PublicCandidate[], f: CatalogFilters, feeOf: (c: PublicCandidate) => number | null) {
+  const out = rows.filter((c) => matches(c, f));
+  const fee = (c: PublicCandidate) => feeOf(c) ?? Number.MAX_SAFE_INTEGER;
+  const pay = (c: PublicCandidate) => c.salary_max ?? c.salary_min ?? Number.MAX_SAFE_INTEGER;
+  const levelRank: Record<string, number> = { beginner: 0, experienced: 1, senior: 2 };
+  switch (f.sort) {
+    case "fee":
+      out.sort((a, b) => fee(a) - fee(b));
+      break;
+    case "pay":
+      out.sort((a, b) => pay(a) - pay(b));
+      break;
+    case "experience":
+      out.sort((a, b) => (levelRank[b.level ?? ""] ?? -1) - (levelRank[a.level ?? ""] ?? -1));
+      break;
+    default:
+      out.sort((a, b) => (b.listed_at ?? "").localeCompare(a.listed_at ?? ""));
+  }
+  return out;
+}
+
+// Counts for each option in a filter group, given the other filters in force,
+// the way a store shows "Experienced (5)".
+export function facetCounts(rows: PublicCandidate[], f: CatalogFilters, key: FilterKey) {
+  const counts = new Map<string, number>();
+  for (const c of rows) {
+    if (!matches(c, f, key)) continue;
+    for (const v of valueOf(c, key)) counts.set(v, (counts.get(v) ?? 0) + 1);
+  }
+  return counts;
+}
+
+export function similarTo(c: PublicCandidate, rows: PublicCandidate[], n = 4) {
+  const g = new Set(geniusesOf(c));
+  return rows
+    .filter((r) => r.id !== c.id)
+    .map((r) => ({
+      r,
+      score:
+        (r.role_category === c.role_category ? 3 : 0) +
+        (r.industry === c.industry ? 1 : 0) +
+        (r.level === c.level ? 1 : 0) +
+        geniusesOf(r).filter((x) => g.has(x)).length,
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, n)
+    .map((x) => x.r);
 }
 
 export async function getListed(id: string): Promise<PublicCandidate | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
-  const { data } = await db()
-    .from("candidates")
-    .select(PUBLIC_CANDIDATE_COLUMNS)
-    .eq("id", id)
-    .eq("status", "listed")
-    .maybeSingle();
-  return (data as unknown as PublicCandidate) ?? null;
+  if (isSampleId(id)) return SAMPLES.find((s) => s.id === id) ?? null;
+  try {
+    const { data } = await db()
+      .from("candidates")
+      .select(PUBLIC_CANDIDATE_COLUMNS)
+      .eq("id", id)
+      .eq("status", "listed")
+      .maybeSingle();
+    return (data as unknown as PublicCandidate) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// Kept for the home page.
+export async function listListed() {
+  return (await allListed()).rows;
 }

@@ -5,6 +5,7 @@ import "@fontsource-variable/instrument-sans";
 import "./globals.css";
 import { brandName } from "@/lib/format";
 import { currentOwner } from "@/lib/session";
+import { ShortlistLink } from "@/components/Shortlist";
 
 export const metadata: Metadata = {
   title: `${brandName()} — browse coached, assessed candidates`,
@@ -29,7 +30,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               {brandName()}
             </Link>
             <nav className="nav" aria-label="Main">
-              <Link href="/candidates">Browse candidates</Link>
+              <Link href="/candidates">
+                <span className="hide-sm">Browse candidates</span>
+                <span className="show-sm">Browse</span>
+              </Link>
+              <ShortlistLink />
               <Link href="/apply" className="hide-sm">
                 Looking for work?
               </Link>

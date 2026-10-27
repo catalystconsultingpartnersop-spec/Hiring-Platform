@@ -35,7 +35,21 @@ export default async function Home() {
     // Database not connected yet: show the example card.
   }
   const hero = featured[0];
-  const more = featured.slice(1, 4);
+  const pick = (test: (c: PublicCandidate) => boolean) => featured.filter(test).slice(0, 8);
+  const aisles = [
+    { title: "Salespeople", href: "/candidates?role=Sales", items: pick((c) => c.role_category === "Sales") },
+    {
+      title: "Numbers people",
+      href: "/candidates?genius=Discernment",
+      items: pick((c) => ["Bookkeeping", "Accounting"].includes(c.role_category ?? "")),
+    },
+    {
+      title: "People who keep everything running",
+      href: "/candidates?genius=Tenacity",
+      items: pick((c) => ["Executive assistant", "Office manager", "Operations", "Project management"].includes(c.role_category ?? "")),
+    },
+    { title: "Beginners with potential", href: "/candidates?level=beginner", items: pick((c) => c.level === "beginner") },
+  ];
 
   return (
     <>
@@ -112,20 +126,22 @@ export default async function Home() {
         </div>
       </section>
 
-      {more.length > 0 && (
-        <section className="section">
-          <div className="wrap">
-            <div className={styles.moreHead}>
-              <h2 className={styles.h2}>Recently listed</h2>
-              <Link href="/candidates">See everyone</Link>
+      {aisles.map((a) =>
+        a.items.length ? (
+          <section className={styles.aisle} key={a.title}>
+            <div className="wrap">
+              <div className={styles.moreHead}>
+                <h2 className={styles.h2}>{a.title}</h2>
+                <Link href={a.href}>See all</Link>
+              </div>
+              <div className="shelf">
+                {a.items.map((c) => (
+                  <CandidateCard key={c.id} c={c} fee={feeFor(c, tiers)} href={`/candidates/${c.id}`} />
+                ))}
+              </div>
             </div>
-            <div className="cards">
-              {more.map((c) => (
-                <CandidateCard key={c.id} c={c} fee={feeFor(c, tiers)} href={`/candidates/${c.id}`} />
-              ))}
-            </div>
-          </div>
-        </section>
+          </section>
+        ) : null,
       )}
     </>
   );

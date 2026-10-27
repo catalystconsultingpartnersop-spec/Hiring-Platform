@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Strengths } from "@/components/CandidateCard";
-import { getListed, getTiers } from "@/lib/catalog";
+import { CandidateCard, GeniusTags, Strengths } from "@/components/CandidateCard";
+import { ShortlistButton } from "@/components/Shortlist";
+import { allListed, getListed, getTiers, similarTo } from "@/lib/catalog";
+import { isSampleId } from "@/lib/samples";
 import { Candidate, db, Hire, PublicCandidate, Unlock } from "@/lib/db";
 import { dateShort, feeFor, LEVEL_LABEL, lines, money, refCode, salaryRange, WORK_MODE_LABEL } from "@/lib/format";
 import { latestHire, markPaidFromSession } from "@/lib/hires";
@@ -16,7 +18,12 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
   const sp = await searchParams;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
-  const owner = await currentOwner();
+  let owner = null;
+  try {
+    owner = isSampleId(id) ? null : await currentOwner();
+  } catch {
+    owner = null;
+  }
   let unlock: Unlock | null = null;
   if (owner) {
     const { data } = await db().from("unlocks").select("*").eq("owner_id", owner.id).eq("candidate_id", id).maybeSingle();
@@ -51,8 +58,9 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
 
   const c = await getListed(id);
   if (!c) notFound();
-  const tiers = await getTiers();
-  return <Teaser c={c} fee={feeFor(c, tiers)} />;
+  const [tiers, { rows }] = await Promise.all([getTiers(), allListed()]);
+  const similar = similarTo(c, rows).map((s) => ({ c: s, fee: feeFor(s, tiers) }));
+  return <Teaser c={c} fee={feeFor(c, tiers)} similar={similar} />;
 }
 
 function Facts({ c }: { c: PublicCandidate }) {
@@ -93,6 +101,9 @@ function Profile({ c }: { c: PublicCandidate }) {
           <Strengths items={c.strengths} strong />
         </p>
       )}
+      <div className={styles.tagsRow}>
+        <GeniusTags c={c} />
+      </div>
       {c.summary && (
         <div className={styles.summary}>
           {lines(c.summary).map((p, i) => (
@@ -111,7 +122,16 @@ function Profile({ c }: { c: PublicCandidate }) {
   );
 }
 
-function Teaser({ c, fee }: { c: PublicCandidate; fee: number | null }) {
+function Teaser({
+  c,
+  fee,
+  similar,
+}: {
+  c: PublicCandidate;
+  fee: number | null;
+  similar: { c: PublicCandidate; fee: number | null }[];
+}) {
+  const sample = isSampleId(c.id);
   return (
     <div className={`wrap ${styles.page}`}>
       <Link href="/candidates" className={`small ${styles.back}`}>
@@ -130,12 +150,27 @@ function Teaser({ c, fee }: { c: PublicCandidate; fee: number | null }) {
             <Link className="btn btn-gold" href={`/candidates/${c.id}/unlock`} style={{ width: "100%", marginTop: 18 }}>
               See who this is
             </Link>
+            <div className={styles.sideSave}>
+              <ShortlistButton id={c.id} label />
+            </div>
             <p className={`small muted ${styles.sideNote}`}>
-              You&rsquo;ll sign a short agreement first. Seeing their name and contact details costs nothing.
+              {sample
+                ? "This is a sample profile, so there's no one to unlock yet."
+                : "You'll sign a short agreement first. Seeing their name and contact details costs nothing."}
             </p>
           </div>
         </aside>
       </div>
+      {similar.length > 0 && (
+        <section className={styles.similar}>
+          <h2>Similar candidates</h2>
+          <div className="shelf">
+            {similar.map((s) => (
+              <CandidateCard key={s.c.id} c={s.c} fee={s.fee} href={`/candidates/${s.c.id}`} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

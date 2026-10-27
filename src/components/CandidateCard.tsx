@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { PublicCandidate } from "@/lib/db";
-import { LEVEL_LABEL, WORK_MODE_LABEL, money, refCode, salaryRange } from "@/lib/format";
+import { geniusesOf } from "@/lib/catalog";
+import { LEVEL_LABEL, WORK_MODE_LABEL, money, salaryRange } from "@/lib/format";
+import { ShortlistButton } from "./Shortlist";
 
 export function Strengths({ items, strong = false }: { items: string[]; strong?: boolean }) {
   if (!items.length) return null;
@@ -14,6 +16,24 @@ export function Strengths({ items, strong = false }: { items: string[]; strong?:
       ))}
     </>
   );
+}
+
+export function GeniusTags({ c }: { c: PublicCandidate }) {
+  const g = geniusesOf(c);
+  if (!g.length) return null;
+  return (
+    <div className="genius-tags" aria-label="Working Genius">
+      {g.map((x) => (
+        <span key={x} className="genius-tag">
+          {x}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export function isNew(c: PublicCandidate) {
+  return !!c.listed_at && Date.now() - Date.parse(c.listed_at) < 7 * 864e5;
 }
 
 export function CandidateCard({
@@ -35,19 +55,28 @@ export function CandidateCard({
     salary,
   ].filter(Boolean) as string[];
 
-  const body = (
-    <>
+  return (
+    <div className="card">
       <div className="card-top">
-        <span>{[c.role_category, c.industry].filter(Boolean).join(" in ")}</span>
-        <span className="card-ref">{example ? "Example" : refCode(c.id)}</span>
+        <span>{[c.role_category, c.industry && c.industry !== "Any" ? c.industry : null].filter(Boolean).join(" in ")}</span>
+        {example ? <span className="card-ref">Example</span> : isNew(c) ? <span className="tag tag-gold">New</span> : null}
       </div>
-      <h3>{c.headline}</h3>
+      <h3>
+        {href ? (
+          <Link href={href} className="card-link">
+            {c.headline}
+          </Link>
+        ) : (
+          c.headline
+        )}
+      </h3>
       {c.strengths.length > 0 && (
         <p className="card-wired">
           <span className="lead">Wired for</span>
           <Strengths items={c.strengths} />
         </p>
       )}
+      <GeniusTags c={c} />
       {meta.length > 0 && (
         <div className="card-meta">
           {meta.map((m) => (
@@ -59,13 +88,7 @@ export function CandidateCard({
         <span className="muted">Flat fee if you hire</span>
         <strong>{fee != null ? money(fee) : "Ask"}</strong>
       </div>
-    </>
-  );
-
-  if (!href) return <div className="card">{body}</div>;
-  return (
-    <Link className="card" href={href}>
-      {body}
-    </Link>
+      {href && <ShortlistButton id={c.id} />}
+    </div>
   );
 }
