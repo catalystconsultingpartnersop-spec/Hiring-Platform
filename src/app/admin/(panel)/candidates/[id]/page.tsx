@@ -5,6 +5,7 @@ import { getTiers } from "@/lib/catalog";
 import { Candidate, db } from "@/lib/db";
 import { dateShort, feeFor, money, refCode } from "@/lib/format";
 import { CandidateForm } from "../CandidateForm";
+import { COMPANY_TZ, formatInZone } from "@/lib/time";
 
 export default async function EditCandidate({ params, searchParams }: PageProps<"/admin/candidates/[id]">) {
   const me = await requireStaff();
@@ -15,6 +16,18 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
   if (!data) notFound();
   const c = data as Candidate;
   const tierFee = feeFor({ ...c, fee_override_cents: null }, await getTiers());
+
+  const { data: calls } = await db()
+    .from("onboarding_calls")
+    .select("id, starts_at, status, staff(full_name, email, time_zone)")
+    .eq("candidate_id", id)
+    .order("starts_at", { ascending: false });
+  const callRows = (calls ?? []) as unknown as {
+    id: string;
+    starts_at: string;
+    status: string;
+    staff: { full_name: string | null; email: string; time_zone: string | null };
+  }[];
 
   const { data: unlocks } = await db()
     .from("unlocks")
@@ -40,6 +53,17 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
             {sp.saved === "listed"
               ? "Saved. They're live in the catalog."
               : "Saved as a draft. Owners won't see them until you set the status to Listed."}
+          </p>
+        )}
+        {callRows.length > 0 && (
+          <p style={{ marginTop: 10 }}>
+            Onboarding call:{" "}
+            {callRows
+              .map(
+                (k) =>
+                  `${formatInZone(k.starts_at, k.staff.time_zone ?? COMPANY_TZ, { weekday: "short", month: "short" })} with ${k.staff.full_name || k.staff.email} (${k.status.replace("_", "-")})`,
+              )
+              .join("; ")}
           </p>
         )}
         {(unlocks ?? []).length > 0 && (

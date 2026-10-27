@@ -107,6 +107,19 @@ export function staffActor(s: Staff) {
   return s.role === "admin" && !s.id ? "admin" : `staff:${s.email}`;
 }
 
+// ---------- Signed links (no sign-in needed) ----------
+// e.g. the link in a candidate's email that lets them reschedule their call.
+
+export function signedToken(subject: string, days: number) {
+  return makeToken(subject, days);
+}
+
+export function readSignedToken(token: string | null | undefined, prefix: string) {
+  const subject = readToken(token ?? undefined);
+  if (!subject || !subject.startsWith(prefix)) return null;
+  return subject.slice(prefix.length);
+}
+
 // ---------- Owners ----------
 
 export async function startOwnerSession(ownerId: string) {

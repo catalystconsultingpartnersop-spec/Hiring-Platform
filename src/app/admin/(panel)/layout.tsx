@@ -12,6 +12,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="wrap">
       <nav className={styles.bar} aria-label="Admin">
         <Link href="/admin">Candidates</Link>
+        <Link href="/admin/calls">{admin ? "Calls" : "My calls"}</Link>
+        <Link href="/admin/hours">My hours</Link>
         <Link href="/admin/candidates/new" className={styles.addLink}>
           + Add candidate
         </Link>

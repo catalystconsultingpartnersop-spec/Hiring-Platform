@@ -67,3 +67,16 @@ export function siteUrl() {
 export function brandName() {
   return process.env.NEXT_PUBLIC_BRAND_NAME || "Talent Catalog";
 }
+
+// How candidates and owners can reach a person.
+export function contactPhone() {
+  return process.env.CONTACT_PHONE || "917-374-7950";
+}
+
+export function contactPhoneHref() {
+  return `+1${contactPhone().replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "")}`;
+}
+
+export function contactEmail() {
+  return process.env.ADMIN_EMAIL || "";
+}

@@ -16,6 +16,7 @@ import {
   startStaffSession,
 } from "@/lib/session";
 import { stripe } from "@/lib/stripe";
+import { cancelCall } from "@/lib/calls";
 import { describe, suggestedHeadline } from "@/lib/strengths";
 
 export type FormState = { error?: string; ok?: string };
@@ -338,4 +339,66 @@ export async function sendTestEmail(): Promise<FormState> {
     html: "<p>If you're reading this, the site can send email.</p>",
   });
   return r.ok ? { ok: `Sent to ${to}. Check your inbox.` } : { error: `The email service said: ${r.error}` };
+}
+
+// ---------- My hours (each rep's weekly availability) ----------
+
+export async function saveMyHours(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requireStaff();
+  if (!me.id) return { error: "Sign in with your email link (not the admin password) to set your own hours." };
+
+  const rows: { staff_id: string; weekday: number; start_minute: number; end_minute: number }[] = [];
+  for (let d = 0; d < 7; d++) {
+    if (form.get(`on_${d}`) !== "on") continue;
+    const start = Number(form.get(`start_${d}`));
+    const end = Number(form.get(`end_${d}`));
+    if (!(end > start)) return { error: "Each day's end time needs to be after its start time." };
+    if (end - start < 45) return { error: "Each day needs at least 45 minutes for one call." };
+    rows.push({ staff_id: me.id, weekday: d, start_minute: start, end_minute: end });
+  }
+
+  const link = String(form.get("meeting_link") ?? "").trim();
+  if (link && !/^https:\/\/\S+$/i.test(link)) return { error: "The video link should start with https://" };
+  const tz = String(form.get("time_zone") ?? "America/New_York");
+
+  const { error: e1 } = await db().from("staff").update({ meeting_link: link || null, time_zone: tz }).eq("id", me.id);
+  if (e1) return { error: `Could not save: ${e1.message}` };
+  const { error: e2 } = await db().from("staff_availability").delete().eq("staff_id", me.id);
+  if (e2) return { error: `Could not save: ${e2.message}` };
+  if (rows.length) {
+    const { error: e3 } = await db().from("staff_availability").insert(rows);
+    if (e3) return { error: `Could not save: ${e3.message}` };
+  }
+  await logActivity(staffActor(me), "hours_saved", { days: rows.length });
+  revalidatePath("/admin/hours");
+  return {
+    ok: rows.length
+      ? `Saved. Candidates can now book you on ${rows.length} ${rows.length === 1 ? "day" : "days"} a week.`
+      : "Saved. You have no hours set, so candidates can't book you right now.",
+  };
+}
+
+// ---------- Onboarding calls ----------
+
+async function myCallOrNull(callId: string) {
+  const me = await requireStaff();
+  const { data } = await db().from("onboarding_calls").select("id, staff_id, status").eq("id", callId).maybeSingle();
+  if (!data) return null;
+  if (me.role !== "admin" && data.staff_id !== me.id) return null; // reps only touch their own calls
+  return { me, call: data };
+}
+
+export async function markCall(callId: string, status: "done" | "no_show") {
+  const found = await myCallOrNull(callId);
+  if (!found) return;
+  await db().from("onboarding_calls").update({ status, updated_at: new Date().toISOString() }).eq("id", callId);
+  await logActivity(staffActor(found.me), `onboarding_call_${status}`, { call_id: callId });
+  revalidatePath("/admin/calls");
+}
+
+export async function cancelCallByStaff(callId: string) {
+  const found = await myCallOrNull(callId);
+  if (!found) return;
+  await cancelCall(callId, staffActor(found.me));
+  revalidatePath("/admin/calls");
 }

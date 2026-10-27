@@ -1,17 +1,26 @@
-import { ApplyForm } from "./ApplyForm";
+import { contactPhone, contactPhoneHref } from "@/lib/format";
+import { availableTimes } from "./actions";
+import { ApplyFlow } from "./ApplyFlow";
 
-export default function ApplyPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ApplyPage() {
+  const times = await availableTimes();
   return (
-    <div className="wrap narrow">
+    <div className="wrap narrow apply-page">
       <div className="page-head">
-        <h1>Find work that fits how you&rsquo;re wired.</h1>
+        <h1>Let&rsquo;s find work that fits you.</h1>
         <p>
-          It&rsquo;s free. We meet with you, run an assessment, and help you figure out which roles bring out your
-          best. Then we list you anonymously and business owners browse your profile. Your name is
-          only shared with an owner who signs an agreement with us.
+          It&rsquo;s free. Tell us a little about yourself, then pick a time for a relaxed video call. We&rsquo;ll help you
+          figure out where you&rsquo;d do your best work and introduce you to employers looking for someone like you.
         </p>
       </div>
-      <ApplyForm assessmentUrl={process.env.ASSESSMENT_URL || "https://www.workinggenius.com"} />
+      <ApplyFlow
+        times={times}
+        assessmentUrl={process.env.ASSESSMENT_URL || "https://www.workinggenius.com"}
+        phone={contactPhone()}
+        phoneHref={contactPhoneHref()}
+      />
     </div>
   );
 }

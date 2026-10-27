@@ -3,7 +3,7 @@ import Link from "next/link";
 import "@fontsource-variable/bricolage-grotesque";
 import "@fontsource-variable/instrument-sans";
 import "./globals.css";
-import { brandName } from "@/lib/format";
+import { brandName, contactPhone, contactPhoneHref } from "@/lib/format";
 import { currentOwner } from "@/lib/session";
 import { ShortlistLink } from "@/components/Shortlist";
 
@@ -48,7 +48,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <span>
               {brandName()}: candidates are coached and assessed. You choose, and you pay one flat fee when you hire.
             </span>
-            <Link href="/apply">Apply as a candidate</Link>
+            <span>
+              Questions? Text or call <a href={`sms:${contactPhoneHref()}`}>{contactPhone()}</a>
+              {" · "}
+              <Link href="/apply">Looking for work?</Link>
+            </span>
           </div>
         </footer>
       </body>
