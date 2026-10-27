@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { PublicCandidate } from "@/lib/db";
-import { profileOf, TRAITS } from "@/lib/strengths";
+import { describe, profileOf, TRAITS, wiredFor } from "@/lib/strengths";
 import { LEVEL_LABEL, WORK_MODE_LABEL, money, salaryRange } from "@/lib/format";
 import { ShortlistButton } from "./Shortlist";
 
@@ -38,6 +38,22 @@ export function WorksBest({ c, detail = false }: { c: PublicCandidate; detail?: 
   );
 }
 
+export function HowTheyWork({ c }: { c: PublicCandidate }) {
+  const d = describe(c.working_genius);
+  if (!d) return null;
+  return (
+    <section className="how-they-work" aria-labelledby="how-they-work">
+      <h2 id="how-they-work">How they work</h2>
+      <p className="htw-line">{d.line}</p>
+      <ul>
+        <li>{d.thrives}</li>
+        {d.alsoBrings && <li>{d.alsoBrings}</li>}
+        {d.bestAlongside && <li>{d.bestAlongside}</li>}
+      </ul>
+    </section>
+  );
+}
+
 export function isNew(c: PublicCandidate) {
   return !!c.listed_at && Date.now() - Date.parse(c.listed_at) < 7 * 864e5;
 }
@@ -54,6 +70,7 @@ export function CandidateCard({
   example?: boolean;
 }) {
   const salary = salaryRange(c.salary_min, c.salary_max);
+  const wired = wiredFor(c);
   const meta = [
     c.level ? LEVEL_LABEL[c.level] : null,
     c.location_region,
@@ -76,10 +93,10 @@ export function CandidateCard({
           c.headline
         )}
       </h3>
-      {c.strengths.length > 0 && (
+      {wired.length > 0 && (
         <p className="card-wired">
           <span className="lead">Wired for</span>
-          <Strengths items={c.strengths} />
+          <Strengths items={wired} />
         </p>
       )}
       <WorksBest c={c} />

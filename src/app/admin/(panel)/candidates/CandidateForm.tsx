@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { describe } from "@/lib/strengths";
 import type { Candidate } from "@/lib/db";
 import { FormState, saveCandidate } from "../../actions";
 import styles from "../admin.module.css";
@@ -86,11 +87,7 @@ export function CandidateForm({ c, tierFeeLabel }: { c: Candidate | null; tierFe
                 <span>Location (broad)</span>
                 <input className="input" name="location_region" defaultValue={v("location_region")} placeholder="Northern New Jersey" />
               </label>
-              <label className="field">
-                <span>Working Genius result</span>
-                <input className="input" name="working_genius" defaultValue={v("working_genius")} placeholder="e.g. GTDEIW" />
-                <small>All six letters, strongest first. Owners only see it as plain-language strengths.</small>
-              </label>
+              <AssessmentField initial={v("working_genius")} />
               <label className="field">
                 <span>Salary from ($)</span>
                 <input className="input" name="salary_min" inputMode="numeric" defaultValue={c?.salary_min ?? ""} />
@@ -108,7 +105,7 @@ export function CandidateForm({ c, tierFeeLabel }: { c: Candidate | null; tierFe
                 defaultValue={c?.strengths.join(", ") ?? ""}
                 placeholder="rallying people, reading a room, pushing a deal over the line"
               />
-              <small>Separate with commas. These show as the highlighted words on the card.</small>
+              <small>Leave empty to use the words generated from their assessment. Separate your own with commas.</small>
             </label>
             <label className="field">
               <span>Summary</span>
@@ -240,5 +237,34 @@ export function CandidateForm({ c, tierFeeLabel }: { c: Candidate | null; tierFe
         )}
       </div>
     </form>
+  );
+}
+
+function AssessmentField({ initial }: { initial: string }) {
+  const [val, setVal] = useState(initial);
+  const d = describe(val);
+  return (
+    <div className="field" style={{ gridColumn: "1 / -1" }}>
+      <label>
+        <span>Working Genius result</span>
+        <input className="input" name="working_genius" value={val} onChange={(e) => setVal(e.target.value)} placeholder="e.g. GTDEIW" />
+      </label>
+      <small>All six letters, strongest first. Owners see only the plain-language profile below.</small>
+      {val.trim() && (
+        <div className="assess-preview" aria-live="polite">
+          {d ? (
+            <>
+              <strong>{d.name}</strong>: {d.line}
+              <br />
+              Wired for: {d.wiredFor.join(", ")}
+              <br />
+              {d.thrives} {d.alsoBrings} {d.bestAlongside}
+            </>
+          ) : (
+            "Type at least the first two letters to see the profile."
+          )}
+        </div>
+      )}
+    </div>
   );
 }

@@ -25,7 +25,7 @@ const RAW: Sample[] = [
     work_mode: "on-site",
     salary_min: 85000,
     salary_max: 100000,
-    strengths: ["rallying people", "reading a room", "pushing a deal over the line"],
+    strengths: [],
     working_genius: "GTDEIW",
     summary:
       "Twelve years selling building materials to contractors. Happiest in a truck between job sites; drained by a desk all day. Builds the kind of trust where foremen call him first when a supplier lets them down.",
@@ -46,7 +46,7 @@ const RAW: Sample[] = [
     work_mode: "hybrid",
     salary_min: 62000,
     salary_max: 72000,
-    strengths: ["spotting what's off", "quiet precision", "closing the books on time"],
+    strengths: [],
     working_genius: "DTWEIG",
     summary:
       "Eight years keeping the books for retail and service businesses with 10 to 60 employees. Reconciles everything, every month, and explains the numbers to owners in plain English.",
@@ -67,7 +67,7 @@ const RAW: Sample[] = [
     work_mode: "on-site",
     salary_min: 95000,
     salary_max: 115000,
-    strengths: ["anticipating what's next", "protecting the calendar", "making people feel looked after"],
+    strengths: [],
     working_genius: "ETDGWI",
     summary:
       "Supported the founder of a 200-person development firm for six years. Owns the calendar, the inbox and the travel, and knows which meetings to quietly decline.",
@@ -88,7 +88,7 @@ const RAW: Sample[] = [
     work_mode: "flexible",
     salary_min: 42000,
     salary_max: 50000,
-    strengths: ["patterns in numbers", "asking the right questions", "learning fast"],
+    strengths: [],
     working_genius: "WDITGE",
     summary:
       "Finishing an accounting certificate and ready for a first real job. Did the books for his family's store for two summers and liked it more than he expected. You'll need to train him, and he'll be worth it.",
@@ -109,7 +109,7 @@ const RAW: Sample[] = [
     work_mode: "on-site",
     salary_min: 105000,
     salary_max: 125000,
-    strengths: ["building systems", "calm under pressure", "getting it done"],
+    strengths: [],
     working_genius: "TEDGWI",
     summary:
       "Ran warehouse operations for a regional distributor with 80 staff across two shifts. Loves the messy problem nobody else wants, then writes the process so it never happens again.",
@@ -130,7 +130,7 @@ const RAW: Sample[] = [
     work_mode: "hybrid",
     salary_min: 65000,
     salary_max: 80000,
-    strengths: ["warm conversations", "relentless follow-up", "keeping the CRM spotless"],
+    strengths: [],
     working_genius: "GETDIW",
     summary:
       "Five years booking in-home consultations for a windows and siding company. Makes 80 calls a day without sounding like it, and remembers every customer's dog's name.",
@@ -151,7 +151,7 @@ const RAW: Sample[] = [
     work_mode: "on-site",
     salary_min: 68000,
     salary_max: 78000,
-    strengths: ["noticing what people need", "keeping things running", "warmth with vendors and staff"],
+    strengths: [],
     working_genius: "EDTWGI",
     summary:
       "Seven years as the person everyone goes to at a law firm: supplies, payroll inputs, onboarding, the broken printer and the birthday cake. People stay longer in offices she runs.",
@@ -172,7 +172,7 @@ const RAW: Sample[] = [
     work_mode: "remote",
     salary_min: 70000,
     salary_max: 85000,
-    strengths: ["fresh ideas", "writing that sounds human", "testing what works"],
+    strengths: [],
     working_genius: "IWGDET",
     summary:
       "Four years doing a bit of everything for small brands: email, social, product pages and the occasional photoshoot. Best paired with someone who loves the details she'd rather skip.",
@@ -193,7 +193,7 @@ const RAW: Sample[] = [
     work_mode: "remote",
     salary_min: 55000,
     salary_max: 65000,
-    strengths: ["patience", "fixing the root cause", "coaching a team"],
+    strengths: [],
     working_genius: "EDGTIW",
     summary:
       "Led a six-person support team for an online retailer. Reads a frustrated email and knows exactly what the customer actually needs, then fixes the process that caused it.",
@@ -214,7 +214,7 @@ const RAW: Sample[] = [
     work_mode: "on-site",
     salary_min: 45000,
     salary_max: 55000,
-    strengths: ["confidence with strangers", "energy", "bouncing back from no"],
+    strengths: [],
     working_genius: "GITDEW",
     summary:
       "Twenty-three, two years running his own small detailing business, and ready to sell for a company with a real product. Raw, coachable, and not afraid of the phone.",
@@ -235,7 +235,7 @@ const RAW: Sample[] = [
     work_mode: "hybrid",
     salary_min: 150000,
     salary_max: 185000,
-    strengths: ["seeing the whole picture", "clean systems", "telling owners the truth"],
+    strengths: [],
     working_genius: "DWITGE",
     summary:
       "CPA with fifteen years in manufacturing finance across the US and Israel. Has twice been the first finance hire and left behind a team, a budget process and an audit with no findings.",
@@ -257,7 +257,7 @@ const RAW: Sample[] = [
     work_mode: "hybrid",
     salary_min: 72000,
     salary_max: 88000,
-    strengths: ["tracking every detail", "keeping people on schedule", "clear updates"],
+    strengths: [],
     working_genius: "TEDWGI",
     summary:
       "Six years coordinating residential and light commercial builds. Owns the schedule, the permits and the subcontractor calendar, and sends the update before anyone asks.",

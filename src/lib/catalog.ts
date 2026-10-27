@@ -1,6 +1,6 @@
 import { db, FeeTier, PublicCandidate, PUBLIC_CANDIDATE_COLUMNS } from "./db";
 import { isSampleId, SAMPLES } from "./samples";
-import { profileOf, TRAITS } from "./strengths";
+import { profileOf, TRAITS, wiredFor } from "./strengths";
 
 const DEFAULT_TIERS: FeeTier[] = [
   { id: "t1", max_salary: 100000, fee_cents: 500000, sort: 1 },
@@ -115,7 +115,7 @@ function matches(c: PublicCandidate, f: CatalogFilters, skip?: FilterKey) {
       c.location_region,
       prof.type?.name,
       ...[...prof.primary, ...prof.secondary].map((l) => TRAITS[l].label),
-      ...c.strengths,
+      ...wiredFor(c),
       ...c.highlights,
     ]
       .filter(Boolean)

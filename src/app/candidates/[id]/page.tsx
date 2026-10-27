@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CandidateCard, Strengths, WorksBest } from "@/components/CandidateCard";
+import { CandidateCard, HowTheyWork, Strengths, WorksBest } from "@/components/CandidateCard";
 import { ShortlistButton } from "@/components/Shortlist";
 import { allListed, getListed, getTiers, similarTo } from "@/lib/catalog";
 import { isSampleId } from "@/lib/samples";
+import { wiredFor } from "@/lib/strengths";
 import { Candidate, db, Hire, PublicCandidate, Unlock } from "@/lib/db";
 import { dateShort, feeFor, LEVEL_LABEL, lines, money, refCode, salaryRange, WORK_MODE_LABEL } from "@/lib/format";
 import { latestHire, markPaidFromSession } from "@/lib/hires";
@@ -94,10 +95,10 @@ function Profile({ c }: { c: PublicCandidate }) {
         {c.listed_at ? ` · listed ${dateShort(c.listed_at)}` : ""}
       </p>
       <h1 className={styles.headline}>{c.headline}</h1>
-      {c.strengths.length > 0 && (
+      {wiredFor(c).length > 0 && (
         <p className={styles.wired}>
           <span className="muted">Wired for </span>
-          <Strengths items={c.strengths} strong />
+          <Strengths items={wiredFor(c)} strong />
         </p>
       )}
       <div className={styles.tagsRow}>
@@ -117,6 +118,7 @@ function Profile({ c }: { c: PublicCandidate }) {
           ))}
         </ul>
       )}
+      <HowTheyWork c={c} />
     </>
   );
 }
