@@ -1,5 +1,7 @@
 import { db, FeeTier, PublicCandidate, PUBLIC_CANDIDATE_COLUMNS } from "./db";
 import { profileOf, TRAITS, wiredFor } from "./strengths";
+import { blockedIdsFor, isBlockedFor } from "./blocklist";
+import { currentOwner } from "./session";
 
 const DEFAULT_TIERS: FeeTier[] = [
   { id: "t1", max_salary: 100000, fee_cents: 500000, sort: 1 },
@@ -29,7 +31,9 @@ export async function allListed(): Promise<{ rows: PublicCandidate[] }> {
       .order("listed_at", { ascending: false });
     if (error) throw error;
     const rows = (data ?? []) as unknown as PublicCandidate[];
-    return { rows };
+    // Hide candidates who asked not to be shown to this owner's company.
+    const blocked = await blockedIdsFor(await currentOwner().catch(() => null));
+    return { rows: blocked.size ? rows.filter((r) => !blocked.has(r.id)) : rows };
   } catch (e) {
     console.error("catalog query failed", e);
   }
@@ -67,12 +71,13 @@ export type CatalogFilters = {
   mode?: string;
   region?: string;
   strength?: string;
+  industry?: string;
   pay?: string;
   saved?: string;
   sort?: string;
 };
 
-const FILTER_KEYS = ["role", "level", "mode", "region", "strength", "pay"] as const;
+const FILTER_KEYS = ["role", "level", "mode", "region", "strength", "pay", "industry"] as const;
 type FilterKey = (typeof FILTER_KEYS)[number];
 
 function valueOf(c: PublicCandidate, key: FilterKey): string[] {
@@ -87,6 +92,8 @@ function valueOf(c: PublicCandidate, key: FilterKey): string[] {
       return c.location_region ? [c.location_region] : [];
     case "strength":
       return strengthsOf(c);
+    case "industry":
+      return c.industry ? [c.industry] : [];
     case "pay": {
       const b = payBand(c);
       return b ? [b] : [];
@@ -179,11 +186,14 @@ export async function getListed(id: string): Promise<PublicCandidate | null> {
   try {
     const { data } = await db()
       .from("candidates")
-      .select(PUBLIC_CANDIDATE_COLUMNS)
+      .select(`${PUBLIC_CANDIDATE_COLUMNS}, never_show_to`)
       .eq("id", id)
       .eq("status", "listed")
       .maybeSingle();
-    return (data as unknown as PublicCandidate) ?? null;
+    if (!data) return null;
+    const { never_show_to, ...pub } = data as unknown as PublicCandidate & { never_show_to: string | null };
+    if (never_show_to && isBlockedFor(never_show_to, await currentOwner().catch(() => null))) return null;
+    return pub as PublicCandidate;
   } catch {
     return null;
   }

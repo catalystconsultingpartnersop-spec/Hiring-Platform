@@ -164,7 +164,7 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
   if (status === "listed") {
     const missing = [
       !record.role_category && "the role they want",
-      (record.strengths as string[]).length === 0 && !describe(record.working_genius as string | null) && "their assessment letters (or your own Wired for words)",
+      !describe(record.working_genius as string | null) && "their Working Genius result (at least the top two)",
     ].filter(Boolean);
     if (missing.length) return { error: `To list this candidate, fill in: ${missing.join(", ")}. Nothing was saved.` };
   }

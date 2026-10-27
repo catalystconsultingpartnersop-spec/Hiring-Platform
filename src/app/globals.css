@@ -230,11 +230,11 @@ img { max-width: 100%; }
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 22px;
+  gap: 8px;
+  padding: 16px 18px;
   background: var(--paper);
-  border: 1.5px solid var(--line);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   text-decoration: none;
   color: inherit;
   min-height: 100%;
@@ -242,13 +242,14 @@ img { max-width: 100%; }
 
 a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 
-.card-link { text-decoration: none; }
+.card-link { text-decoration: none; color: inherit; }
 .card-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
 .card-link:focus-visible { outline: none; }
 .card:has(.card-link:focus-visible) { outline: 3px solid var(--marigold); outline-offset: 2px; }
 
-.card .shortlist-btn { position: absolute; top: 14px; right: 14px; z-index: 2; }
-.card:has(.shortlist-btn) .card-top { padding-right: 38px; }
+.card .shortlist-btn { position: absolute; top: 10px; right: 10px; z-index: 2; min-width: 30px; height: 30px; }
+.card .shortlist-btn svg { width: 17px; height: 17px; }
+.card:has(.shortlist-btn) .card-top { padding-right: 32px; }
 
 .shortlist-btn {
   display: inline-flex;
@@ -271,14 +272,14 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 .works-best { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .works-type {
   display: inline-block;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  padding: 3px 11px;
+  padding: 2px 9px;
   border-radius: 999px;
   background: var(--ink);
   color: var(--paper);
 }
-.works-main { font-size: 14.5px; color: var(--ink); line-height: 1.45; }
+.works-main { font-size: 13.5px; color: var(--ink); line-height: 1.4; }
 .works-also { color: var(--ink-2); }
 .works-best-lg .works-type { font-size: 15px; padding: 5px 14px; }
 .works-best-lg .works-main { font-size: 17px; }
@@ -286,46 +287,53 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 .card-top {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
-  font-size: 13px;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
   color: var(--ink-2);
+  min-height: 24px;
 }
 
 .card-ref { font-variant-numeric: tabular-nums; color: var(--ink-3); }
 
-.card h3 { font-size: 22px; font-weight: 700; }
-
-.card-wired {
-  font-size: 15px;
-  line-height: 1.9;
+.card h3 {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
+.card-wired { font-size: 14px; line-height: 1.8; }
 .card-wired .lead { color: var(--ink-2); margin-right: 4px; }
 
 .card-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 14px;
-  font-size: 14px;
+  gap: 2px 12px;
+  font-size: 13px;
   color: var(--ink-2);
 }
 
 .card-foot {
   margin-top: auto;
-  padding-top: 14px;
-  border-top: 1px dashed var(--line);
+  padding-top: 10px;
+  border-top: 1px solid var(--wash);
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 14px;
+  font-size: 13px;
 }
 
-.card-foot strong { font-family: var(--display); font-size: 18px; }
+.card-foot strong { font-family: var(--display); font-size: 16px; }
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 14px;
 }
 
 /* ---------- Page sections ---------- */
@@ -388,7 +396,7 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 }
 
 .sort-select { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-2); }
-.sort-select .select { width: auto; padding: 8px 12px; font-size: 14px; }
+.sort-select .select { width: auto; padding: 6px 10px; font-size: 14px; border-width: 1px; }
 
 /* Horizontal shelf of cards, for "similar candidates" and home-page aisles */
 .shelf {
@@ -425,3 +433,14 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
   font-size: 14px;
   line-height: 1.5;
 }
+
+.assess-nudge {
+  margin-top: 22px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  background: var(--marigold-soft);
+  border: 1.5px solid var(--marigold);
+}
+.assess-nudge p + p, .assess-nudge p + .btn { margin-top: 8px; }
+.assess-nudge .btn { margin-top: 12px; }
+.assess-nudge-title { font-family: var(--display); font-weight: 700; font-size: 19px; }

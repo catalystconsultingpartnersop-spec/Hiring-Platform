@@ -122,7 +122,7 @@ ${candidateId ? `<p><a href="${siteUrl()}/admin/candidates/${candidateId}">Open 
     subject: `We got your application, ${full_name.split(" ")[0]}`,
     html: `<p>Hi ${escapeHtml(full_name.split(" ")[0])},</p>
 <p>Thanks for applying to ${escapeHtml(brandName())}. We'll be in touch to set up your first coaching conversation.</p>
-<p>Nothing is listed until you've seen and approved your profile, and your name is never shown publicly.</p>`,
+<p>Your name is never shown publicly. It's only shared with a business owner who signs an agreement with us.</p>`,
   });
 
   return { ok: true };

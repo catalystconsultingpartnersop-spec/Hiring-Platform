@@ -9,6 +9,7 @@ import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
 import { brandName, feeFor, money, refCode, siteUrl } from "@/lib/format";
 import { latestHire } from "@/lib/hires";
 import { requireOwner } from "@/lib/session";
+import { isBlockedFor } from "@/lib/blocklist";
 import { stripe } from "@/lib/stripe";
 
 export type SignState = { error?: string };
@@ -24,12 +25,7 @@ export async function signAgreement(candidateId: string, _prev: SignState, form:
 
   // Respect companies the candidate asked never to be shown to.
   const { data: priv } = await db().from("candidates").select("never_show_to, full_name").eq("id", candidateId).single();
-  const blocked = (priv?.never_show_to ?? "")
-    .split(/[\n,]/)
-    .map((s: string) => s.trim().toLowerCase())
-    .filter(Boolean);
-  const company = (owner.company ?? "").toLowerCase();
-  if (company.length > 1 && blocked.some((b: string) => company.includes(b) || b.includes(company))) {
+  if (isBlockedFor(priv?.never_show_to, owner)) {
     await logActivity(`owner:${owner.email}`, "unlock_blocked", { candidate: refCode(candidateId) });
     return { error: "This candidate isn't available to your company. Browse the others, or contact us with questions." };
   }

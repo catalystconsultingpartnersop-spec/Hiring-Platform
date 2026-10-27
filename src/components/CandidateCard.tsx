@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { PublicCandidate } from "@/lib/db";
-import { describe, profileOf, TRAITS, wiredFor } from "@/lib/strengths";
+import { describe, profileOf, TRAITS } from "@/lib/strengths";
 import { LEVEL_LABEL, WORK_MODE_LABEL, money, salaryRange } from "@/lib/format";
 import { ShortlistButton } from "./Shortlist";
 
@@ -22,7 +22,7 @@ const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
 const joinAnd = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}` : xs[0] ?? "");
 
 // "Works best as a Driver: getting people moving and finishing the job."
-export function WorksBest({ c, detail = false }: { c: PublicCandidate; detail?: boolean }) {
+export function WorksBest({ c, detail = false, compact = false }: { c: PublicCandidate; detail?: boolean; compact?: boolean }) {
   const p = profileOf(c.working_genius);
   if (!p.primary.length) return null;
   const main = p.primary.map((l) => lower(TRAITS[l].label));
@@ -32,7 +32,7 @@ export function WorksBest({ c, detail = false }: { c: PublicCandidate; detail?: 
       {p.type && <span className="works-type">{p.type.name}</span>}
       <p className="works-main">
         Best at {joinAnd(main)}
-        {also.length > 0 && <span className="works-also">. Also strong at {joinAnd(also)}</span>}.
+        {!compact && also.length > 0 && <span className="works-also">. Also strong at {joinAnd(also)}</span>}.
       </p>
     </div>
   );
@@ -69,7 +69,6 @@ export function CandidateCard({
   example?: boolean;
 }) {
   const salary = salaryRange(c.salary_min, c.salary_max);
-  const wired = wiredFor(c);
   const meta = [
     c.level ? LEVEL_LABEL[c.level] : null,
     c.location_region,
@@ -92,13 +91,7 @@ export function CandidateCard({
           c.headline
         )}
       </h3>
-      {wired.length > 0 && (
-        <p className="card-wired">
-          <span className="lead">Wired for</span>
-          <Strengths items={wired} />
-        </p>
-      )}
-      <WorksBest c={c} />
+      <WorksBest c={c} compact />
       {meta.length > 0 && (
         <div className="card-meta">
           {meta.map((m) => (

@@ -12,11 +12,11 @@ import { feeFor, LEVEL_LABEL, WORK_MODE_LABEL } from "@/lib/format";
 import { TRAIT_LIST, TRAITS } from "@/lib/strengths";
 import styles from "./catalog.module.css";
 import { FiltersToggle } from "./FiltersToggle";
-import { SortSelect } from "./SortSelect";
+import { ParamSelect } from "./SortSelect";
 
 export const dynamic = "force-dynamic";
 
-const KEYS = ["q", "role", "level", "mode", "region", "strength", "pay", "saved", "sort"] as const;
+const KEYS = ["q", "role", "level", "mode", "region", "strength", "pay", "industry", "saved", "sort"] as const;
 
 function href(f: CatalogFilters, change: Partial<CatalogFilters>) {
   const next = { ...f, ...change };
@@ -38,6 +38,8 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
   const roleCounts = facetCounts(all, f, "role");
   const allRoles = [...new Set(all.map((c) => c.role_category).filter((r): r is string => !!r))].sort();
   const regions = [...facetCounts(all, f, "region").entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const industryCounts = facetCounts(all, f, "industry");
+  const allIndustries = [...new Set(all.map((c) => c.industry).filter((r): r is string => !!r && r !== "Any"))].sort();
   const shortlistView = !!f.saved;
 
   const active: [keyof CatalogFilters, string][] = [];
@@ -46,6 +48,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
   if (f.pay) active.push(["pay", PAY_BANDS.find((b) => b[0] === f.pay)?.[1] ?? f.pay]);
   if (f.mode) active.push(["mode", WORK_MODE_LABEL[f.mode] ?? f.mode]);
   if (f.region) active.push(["region", f.region]);
+  if (f.industry) active.push(["industry", f.industry]);
   if (f.q) active.push(["q", `“${f.q}”`]);
 
   return (
@@ -85,7 +88,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
       <div className={`wrap ${styles.layout}`}>
         <FiltersToggle active={active.length}>
           <aside className={styles.rail} aria-label="Filters">
-            <Facet title="Best at" note="Their two strongest ways of working">
+            <Facet title="Best at">
               {TRAIT_LIST.map((t) => (
                 <FacetLink
                   key={t.key}
@@ -93,8 +96,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
                   n={facetCounts(all, f, "strength").get(t.key) ?? 0}
                   href={href(f, { strength: f.strength === t.key ? undefined : t.key })}
                 >
-                  {t.label}
-                  <small>{t.short}</small>
+                  <span title={t.short}>{t.label}</span>
                 </FacetLink>
               ))}
             </Facet>
@@ -110,6 +112,20 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
                 </FacetLink>
               ))}
             </Facet>
+            {allIndustries.length > 0 && (
+              <Facet title="Industry">
+                {allIndustries.map((v) => (
+                  <FacetLink
+                    key={v}
+                    on={f.industry === v}
+                    n={industryCounts.get(v) ?? 0}
+                    href={href(f, { industry: f.industry === v ? undefined : v })}
+                  >
+                    {v}
+                  </FacetLink>
+                ))}
+              </Facet>
+            )}
             <Facet title="Salary they want">
               {PAY_BANDS.map(([v, label]) => (
                 <FacetLink
@@ -152,7 +168,27 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
                 {rows.length} {rows.length === 1 ? "candidate" : "candidates"}
               </span>
             </h1>
-            <SortSelect value={f.sort ?? ""} />
+            <div className={styles.tools}>
+              {allIndustries.length > 0 && (
+                <ParamSelect
+                  param="industry"
+                  label="Industry"
+                  value={f.industry ?? ""}
+                  options={[["", "All industries"], ...allIndustries.map((i): [string, string] => [i, i])]}
+                />
+              )}
+              <ParamSelect
+                param="sort"
+                label="Sort by"
+                value={f.sort ?? ""}
+                options={[
+                  ["", "Newest"],
+                  ["fee", "Fee: low to high"],
+                  ["pay", "Salary: low to high"],
+                  ["experience", "Most experienced"],
+                ]}
+              />
+            </div>
           </div>
           {active.length > 0 && (
             <div className={styles.chips}>

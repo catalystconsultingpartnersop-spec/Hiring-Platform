@@ -19,7 +19,7 @@ function Label({ text, required }: { text: string; required?: boolean }) {
   );
 }
 
-export function ApplyForm() {
+export function ApplyForm({ assessmentUrl }: { assessmentUrl: string }) {
   const [state, action, pending] = useActionState<ApplyState, FormData>(submitApplication, {});
   const v = (k: string) => state.fields?.[k] ?? "";
 
@@ -111,10 +111,26 @@ export function ApplyForm() {
         />
       </label>
 
-      <label className="field">
-        <Label text="Working Genius result, if you've taken it" />
-        <input className="input" name="working_genius" placeholder="e.g. WDGEIT" defaultValue={v("working_genius")} />
-      </label>
+      <div className="assess-nudge">
+        <p className="assess-nudge-title">Take the Working Genius assessment first. We strongly recommend it.</p>
+        <p>
+          It takes about 10 minutes and shows the kind of work that energizes you and the kind that drains you. We use
+          it to match you with roles where you&rsquo;ll actually do well, and it has made a real difference for the
+          people we&rsquo;ve placed. You can still apply without it, and we&rsquo;ll go through it together later.
+        </p>
+        <a className="btn btn-small" href={assessmentUrl} target="_blank" rel="noopener noreferrer">
+          Take the assessment
+        </a>
+        <label className="field" style={{ marginTop: 16 }}>
+          <Label text="Your result, if you have it" />
+          <input
+            className="input"
+            name="working_genius"
+            placeholder="e.g. WDGEIT, or your top two like Wonder and Discernment"
+            defaultValue={v("working_genius")}
+          />
+        </label>
+      </div>
 
       <label className="field">
         <Label text="Resume" />
@@ -125,7 +141,10 @@ export function ApplyForm() {
       <label className="field">
         <Label text="Companies that should never see you" />
         <input className="input" name="never_show_to" placeholder="e.g. your current employer" defaultValue={v("never_show_to")} />
-        <small>We&rsquo;ll never reveal you to these companies, even if they sign up.</small>
+        <small>
+          We&rsquo;ll do our best to keep you hidden from anyone at these companies, but we can&rsquo;t guarantee it, since
+          someone could sign up with a personal email.
+        </small>
       </label>
 
       <input
@@ -143,8 +162,8 @@ export function ApplyForm() {
           <span className="req" aria-hidden="true">
             *{" "}
           </span>
-          I agree to be listed anonymously once I&rsquo;ve approved my profile, and for my name and contact details to
-          be shared with business owners who sign an agreement.
+          I agree to be listed anonymously, and for my name and contact details to be shared with business owners who
+          sign an agreement with us.
         </span>
       </label>
 
