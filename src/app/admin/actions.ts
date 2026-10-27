@@ -325,3 +325,17 @@ export async function setStaffRole(id: string, role: "admin" | "rep") {
   await logActivity(staffActor(me), "staff_role_changed", { staff_id: id, role });
   revalidatePath("/admin/team");
 }
+
+// ---------- Email check ----------
+
+export async function sendTestEmail(): Promise<FormState> {
+  const me = await requireAdmin();
+  const to = me.email || process.env.ADMIN_EMAIL || "";
+  if (!to) return { error: "ADMIN_EMAIL is missing in Vercel, so there's nowhere to send the test." };
+  const r = await sendEmail({
+    to,
+    subject: `Test email from ${brandName()}`,
+    html: "<p>If you're reading this, the site can send email.</p>",
+  });
+  return r.ok ? { ok: `Sent to ${to}. Check your inbox.` } : { error: `The email service said: ${r.error}` };
+}

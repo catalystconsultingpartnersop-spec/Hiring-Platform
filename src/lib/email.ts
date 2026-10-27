@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { db, logActivity } from "./db";
 
 export function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -13,11 +14,13 @@ export async function sendEmail(opts: {
   replyTo?: string;
   attachments?: { filename: string; content: Buffer }[];
 }) {
-  const key = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const key = process.env.RESEND_API_KEY?.trim();
+  const from = process.env.EMAIL_FROM?.trim();
   if (!key || !from) {
     console.log(`[email not sent: RESEND_API_KEY/EMAIL_FROM missing] to=${opts.to} subject=${opts.subject}\n${opts.html}`);
-    return { ok: false };
+    const missing = [!key && "RESEND_API_KEY", !from && "EMAIL_FROM"].filter(Boolean).join(" and ");
+    await logActivity("system", "email_failed", { to: opts.to, subject: opts.subject, error: `${missing} is missing in Vercel` });
+    return { ok: false, error: `${missing} is missing in Vercel` };
   }
   try {
     const resend = new Resend(key);
@@ -31,12 +34,16 @@ export async function sendEmail(opts: {
     });
     if (error) {
       console.error("email failed", error);
-      return { ok: false };
+      const msg = `${error.name ?? "error"}: ${error.message}`;
+      await logActivity("system", "email_failed", { to: opts.to, subject: opts.subject, error: msg });
+      return { ok: false, error: msg };
     }
     return { ok: true };
   } catch (e) {
     console.error("email failed", e);
-    return { ok: false };
+    const msg = e instanceof Error ? e.message : String(e);
+    await logActivity("system", "email_failed", { to: opts.to, subject: opts.subject, error: msg });
+    return { ok: false, error: msg };
   }
 }
 
@@ -46,10 +53,27 @@ export async function emailAdmin(
   extra: { replyTo?: string; attachments?: { filename: string; content: Buffer }[] } = {},
 ) {
   const to = process.env.ADMIN_EMAIL;
-  if (!to) return { ok: false };
+  if (!to) return { ok: false, error: "ADMIN_EMAIL is missing in Vercel" };
   return sendEmail({ to, subject, html, ...extra });
 }
 
 function wrap(body: string) {
   return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:#1c2433;max-width:560px">${body}</div>`;
+}
+
+// The most recent email failure in the last day, if any.
+export async function lastEmailProblem(): Promise<string | null> {
+  try {
+    const since = new Date(Date.now() - 864e5).toISOString();
+    const { data } = await db()
+      .from("activity_log")
+      .select("details")
+      .eq("action", "email_failed")
+      .gte("at", since)
+      .order("at", { ascending: false })
+      .limit(1);
+    return (data?.[0]?.details as { error?: string } | undefined)?.error ?? null;
+  } catch {
+    return null;
+  }
 }

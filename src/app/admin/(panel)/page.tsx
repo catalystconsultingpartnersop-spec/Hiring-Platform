@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { db, dbConfigProblem, Hire } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
+import { EmailCheck } from "./EmailCheck";
+import { lastEmailProblem } from "@/lib/email";
 import { dateShort, money, refCode } from "@/lib/format";
 import { markHired, refundHire, setUnlockFee } from "../actions";
 import styles from "./admin.module.css";
@@ -74,6 +76,15 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
     .reduce((s, h) => s + h.amount_cents, 0);
 
   const dbError = candErr ?? unlockErr;
+
+  // Most recent email failure in the last day, so problems are visible here.
+  const emailProblem = admin ? await lastEmailProblem() : null;
+  const rk = process.env.RESEND_API_KEY?.trim() ?? "";
+  const emailSettings = [
+    `RESEND_API_KEY ${rk ? `is set (starts with ${rk.slice(0, 3)}, ${rk.length} characters${rk !== process.env.RESEND_API_KEY ? ", has extra spaces" : ""})` : "is missing"}`,
+    `EMAIL_FROM ${process.env.EMAIL_FROM ? `is "${process.env.EMAIL_FROM}"` : "is missing"}`,
+    `ADMIN_EMAIL ${process.env.ADMIN_EMAIL ? `is ${process.env.ADMIN_EMAIL}` : "is missing"}`,
+  ].join("; ");
   if (dbError) console.error("admin dashboard query failed", dbError);
 
   return (
@@ -106,6 +117,8 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
           </div>
         )}
       </div>
+
+      {admin && <EmailCheck problem={emailProblem} settings={emailSettings} />}
 
       <h2 className={styles.h2}>Candidates</h2>
       <div className={styles.tabs}>
