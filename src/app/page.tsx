@@ -93,13 +93,12 @@ export default async function Home() {
             </li>
             <li>
               <h3>Sign to see who they are</h3>
-              <p>A short agreement unlocks their name, resume and contact details. Nothing to pay yet.</p>
+              <p>A short agreement and a card on file unlock their name, resume and contact details. Nothing is charged yet.</p>
             </li>
             <li>
               <h3>Pay when you decide to hire</h3>
               <p>
-                One flat fee, paid before the hire is confirmed. If the hire doesn&rsquo;t go through, it&rsquo;s
-                refunded.
+                One flat fee, charged when you decide to hire. No percentage of salary.
               </p>
             </li>
           </ol>

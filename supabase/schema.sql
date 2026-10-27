@@ -195,3 +195,14 @@ revoke all on staff_availability, onboarding_calls from anon, authenticated;
 
 -- ---------- Team passwords (same as migrations/004_team_passwords.sql) ----------
 alter table staff add column if not exists password_hash text;
+
+-- 005: card on file
+-- Card on file: owners add a card when they sign, and the fee is charged to it.
+alter table owners add column if not exists stripe_customer_id text;
+alter table owners add column if not exists card_pm text;
+alter table owners add column if not exists card_label text;
+
+alter table unlocks add column if not exists card_pm text;
+alter table unlocks add column if not exists card_label text;
+alter table unlocks add column if not exists confirmed_at timestamptz;
+-- (existing rows were grandfathered when this ran)

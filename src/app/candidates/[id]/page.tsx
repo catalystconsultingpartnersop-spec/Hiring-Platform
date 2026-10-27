@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import { notFound } from "next/navigation";
 import { CandidateCard, HowTheyWork, Strengths, WorksBest } from "@/components/CandidateCard";
 import { ShortlistButton } from "@/components/Shortlist";
@@ -26,7 +27,13 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
   }
   let unlock: Unlock | null = null;
   if (owner) {
-    const { data } = await db().from("unlocks").select("*").eq("owner_id", owner.id).eq("candidate_id", id).maybeSingle();
+    const { data } = await db()
+      .from("unlocks")
+      .select("*")
+      .eq("owner_id", owner.id)
+      .eq("candidate_id", id)
+      .not("confirmed_at", "is", null)
+      .maybeSingle();
     unlock = (data as Unlock) ?? null;
   }
 
@@ -145,7 +152,7 @@ function Teaser({
           <div className="panel">
             <p className="muted small">Flat fee if you hire</p>
             <p className={styles.fee}>{fee != null ? money(fee) : "Ask us"}</p>
-            <p className="small muted">No percentage of salary. Paid only when you decide to hire.</p>
+            <p className="small muted">No percentage of salary. Charged only when you decide to hire.</p>
             <Link className="btn btn-gold" href={`/candidates/${c.id}/unlock`} style={{ width: "100%", marginTop: 18 }}>
               See who this is
             </Link>
@@ -194,7 +201,9 @@ function Unlocked({
         Your candidates
       </Link>
       {justUnlocked && <p className="notice notice-good">Signed. Here&rsquo;s who they are. A copy of the agreement is in your email.</p>}
-      {paidNotice && <p className="notice notice-good">Payment received. Go ahead and make the hire.</p>}
+      {(paidNotice || hireNote === "paid") && (
+        <p className="notice notice-good">Payment received. Go ahead and make the hire.</p>
+      )}
       {hireNote === "cancelled" && <p className="notice">Payment cancelled. Nothing was charged.</p>}
       {hireNote === "requested" && (
         <p className="notice notice-gold">We&rsquo;ve been told you&rsquo;re ready to hire and will contact you with the fee.</p>
@@ -247,21 +256,30 @@ function Unlocked({
                 <p className="muted small">Your flat fee</p>
                 <p className={styles.fee}>{unlock.fee_cents != null ? money(unlock.fee_cents) : "Set with us"}</p>
                 <p className="small muted">
-                  When you decide to hire {c.full_name.split(" ")[0]}, pay here before confirming the hire. If it
-                  doesn&rsquo;t go through, you get a full refund.
+                  When you decide to hire {c.full_name.split(" ")[0]}, press the button below before confirming the
+                  hire.{unlock.card_label && unlock.fee_cents != null ? ` The fee is charged to your ${unlock.card_label}.` : ""}
                 </p>
                 <form action={startHire.bind(null, c.id)}>
-                  <button className="btn btn-gold" type="submit" style={{ width: "100%", marginTop: 18 }}>
-                    {status === "pending" ? "Finish payment" : "I've decided to hire"}
-                  </button>
+                  {unlock.card_label && unlock.fee_cents != null ? (
+                    <ConfirmButton
+                      className="btn btn-gold"
+                      style={{ width: "100%", marginTop: 18 }}
+                      message={`Charge ${money(unlock.fee_cents)} to your ${unlock.card_label} to hire ${c.full_name}?`}
+                    >
+                      I&rsquo;ve decided to hire
+                    </ConfirmButton>
+                  ) : (
+                    <button className="btn btn-gold" type="submit" style={{ width: "100%", marginTop: 18 }}>
+                      {status === "pending" ? "Finish payment" : "I've decided to hire"}
+                    </button>
+                  )}
                 </form>
               </>
             ) : status === "paid" ? (
               <>
                 <span className="tag tag-good">Paid {dateShort(hire!.paid_at)}</span>
                 <p className={styles.sideMsg}>
-                  You&rsquo;re all set to hire {c.full_name.split(" ")[0]}. If the hire doesn&rsquo;t go through,
-                  reply to your receipt email and we&rsquo;ll refund {money(hire!.amount_cents)}.
+                  You&rsquo;re all set to hire {c.full_name.split(" ")[0]}. Your receipt is in your email.
                 </p>
               </>
             ) : status === "hired" ? (
@@ -275,7 +293,9 @@ function Unlocked({
                 <p className={styles.sideMsg}>The fee of {money(hire!.amount_cents)} was refunded.</p>
               </>
             )}
-            <p className={`small muted ${styles.sideNote}`}>Agreement signed {dateShort(unlock.signed_at)}.</p>
+            <p className={`small muted ${styles.sideNote}`}>
+              Agreement signed {dateShort(unlock.signed_at)}.{unlock.card_label ? ` ${unlock.card_label} on file.` : ""}
+            </p>
           </div>
         </aside>
       </div>

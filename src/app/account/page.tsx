@@ -15,12 +15,14 @@ type Row = {
   hires: Hire[];
 };
 
-export default async function AccountPage() {
+export default async function AccountPage({ searchParams }: PageProps<"/account">) {
+  const sp = await searchParams;
   const owner = await requireOwner("/account");
   const { data } = await db()
     .from("unlocks")
     .select("id, candidate_id, signed_at, fee_cents, candidates(full_name, headline, status), hires(*)")
     .eq("owner_id", owner.id)
+    .not("confirmed_at", "is", null)
     .order("signed_at", { ascending: false });
   const rows = (data ?? []) as unknown as Row[];
 
@@ -30,8 +32,15 @@ export default async function AccountPage() {
         <h1>Your candidates</h1>
         <p>
           {owner.full_name}, {owner.company}. Everyone you&rsquo;ve signed for is here.
+          {owner.card_label ? ` Card on file: ${owner.card_label}.` : ""}
         </p>
       </div>
+      {sp.card === "failed" && (
+        <p className="notice notice-bad" role="alert" style={{ marginBottom: 20 }}>
+          We couldn&rsquo;t confirm your card, so nothing was unlocked and nothing was charged. Open the candidate and
+          try again.
+        </p>
+      )}
 
       {rows.length === 0 ? (
         <div className="panel panel-wash">

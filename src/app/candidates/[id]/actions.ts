@@ -5,8 +5,9 @@ import { redirect } from "next/navigation";
 import { AGREEMENT_VERSION, agreementText } from "@/lib/agreement";
 import { getListed, getTiers } from "@/lib/catalog";
 import { db, logActivity, Unlock } from "@/lib/db";
-import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
-import { brandName, feeFor, money, refCode, siteUrl } from "@/lib/format";
+import { emailAdmin, escapeHtml } from "@/lib/email";
+import { brandName, contactPhone, feeFor, refCode, siteUrl } from "@/lib/format";
+import { cardSetupUrl, chargeCardOnFile, unlockWithSavedCard } from "@/lib/cards";
 import { latestHire } from "@/lib/hires";
 import { requireOwner } from "@/lib/session";
 import { isBlockedFor } from "@/lib/blocklist";
@@ -41,37 +42,50 @@ export async function signAgreement(candidateId: string, _prev: SignState, form:
   });
 
   const h = await headers();
-  const { error } = await db().from("unlocks").insert({
-    owner_id: owner.id,
-    candidate_id: candidateId,
+  const signature = {
     signed_name: signedName,
     agreement_version: AGREEMENT_VERSION,
     agreement_text: text,
     fee_cents: fee,
     ip: (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || null,
     user_agent: h.get("user-agent"),
-  });
-  if (error && error.code !== "23505") return { error: "Something went wrong saving your signature. Try again." };
+    signed_at: new Date().toISOString(),
+  };
 
-  if (!error) {
-    const ref = refCode(candidateId);
-    await logActivity(`owner:${owner.email}`, "agreement_signed", { candidate: ref, fee_cents: fee });
-    await sendEmail({
-      to: owner.email,
-      subject: `Your signed agreement for candidate ${ref}`,
-      html: `<p>Here is a copy of the agreement you signed on ${new Date().toLocaleDateString("en-US", { dateStyle: "long" })}.</p>
-<pre style="white-space:pre-wrap;font-family:inherit;background:#eef1f6;padding:14px;border-radius:8px">${escapeHtml(text)}
+  // One agreement per owner and candidate. If they signed before but never
+  // added a card, the new signature replaces the old one.
+  const { data: existing } = await db()
+    .from("unlocks")
+    .select("*")
+    .eq("owner_id", owner.id)
+    .eq("candidate_id", candidateId)
+    .maybeSingle();
+  if (existing?.confirmed_at) redirect(`/candidates/${candidateId}`);
+  const { data: row, error } = existing
+    ? await db().from("unlocks").update(signature).eq("id", existing.id).select("*").single()
+    : await db()
+        .from("unlocks")
+        .insert({ owner_id: owner.id, candidate_id: candidateId, ...signature })
+        .select("*")
+        .single();
+  if (error || !row) return { error: "Something went wrong saving your signature. Try again." };
+  const unlock = row as Unlock;
 
-Signed: ${escapeHtml(signedName)}</pre>
-<p><a href="${siteUrl()}/candidates/${candidateId}">View the candidate</a></p>`,
-    });
-    await emailAdmin(
-      `Unlocked: ${owner.company} signed for ${priv?.full_name} (${ref})`,
-      `<p><strong>${escapeHtml(owner.company ?? "")}</strong> (${escapeHtml(owner.full_name ?? "")}, ${escapeHtml(owner.email)}${owner.phone ? `, ${escapeHtml(owner.phone)}` : ""}) signed the agreement for <strong>${escapeHtml(priv?.full_name ?? "")}</strong> (${ref}). Fee: ${money(fee)}.</p>
-<p><a href="${siteUrl()}/admin">Open the admin dashboard</a></p>`,
-    );
+  // A card is already on file: use it, unless they asked to add a new one.
+  if (owner.card_pm && form.get("new_card") !== "1") {
+    await unlockWithSavedCard(unlock, owner);
+    redirect(`/candidates/${candidateId}?unlocked=1`);
   }
-  redirect(`/candidates/${candidateId}?unlocked=1`);
+
+  let url: string;
+  try {
+    url = await cardSetupUrl(owner, unlock.id, candidateId);
+  } catch (e) {
+    console.error("card setup failed", e);
+    await logActivity(`owner:${owner.email}`, "card_setup_failed", { candidate: refCode(candidateId), error: String(e) });
+    return { error: `We couldn't open the card form. Try again in a minute, or text or call ${contactPhone()}.` };
+  }
+  redirect(url);
 }
 
 export async function startHire(candidateId: string) {
@@ -81,6 +95,7 @@ export async function startHire(candidateId: string) {
     .select("*")
     .eq("owner_id", owner.id)
     .eq("candidate_id", candidateId)
+    .not("confirmed_at", "is", null)
     .maybeSingle();
   const unlock = data as Unlock | null;
   if (!unlock) redirect(`/candidates/${candidateId}`);
@@ -101,6 +116,12 @@ export async function startHire(candidateId: string) {
     redirect(`/candidates/${candidateId}?hire=requested`);
   }
 
+  // Charge the card on file. If it's declined, fall back to paying on Stripe.
+  if (unlock.card_pm) {
+    const r = await chargeCardOnFile(unlock.id, `owner:${owner.email}`);
+    if (r.ok) redirect(`/candidates/${candidateId}?hire=paid`);
+  }
+
   const { data: hire, error } = await db()
     .from("hires")
     .insert({ unlock_id: unlock.id, amount_cents: unlock.fee_cents, status: "pending" })
@@ -119,7 +140,7 @@ export async function startHire(candidateId: string) {
           unit_amount: unlock.fee_cents,
           product_data: {
             name: `Hiring fee: ${cand?.full_name} (${ref})`,
-            description: "One-time flat fee. Refunded in full if the hire doesn't go through.",
+            description: "One-time flat placement fee.",
           },
         },
       },

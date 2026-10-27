@@ -28,22 +28,28 @@ export async function markPaidFromSession(sessionId: string) {
   if (hire.status !== "pending") return { ok: true as const, already: true };
 
   const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
-  const { data: updated } = await db()
+  return markHirePaid(hireId, paymentIntent ?? null);
+}
+
+// Marks a pending hire paid and sends the receipt. Safe to call twice.
+export async function markHirePaid(hireId: string, paymentIntent: string | null, viaCardOnFile = false) {
+  const { data: hire } = await db()
     .from("hires")
-    .update({ status: "paid", paid_at: new Date().toISOString(), stripe_payment_intent: paymentIntent ?? null })
+    .update({ status: "paid", paid_at: new Date().toISOString(), stripe_payment_intent: paymentIntent })
     .eq("id", hireId)
     .eq("status", "pending")
-    .select("id")
+    .select("*")
     .maybeSingle();
-  if (!updated) return { ok: true as const, already: true };
+  if (!hire) return { ok: true as const, already: true };
 
   const { data: unlock } = await db()
     .from("unlocks")
-    .select("candidate_id, owners(email, full_name, company), candidates(full_name)")
+    .select("candidate_id, card_label, owners(email, full_name, company), candidates(full_name)")
     .eq("id", hire.unlock_id)
     .single();
   const owner = (unlock as unknown as { owners: { email: string; full_name: string; company: string } }).owners;
   const cand = (unlock as unknown as { candidates: { full_name: string } }).candidates;
+  const card = (unlock as unknown as { card_label: string | null }).card_label;
   const ref = refCode(unlock!.candidate_id);
 
   await logActivity(`owner:${owner.email}`, "hire_paid", { hire_id: hireId, candidate: ref, amount_cents: hire.amount_cents });
@@ -52,8 +58,8 @@ export async function markPaidFromSession(sessionId: string) {
     to: owner.email,
     subject: `Receipt: ${money(hire.amount_cents)} for ${cand.full_name} (${ref})`,
     html: `<p>Hi ${escapeHtml(owner.full_name ?? "")},</p>
-<p>We received your payment of <strong>${money(hire.amount_cents)}</strong> for hiring ${escapeHtml(cand.full_name)} (${ref}).</p>
-<p>Go ahead and make the hire. If it doesn't go through, reply to this email and we'll refund you in full.</p>
+<p>We received your payment of <strong>${money(hire.amount_cents)}</strong> for hiring ${escapeHtml(cand.full_name)} (${ref})${viaCardOnFile && card ? `, charged to your ${escapeHtml(card)}` : ""}.</p>
+<p>Go ahead and make the hire. Congratulations.</p>
 <p>Thank you,<br>${escapeHtml(brandName())}</p>`,
   });
   await emailAdmin(

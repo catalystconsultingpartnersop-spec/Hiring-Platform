@@ -12,7 +12,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/resume/[id]">) 
   if (!allowed) {
     const owner = await currentOwner();
     if (owner) {
-      const { data } = await db().from("unlocks").select("id").eq("owner_id", owner.id).eq("candidate_id", id).maybeSingle();
+      const { data } = await db().from("unlocks").select("id").eq("owner_id", owner.id).eq("candidate_id", id).not("confirmed_at", "is", null).maybeSingle();
       allowed = !!data;
     }
   }

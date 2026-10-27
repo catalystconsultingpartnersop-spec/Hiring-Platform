@@ -5,7 +5,7 @@ import { requireStaff } from "@/lib/session";
 import { EmailCheck } from "./EmailCheck";
 import { lastEmailProblem } from "@/lib/email";
 import { dateShort, money, refCode } from "@/lib/format";
-import { markHired, refundHire, setUnlockFee } from "../actions";
+import { chargeAgreement, markHired, refundHire, setUnlockFee } from "../actions";
 import styles from "./admin.module.css";
 
 const VIEWS = [
@@ -35,6 +35,8 @@ type UnlockRow = {
   signed_at: string;
   signed_name: string;
   fee_cents: number | null;
+  card_label: string | null;
+  confirmed_at: string | null;
   candidates: { full_name: string };
   owners: { email: string; full_name: string | null; company: string | null; phone: string | null };
   hires: Hire[];
@@ -62,7 +64,7 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
       .order("created_at", { ascending: false }),
     db()
       .from("unlocks")
-      .select("id, candidate_id, signed_at, signed_name, fee_cents, candidates(full_name), owners(email, full_name, company, phone), hires(*)")
+      .select("*, candidates(full_name), owners(email, full_name, company, phone), hires(*)")
       .order("signed_at", { ascending: false })
       .limit(100),
   ]);
@@ -118,6 +120,16 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
         )}
       </div>
 
+      {sp.charged === "1" && (
+        <p className="notice notice-good" role="status" style={{ marginTop: 20 }}>
+          Charged. The owner was emailed a receipt.
+        </p>
+      )}
+      {typeof sp.charge_error === "string" && (
+        <p className="notice notice-bad" role="alert" style={{ marginTop: 20 }}>
+          The card wasn&rsquo;t charged: {sp.charge_error}
+        </p>
+      )}
       {sp.password === "set" && (
         <p className="notice notice-good" role="status" style={{ marginTop: 20 }}>
           Password saved. Next time, sign in with your email and password.
@@ -202,7 +214,12 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
                       <Link href={`/admin/candidates/${u.candidate_id}`}>{u.candidates.full_name}</Link>
                       <div className="small muted">{refCode(u.candidate_id)}</div>
                     </td>
-                    <td>{dateShort(u.signed_at)}</td>
+                    <td>
+                      {dateShort(u.signed_at)}
+                      <div className="small muted">
+                        {u.confirmed_at ? u.card_label ?? "Card on file" : "Card not added, not unlocked"}
+                      </div>
+                    </td>
                     <td>
                       {u.fee_cents != null ? (
                         money(u.fee_cents)
@@ -217,7 +234,19 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
                     </td>
                     <td>
                       {!hire ? (
-                        <span className="tag">Considering</span>
+                        <div className={styles.inline}>
+                          <span className="tag">Considering</span>
+                          {u.confirmed_at && u.card_label && u.fee_cents != null && (
+                            <form action={chargeAgreement.bind(null, u.id)}>
+                              <ConfirmButton
+                                className="btn btn-small btn-ghost"
+                                message={`Charge ${money(u.fee_cents)} to ${u.owners.company}'s ${u.card_label} now? They'll get a receipt by email.`}
+                              >
+                                Charge card
+                              </ConfirmButton>
+                            </form>
+                          )}
+                        </div>
                       ) : hire.status === "pending" ? (
                         <span className="tag">Checkout opened</span>
                       ) : hire.status === "paid" ? (

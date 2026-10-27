@@ -93,6 +93,9 @@ export type Owner = {
   full_name: string | null;
   company: string | null;
   phone: string | null;
+  stripe_customer_id?: string | null;
+  card_pm?: string | null; // saved card (Stripe payment method)
+  card_label?: string | null; // e.g. "Visa ending 4242"
 };
 
 export type Unlock = {
@@ -104,6 +107,9 @@ export type Unlock = {
   agreement_text: string;
   fee_cents: number | null;
   signed_at: string;
+  card_pm?: string | null;
+  card_label?: string | null;
+  confirmed_at?: string | null; // set once a card is on file; until then nothing is unlocked
 };
 
 export type Hire = {

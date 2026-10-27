@@ -159,7 +159,8 @@ export async function endOwnerSession() {
 export async function currentOwner(): Promise<Owner | null> {
   const id = readToken((await cookies()).get(OWNER_COOKIE)?.value);
   if (!id) return null;
-  const { data } = await db().from("owners").select("id, email, full_name, company, phone").eq("id", id).maybeSingle();
+  // "*" so the page keeps working even before newer columns exist.
+  const { data } = await db().from("owners").select("*").eq("id", id).maybeSingle();
   return (data as Owner) ?? null;
 }
 

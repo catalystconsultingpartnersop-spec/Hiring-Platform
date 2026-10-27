@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { confirmCardSetup } from "@/lib/cards";
 import { markPaidFromSession } from "@/lib/hires";
 import { stripe } from "@/lib/stripe";
 
@@ -19,7 +20,8 @@ export async function POST(req: Request) {
 
   if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
     try {
-      await markPaidFromSession(event.data.object.id);
+      if (event.data.object.mode === "setup") await confirmCardSetup(event.data.object.id);
+      else await markPaidFromSession(event.data.object.id);
     } catch (e) {
       console.error("webhook handling failed", e);
       return new NextResponse("Error", { status: 500 });

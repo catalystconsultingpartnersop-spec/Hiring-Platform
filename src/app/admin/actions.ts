@@ -21,6 +21,7 @@ import {
 } from "@/lib/session";
 import { stripe } from "@/lib/stripe";
 import { cancelCall } from "@/lib/calls";
+import { chargeCardOnFile } from "@/lib/cards";
 import { describe, suggestedHeadline } from "@/lib/strengths";
 import { RESUME_CONTENT_TYPE, resumeKind } from "@/lib/resume";
 
@@ -317,6 +318,15 @@ export async function setUnlockFee(unlockId: string, form: FormData) {
   await db().from("unlocks").update({ fee_cents: cents }).eq("id", unlockId);
   await logActivity("admin", "unlock_fee_set", { unlock_id: unlockId, fee_cents: cents });
   revalidatePath("/admin");
+}
+
+// Charges the fee to the owner's card on file (e.g. they hired without
+// pressing the button, or the fee was set by hand).
+export async function chargeAgreement(unlockId: string) {
+  const me = await requireAdmin();
+  const r = await chargeCardOnFile(unlockId, staffActor(me));
+  revalidatePath("/admin");
+  redirect(r.ok ? "/admin?charged=1" : `/admin?charge_error=${encodeURIComponent(r.error)}`);
 }
 
 export async function markHired(hireId: string) {
