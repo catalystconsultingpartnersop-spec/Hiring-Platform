@@ -109,6 +109,7 @@ export type Unlock = {
   signed_at: string;
   card_pm?: string | null;
   card_label?: string | null;
+  ip?: string | null;
   confirmed_at?: string | null; // set once a card is on file; until then nothing is unlocked
 };
 

@@ -1,0 +1,69 @@
+.doc {
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  padding: clamp(20px, 4vw, 40px);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.title {
+  font-family: var(--display);
+  font-size: clamp(20px, 3vw, 26px);
+  line-height: 1.2;
+  margin: 0;
+}
+.subtitle { color: var(--ink-2); margin: 6px 0 18px; padding-bottom: 18px; border-bottom: 1.5px solid var(--line); }
+.heading {
+  font-family: var(--display);
+  font-size: 16.5px;
+  margin: 26px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  font-size: 13px;
+  flex: none;
+}
+.para { margin: 8px 0; }
+.clause, .item { display: flex; gap: 10px; margin: 8px 0; }
+.item { margin-left: 30px; }
+.clauseNum { font-weight: 700; min-width: 30px; flex: none; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.signature {
+  margin-top: 28px;
+  padding: 16px 18px;
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius);
+}
+.sigLabel { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); margin: 0; }
+.sigName { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 24px; margin: 4px 0; }
+.sigMeta { font-size: 13.5px; color: var(--ink-2); margin: 0; }
+
+.terms {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 0 0 20px;
+}
+.terms > div { background: var(--wash); padding: 14px 16px; }
+.terms dt { font-size: 12.5px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; }
+.terms dd { margin: 4px 0 0; font-weight: 700; font-size: 15.5px; line-height: 1.35; }
+
+@media (max-width: 560px) {
+  .item { margin-left: 12px; }
+}
+@media print {
+  .doc { border: 0; padding: 0; }
+}

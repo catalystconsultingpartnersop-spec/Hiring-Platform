@@ -1,8 +1,9 @@
 import type Stripe from "stripe";
 import { db, logActivity, Owner, Unlock } from "./db";
+import { agreementEmailHtml } from "./agreementView";
 import { emailAdmin, escapeHtml, sendEmail } from "./email";
 import { money, refCode, siteUrl } from "./format";
-import { markHirePaid } from "./hires";
+import { HireDetails, markHirePaid } from "./hires";
 import { stripe } from "./stripe";
 
 // Card on file: owners add a card when they sign an agreement (nothing is
@@ -86,11 +87,17 @@ async function activate(unlock: Unlock, owner: Owner, pmId: string, label: strin
   await sendEmail({
     to: owner.email,
     subject: `Your signed agreement for candidate ${ref}`,
-    html: `<p>Here is a copy of the agreement you signed on ${new Date(unlock.signed_at).toLocaleDateString("en-US", { dateStyle: "long" })}. Your ${escapeHtml(label)} is on file. Nothing has been charged.</p>
-<pre style="white-space:pre-wrap;font-family:inherit;background:#eef1f6;padding:14px;border-radius:8px">${escapeHtml(unlock.agreement_text)}
-
-Signed: ${escapeHtml(unlock.signed_name)}</pre>
-<p><a href="${siteUrl()}/candidates/${unlock.candidate_id}">View the candidate</a></p>`,
+    html: `<p>Hi ${escapeHtml((owner.full_name ?? "").split(" ")[0])},</p>
+<p>Thanks for signing. Here is your copy of the agreement for candidate ${ref}. Your <strong>${escapeHtml(label)}</strong> is on file. <strong>Nothing has been charged.</strong></p>
+<p style="margin:18px 0"><a href="${siteUrl()}/candidates/${unlock.candidate_id}" style="display:inline-block;background:#f2b300;color:#17213a;padding:11px 18px;border-radius:999px;text-decoration:none;font-weight:bold">See the candidate</a>
+&nbsp; <a href="${siteUrl()}/account/agreements/${unlock.id}" style="color:#17213a">View or print the agreement</a></p>
+${agreementEmailHtml(unlock.agreement_text, {
+  name: unlock.signed_name,
+  company: owner.company ?? "",
+  email: owner.email,
+  signedAt: unlock.signed_at,
+  ip: unlock.ip,
+})}`,
   });
   await emailAdmin(
     `Unlocked: ${owner.company} signed for ${cand?.full_name} (${ref})`,
@@ -105,6 +112,7 @@ export async function chargeCardOnFile(
   unlockId: string,
   actor: string,
   amountCents?: number,
+  details: HireDetails = {},
 ): Promise<{ ok: true; hireId: string } | { ok: false; error: string }> {
   const { data } = await db().from("unlocks").select("*, owners(*)").eq("id", unlockId).maybeSingle();
   if (!data) return { ok: false, error: "Agreement not found." };
@@ -133,13 +141,19 @@ export async function chargeCardOnFile(
         off_session: true,
         confirm: true,
         description: `Placement fee, candidate ${ref}`,
-        metadata: { hire_id: hire.id, candidate_ref: ref, owner_email: owner.email },
+        metadata: {
+          hire_id: hire.id,
+          candidate_ref: ref,
+          owner_email: owner.email,
+          job_title: details.jobTitle ?? "",
+          start_date: details.startDate ?? "",
+        },
       },
       { idempotencyKey: `hire_${hire.id}` },
     );
     if (pi.status !== "succeeded") throw new Error(`Payment status: ${pi.status}`);
     await logActivity(actor, "fee_charged_to_card", { candidate: ref, amount_cents: amount });
-    await markHirePaid(hire.id, pi.id, true);
+    await markHirePaid(hire.id, pi.id, true, details);
     return { ok: true, hireId: hire.id };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

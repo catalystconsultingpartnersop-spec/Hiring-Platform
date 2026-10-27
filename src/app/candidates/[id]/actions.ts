@@ -8,6 +8,7 @@ import { db, logActivity, Unlock } from "@/lib/db";
 import { emailAdmin, escapeHtml } from "@/lib/email";
 import { brandName, contactPhone, feeFor, refCode, siteUrl } from "@/lib/format";
 import { cardSetupUrl, chargeCardOnFile, unlockWithSavedCard } from "@/lib/cards";
+import { HireDetails } from "@/lib/hires";
 import { latestHire } from "@/lib/hires";
 import { requireOwner } from "@/lib/session";
 import { isBlockedFor } from "@/lib/blocklist";
@@ -88,8 +89,10 @@ export async function signAgreement(candidateId: string, _prev: SignState, form:
   redirect(url);
 }
 
-export async function startHire(candidateId: string) {
-  const owner = await requireOwner(`/candidates/${candidateId}`);
+// "I've decided to hire": the owner confirms on /candidates/[id]/hire.
+export async function startHire(candidateId: string, form: FormData) {
+  const hirePage = `/candidates/${candidateId}/hire`;
+  const owner = await requireOwner(hirePage);
   const { data } = await db()
     .from("unlocks")
     .select("*")
@@ -102,24 +105,30 @@ export async function startHire(candidateId: string) {
 
   const existing = await latestHire(unlock.id);
   if (existing && (existing.status === "paid" || existing.status === "hired")) redirect(`/candidates/${candidateId}`);
+  if (form.get("confirm") !== "on") redirect(`${hirePage}?error=confirm`);
 
+  const details: HireDetails = {
+    jobTitle: String(form.get("job_title") ?? "").trim().slice(0, 120) || undefined,
+    startDate: /^\d{4}-\d{2}-\d{2}$/.test(String(form.get("start_date") ?? "")) ? String(form.get("start_date")) : undefined,
+  };
   const { data: cand } = await db().from("candidates").select("full_name").eq("id", candidateId).single();
   const ref = refCode(candidateId);
+  await logActivity(`owner:${owner.email}`, "hire_decided", { candidate: ref, ...details });
 
   if (unlock.fee_cents == null) {
     // Fee is set by hand for this candidate: let Heshy know instead of charging.
-    await logActivity(`owner:${owner.email}`, "hire_requested_manual_fee", { candidate: ref });
     await emailAdmin(
       `Ready to hire: ${owner.company} wants ${cand?.full_name} (${ref}), fee to be set`,
-      `<p>${escapeHtml(owner.company ?? "")} (${escapeHtml(owner.email)}) decided to hire ${escapeHtml(cand?.full_name ?? "")} (${ref}). This candidate's fee is set by hand, so contact them with the amount.</p>`,
+      `<p>${escapeHtml(owner.company ?? "")} (${escapeHtml(owner.email)}) decided to hire ${escapeHtml(cand?.full_name ?? "")} (${ref}).${details.jobTitle ? ` Role: ${escapeHtml(details.jobTitle)}.` : ""}${details.startDate ? ` Start: ${details.startDate}.` : ""} This candidate's fee is set by hand, so contact them with the amount.</p>`,
     );
     redirect(`/candidates/${candidateId}?hire=requested`);
   }
 
-  // Charge the card on file. If it's declined, fall back to paying on Stripe.
-  if (unlock.card_pm) {
-    const r = await chargeCardOnFile(unlock.id, `owner:${owner.email}`);
+  // Charge the card on file, unless they chose to pay with a different card.
+  if (unlock.card_pm && form.get("other_card") !== "1") {
+    const r = await chargeCardOnFile(unlock.id, `owner:${owner.email}`, undefined, details);
     if (r.ok) redirect(`/candidates/${candidateId}?hire=paid`);
+    redirect(`${hirePage}?error=declined`);
   }
 
   const { data: hire, error } = await db()
@@ -127,30 +136,44 @@ export async function startHire(candidateId: string) {
     .insert({ unlock_id: unlock.id, amount_cents: unlock.fee_cents, status: "pending" })
     .select("id")
     .single();
-  if (error || !hire) throw new Error("Could not start the payment.");
+  if (error || !hire) redirect(`${hirePage}?error=failed`);
 
-  const session = await stripe().checkout.sessions.create({
-    mode: "payment",
-    customer_email: owner.email,
-    line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency: "usd",
-          unit_amount: unlock.fee_cents,
-          product_data: {
-            name: `Hiring fee: ${cand?.full_name} (${ref})`,
-            description: "One-time flat placement fee.",
+  let url: string;
+  try {
+    const session = await stripe().checkout.sessions.create({
+      mode: "payment",
+      customer_email: owner.stripe_customer_id ? undefined : owner.email,
+      customer: owner.stripe_customer_id ?? undefined,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "usd",
+            unit_amount: unlock.fee_cents,
+            product_data: {
+              name: `Placement fee: ${cand?.full_name} (${ref})`,
+              description: "One-time flat fee under your signed agreement.",
+            },
           },
         },
+      ],
+      metadata: {
+        hire_id: hire.id,
+        candidate_ref: ref,
+        owner_email: owner.email,
+        job_title: details.jobTitle ?? "",
+        start_date: details.startDate ?? "",
       },
-    ],
-    metadata: { hire_id: hire.id, candidate_ref: ref, owner_email: owner.email },
-    success_url: `${siteUrl()}/candidates/${candidateId}?paid={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${siteUrl()}/candidates/${candidateId}?hire=cancelled`,
-  });
-
-  await db().from("hires").update({ stripe_session_id: session.id }).eq("id", hire.id);
+      success_url: `${siteUrl()}/candidates/${candidateId}?paid={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${siteUrl()}${hirePage}?error=cancelled`,
+    });
+    await db().from("hires").update({ stripe_session_id: session.id }).eq("id", hire.id);
+    url = session.url!;
+  } catch (e) {
+    console.error("checkout failed", e);
+    await db().from("hires").delete().eq("id", hire.id).eq("status", "pending");
+    redirect(`${hirePage}?error=failed`);
+  }
   await logActivity(`owner:${owner.email}`, "hire_checkout_started", { candidate: ref, amount_cents: unlock.fee_cents });
-  redirect(session.url!);
+  redirect(url);
 }

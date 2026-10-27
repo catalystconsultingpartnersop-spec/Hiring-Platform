@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ConfirmButton } from "@/components/ConfirmButton";
 import { notFound } from "next/navigation";
 import { CandidateCard, HowTheyWork, Strengths, WorksBest } from "@/components/CandidateCard";
 import { ShortlistButton } from "@/components/Shortlist";
@@ -9,7 +8,6 @@ import { Candidate, db, Hire, PublicCandidate, Unlock } from "@/lib/db";
 import { dateShort, feeFor, LEVEL_LABEL, lines, money, refCode, salaryRange, WORK_MODE_LABEL } from "@/lib/format";
 import { latestHire, markPaidFromSession } from "@/lib/hires";
 import { currentOwner } from "@/lib/session";
-import { startHire } from "./actions";
 import styles from "./detail.module.css";
 
 export const dynamic = "force-dynamic";
@@ -201,8 +199,12 @@ function Unlocked({
         Your candidates
       </Link>
       {justUnlocked && <p className="notice notice-good">Signed. Here&rsquo;s who they are. A copy of the agreement is in your email.</p>}
-      {(paidNotice || hireNote === "paid") && (
-        <p className="notice notice-good">Payment received. Go ahead and make the hire.</p>
+      {(paidNotice || hireNote === "paid") && hire && (
+        <div className="notice notice-good" role="status">
+          <strong>Payment received: {money(hire.amount_cents)}.</strong> Go ahead and make the offer to{" "}
+          {c.full_name.split(" ")[0]}. Your receipt is in your email, or{" "}
+          <Link href={`/account/receipts/${hire.id}`}>view it here</Link>.
+        </div>
       )}
       {hireNote === "cancelled" && <p className="notice">Payment cancelled. Nothing was charged.</p>}
       {hireNote === "requested" && (
@@ -256,30 +258,19 @@ function Unlocked({
                 <p className="muted small">Your flat fee</p>
                 <p className={styles.fee}>{unlock.fee_cents != null ? money(unlock.fee_cents) : "Set with us"}</p>
                 <p className="small muted">
-                  When you decide to hire {c.full_name.split(" ")[0]}, press the button below before confirming the
-                  hire.{unlock.card_label && unlock.fee_cents != null ? ` The fee is charged to your ${unlock.card_label}.` : ""}
+                  When you decide to hire {c.full_name.split(" ")[0]}, press the button below. You&rsquo;ll see exactly
+                  what happens before anything is charged.
                 </p>
-                <form action={startHire.bind(null, c.id)}>
-                  {unlock.card_label && unlock.fee_cents != null ? (
-                    <ConfirmButton
-                      className="btn btn-gold"
-                      style={{ width: "100%", marginTop: 18 }}
-                      message={`Charge ${money(unlock.fee_cents)} to your ${unlock.card_label} to hire ${c.full_name}?`}
-                    >
-                      I&rsquo;ve decided to hire
-                    </ConfirmButton>
-                  ) : (
-                    <button className="btn btn-gold" type="submit" style={{ width: "100%", marginTop: 18 }}>
-                      {status === "pending" ? "Finish payment" : "I've decided to hire"}
-                    </button>
-                  )}
-                </form>
+                <Link className="btn btn-gold" href={`/candidates/${c.id}/hire`} style={{ width: "100%", marginTop: 18 }}>
+                  I&rsquo;ve decided to hire
+                </Link>
               </>
             ) : status === "paid" ? (
               <>
                 <span className="tag tag-good">Paid {dateShort(hire!.paid_at)}</span>
                 <p className={styles.sideMsg}>
-                  You&rsquo;re all set to hire {c.full_name.split(" ")[0]}. Your receipt is in your email.
+                  You&rsquo;re all set to hire {c.full_name.split(" ")[0]}.{" "}
+                  <Link href={`/account/receipts/${hire!.id}`}>View your receipt</Link>
                 </p>
               </>
             ) : status === "hired" ? (
@@ -294,7 +285,8 @@ function Unlocked({
               </>
             )}
             <p className={`small muted ${styles.sideNote}`}>
-              Agreement signed {dateShort(unlock.signed_at)}.{unlock.card_label ? ` ${unlock.card_label} on file.` : ""}
+              <Link href={`/account/agreements/${unlock.id}`}>Agreement</Link> signed {dateShort(unlock.signed_at)}.
+              {unlock.card_label ? ` ${unlock.card_label} on file.` : ""}
             </p>
           </div>
         </aside>

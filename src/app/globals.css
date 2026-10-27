@@ -504,3 +504,10 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
   margin-top: 14px;
 }
 .tp-time.on { background: var(--marigold); border-color: var(--marigold); }
+
+/* Printing an agreement or receipt: just the document. */
+@media print {
+  .site-header, .site-footer, .no-print { display: none !important; }
+  body { background: #fff; }
+  .wrap { max-width: none; padding: 0; }
+}

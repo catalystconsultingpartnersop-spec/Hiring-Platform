@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { brandName, feeFor, money, refCode } from "@/lib/format";
 import { requireOwner } from "@/lib/session";
 import { SignForm } from "./SignForm";
+import { AgreementDoc, KeyTerms } from "@/components/AgreementDoc";
+import styles from "./unlock.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -53,14 +55,17 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
           A card on file is needed to see who this is. Nothing was charged. Sign again below to add one.
         </p>
       )}
-      <pre
-        className="panel"
-        style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: 15, maxHeight: 420, overflow: "auto" }}
-        tabIndex={0}
-        aria-label="Agreement text"
-      >
-        {text}
-      </pre>
+      <KeyTerms
+        items={[
+          ["Fee if you hire", fee != null ? money(fee) : "Set with us in writing"],
+          ["Charged", "Only when you decide to hire"],
+          ["Applies for", "12 months from today"],
+          ["Today", "Card on file, nothing charged"],
+        ]}
+      />
+      <div className={styles.scroll} tabIndex={0} aria-label="Agreement text">
+        <AgreementDoc text={text} />
+      </div>
       <SignForm candidateId={id} defaultName={owner.full_name ?? ""} savedCard={owner.card_pm ? owner.card_label ?? "card on file" : null} />
     </div>
   );

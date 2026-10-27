@@ -215,7 +215,7 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
                       <div className="small muted">{refCode(u.candidate_id)}</div>
                     </td>
                     <td>
-                      {dateShort(u.signed_at)}
+                      <Link href={`/account/agreements/${u.id}`}>{dateShort(u.signed_at)}</Link>
                       <div className="small muted">
                         {u.confirmed_at ? u.card_label ?? "Card on file" : "Card not added, not unlocked"}
                       </div>
@@ -251,7 +251,9 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
                         <span className="tag">Checkout opened</span>
                       ) : hire.status === "paid" ? (
                         <div className={styles.inline}>
-                          <span className="tag tag-good">Paid {dateShort(hire.paid_at)}</span>
+                          <Link href={`/account/receipts/${hire.id}`} className="tag tag-good">
+                            Paid {dateShort(hire.paid_at)}
+                          </Link>
                           <form action={markHired.bind(null, hire.id)}>
                             <button className="btn btn-small" type="submit">
                               Mark hired

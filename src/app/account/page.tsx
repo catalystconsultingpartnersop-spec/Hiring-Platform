@@ -71,7 +71,18 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
                         {refCode(r.candidate_id)}: {r.candidates.headline}
                       </div>
                     </td>
-                    <td>{dateShort(r.signed_at)}</td>
+                    <td>
+                      {dateShort(r.signed_at)}
+                      <div className="small">
+                        <Link href={`/account/agreements/${r.id}`}>Agreement</Link>
+                        {hire?.paid_at && (
+                          <>
+                            {" · "}
+                            <Link href={`/account/receipts/${hire.id}`}>Receipt</Link>
+                          </>
+                        )}
+                      </div>
+                    </td>
                     <td>{money(r.fee_cents)}</td>
                     <td>
                       {hire?.status === "paid" ? (
