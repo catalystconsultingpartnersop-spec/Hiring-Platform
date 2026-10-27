@@ -20,10 +20,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {admin && <Link href="/admin/settings">Fees</Link>}
         {admin && <Link href="/admin/team">Team</Link>}
         {admin && <Link href="/admin/activity">Activity</Link>}
-        <span className={styles.me}>
+        <Link href="/admin/password" className={styles.me} title="Change your password">
           {me.name}
           {admin ? "" : " (rep)"}
-        </span>
+        </Link>
         <form action={adminLogout} className={styles.out}>
           <button type="submit">Sign out</button>
         </form>

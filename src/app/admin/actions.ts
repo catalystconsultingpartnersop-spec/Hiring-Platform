@@ -7,7 +7,9 @@ import { escapeHtml, sendEmail } from "@/lib/email";
 import { brandName, money, refCode, siteUrl } from "@/lib/format";
 import {
   checkAdminPassword,
+  checkPasswordHash,
   endAdminSession,
+  hashPassword,
   hashToken,
   newLoginToken,
   requireAdmin,
@@ -23,16 +25,71 @@ export type FormState = { error?: string; ok?: string };
 
 // ---------- Sign in ----------
 
-export async function adminLogin(_prev: FormState, form: FormData): Promise<FormState> {
-  // Small delay makes password guessing slow.
-  await new Promise((r) => setTimeout(r, 600));
-  if (!checkAdminPassword(String(form.get("password") ?? ""))) {
-    await logActivity("system", "admin_login_failed");
-    return { error: "That password isn't right." };
+// Team sign-in with email and password. Heshy's email with the ADMIN_PASSWORD
+// from Vercel always works too, and counts as him.
+export async function staffLogin(_prev: FormState, form: FormData): Promise<FormState> {
+  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  const password = String(form.get("password") ?? "");
+  await new Promise((r) => setTimeout(r, 500)); // slows down password guessing
+  if (!email || !password) return { error: "Enter your email and password." };
+
+  // Too many wrong tries for this email in 15 minutes: pause.
+  const since = new Date(Date.now() - 15 * 60e3).toISOString();
+  const { count } = await db()
+    .from("activity_log")
+    .select("id", { count: "exact", head: true })
+    .eq("action", "staff_login_failed")
+    .eq("actor", `staff:${email}`)
+    .gte("at", since);
+  if ((count ?? 0) >= 8) return { error: "Too many tries. Wait 15 minutes, or use “Email me a link” below." };
+
+  const ownerEmail = (process.env.ADMIN_EMAIL ?? "").toLowerCase();
+  if (email === ownerEmail && checkAdminPassword(password)) {
+    let { data: me } = await db().from("staff").select("id").eq("email", email).maybeSingle();
+    if (!me) {
+      const { data: created } = await db()
+        .from("staff")
+        .insert({ email, full_name: "Heshy", role: "admin" })
+        .select("id")
+        .single();
+      me = created;
+    }
+    await startStaffSession(me?.id ?? "admin");
+    if (me?.id) await db().from("staff").update({ last_login_at: new Date().toISOString() }).eq("id", me.id);
+    await logActivity(`staff:${email}`, "staff_signed_in");
+    redirect("/admin");
   }
-  await startStaffSession("admin");
-  await logActivity("admin", "admin_signed_in");
+
+  const { data: member } = await db()
+    .from("staff")
+    .select("id, active, password_hash")
+    .eq("email", email)
+    .maybeSingle();
+  if (!member || !member.active || !checkPasswordHash(password, member.password_hash)) {
+    await logActivity(`staff:${email}`, "staff_login_failed");
+    return {
+      error: member && member.active && !member.password_hash && email !== ownerEmail
+        ? "You haven't set a password yet. Use “Email me a link” below, and you'll be asked to set one."
+        : "That email and password don't match.",
+    };
+  }
+  await startStaffSession(member.id);
+  await db().from("staff").update({ last_login_at: new Date().toISOString() }).eq("id", member.id);
+  await logActivity(`staff:${email}`, "staff_signed_in");
   redirect("/admin");
+}
+
+export async function setMyPassword(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requireStaff();
+  if (!me.id) return { error: "Sign out and sign back in with your email first." };
+  const pw = String(form.get("password") ?? "");
+  const again = String(form.get("password2") ?? "");
+  if (pw.length < 8) return { error: "Use at least 8 characters." };
+  if (pw !== again) return { error: "The two passwords don't match." };
+  const { error } = await db().from("staff").update({ password_hash: hashPassword(pw) }).eq("id", me.id);
+  if (error) return { error: "Couldn't save your password. The database may need the latest update; tell Heshy." };
+  await logActivity(staffActor(me), "password_set");
+  redirect("/admin?password=set");
 }
 
 // Staff (Heshy and reps) sign in with an emailed link.
@@ -97,7 +154,8 @@ export async function verifyStaffLink(form: FormData) {
   await db().from("staff").update({ last_login_at: now }).eq("id", member.id);
   await startStaffSession(member.id);
   await logActivity(`staff:${data.email}`, "staff_signed_in");
-  redirect("/admin");
+  const { data: pw } = await db().from("staff").select("password_hash").eq("id", member.id).maybeSingle();
+  redirect(pw?.password_hash ? "/admin" : "/admin/password?welcome=1");
 }
 
 export async function adminLogout() {
@@ -299,13 +357,17 @@ export async function addStaff(_prev: FormState, form: FormData): Promise<FormSt
     .upsert({ email, full_name, role, active: true }, { onConflict: "email" });
   if (error) return { error: `Could not add them: ${error.message}` };
   await logActivity(staffActor(me), "staff_added", { email, role });
+  const { token, hash } = newLoginToken();
+  await db()
+    .from("login_tokens")
+    .insert({ token_hash: hash, email, kind: "staff", expires_at: new Date(Date.now() + 7 * 864e5).toISOString() });
   await sendEmail({
     to: email,
     subject: `You've been added to the ${brandName()} team`,
     html: `<p>Hi ${escapeHtml(full_name.split(" ")[0])},</p>
-<p>You now have access to the ${escapeHtml(brandName())} back office, where you can add and update candidates.</p>
-<p><a href="${siteUrl()}/admin/login" style="display:inline-block;background:#17213a;color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Sign in</a></p>
-<p style="color:#4a5570;font-size:13px">Enter this email address on the sign-in page and we'll send you a link. No password needed.</p>`,
+<p>You now have access to the ${escapeHtml(brandName())} back office, where you'll set your hours for onboarding calls and add candidates.</p>
+<p><a href="${siteUrl()}/admin/verify?token=${token}" style="display:inline-block;background:#17213a;color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Set your password</a></p>
+<p style="color:#4a5570;font-size:13px">This link works once, for 7 days. After that, sign in at ${siteUrl()}/admin/login with your email and password.</p>`,
   });
   revalidatePath("/admin/team");
   return { ok: `${full_name} was added and emailed a sign-in link.` };

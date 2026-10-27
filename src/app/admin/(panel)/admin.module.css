@@ -12,7 +12,8 @@
 .bar a { text-decoration: none; color: var(--ink-2); }
 .bar a:hover { color: var(--ink); }
 
-.me { margin-left: auto; font-weight: 400; color: var(--ink-3); font-size: 14px; }
+.bar a.me { margin-left: auto; font-weight: 400; color: var(--ink-3); font-size: 14px; }
+.bar a.me:hover { color: var(--ink); text-decoration: underline; }
 .out { margin-left: 0; }
 .bar a.addLink {
   background: var(--marigold);

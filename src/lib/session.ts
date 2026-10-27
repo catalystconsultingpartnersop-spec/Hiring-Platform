@@ -1,11 +1,11 @@
-import { createHmac, timingSafeEqual, randomBytes, createHash } from "crypto";
+import { createHmac, timingSafeEqual, randomBytes, createHash, scryptSync } from "crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db, Owner } from "./db";
 
 const ADMIN_COOKIE = "hp_admin";
 const OWNER_COOKIE = "hp_owner";
-const ADMIN_DAYS = 7;
+const ADMIN_DAYS = 30;
 const OWNER_DAYS = 30;
 
 function secret() {
@@ -105,6 +105,23 @@ export async function isAdmin() {
 
 export function staffActor(s: Staff) {
   return s.role === "admin" && !s.id ? "admin" : `staff:${s.email}`;
+}
+
+// ---------- Team passwords ----------
+
+export function hashPassword(pw: string) {
+  const salt = randomBytes(16).toString("base64url");
+  const hash = scryptSync(pw, salt, 32).toString("base64url");
+  return `scrypt$${salt}$${hash}`;
+}
+
+export function checkPasswordHash(pw: string, stored: string | null | undefined) {
+  if (!stored) return false;
+  const [kind, salt, hash] = stored.split("$");
+  if (kind !== "scrypt" || !salt || !hash) return false;
+  const a = Buffer.from(scryptSync(pw, salt, 32).toString("base64url"));
+  const b = Buffer.from(hash);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 // ---------- Signed links (no sign-in needed) ----------

@@ -192,3 +192,6 @@ alter table staff_availability enable row level security;
 alter table onboarding_calls enable row level security;
 grant all on staff_availability, onboarding_calls to service_role;
 revoke all on staff_availability, onboarding_calls from anon, authenticated;
+
+-- ---------- Team passwords (same as migrations/004_team_passwords.sql) ----------
+alter table staff add column if not exists password_hash text;

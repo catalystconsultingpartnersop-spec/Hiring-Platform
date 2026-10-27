@@ -118,6 +118,11 @@ export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
         )}
       </div>
 
+      {sp.password === "set" && (
+        <p className="notice notice-good" role="status" style={{ marginTop: 20 }}>
+          Password saved. Next time, sign in with your email and password.
+        </p>
+      )}
       {admin && <EmailCheck problem={emailProblem} settings={emailSettings} />}
 
       <h2 className={styles.h2}>Candidates</h2>
