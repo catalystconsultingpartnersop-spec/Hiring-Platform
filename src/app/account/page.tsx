@@ -104,6 +104,9 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
       )}
 
       <div style={{ display: "flex", gap: 12, marginTop: 28 }}>
+        <Link className="btn btn-small" href="/hiring-help">
+          Hiring help and templates
+        </Link>
         <Link className="btn btn-ghost btn-small" href="/account/setup?next=/account">
           Edit your details
         </Link>

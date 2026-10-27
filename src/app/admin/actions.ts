@@ -351,6 +351,9 @@ export async function refundHire(hireId: string) {
 
   await stripe().refunds.create({ payment_intent: hire.stripe_payment_intent });
   await db().from("hires").update({ status: "refunded", refunded_at: new Date().toISOString() }).eq("id", hireId).eq("status", "paid");
+  // Back off "hired" but not straight onto the catalog: Heshy or the rep relists them.
+  const cid = (hire as unknown as { unlocks: { candidate_id: string } }).unlocks.candidate_id;
+  await db().from("candidates").update({ status: "paused", updated_at: new Date().toISOString() }).eq("id", cid).eq("status", "hired");
 
   const u = (hire as unknown as { unlocks: { candidate_id: string; owners: { email: string; full_name: string } } }).unlocks;
   await logActivity("admin", "hire_refunded", { hire_id: hireId, candidate: refCode(u.candidate_id), amount_cents: hire.amount_cents });

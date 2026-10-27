@@ -38,6 +38,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/apply" className="hide-sm">
                 Looking for work?
               </Link>
+              {signedIn && (
+                <Link href="/hiring-help" className="hide-sm">
+                  Hiring help
+                </Link>
+              )}
               {signedIn ? <Link href="/account">Your account</Link> : <Link href="/login">Sign in</Link>}
             </nav>
           </div>

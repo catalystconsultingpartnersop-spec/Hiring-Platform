@@ -203,7 +203,8 @@ function Unlocked({
         <div className="notice notice-good" role="status">
           <strong>Payment received: {money(hire.amount_cents)}.</strong> Go ahead and make the offer to{" "}
           {c.full_name.split(" ")[0]}. Your receipt is in your email, or{" "}
-          <Link href={`/account/receipts/${hire.id}`}>view it here</Link>.
+          <Link href={`/account/receipts/${hire.id}`}>view it here</Link>. Next:{" "}
+          <Link href={`/hiring-help/templates/offer-letter?c=${c.id}`}>fill in an offer letter</Link>.
         </div>
       )}
       {hireNote === "cancelled" && <p className="notice">Payment cancelled. Nothing was charged.</p>}
@@ -271,6 +272,8 @@ function Unlocked({
                 <p className={styles.sideMsg}>
                   You&rsquo;re all set to hire {c.full_name.split(" ")[0]}.{" "}
                   <Link href={`/account/receipts/${hire!.id}`}>View your receipt</Link>
+                  {" · "}
+                  <Link href={`/hiring-help/templates/offer-letter?c=${c.id}`}>Offer letter template</Link>
                 </p>
               </>
             ) : status === "hired" ? (

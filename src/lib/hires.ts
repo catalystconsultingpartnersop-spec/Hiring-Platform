@@ -3,6 +3,7 @@ import { stripe } from "./stripe";
 import { emailAdmin, escapeHtml, sendEmail } from "./email";
 import { brandName, money, refCode, siteUrl } from "./format";
 import { receiptEmailHtml, receiptNumber } from "./receipt";
+import { candidateHired } from "./notify";
 
 export async function latestHire(unlockId: string): Promise<Hire | null> {
   const { data } = await db()
@@ -50,16 +51,17 @@ export async function markHirePaid(hireId: string, paymentIntent: string | null,
 
   const { data: unlock } = await db()
     .from("unlocks")
-    .select("candidate_id, card_label, signed_at, owners(email, full_name, company), candidates(full_name)")
+    .select("candidate_id, card_label, signed_at, owners(email, full_name, company, phone), candidates(full_name)")
     .eq("id", hire.unlock_id)
     .single();
-  const owner = (unlock as unknown as { owners: { email: string; full_name: string; company: string } }).owners;
+  const owner = (unlock as unknown as { owners: { email: string; full_name: string; company: string; phone: string | null } }).owners;
   const cand = (unlock as unknown as { candidates: { full_name: string } }).candidates;
   const card = (unlock as unknown as { card_label: string | null }).card_label;
   const signedAt = (unlock as unknown as { signed_at: string }).signed_at;
   const ref = refCode(unlock!.candidate_id);
 
   await logActivity(`owner:${owner.email}`, "hire_paid", { hire_id: hireId, candidate: ref, amount_cents: hire.amount_cents });
+  await candidateHired(unlock!.candidate_id, owner, hire.amount_cents, details);
 
   await sendEmail({
     to: owner.email,
