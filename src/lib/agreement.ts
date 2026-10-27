@@ -3,7 +3,7 @@ import { money } from "./format";
 // Every signature stores the exact text and version that was signed. Bump
 // AGREEMENT_VERSION whenever the wording changes. Have a lawyer review this
 // before relying on it.
-export const AGREEMENT_VERSION = "2026-10-27b";
+export const AGREEMENT_VERSION = "2026-10-27c";
 
 export function legalEntity() {
   return process.env.LEGAL_ENTITY?.trim() || "Catalyst Consulting Partners LLC";
@@ -32,7 +32,7 @@ When the Company signs, we disclose the name, contact details, resume and full p
   (b) any business that owns or controls the Company, that the Company owns or controls, or that is under common ownership or control with the Company; or
   (c) any other person or business to whom the Company, or anyone acting for it, passed on the Candidate's identity or details.
 2.2 "Hired or engaged" means any paid work in any capacity: employee, contractor, consultant, freelancer, temporary or part-time, whether directly or through a staffing agency, PEO, payroll provider or other intermediary.
-2.3 The Fee is owed even if the Company later says it knew of the Candidate from another source, unless the Company told us so in writing within 2 business days after the Introduction Date.
+2.3 The Fee is owed even if the Company says it already knew of the Candidate or found them through another source. The only exception is if the Company proves, with clear and convincing written evidence dated before the Introduction Date (such as an application the Candidate submitted to the Company, payroll records, or written correspondence about a role), that it was already actively considering the Candidate for a role. The Company must send that evidence within 2 business days after the Introduction Date. A statement, recollection or email made after the Introduction Date is not enough. If the Company cannot prove it, the Fee is owed.
 2.4 The Fee is the only amount owed for a Hire. There is no percentage of salary and no other charge.
 
 3. CARD ON FILE AND PAYMENT AUTHORIZATION
