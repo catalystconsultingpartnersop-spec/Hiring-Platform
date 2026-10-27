@@ -29,3 +29,24 @@
   height: 1px;
   background: var(--line);
 }
+
+.switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--wash);
+  border-radius: 999px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+.switch button {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.switch button[aria-selected="true"] { background: var(--paper); color: var(--ink); box-shadow: 0 1px 3px rgba(23, 33, 58, 0.15); }

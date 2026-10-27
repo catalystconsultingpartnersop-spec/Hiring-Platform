@@ -4,9 +4,99 @@ import { redirect } from "next/navigation";
 import { db, logActivity } from "@/lib/db";
 import { escapeHtml, sendEmail } from "@/lib/email";
 import { brandName, siteUrl } from "@/lib/format";
-import { endOwnerSession, hashToken, newLoginToken, safeNext, startOwnerSession } from "@/lib/session";
+import {
+  checkPasswordHash,
+  endOwnerSession,
+  hashPassword,
+  hashToken,
+  newLoginToken,
+  safeNext,
+  startOwnerSession,
+} from "@/lib/session";
 
-export type LoginState = { sent?: string; error?: string };
+export type LoginState = { sent?: string; error?: string; fields?: Record<string, string> };
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+async function tooManyTries(email: string) {
+  const since = new Date(Date.now() - 15 * 60e3).toISOString();
+  const { count } = await db()
+    .from("activity_log")
+    .select("id", { count: "exact", head: true })
+    .eq("actor", `owner:${email}`)
+    .eq("action", "owner_login_failed")
+    .gte("at", since);
+  return (count ?? 0) >= 8;
+}
+
+async function signedIn(owner: { id: string; full_name: string | null; company: string | null }, email: string, next: string, how: string): Promise<never> {
+  await db().from("owners").update({ last_login_at: new Date().toISOString() }).eq("id", owner.id);
+  await startOwnerSession(owner.id);
+  await logActivity(`owner:${email}`, "signed_in", { how });
+  if (!owner.full_name || !owner.company) redirect(`/account/setup?next=${encodeURIComponent(next)}`);
+  redirect(next);
+}
+
+// Email + password.
+export async function signInWithPassword(_prev: LoginState, form: FormData): Promise<LoginState> {
+  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  const password = String(form.get("password") ?? "");
+  const next = safeNext(String(form.get("next") ?? ""));
+  const fields = { email };
+  if (!EMAIL.test(email)) return { error: "Enter a valid email address.", fields };
+  if (await tooManyTries(email)) return { error: "Too many tries. Wait 15 minutes, or use “Forgot password?” below.", fields };
+
+  const { data: owner } = await db().from("owners").select("id, full_name, company, password_hash").eq("email", email).maybeSingle();
+  if (!owner) return { error: "We don't have an account for that email. Create one below. It takes 30 seconds.", fields };
+  if (!owner.password_hash) {
+    // Older account made with an email link: one-time password setup.
+    const r = await requestLink({}, form);
+    if (r.error) return { ...r, fields };
+    return {
+      sent: email,
+      fields,
+      error: undefined,
+    };
+  }
+  if (!checkPasswordHash(password, owner.password_hash)) {
+    await logActivity(`owner:${email}`, "owner_login_failed");
+    return { error: "That password isn't right. Try again, or use “Forgot password?” below.", fields };
+  }
+  return signedIn(owner, email, next, "password");
+}
+
+// New owner: one form, signed straight in. No email round-trip.
+export async function createAccount(_prev: LoginState, form: FormData): Promise<LoginState> {
+  const get = (k: string) => String(form.get(k) ?? "").trim();
+  const email = get("email").toLowerCase();
+  const full_name = get("full_name");
+  const company = get("company");
+  const phone = get("phone") || null;
+  const password = String(form.get("password") ?? "");
+  const next = safeNext(get("next"));
+  const fields = { email, full_name, company, phone: phone ?? "" };
+  if (full_name.length < 2) return { error: "Enter your full name.", fields };
+  if (company.length < 2) return { error: "Enter your company name.", fields };
+  if (!EMAIL.test(email)) return { error: "Enter a valid email address.", fields };
+  if (password.length < 8) return { error: "Pick a password with at least 8 characters.", fields };
+
+  const { data: existing } = await db().from("owners").select("id, password_hash").eq("email", email).maybeSingle();
+  if (existing?.password_hash) return { error: "There's already an account for that email. Sign in instead.", fields };
+  if (existing) {
+    // Account exists from an email link: prove it's theirs once, then set the password.
+    const r = await requestLink({}, form);
+    return r.error ? { ...r, fields } : { sent: email, fields };
+  }
+
+  const { data: owner, error } = await db()
+    .from("owners")
+    .insert({ email, full_name, company, phone, password_hash: hashPassword(password) })
+    .select("id, full_name, company")
+    .single();
+  if (error || !owner) return { error: "Something went wrong creating your account. Try again.", fields };
+  await logActivity(`owner:${email}`, "owner_signed_up", { company });
+  return signedIn(owner, email, next, "signup");
+}
 
 export async function requestLink(_prev: LoginState, form: FormData): Promise<LoginState> {
   const email = String(form.get("email") ?? "").trim().toLowerCase();
@@ -32,7 +122,7 @@ export async function requestLink(_prev: LoginState, form: FormData): Promise<Lo
   await sendEmail({
     to: email,
     subject: `Your sign-in link for ${brandName()}`,
-    html: `<p>Click below to sign in. The link works once and expires in 30 minutes.</p>
+    html: `<p>Click below to sign in and set your password. After that, you'll sign in with your email and password. The link works once and expires in 30 minutes.</p>
 <p><a href="${link}" style="display:inline-block;background:#f2b300;color:#17213a;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Sign in to ${escapeHtml(brandName())}</a></p>
 <p style="color:#4a5570;font-size:13px">If you didn't ask for this, ignore this email.</p>`,
   });
@@ -59,14 +149,14 @@ export async function verifyLink(form: FormData) {
   const { data: owner, error } = await db()
     .from("owners")
     .upsert({ email: data.email, last_login_at: now }, { onConflict: "email" })
-    .select("id, full_name, company")
+    .select("id, full_name, company, password_hash")
     .single();
   if (error || !owner) redirect("/login?error=invalid");
 
   await startOwnerSession(owner.id);
   await logActivity(`owner:${data.email}`, "signed_in");
   const next = safeNext(data.next_path);
-  if (!owner.full_name || !owner.company) redirect(`/account/setup?next=${encodeURIComponent(next)}`);
+  if (!owner.full_name || !owner.company || !owner.password_hash) redirect(`/account/setup?pw=1&next=${encodeURIComponent(next)}`);
   redirect(next);
 }
 

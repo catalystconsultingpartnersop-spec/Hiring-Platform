@@ -136,6 +136,9 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
                   <tr key={r.rep.id}>
                     <td>
                       <Link href={qs("all", r.rep.id)}>{repName(r.rep)}</Link>
+                      <div className="small">
+                        <Link href={`/admin/team/${r.rep.id}`}>Their dashboard</Link>
+                      </div>
                     </td>
                     <td>{r.hires}</td>
                     <td>{r.owed ? <strong>{money(r.owed)}</strong> : "—"}</td>

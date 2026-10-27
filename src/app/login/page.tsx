@@ -17,8 +17,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <div className="wrap narrow" style={{ maxWidth: 460 }}>
       <div className="page-head">
-        <h1>Sign in</h1>
-        <p>For business owners. New here? This creates your account too.</p>
+        <h1>{sp.mode === "create" || (sp.mode !== "signin" && next.includes("/unlock")) ? "Create your free account" : "Welcome back"}</h1>
+        <p>For business owners. Browse free; sign in to see who a candidate is.</p>
       </div>
       {error && (
         <p className="notice notice-bad" role="alert" style={{ marginBottom: 20 }}>
@@ -38,12 +38,15 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
             Continue with Google
           </a>
           <div className={styles.or}>
-            <span>or use your email</span>
+            <span>or</span>
           </div>
         </>
       )}
 
-      <LoginForm next={next} />
+      <LoginForm next={next} startMode={sp.mode === "create" || (sp.mode !== "signin" && next.includes("/unlock")) ? "create" : "signin"} />
+      <p className="small muted" style={{ marginTop: 28, textAlign: "center" }}>
+        On the team? <a href="/admin/login">Team sign-in</a>
+      </p>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { requireStaff } from "@/lib/session";
 import { nowMs } from "@/lib/time";
 import { commissionPercent } from "@/lib/settings";
 import { EmailCheck } from "./EmailCheck";
+import { RepDashboard } from "./RepDashboard";
 import styles from "./admin.module.css";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +20,19 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
   const me = await requireStaff();
   // Old links to the candidate tabs still work.
   if (typeof sp.view === "string") redirect(`/admin/candidates?view=${sp.view}`);
-  if (me.role !== "admin") redirect(`/admin/candidates${sp.password ? "?password=set" : ""}`);
+  if (me.role !== "admin") {
+    if (!me.id) redirect("/admin/candidates");
+    return (
+      <>
+        {sp.password === "set" && (
+          <p className="notice notice-good" role="status" style={{ marginTop: 16 }}>
+            Password saved. Next time, sign in with your email and password.
+          </p>
+        )}
+        <RepDashboard staffId={me.id} name={me.name} self nowIso={new Date(nowMs()).toISOString()} />
+      </>
+    );
+  }
 
   const problem = dbConfigProblem();
   if (problem) {

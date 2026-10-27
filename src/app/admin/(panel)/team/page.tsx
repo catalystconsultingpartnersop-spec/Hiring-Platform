@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { dateShort } from "@/lib/format";
 import { isOwnerEmail, requireAdmin } from "@/lib/session";
@@ -89,7 +90,9 @@ export default async function TeamPage() {
                 return (
                   <tr key={m.id} style={m.active ? undefined : { opacity: 0.55 }}>
                     <td>
-                      <strong>{m.full_name || m.email}</strong>
+                      <strong>
+                        {owner ? m.full_name || m.email : <Link href={`/admin/team/${m.id}`}>{m.full_name || m.email}</Link>}
+                      </strong>
                       <div className="small muted">{m.email}</div>
                     </td>
                     <td>

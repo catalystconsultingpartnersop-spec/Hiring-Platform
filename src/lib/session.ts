@@ -6,7 +6,7 @@ import { db, Owner } from "./db";
 const ADMIN_COOKIE = "hp_admin";
 const OWNER_COOKIE = "hp_owner";
 const ADMIN_DAYS = 30;
-const OWNER_DAYS = 30;
+const OWNER_DAYS = 90;
 
 function secret() {
   const s = process.env.SESSION_SECRET;

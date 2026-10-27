@@ -96,6 +96,7 @@ export type Owner = {
   stripe_customer_id?: string | null;
   card_pm?: string | null; // saved card (Stripe payment method)
   card_label?: string | null; // e.g. "Visa ending 4242"
+  password_hash?: string | null; // never send to the browser
 };
 
 export type Unlock = {

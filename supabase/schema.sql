@@ -223,3 +223,6 @@ alter table app_settings enable row level security;
 grant all on app_settings to service_role;
 revoke all on app_settings from anon, authenticated;
 
+
+-- 007: owner passwords
+alter table owners add column if not exists password_hash text;
