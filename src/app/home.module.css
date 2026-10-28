@@ -130,3 +130,5 @@
   background: var(--marigold); color: var(--ink); font-size: 14px; font-weight: 800; flex: none;
 }
 @media (max-width: 560px) { .points { flex-direction: column; } }
+
+.lede strong { color: var(--marigold); font-weight: 700; }

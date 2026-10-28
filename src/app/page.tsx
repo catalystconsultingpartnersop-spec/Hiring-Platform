@@ -36,7 +36,10 @@ export default async function Home() {
           <h1>
             Scroll. Meet. <span>Hire.</span>
           </h1>
-          <p className={styles.lede}>Your next great employee is here. Hiring, built around your time.</p>
+          <p className={styles.lede}>
+            Browse our collection of vetted talent. Find the person you&rsquo;ve been looking for, or the one you
+            didn&rsquo;t know you needed. Take your time, look around, and enjoy. <strong>Happy browsing.</strong>
+          </p>
           <ul className={styles.points}>
             <li>See people right away</li>
             <li>Every person interviewed</li>
