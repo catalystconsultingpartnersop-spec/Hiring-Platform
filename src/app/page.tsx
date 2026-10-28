@@ -3,12 +3,73 @@ import { CandidateCard, isNew } from "@/components/CandidateCard";
 import { getTiers, listListed } from "@/lib/catalog";
 import type { FeeTier, PublicCandidate } from "@/lib/db";
 import { contactPhone, contactPhoneHref, feeFor } from "@/lib/format";
+import { nowMs } from "@/lib/time";
 import styles from "./home.module.css";
 
 export const dynamic = "force-dynamic";
 
 // Shown as quick picks even before there's anyone listed in that role.
 const POPULAR = ["Office manager", "Bookkeeping", "Sales", "Executive assistant", "Graphic design", "Customer service", "Operations", "Marketing"];
+
+// Fixed examples for the welcome stack at the top. The real, live
+// candidates appear as soon as the owner starts browsing.
+const example = (id: string, c: Partial<PublicCandidate>): PublicCandidate => ({
+  id,
+  status: "listed",
+  headline: null,
+  role_category: null,
+  industry: null,
+  level: null,
+  location_region: null,
+  work_mode: null,
+  salary_min: null,
+  salary_max: null,
+  strengths: [],
+  working_genius: null,
+  summary: null,
+  highlights: [],
+  fee_override_cents: null,
+  listed_at: null,
+  ...c,
+});
+const SHOWCASE: PublicCandidate[] = [
+  example("ex-1", {
+    headline: "Bookkeeper who finds the mistake everyone else missed",
+    role_category: "Bookkeeping",
+    industry: "Small business",
+    level: "experienced",
+    location_region: "Brooklyn, NY",
+    work_mode: "hybrid",
+    salary_min: 62000,
+    salary_max: 72000,
+    working_genius: "DTWEIG",
+    fee_override_cents: 500000,
+  }),
+  example("ex-2", {
+    headline: "Executive assistant who runs a CEO's week like a control tower",
+    role_category: "Executive assistant",
+    industry: "Real estate",
+    level: "senior",
+    location_region: "Manhattan, NY",
+    work_mode: "on-site",
+    salary_min: 95000,
+    salary_max: 115000,
+    working_genius: "ETDGWI",
+    fee_override_cents: 1000000,
+  }),
+  example("ex-3", {
+    headline: "Beginner with a head for numbers and a hunger to learn",
+    role_category: "Accounting",
+    industry: "Small business",
+    level: "beginner",
+    location_region: "Lakewood, NJ",
+    work_mode: "flexible",
+    salary_min: 42000,
+    salary_max: 50000,
+    working_genius: "WDITGE",
+    fee_override_cents: 500000,
+  }),
+];
 
 export default async function Home() {
   let all: PublicCandidate[] = [];
@@ -58,15 +119,13 @@ export default async function Home() {
               ))}
             </div>
           </div>
-          {feed.length > 0 && (
-            <div className={styles.stack} aria-hidden="true">
-              {feed.slice(0, 3).map((c, i) => (
-                <div key={c.id} className={styles[`s${i}`]}>
-                  <CandidateCard c={c} fee={feeFor(c, tiers)} />
-                </div>
-              ))}
-            </div>
-          )}
+          <div className={styles.stack} aria-hidden="true">
+            {SHOWCASE.map((c, i) => (
+              <div key={c.id} className={styles[`s${i}`]}>
+                <CandidateCard c={{ ...c, listed_at: new Date(nowMs()).toISOString() }} fee={c.fee_override_cents} />
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
