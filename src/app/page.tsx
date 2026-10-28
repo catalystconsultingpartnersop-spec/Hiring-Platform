@@ -47,17 +47,6 @@ export default async function Home() {
               <Link className="btn btn-gold" href="/candidates">
                 Start browsing
               </Link>
-              <span className={styles.happy} aria-label="Happy browsing">
-                Happy{" "}
-                <span className={styles.rotor} aria-hidden="true">
-                  <span>
-                    <i>scrolling.</i>
-                    <i>browsing.</i>
-                    <i>shopping.</i>
-                    <i>scrolling.</i>
-                  </span>
-                </span>
-              </span>
             </div>
             <p className={styles.jump}>Or jump straight to</p>
             <div className={styles.chips}>
