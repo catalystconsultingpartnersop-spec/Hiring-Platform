@@ -168,3 +168,6 @@
 .panelFoot:hover { background: #24304f; }
 .panelNote { margin: 10px 0 6px; text-align: center; font-size: 13px; color: var(--ink-2); }
 @media (max-width: 900px) { .panel { display: none; } }
+
+.wink { margin: 12px 0 0; font-family: var(--display); font-size: clamp(18px, 1.8vw, 22px); font-weight: 600; font-style: italic; color: var(--marigold); }
+.wink + .lede { margin-top: 18px; }

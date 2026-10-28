@@ -13,6 +13,17 @@ export const metadata: Metadata = {
     "Browse candidates who have been coached and assessed. Sign to see who they are. Pay one flat fee when you decide to hire.",
 };
 
+// The last word of the name in gold, e.g. "The Candidate Collection".
+function BrandWord({ name }: { name: string }) {
+  const i = name.lastIndexOf(" ");
+  if (i < 0) return <>{name}</>;
+  return (
+    <>
+      {name.slice(0, i)} <span className="brand-accent">{name.slice(i + 1)}</span>
+    </>
+  );
+}
+
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   let signedIn = false;
   try {
@@ -27,7 +38,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <div className="wrap">
             <Link href="/" className="brand">
               <span className="brand-mark" aria-hidden="true" />
-              {brandName()}
+              <BrandWord name={brandName()} />
             </Link>
             <nav className="nav" aria-label="Main">
               <Link href="/candidates">

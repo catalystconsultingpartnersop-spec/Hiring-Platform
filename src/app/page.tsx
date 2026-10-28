@@ -96,10 +96,8 @@ export default async function Home() {
         <div className={`wrap ${styles.heroGrid}`}>
           <div>
             <p className={styles.kicker}>Vetted talent, ready when you are</p>
-            <h1 className={styles.big}>
-              Find the one you&rsquo;re looking for.
-              <span>Or the one you didn&rsquo;t know you needed.</span>
-            </h1>
+            <h1 className={styles.big}>Find the one you&rsquo;re looking for.</h1>
+            <p className={styles.wink}>Or the one you didn&rsquo;t know you needed.</p>
             <p className={styles.lede}>
               Scroll through our collection of vetted candidates. Look around, take your time, and see the talent
               that&rsquo;s available to you.

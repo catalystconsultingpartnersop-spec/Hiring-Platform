@@ -511,3 +511,12 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
   body { background: #fff; }
   .wrap { max-width: none; padding: 0; }
 }
+
+.brand-accent { color: #c99500; }
+@media (max-width: 480px) {
+  .brand { font-size: 16px; }
+  .brand-mark { width: 10px; height: 10px; margin-right: 6px; }
+  .site-header .wrap { gap: 10px; }
+  .nav { gap: 12px; font-size: 13.5px; }
+  .nav .nav-shortlist { display: none; }
+}

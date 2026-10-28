@@ -65,7 +65,7 @@ export function siteUrl() {
 }
 
 export function brandName() {
-  return process.env.NEXT_PUBLIC_BRAND_NAME || "Talent Catalog";
+  return process.env.NEXT_PUBLIC_BRAND_NAME || "The Candidate Collection";
 }
 
 // How candidates and owners can reach a person.
