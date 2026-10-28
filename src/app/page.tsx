@@ -37,8 +37,8 @@ export default async function Home() {
             Scroll. Meet. <span>Hire.</span>
           </h1>
           <p className={styles.lede}>
-            Your next employee is already here. Browse people who are ready to work, every one interviewed by our
-            team. No hour-long intake call. No one telling you how to run your business.
+            Your next great employee is already here. Every person has sat down with our team, so you&rsquo;ll see
+            their strengths before you say hello. Browse at your own pace, and reach out when someone feels right.
           </p>
 
           <div className={styles.cta}>
