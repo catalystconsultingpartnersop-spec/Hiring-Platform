@@ -22,30 +22,36 @@ export async function sendEmail(opts: {
     await logActivity("system", "email_failed", { to: opts.to, subject: opts.subject, error: `${missing} is missing in Vercel` });
     return { ok: false, error: `${missing} is missing in Vercel` };
   }
-  try {
-    const resend = new Resend(key);
-    const { error } = await resend.emails.send({
-      from,
-      to: opts.to,
-      subject: opts.subject,
-      html: wrap(opts.html),
-      replyTo: opts.replyTo ?? process.env.ADMIN_EMAIL,
-      attachments: opts.attachments,
-    });
-    if (error) {
-      console.error("email failed", error);
-      const msg = `${error.name ?? "error"}: ${error.message}`;
-      await logActivity("system", "email_failed", { to: opts.to, subject: opts.subject, error: msg });
-      return { ok: false, error: msg };
+  const resend = new Resend(key);
+  let lastError = "";
+  // Resend allows only a couple of emails per second, and a booking sends
+  // three at once (candidate, rep, Heshy). On "too many requests", wait and retry.
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const { error } = await resend.emails.send({
+        from,
+        to: opts.to,
+        subject: opts.subject,
+        html: wrap(opts.html),
+        replyTo: opts.replyTo ?? process.env.ADMIN_EMAIL,
+        attachments: opts.attachments,
+      });
+      if (!error) {
+        await logActivity("system", "email_ok", { to: opts.to, subject: opts.subject });
+        return { ok: true };
+      }
+      lastError = `${error.name ?? "error"}: ${error.message}`;
+      const limited = /rate|too many|429/i.test(`${error.name} ${error.message}`);
+      if (!limited) break;
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : String(e);
+      if (!/rate|too many|429/i.test(lastError)) break;
     }
-    await logActivity("system", "email_ok", { to: opts.to });
-    return { ok: true };
-  } catch (e) {
-    console.error("email failed", e);
-    const msg = e instanceof Error ? e.message : String(e);
-    await logActivity("system", "email_failed", { to: opts.to, subject: opts.subject, error: msg });
-    return { ok: false, error: msg };
+    await new Promise((r) => setTimeout(r, 700 * (attempt + 1)));
   }
+  console.error("email failed", lastError);
+  await logActivity("system", "email_failed", { to: opts.to, subject: opts.subject, error: lastError });
+  return { ok: false, error: lastError };
 }
 
 export async function emailAdmin(

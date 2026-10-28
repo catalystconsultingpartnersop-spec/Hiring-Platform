@@ -59,6 +59,11 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
         .lte("starts_at", new Date(now.getTime() + 7 * DAY).toISOString()),
       lastEmailProblem(),
     ]);
+  const { data: failedMail } = await db()
+    .from("activity_log")
+    .select("details")
+    .eq("action", "email_failed")
+    .gte("at", new Date(NOW - 7 * DAY).toISOString());
   const dbError = error ?? candErr;
   const count = (s: string) => (cands ?? []).filter((c) => c.status === s).length;
 
@@ -86,6 +91,12 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
   if (count("applied")) todo.push({ text: <>{count("applied")} new application{count("applied") > 1 ? "s" : ""} to review</>, href: "/admin/candidates?view=applied", cta: "Review" });
   if (owed.length) todo.push({ text: <>{money(owedTotal)} in rep commission to pay out ({owed.length} hire{owed.length > 1 ? "s" : ""})</>, href: "/admin/payments?view=owed", cta: "Pay out" });
   if (needFee.length) todo.push({ text: <>{needFee.length} agreement{needFee.length > 1 ? "s" : ""} need a fee set</>, href: "/admin/agreements?stage=considering", cta: "Set fee" });
+  if (failedMail?.length)
+    todo.push({
+      text: <>{failedMail.length} email{failedMail.length > 1 ? "s" : ""} didn&rsquo;t go out this week</>,
+      href: "/admin/activity",
+      cta: "See which",
+    });
   if (toConfirm.length) todo.push({ text: <>{toConfirm.length} paid hire{toConfirm.length > 1 ? "s" : ""} not yet marked as started</>, href: "/admin/agreements?stage=paid", cta: "Check" });
 
   return (
