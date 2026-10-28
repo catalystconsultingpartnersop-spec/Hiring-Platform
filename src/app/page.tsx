@@ -36,10 +36,13 @@ export default async function Home() {
           <h1>
             Scroll. Meet. <span>Hire.</span>
           </h1>
-          <p className={styles.lede}>
-            Your next great employee is already here. Every person has sat down with our team, so you&rsquo;ll see
-            their strengths before you say hello. Browse at your own pace, and reach out when someone feels right.
-          </p>
+          <p className={styles.lede}>Your next great employee is here. Hiring, built around your time.</p>
+          <ul className={styles.points}>
+            <li>See people right away</li>
+            <li>Every person interviewed</li>
+            <li>Their strengths in plain words</li>
+            <li>One flat fee, only if you hire</li>
+          </ul>
 
           <div className={styles.cta}>
             <Link className="btn btn-gold" href="/candidates">
@@ -57,7 +60,6 @@ export default async function Home() {
             ))}
           </div>
 
-          <p className={styles.free}>Free to browse. Free to see who they are. One flat fee, only if you hire.</p>
         </div>
       </section>
 

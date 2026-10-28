@@ -120,3 +120,13 @@
 .easy p { margin: 8px 0 0; color: rgba(255, 255, 255, 0.78); font-size: 15px; line-height: 1.5; }
 @media (max-width: 1100px) { .easy { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 680px) { .easy { grid-template-columns: 1fr; } }
+
+.points { list-style: none; padding: 0; margin: 20px 0 0; display: flex; flex-wrap: wrap; gap: 10px 26px; }
+.points li { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; }
+.points li::before {
+  content: "✓";
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--marigold); color: var(--ink); font-size: 14px; font-weight: 800; flex: none;
+}
+@media (max-width: 560px) { .points { flex-direction: column; } }
