@@ -193,8 +193,8 @@ export default async function Home() {
               start, and it&rsquo;s a better one.
             </p>
             <p className={styles.missionBottom}>
-              Our mission is simple: help people find work that suits them. And that is the best thing for the employer,
-              too.
+              Bottom line: we help people understand their nature, the way they&rsquo;re truly wired, so they can find
+              work that fits them. And a person in the right job is the best hire you&rsquo;ll ever make.
             </p>
           </div>
         </div>
