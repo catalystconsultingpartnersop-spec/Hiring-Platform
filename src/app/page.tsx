@@ -2,13 +2,24 @@ import Link from "next/link";
 import { CandidateCard, isNew } from "@/components/CandidateCard";
 import { getTiers, listListed } from "@/lib/catalog";
 import type { FeeTier, PublicCandidate } from "@/lib/db";
-import { contactPhone, contactPhoneHref, feeFor, LEVEL_LABEL, salaryRange } from "@/lib/format";
+import { contactPhone, contactPhoneHref, feeFor } from "@/lib/format";
 import styles from "./home.module.css";
 
 export const dynamic = "force-dynamic";
 
 // Shown as quick picks even before there's anyone listed in that role.
 const POPULAR = ["Office manager", "Bookkeeping", "Sales", "Executive assistant", "Graphic design", "Customer service", "Operations", "Marketing"];
+
+// A clean, professional title for the showcase cards, e.g. "Senior operations
+// professional" or "Experienced executive assistant".
+const PERSON = /(assistant|manager|designer|coordinator|specialist|representative|rep|developer|engineer|accountant|bookkeeper|administrator|technician|driver|writer|analyst|director|lead|estimator|dispatcher|receptionist)$/i;
+function proTitle(c: PublicCandidate) {
+  const role = (c.role_category ?? "").trim();
+  if (!role) return c.headline;
+  const lvl = c.level === "senior" ? "Senior" : c.level === "beginner" ? "Entry-level" : "Experienced";
+  const noun = PERSON.test(role) ? role.toLowerCase() : `${role.toLowerCase()} professional`;
+  return `${lvl} ${noun}`;
+}
 
 export default async function Home() {
   let all: PublicCandidate[] = [];
@@ -59,34 +70,12 @@ export default async function Home() {
             </div>
           </div>
           {feed.length > 0 && (
-            <div className={styles.panel}>
-              <div className={styles.panelHead}>
-                <span className={styles.live} aria-hidden="true" />
-                Available now
-                <b>{all.length}</b>
-              </div>
-              <ul className={styles.rows}>
-                {feed.slice(0, 5).map((c) => (
-                  <li key={c.id}>
-                    <Link href={`/candidates/${c.id}`}>
-                      <span className={styles.rowMain}>
-                        <strong>{c.role_category ?? "Candidate"}</strong>
-                        <span>
-                          {[c.level ? LEVEL_LABEL[c.level] : null, c.location_region].filter(Boolean).join(" · ")}
-                        </span>
-                      </span>
-                      <span className={styles.rowSide}>
-                        {(c.salary_min || c.salary_max) && <span>{salaryRange(c.salary_min, c.salary_max)}</span>}
-                        <i aria-hidden="true">›</i>
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-              <Link className={styles.panelFoot} href="/candidates">
-                See all {all.length} candidates
-              </Link>
-              <p className={styles.panelNote}>Every candidate interviewed by our team</p>
+            <div className={styles.stack} aria-hidden="true">
+              {feed.slice(0, 3).map((c, i) => (
+                <div key={c.id} className={styles[`s${i}`]}>
+                  <CandidateCard c={{ ...c, headline: proTitle(c) }} fee={feeFor(c, tiers)} />
+                </div>
+              ))}
             </div>
           )}
         </div>
