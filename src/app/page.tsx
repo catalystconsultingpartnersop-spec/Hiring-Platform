@@ -43,16 +43,13 @@ export default async function Home() {
             hour-long intake call. No one telling you how to run your business.
           </p>
 
-          <form action="/candidates" className={styles.search} role="search">
-            <label className="sr-only" htmlFor="home-q">
-              Who are you looking for?
-            </label>
-            <input id="home-q" name="q" placeholder="Who are you looking for? Try “bookkeeper” or “someone to run my office”" />
-            <button type="submit" className="btn btn-gold">
-              Browse
-            </button>
-          </form>
+          <div className={styles.cta}>
+            <Link className="btn btn-gold" href="/candidates">
+              Browse candidates
+            </Link>
+          </div>
 
+          <p className={styles.jump}>Or jump straight to</p>
           <div className={styles.chips}>
             {chips.map(({ role, n }) => (
               <Link key={role} href={n ? `/candidates?role=${encodeURIComponent(role)}` : `/candidates?q=${encodeURIComponent(role)}`}>

@@ -101,3 +101,8 @@
   .search { border-radius: 18px; flex-direction: column; padding: 8px; }
   .search input { padding: 12px 10px; }
 }
+
+.cta { margin-top: 28px; }
+.cta :global(.btn) { min-height: 56px; padding: 0 34px; font-size: 18px; }
+.jump { margin: 26px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255, 255, 255, 0.6); font-weight: 700; }
+.jump + .chips { margin-top: 10px; }
