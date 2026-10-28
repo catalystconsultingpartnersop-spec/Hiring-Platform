@@ -171,3 +171,11 @@
 
 .wink { margin: 12px 0 0; font-family: var(--display); font-size: clamp(18px, 1.8vw, 22px); font-weight: 600; font-style: italic; color: var(--marigold); }
 .wink + .lede { margin-top: 18px; }
+
+.mission { background: #fff8e1; padding: clamp(52px, 7vw, 92px) 0; }
+.missionGrid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: clamp(28px, 5vw, 72px); align-items: start; }
+.missionLabel { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800; color: #9a7300; }
+.mission h2 { font-size: clamp(30px, 4vw, 44px); line-height: 1.1; }
+.missionText p { font-size: 18.5px; line-height: 1.65; color: var(--ink-2); margin: 0 0 16px; }
+.missionBottom { color: var(--ink) !important; font-weight: 700; border-left: 4px solid var(--marigold); padding-left: 16px; }
+@media (max-width: 860px) { .missionGrid { grid-template-columns: 1fr; } }

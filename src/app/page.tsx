@@ -173,6 +173,33 @@ export default async function Home() {
         </div>
       </section>
 
+      <section className={styles.mission} id="mission">
+        <div className={`wrap ${styles.missionGrid}`}>
+          <div>
+            <p className={styles.missionLabel}>Our mission</p>
+            <h2>Every person has a talent. We help them find where it shines.</h2>
+          </div>
+          <div className={styles.missionText}>
+            <p>
+              We treat every candidate with dignity and respect. Before anyone is listed, we sit down with them and talk
+              about what they&rsquo;re great at and where their talents are truly valued.
+            </p>
+            <p>
+              So when you browse, you&rsquo;re meeting people who already have that clarity. You both start the
+              relationship set up for success.
+            </p>
+            <p>
+              It isn&rsquo;t a guarantee. Plenty has to go right for any hire to work out. But it&rsquo;s a real
+              start, and it&rsquo;s a better one.
+            </p>
+            <p className={styles.missionBottom}>
+              Our mission is simple: help people find work that suits them. And that is the best thing for the employer,
+              too.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className={styles.scroll}>
         <div className={`wrap ${styles.scrollGrid}`}>
           <div>
