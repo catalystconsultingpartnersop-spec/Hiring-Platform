@@ -32,32 +32,52 @@ export default async function Home() {
   return (
     <>
       <section className={styles.hero}>
-        <div className="wrap">
-          <h1>
-            Scroll. Meet. <span>Hire.</span>
-          </h1>
-          <p className={styles.lede}>
-            Your next employee is already here. Browse people who are ready to work, every one interviewed by our
-            team. No hour-long intake call. No one telling you how to run your business.
-          </p>
-
-          <div className={styles.cta}>
-            <Link className="btn btn-gold" href="/candidates">
-              Browse candidates
-            </Link>
-          </div>
-
-          <p className={styles.jump}>Or jump straight to</p>
-          <div className={styles.chips}>
-            {chips.map(({ role, n }) => (
-              <Link key={role} href={n ? `/candidates?role=${encodeURIComponent(role)}` : `/candidates?q=${encodeURIComponent(role)}`}>
-                {role}
-                {n > 0 && <b>{n}</b>}
+        <div className={`wrap ${styles.heroGrid}`}>
+          <div>
+            <p className={styles.kicker}>Vetted talent, ready when you are</p>
+            <h1 className={styles.big}>
+              Find the one you&rsquo;re looking for.
+              <span>Or the one you didn&rsquo;t know you needed.</span>
+            </h1>
+            <p className={styles.lede}>
+              Scroll through our collection of vetted candidates. Look around, take your time, and see the talent
+              that&rsquo;s available to you.
+            </p>
+            <div className={styles.cta}>
+              <Link className="btn btn-gold" href="/candidates">
+                Start browsing
               </Link>
-            ))}
+              <span className={styles.happy} aria-label="Happy browsing">
+                Happy{" "}
+                <span className={styles.rotor} aria-hidden="true">
+                  <span>
+                    <i>scrolling.</i>
+                    <i>browsing.</i>
+                    <i>shopping.</i>
+                    <i>scrolling.</i>
+                  </span>
+                </span>
+              </span>
+            </div>
+            <p className={styles.jump}>Or jump straight to</p>
+            <div className={styles.chips}>
+              {chips.map(({ role, n }) => (
+                <Link key={role} href={n ? `/candidates?role=${encodeURIComponent(role)}` : `/candidates?q=${encodeURIComponent(role)}`}>
+                  {role}
+                  {n > 0 && <b>{n}</b>}
+                </Link>
+              ))}
+            </div>
           </div>
-
-          <p className={styles.free}>Free to browse. Free to see who they are. One flat fee, only if you hire.</p>
+          {feed.length > 0 && (
+            <div className={styles.stack} aria-hidden="true">
+              {feed.slice(0, 3).map((c, i) => (
+                <div key={c.id} className={styles[`s${i}`]}>
+                  <CandidateCard c={c} fee={feeFor(c, tiers)} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

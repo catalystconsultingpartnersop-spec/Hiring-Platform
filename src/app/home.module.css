@@ -120,3 +120,33 @@
 .easy p { margin: 8px 0 0; color: rgba(255, 255, 255, 0.78); font-size: 15px; line-height: 1.5; }
 @media (max-width: 1100px) { .easy { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 680px) { .easy { grid-template-columns: 1fr; } }
+
+/* Fresh hero */
+.heroGrid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: clamp(28px, 5vw, 64px); align-items: center; }
+.kicker { display: inline-block; margin: 0 0 18px; padding: 6px 14px; border-radius: 999px; background: rgba(242, 179, 0, 0.16); color: var(--marigold); font-weight: 700; font-size: 14px; }
+.big { font-size: clamp(34px, 4.2vw, 54px) !important; line-height: 1.04 !important; max-width: none !important; }
+.big span { display: block; color: var(--marigold); margin-top: 6px; }
+.cta { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.happy { font-family: var(--display); font-size: 22px; font-weight: 700; color: #fff; display: inline-flex; align-items: baseline; gap: 6px; }
+.rotor { display: inline-block; height: 1.2em; overflow: hidden; vertical-align: bottom; color: var(--marigold); }
+.rotor > span { display: flex; flex-direction: column; animation: rotor 7.5s cubic-bezier(0.7, 0, 0.3, 1) infinite; }
+.rotor i { font-style: normal; height: 1.2em; line-height: 1.2em; }
+@keyframes rotor {
+  0%, 26% { transform: translateY(0); }
+  33%, 59% { transform: translateY(-1.2em); }
+  66%, 92% { transform: translateY(-2.4em); }
+  100% { transform: translateY(-3.6em); }
+}
+@media (prefers-reduced-motion: reduce) { .rotor > span { animation: none; transform: translateY(-1.2em); } }
+
+.stack { position: relative; height: 470px; }
+.stack > div { position: absolute; width: min(100%, 380px); border-radius: var(--radius); box-shadow: 0 24px 50px -24px rgba(0, 0, 0, 0.6); }
+.stack :global(.card) { background: #fff; color: var(--ink); }
+.stack { color: var(--ink); }
+.s0 { top: 0; right: 0; transform: rotate(4deg); z-index: 1; filter: brightness(0.9); }
+.s1 { top: 95px; right: 70px; transform: rotate(-3deg); z-index: 2; filter: brightness(0.96); }
+.s2 { top: 190px; right: 20px; transform: rotate(1.5deg); z-index: 3; }
+@media (max-width: 900px) {
+  .heroGrid { grid-template-columns: 1fr; }
+  .stack { display: none; }
+}
