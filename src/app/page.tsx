@@ -10,17 +10,6 @@ export const dynamic = "force-dynamic";
 // Shown as quick picks even before there's anyone listed in that role.
 const POPULAR = ["Office manager", "Bookkeeping", "Sales", "Executive assistant", "Graphic design", "Customer service", "Operations", "Marketing"];
 
-// A clean, professional title for the showcase cards, e.g. "Senior operations
-// professional" or "Experienced executive assistant".
-const PERSON = /(assistant|manager|designer|coordinator|specialist|representative|rep|developer|engineer|accountant|bookkeeper|administrator|technician|driver|writer|analyst|director|lead|estimator|dispatcher|receptionist)$/i;
-function proTitle(c: PublicCandidate) {
-  const role = (c.role_category ?? "").trim();
-  if (!role) return c.headline;
-  const lvl = c.level === "senior" ? "Senior" : c.level === "beginner" ? "Entry-level" : "Experienced";
-  const noun = PERSON.test(role) ? role.toLowerCase() : `${role.toLowerCase()} professional`;
-  return `${lvl} ${noun}`;
-}
-
 export default async function Home() {
   let all: PublicCandidate[] = [];
   let tiers: FeeTier[] = [];
@@ -73,7 +62,7 @@ export default async function Home() {
             <div className={styles.stack} aria-hidden="true">
               {feed.slice(0, 3).map((c, i) => (
                 <div key={c.id} className={styles[`s${i}`]}>
-                  <CandidateCard c={{ ...c, headline: proTitle(c) }} fee={feeFor(c, tiers)} />
+                  <CandidateCard c={c} fee={feeFor(c, tiers)} />
                 </div>
               ))}
             </div>
