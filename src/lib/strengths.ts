@@ -224,5 +224,5 @@ export const TRAIT_LIST = ORDER.map((k) => ({ key: k, ...TRAITS[k] }));
 export function suggestedHeadline(role: string, raw: string | null | undefined) {
   const d = describe(raw);
   const r = role.trim().toLowerCase();
-  return d ? `${d.name} for ${r} roles` : `${cap(role.trim())} candidate`;
+  return d ? `${cap(r)} · ${d.name.toLowerCase()}` : `${cap(role.trim())}`;
 }
