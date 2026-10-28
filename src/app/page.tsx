@@ -81,26 +81,27 @@ export default async function Home() {
       <section className={styles.contrast}>
         <div className="wrap">
           <h2>Hiring, the easy way.</h2>
-          <div className={styles.vs}>
-            <div className={styles.old}>
-              <p className={styles.vsLabel}>What hiring usually looks like</p>
-              <ul>
-                <li>An hour-long intake call before you see anyone</li>
-                <li>Opinions about how you should run your business</li>
-                <li>Homework, forms, and more calls</li>
-                <li>A few so-so candidates who don&rsquo;t really fit</li>
-                <li>A big percentage of their first-year salary</li>
-              </ul>
+          <p className={styles.easySub}>Everything about this is built around your time.</p>
+          <div className={styles.easy}>
+            <div>
+              <h3>See people right away</h3>
+              <p>Open the site and start scrolling. No call to schedule first.</p>
             </div>
-            <div className={styles.new}>
-              <p className={styles.vsLabel}>What it looks like here</p>
-              <ul>
-                <li>Open the site and start scrolling, right now</li>
-                <li>We don&rsquo;t tell you how to run your business</li>
-                <li>No calls, no forms, no homework</li>
-                <li>Every person interviewed, with how they work best spelled out</li>
-                <li>One flat fee, usually $5,000, only if you hire</li>
-              </ul>
+            <div>
+              <h3>Your business, your call</h3>
+              <p>You know your business best. We&rsquo;re here to show you great people, not to give you advice.</p>
+            </div>
+            <div>
+              <h3>Nothing to fill out</h3>
+              <p>No forms, no homework, no back-and-forth. Just browse.</p>
+            </div>
+            <div>
+              <h3>People who fit</h3>
+              <p>Every person is interviewed, with how they work best spelled out in plain words.</p>
+            </div>
+            <div>
+              <h3>One fair, flat fee</h3>
+              <p>Usually $5,000, and only if you hire. Never a percentage of salary.</p>
             </div>
           </div>
         </div>

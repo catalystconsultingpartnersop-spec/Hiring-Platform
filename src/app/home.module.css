@@ -106,3 +106,17 @@
 .cta :global(.btn) { min-height: 56px; padding: 0 34px; font-size: 18px; }
 .jump { margin: 26px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255, 255, 255, 0.6); font-weight: 700; }
 .jump + .chips { margin-top: 10px; }
+
+.easySub { font-size: 19px; color: var(--ink-2); margin: 10px 0 0; }
+.easy { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 26px; }
+.easy > div { background: var(--ink); color: #fff; border-radius: 18px; padding: 22px 20px; position: relative; }
+.easy > div::before {
+  content: "✓";
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--marigold); color: var(--ink); font-weight: 800; margin-bottom: 12px;
+}
+.easy h3 { font-size: 18px; line-height: 1.25; }
+.easy p { margin: 8px 0 0; color: rgba(255, 255, 255, 0.78); font-size: 15px; line-height: 1.5; }
+@media (max-width: 1100px) { .easy { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 680px) { .easy { grid-template-columns: 1fr; } }
