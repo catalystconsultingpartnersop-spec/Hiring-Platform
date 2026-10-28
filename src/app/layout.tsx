@@ -68,6 +68,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               Questions? Text or call <a href={`sms:${contactPhoneHref()}`}>{contactPhone()}</a>
               {" · "}
               <Link href="/apply">Looking for work?</Link>
+              {" · "}
+              <Link href="/mission">Our mission</Link>
             </span>
           </div>
         </footer>

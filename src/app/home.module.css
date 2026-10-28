@@ -179,3 +179,8 @@
 .missionText p { font-size: 18.5px; line-height: 1.65; color: var(--ink-2); margin: 0 0 16px; }
 .missionBottom { color: var(--ink) !important; font-weight: 700; border-left: 4px solid var(--marigold); padding-left: 16px; }
 @media (max-width: 860px) { .missionGrid { grid-template-columns: 1fr; } }
+
+.missionLine { font-size: clamp(28px, 3.8vw, 46px) !important; line-height: 1.15 !important; max-width: 26ch; }
+.missionKicker { margin: 18px 0 0; font-size: clamp(18px, 2vw, 22px); color: #6b4f00; font-weight: 600; }
+.missionLink { display: inline-flex; align-items: center; gap: 8px; margin-top: 26px; font-weight: 700; color: var(--ink); text-decoration: none; border-bottom: 2px solid var(--marigold); padding-bottom: 2px; }
+.missionLink::after { content: "→"; }
