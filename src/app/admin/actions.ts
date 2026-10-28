@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db, logActivity } from "@/lib/db";
-import { escapeHtml, sendEmail } from "@/lib/email";
+import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
+import { candidateHired, hireSummaryHtml } from "@/lib/notify";
 import { brandName, money, refCode, siteUrl } from "@/lib/format";
 import {
   checkAdminPassword,
@@ -235,6 +236,20 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
     const { error } = await db().from("candidates").update(record).eq("id", id);
     if (error) return { error: `Could not save: ${error.message}` };
     if (before?.status !== status) await logActivity(actor, "candidate_status", { candidate: refCode(id), from: before?.status, to: status });
+    if (before?.status !== "hired" && status === "hired") {
+      // Hired outside the site's payment flow: still tell everyone.
+      const notice = await candidateHired(id, null, null, {});
+      const { data: c } = await db().from("candidates").select("full_name").eq("id", id).single();
+      await emailAdmin(
+        `Marked hired: ${c?.full_name} (${refCode(id)})`,
+        `<p>${escapeHtml(me.name)} marked <strong>${escapeHtml(c?.full_name ?? "")}</strong> (${refCode(id)}) as hired from the back office. No payment went through the site for this hire.</p>
+<p><a href="${siteUrl()}/admin/candidates/${id}">Open their profile</a></p>
+${hireSummaryHtml(notice)}`,
+      );
+    }
+    if (before?.status === "hired" && status === "listed") {
+      await logActivity(actor, "candidate_relisted_after_hire", { candidate: refCode(id) });
+    }
   } else {
     if (status === "listed") record.listed_at = new Date().toISOString();
     record.consent_at = form.get("consent") === "on" ? new Date().toISOString() : null;

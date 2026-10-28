@@ -25,33 +25,39 @@ export async function repFor(candidateId: string): Promise<Rep | null> {
   return (call as unknown as { staff: Rep | null } | null)?.staff ?? null;
 }
 
-// A candidate was hired: take them off the catalog and tell their rep.
+export type HireNotice = { rep: Rep | null; repEmailed: boolean; toldOwners: string[] };
+
+// A candidate was hired. One place that does everything, whichever way the
+// hire happened (owner paid, card charged, or staff marked them hired):
+// take them off the catalog, tell other owners who were considering them,
+// and tell their rep. Heshy is told by the caller.
 export async function candidateHired(
   candidateId: string,
-  owner: { email: string; full_name: string | null; company: string | null; phone?: string | null },
-  amountCents: number,
+  owner: { email: string; full_name: string | null; company: string | null; phone?: string | null } | null,
+  amountCents: number | null,
   details: HireDetails,
-) {
+): Promise<HireNotice> {
   await db()
     .from("candidates")
     .update({ status: "hired", updated_at: new Date().toISOString() })
     .eq("id", candidateId)
-    .in("status", ["listed", "paused", "draft"]);
+    .neq("status", "hired");
   await logActivity("system", "candidate_marked_hired", { candidate: refCode(candidateId) });
-  await tellOtherOwners(candidateId, owner.email);
+  const toldOwners = await tellOtherOwners(candidateId, owner?.email ?? "");
 
   const rep = await repFor(candidateId);
-  if (!rep || !rep.active || isOwnerEmail(rep.email)) return rep; // Heshy already gets the payment email
+  if (!rep || !rep.active || isOwnerEmail(rep.email)) return { rep, repEmailed: false, toldOwners };
   const { data: c } = await db().from("candidates").select("full_name, email, phone").eq("id", candidateId).single();
-  if (!c) return rep;
+  if (!c) return { rep, repEmailed: false, toldOwners };
   const first = (rep.full_name ?? "").split(" ")[0] || "there";
-  await sendEmail({
+  const who = owner?.company ? `<strong>${escapeHtml(owner.company)}</strong>` : "an employer";
+  const sent = await sendEmail({
     to: rep.email,
-    subject: `${c.full_name} is being hired by ${owner.company}`,
+    subject: owner?.company ? `${c.full_name} is being hired by ${owner.company}` : `${c.full_name} has been hired`,
     html: `<p>Hi ${escapeHtml(first)},</p>
-<p>Good news: <strong>${escapeHtml(owner.company ?? "")}</strong> has decided to hire <strong>${escapeHtml(c.full_name)}</strong> (${refCode(candidateId)}) and paid the ${money(amountCents)} fee. ${escapeHtml(c.full_name.split(" ")[0])} is now off the catalog.</p>
+<p>Good news: ${who} is hiring <strong>${escapeHtml(c.full_name)}</strong> (${refCode(candidateId)})${amountCents ? ` and paid the ${money(amountCents)} fee` : ""}. ${escapeHtml(c.full_name.split(" ")[0])} is now off the catalog.</p>
 <table style="border-collapse:collapse;font-size:14px">
-<tr><td style="padding:4px 14px 4px 0;color:#4a5570">Employer</td><td>${escapeHtml(owner.company ?? "")}, ${escapeHtml(owner.full_name ?? "")}, ${escapeHtml(owner.email)}${owner.phone ? `, ${escapeHtml(owner.phone)}` : ""}</td></tr>
+${owner ? `<tr><td style="padding:4px 14px 4px 0;color:#4a5570">Employer</td><td>${escapeHtml(owner.company ?? "")}, ${escapeHtml(owner.full_name ?? "")}, ${escapeHtml(owner.email)}${owner.phone ? `, ${escapeHtml(owner.phone)}` : ""}</td></tr>` : ""}
 ${details.jobTitle ? `<tr><td style="padding:4px 14px 4px 0;color:#4a5570">Role</td><td>${escapeHtml(details.jobTitle)}</td></tr>` : ""}
 ${details.startDate ? `<tr><td style="padding:4px 14px 4px 0;color:#4a5570">Expected start</td><td>${escapeHtml(details.startDate)}</td></tr>` : ""}
 <tr><td style="padding:4px 14px 4px 0;color:#4a5570">Candidate</td><td>${escapeHtml(c.email)}${c.phone ? `, ${escapeHtml(c.phone)}` : ""}</td></tr>
@@ -60,12 +66,28 @@ ${details.startDate ? `<tr><td style="padding:4px 14px 4px 0;color:#4a5570">Expe
 <p><a href="${siteUrl()}/admin/candidates/${candidateId}">Open their profile</a></p>`,
   });
   await logActivity("system", "rep_notified_of_hire", { candidate: refCode(candidateId), rep: rep.email });
-  return rep;
+  return { rep, repEmailed: sent.ok, toldOwners };
+}
+
+// The lines added to Heshy's email about what happened after a hire.
+export function hireSummaryHtml(n: HireNotice) {
+  const repLine = !n.rep
+    ? "No rep is attached to this candidate."
+    : isOwnerEmail(n.rep.email)
+      ? "You brought this candidate in."
+      : `${escapeHtml(n.rep.full_name || n.rep.email)} (their rep) ${n.repEmailed ? "was emailed" : "could not be emailed; tell them directly"}.`;
+  return `<p style="margin-top:16px;padding:12px 14px;background:#eef1f6;border-radius:8px;font-size:14px">
+<strong>Done automatically:</strong><br>
+Taken off the catalog.<br>
+${repLine}<br>
+${n.toldOwners.length ? `${n.toldOwners.length} other owner${n.toldOwners.length > 1 ? "s" : ""} who were considering them ${n.toldOwners.length > 1 ? "were" : "was"} told they're no longer available: ${n.toldOwners.map(escapeHtml).join(", ")}.` : "No other owners were considering them."}<br>
+To put them back on the catalog later, set their status to Listed.</p>`;
 }
 
 // Other owners who were considering this candidate: let them know, kindly,
 // that the candidate is no longer available. They owe nothing.
-export async function tellOtherOwners(candidateId: string, hiringOwnerEmail: string) {
+export async function tellOtherOwners(candidateId: string, hiringOwnerEmail: string): Promise<string[]> {
+  const told: string[] = [];
   const [{ data: rows }, { data: c }] = await Promise.all([
     db()
       .from("unlocks")
@@ -74,7 +96,7 @@ export async function tellOtherOwners(candidateId: string, hiringOwnerEmail: str
       .not("confirmed_at", "is", null),
     db().from("candidates").select("full_name, role_category").eq("id", candidateId).single(),
   ]);
-  if (!c) return;
+  if (!c) return told;
   const first = c.full_name.split(" ")[0];
   const browse = `${siteUrl()}/candidates${c.role_category ? `?role=${encodeURIComponent(c.role_category)}` : ""}`;
   type Row = { id: string; owners: { email: string; full_name: string | null }; hires: { status: string }[] };
@@ -93,5 +115,7 @@ export async function tellOtherOwners(candidateId: string, hiringOwnerEmail: str
 <p>${escapeHtml(brandName())}</p>`,
     });
     await logActivity("system", "owner_told_unavailable", { candidate: refCode(candidateId), owner: r.owners.email });
+    told.push(r.owners.email);
   }
+  return told;
 }

@@ -41,6 +41,10 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
   const industryCounts = facetCounts(all, f, "industry");
   const allIndustries = [...new Set(all.map((c) => c.industry).filter((r): r is string => !!r && r !== "Any"))].sort();
   const shortlistView = !!f.saved;
+  // Saved candidates who have since been hired (or taken down) drop out of the list; say so.
+  const goneFromShortlist = shortlistView
+    ? (f.saved ?? "").split(",").filter((id) => id && id !== "none" && !all.some((c) => c.id === id)).length
+    : 0;
 
   const active: [keyof CatalogFilters, string][] = [];
   if (f.strength && f.strength in TRAITS) active.push(["strength", `Best at: ${TRAITS[f.strength as keyof typeof TRAITS].label}`]);
@@ -161,6 +165,14 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
         </FiltersToggle>
 
         <section aria-live="polite">
+          {goneFromShortlist > 0 && (
+            <p className="notice notice-gold" role="status" style={{ marginBottom: 16 }}>
+              {goneFromShortlist === 1
+                ? "One person you saved is no longer available. They've been hired."
+                : `${goneFromShortlist} people you saved are no longer available. They've been hired.`}{" "}
+              Here&rsquo;s who&rsquo;s still on your list.
+            </p>
+          )}
           <div className={styles.resultsHead}>
             <h1>
               {shortlistView ? "Your shortlist" : f.role ?? "All candidates"}

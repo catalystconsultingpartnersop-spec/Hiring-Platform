@@ -3,7 +3,7 @@ import { stripe } from "./stripe";
 import { emailAdmin, escapeHtml, sendEmail } from "./email";
 import { brandName, money, refCode, siteUrl } from "./format";
 import { receiptEmailHtml, receiptNumber } from "./receipt";
-import { candidateHired } from "./notify";
+import { candidateHired, hireSummaryHtml } from "./notify";
 
 export async function latestHire(unlockId: string): Promise<Hire | null> {
   const { data } = await db()
@@ -61,9 +61,9 @@ export async function markHirePaid(hireId: string, paymentIntent: string | null,
   const ref = refCode(unlock!.candidate_id);
 
   await logActivity(`owner:${owner.email}`, "hire_paid", { hire_id: hireId, candidate: ref, amount_cents: hire.amount_cents });
-  const rep = await candidateHired(unlock!.candidate_id, owner, hire.amount_cents, details);
+  const notice = await candidateHired(unlock!.candidate_id, owner, hire.amount_cents, details);
   // Credit the rep who brought the candidate in (for commission).
-  if (rep) await db().from("hires").update({ rep_id: rep.id }).eq("id", hireId);
+  if (notice.rep) await db().from("hires").update({ rep_id: notice.rep.id }).eq("id", hireId);
 
   await sendEmail({
     to: owner.email,
@@ -89,6 +89,7 @@ ${receiptEmailHtml({
     `Paid: ${owner.company} is hiring ${cand.full_name} (${money(hire.amount_cents)})`,
     `<p><strong>${escapeHtml(owner.company ?? "")}</strong> (${escapeHtml(owner.full_name ?? "")}, ${escapeHtml(owner.email)}) paid ${money(hire.amount_cents)} to hire <strong>${escapeHtml(cand.full_name)}</strong> (${ref}).</p>
 ${details.jobTitle ? `<p>Role: ${escapeHtml(details.jobTitle)}</p>` : ""}${details.startDate ? `<p>Expected start: ${escapeHtml(details.startDate)}</p>` : ""}
+${hireSummaryHtml(notice)}
 <p><a href="${siteUrl()}/admin">Open the admin dashboard</a></p>`,
   );
   return { ok: true as const, already: false };
