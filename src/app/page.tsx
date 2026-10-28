@@ -193,8 +193,8 @@ export default async function Home() {
               start, and it&rsquo;s a better one.
             </p>
             <p className={styles.missionBottom}>
-              Bottom line: we help people understand their nature, the way they&rsquo;re truly wired, so they can find
-              work that fits them. And a person in the right job is the best hire you&rsquo;ll ever make.
+              Bottom line: we help people discover their natural strengths and character, so they can find work that
+              truly fits them. And a person in the right job is the best hire you&rsquo;ll ever make.
             </p>
           </div>
         </div>
