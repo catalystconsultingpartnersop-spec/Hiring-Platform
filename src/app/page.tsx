@@ -34,7 +34,7 @@ export default async function Home() {
       <section className={styles.hero}>
         <div className="wrap">
           <h1>
-            Need help?
+            Looking for your next employee?
             <br />
             <span>Just browse.</span>
           </h1>
@@ -45,9 +45,9 @@ export default async function Home() {
 
           <form action="/candidates" className={styles.search} role="search">
             <label className="sr-only" htmlFor="home-q">
-              What kind of help do you need?
+              Who are you looking for?
             </label>
-            <input id="home-q" name="q" placeholder="What do you need? Try “bookkeeper” or “someone to run my office”" />
+            <input id="home-q" name="q" placeholder="Who are you looking for? Try “bookkeeper” or “someone to run my office”" />
             <button type="submit" className="btn btn-gold">
               Browse
             </button>
