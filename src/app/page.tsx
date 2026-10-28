@@ -39,8 +39,8 @@ export default async function Home() {
             <span>Just browse.</span>
           </h1>
           <p className={styles.lede}>
-            Scroll through people who are ready to work, every one already interviewed by our team. No recruiter. No
-            hour-long intake call. No one telling you how to run your business.
+            Meet people who are ready to work, and excited to. Every one has sat down with our team, so you can see
+            what they&rsquo;re great at before you even say hello.
           </p>
 
           <div className={styles.cta}>
@@ -59,7 +59,7 @@ export default async function Home() {
             ))}
           </div>
 
-          <p className={styles.free}>Free to browse. Free to see who they are. One flat fee, only if you hire.</p>
+          <p className={styles.free}>Welcome. Take your time, look around, and save the ones you like.</p>
         </div>
       </section>
 
@@ -67,7 +67,7 @@ export default async function Home() {
         <section className={styles.feed}>
           <div className="wrap">
             <div className={styles.feedHead}>
-              <h2>{fresh.length ? "Fresh this week, and more" : "People ready to work"}</h2>
+              <h2>Say hello to a few of them</h2>
               <Link href="/candidates">See everyone ({all.length})</Link>
             </div>
             <div className={styles.grid}>{feed.map(card)}</div>
@@ -80,29 +80,30 @@ export default async function Home() {
         </section>
       )}
 
-      <section className={styles.contrast}>
+      <section className={styles.made}>
         <div className="wrap">
-          <h2>Remember the last time you called a recruiter?</h2>
-          <div className={styles.vs}>
-            <div className={styles.old}>
-              <p className={styles.vsLabel}>The usual way</p>
-              <ul>
-                <li>An hour-long intake call before you see anyone</li>
-                <li>Opinions about how you should run your business</li>
-                <li>Homework, forms, and more calls</li>
-                <li>A few so-so candidates who don&rsquo;t really fit</li>
-                <li>20&ndash;25% of their first-year salary</li>
-              </ul>
+          <h2>Made for busy owners.</h2>
+          <p className={styles.madeSub}>Finding good people should feel like the easy part of your day.</p>
+          <div className={styles.tiles}>
+            <div>
+              <span className={styles.icon} aria-hidden="true">☾</span>
+              <h3>Browse anytime</h3>
+              <p>Late at night, between jobs, on your phone. The people are here whenever you are.</p>
             </div>
-            <div className={styles.new}>
-              <p className={styles.vsLabel}>Here</p>
-              <ul>
-                <li>Open the site and start scrolling, right now</li>
-                <li>We don&rsquo;t tell you how to run your business</li>
-                <li>No calls, no forms, no homework</li>
-                <li>Every person interviewed, with how they work best spelled out</li>
-                <li>One flat fee, usually $5,000, only if you hire</li>
-              </ul>
+            <div>
+              <span className={styles.icon} aria-hidden="true">★</span>
+              <h3>Know them before you meet them</h3>
+              <p>What each person is great at, what they&rsquo;ve done and what they want next, in plain words.</p>
+            </div>
+            <div>
+              <span className={styles.icon} aria-hidden="true">☎</span>
+              <h3>Meet them your way</h3>
+              <p>See their name, resume and number in a minute, then reach out directly, on your schedule.</p>
+            </div>
+            <div>
+              <span className={styles.icon} aria-hidden="true">$</span>
+              <h3>One simple fee</h3>
+              <p>A flat fee, shown up front on every profile, only when you decide to hire.</p>
             </div>
           </div>
         </div>
@@ -113,37 +114,51 @@ export default async function Home() {
           <div>
             <h2>Candidate scrolling.</h2>
             <p>
-              Like browsing houses you&rsquo;re not buying yet. Lying in bed at night, thinking about the business,
-              and it hits you: <em>&ldquo;I could really use a graphics person.&rdquo;</em> Open the site and look. No
-              commitment, nobody calls you in the morning.
+              Like browsing homes for fun. You&rsquo;re winding down at night, thinking about the business, and it
+              hits you: <em>&ldquo;I could really use a graphics person.&rdquo;</em> So you take a look.
             </p>
-            <p>When someone catches your eye, save them. When you&rsquo;re ready, meet them.</p>
+            <p>Save the ones you like. When the time is right, meet them.</p>
           </div>
           <ol className={styles.steps}>
             <li>
-              <strong>Scroll</strong>
-              <span>See what each person is great at, what they&rsquo;ve done and what they want next.</span>
+              <strong>Browse</strong>
+              <span>See what each person is great at and what they want next.</span>
             </li>
             <li>
-              <strong>Meet them, free</strong>
-              <span>See their name, resume and number in a minute. Card on file, nothing charged.</span>
+              <strong>Meet them</strong>
+              <span>See their name, resume and number in a minute. Nothing is charged.</span>
             </li>
             <li>
-              <strong>Hire with one click</strong>
-              <span>One flat fee. You get a receipt and a ready-to-fill offer letter.</span>
+              <strong>Welcome them aboard</strong>
+              <span>Hire with one click. You get a receipt and a ready-to-fill offer letter.</span>
             </li>
           </ol>
         </div>
       </section>
 
+      <section className={styles.people}>
+        <div className={`wrap ${styles.peopleGrid}`}>
+          <div className={styles.quoteMark} aria-hidden="true">“</div>
+          <div>
+            <h2>Every person here, we&rsquo;ve met.</h2>
+            <p>
+              We sit down with each candidate, learn what makes them tick, and help them find work they&rsquo;ll
+              love. So the people you meet here aren&rsquo;t just looking for any job. They&rsquo;re looking for the
+              right one, and that might be with you.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className={styles.closing}>
         <div className="wrap">
-          <h2>Your next hire is a scroll away.</h2>
+          <h2>We&rsquo;re glad you&rsquo;re here.</h2>
+          <p className={styles.closingSub}>Your next great employee might be one scroll away.</p>
           <Link className="btn btn-gold" href="/candidates">
             Start browsing
           </Link>
           <p>
-            Rather talk to a person? Text or call <a href={`sms:${contactPhoneHref()}`}>{contactPhone()}</a>.
+            Want to say hi first? Text or call <a href={`sms:${contactPhoneHref()}`}>{contactPhone()}</a>.
           </p>
           <p className={styles.seeker}>
             Looking for work yourself? <Link href="/apply">Start here</Link>
