@@ -34,13 +34,11 @@ export default async function Home() {
       <section className={styles.hero}>
         <div className="wrap">
           <h1>
-            Looking for your next employee?
-            <br />
-            <span>Just browse.</span>
+            Scroll. Meet. <span>Hire.</span>
           </h1>
           <p className={styles.lede}>
-            Scroll through people who are ready to work, every one already interviewed by our team. No recruiter. No
-            hour-long intake call. No one telling you how to run your business.
+            Your next employee is already here. Browse people who are ready to work, every one interviewed by our
+            team. No hour-long intake call. No one telling you how to run your business.
           </p>
 
           <div className={styles.cta}>
@@ -82,20 +80,20 @@ export default async function Home() {
 
       <section className={styles.contrast}>
         <div className="wrap">
-          <h2>Remember the last time you called a recruiter?</h2>
+          <h2>Hiring, the easy way.</h2>
           <div className={styles.vs}>
             <div className={styles.old}>
-              <p className={styles.vsLabel}>The usual way</p>
+              <p className={styles.vsLabel}>What hiring usually looks like</p>
               <ul>
                 <li>An hour-long intake call before you see anyone</li>
                 <li>Opinions about how you should run your business</li>
                 <li>Homework, forms, and more calls</li>
                 <li>A few so-so candidates who don&rsquo;t really fit</li>
-                <li>20&ndash;25% of their first-year salary</li>
+                <li>A big percentage of their first-year salary</li>
               </ul>
             </div>
             <div className={styles.new}>
-              <p className={styles.vsLabel}>Here</p>
+              <p className={styles.vsLabel}>What it looks like here</p>
               <ul>
                 <li>Open the site and start scrolling, right now</li>
                 <li>We don&rsquo;t tell you how to run your business</li>
