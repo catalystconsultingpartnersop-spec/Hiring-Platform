@@ -127,7 +127,11 @@ function matches(c: PublicCandidate, f: CatalogFilters, skip?: FilterKey) {
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
-    if (!q.split(/\s+/).every((w) => hay.includes(w))) return false;
+    const stems = searchStems(q);
+    if (stems.length) {
+      const hits = stems.filter((alts) => alts.some((a) => hay.includes(a))).length;
+      if (hits < Math.ceil(stems.length / 2)) return false;
+    }
   }
   return true;
 }
@@ -202,4 +206,37 @@ export async function getListed(id: string): Promise<PublicCandidate | null> {
 // Kept for the home page.
 export async function listListed() {
   return (await allListed()).rows;
+}
+
+// Forgiving search: "a bookkeeper", "someone to run my office" and
+// "graphics guy" should all find people. Drops filler words, trims word
+// endings, and knows a few everyday synonyms.
+const FILLER = new Set(
+  "a an the and or for to of in on at my our we i me us need needs want wants looking someone somebody person people guy gal who that can could help with good great new".split(" "),
+);
+const SYNONYMS: Record<string, string[]> = {
+  graphic: ["design"],
+  graphics: ["design"],
+  books: ["bookkeep", "accounting"],
+  admin: ["assistant", "office"],
+  secretary: ["assistant", "office"],
+  receptionist: ["front desk", "office", "customer"],
+  salesman: ["sales"],
+  seller: ["sales"],
+  accountant: ["accounting", "bookkeep"],
+  ops: ["operations"],
+  manager: ["manag"],
+  social: ["marketing"],
+};
+
+function searchStems(q: string): string[][] {
+  return q
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w && !FILLER.has(w))
+    .map((w) => {
+      const stem = w.length > 5 ? w.slice(0, Math.max(5, w.length - 3)) : w.replace(/s$/, "");
+      return [stem, ...(SYNONYMS[w] ?? [])];
+    });
 }
