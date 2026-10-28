@@ -193,11 +193,23 @@ function Unlocked({
   hireNote: string;
 }) {
   const status = hire?.status;
+  // Hired by another company while this owner was still considering.
+  const taken = c.status === "hired" && status !== "paid" && status !== "hired";
+  const first = c.full_name.split(" ")[0];
   return (
     <div className={`wrap ${styles.page}`}>
       <Link href="/account" className={`small ${styles.back}`}>
         Your candidates
       </Link>
+      {taken && (
+        <div className="notice notice-gold" role="status">
+          <strong>{first} is no longer available.</strong> They accepted a position with another employer on{" "}
+          {dateShort(c.updated_at)}. Nothing was charged, and you owe nothing for {first}.{" "}
+          <Link href={`/candidates${c.role_category ? `?role=${encodeURIComponent(c.role_category)}` : ""}`}>
+            See similar candidates
+          </Link>
+        </div>
+      )}
       {justUnlocked && <p className="notice notice-good">Signed. Here&rsquo;s who they are. A copy of the agreement is in your email.</p>}
       {(paidNotice || hireNote === "paid") && hire && (
         <div className="notice notice-good" role="status">
@@ -254,7 +266,21 @@ function Unlocked({
 
         <aside className={styles.side}>
           <div className="panel">
-            {!status || status === "pending" ? (
+            {taken ? (
+              <>
+                <span className="tag">No longer available</span>
+                <p className={styles.sideMsg}>
+                  {first} was hired elsewhere. Nothing was charged.
+                </p>
+                <Link
+                  className="btn btn-gold"
+                  href={`/candidates${c.role_category ? `?role=${encodeURIComponent(c.role_category)}` : ""}`}
+                  style={{ width: "100%", marginTop: 14 }}
+                >
+                  See similar candidates
+                </Link>
+              </>
+            ) : !status || status === "pending" ? (
               <>
                 <p className="muted small">Your flat fee</p>
                 <p className={styles.fee}>{unlock.fee_cents != null ? money(unlock.fee_cents) : "Set with us"}</p>

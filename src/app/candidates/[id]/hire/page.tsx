@@ -37,6 +37,7 @@ export default async function HirePage({ params, searchParams }: PageProps<"/can
   const { data: cd } = await db().from("candidates").select("*").eq("id", id).maybeSingle();
   if (!cd) notFound();
   const c = cd as Candidate;
+  if (c.status === "hired") redirect(`/candidates/${id}`); // hired by someone else meanwhile
   const first = c.full_name.split(" ")[0];
   const fee = unlock.fee_cents;
   const card = unlock.card_pm ? (unlock.card_label ?? "card on file") : null;

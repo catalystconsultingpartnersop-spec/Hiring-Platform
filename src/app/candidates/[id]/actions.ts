@@ -105,6 +105,8 @@ export async function startHire(candidateId: string, form: FormData) {
 
   const existing = await latestHire(unlock.id);
   if (existing && (existing.status === "paid" || existing.status === "hired")) redirect(`/candidates/${candidateId}`);
+  const { data: still } = await db().from("candidates").select("status").eq("id", candidateId).single();
+  if (still?.status === "hired") redirect(`/candidates/${candidateId}`); // no longer available
   if (form.get("confirm") !== "on") redirect(`${hirePage}?error=confirm`);
 
   const details: HireDetails = {

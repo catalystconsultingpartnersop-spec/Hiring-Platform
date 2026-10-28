@@ -18,7 +18,7 @@ export type AgreementRow = {
   fee_cents: number | null;
   card_label: string | null;
   confirmed_at: string | null;
-  candidates: { full_name: string; added_by: string | null; role_category: string | null; industry: string | null };
+  candidates: { full_name: string; added_by: string | null; role_category: string | null; industry: string | null; status: string };
   owners: { email: string; full_name: string | null; company: string | null; phone: string | null };
   hires: HireRow[];
 };
@@ -28,7 +28,7 @@ export async function loadAgreements() {
     db()
       .from("unlocks")
       .select(
-        "id, candidate_id, signed_at, signed_name, fee_cents, card_label, confirmed_at, candidates(full_name, added_by, role_category, industry), owners(email, full_name, company, phone), hires(*)",
+        "id, candidate_id, signed_at, signed_name, fee_cents, card_label, confirmed_at, candidates(full_name, added_by, role_category, industry, status), owners(email, full_name, company, phone), hires(*)",
       )
       .order("signed_at", { ascending: false }),
     db().from("staff").select("id, email, full_name"),
@@ -42,12 +42,12 @@ export function latest(hires: HireRow[]) {
 }
 
 // Where an agreement stands, in one word.
-export function stageOf(a: AgreementRow): "no_card" | "considering" | "checkout" | "paid" | "hired" | "refunded" {
+export function stageOf(a: AgreementRow): "no_card" | "considering" | "checkout" | "paid" | "hired" | "refunded" | "taken" {
   if (!a.confirmed_at) return "no_card";
   const h = latest(a.hires);
-  if (!h) return "considering";
-  if (h.status === "pending") return "checkout";
-  return h.status;
+  if (h && h.status !== "pending") return h.status;
+  if (a.candidates.status === "hired") return "taken"; // someone else hired them
+  return h ? "checkout" : "considering";
 }
 
 export const STAGE_LABEL: Record<ReturnType<typeof stageOf>, string> = {
@@ -57,6 +57,7 @@ export const STAGE_LABEL: Record<ReturnType<typeof stageOf>, string> = {
   paid: "Paid",
   hired: "Hired",
   refunded: "Refunded",
+  taken: "Hired elsewhere",
 };
 
 export function repName(p: StaffLite | undefined) {

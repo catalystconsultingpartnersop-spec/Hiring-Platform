@@ -91,6 +91,8 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
                         <span className="tag tag-good">Hired</span>
                       ) : hire?.status === "refunded" ? (
                         <span className="tag">Refunded</span>
+                      ) : r.candidates.status === "hired" ? (
+                        <span className="tag">No longer available</span>
                       ) : (
                         <span className="tag">Considering</span>
                       )}

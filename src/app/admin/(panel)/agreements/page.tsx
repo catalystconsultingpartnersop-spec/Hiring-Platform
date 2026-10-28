@@ -15,7 +15,7 @@ const PERIODS = [
   ["365", "Last 12 months"],
   ["all", "All time"],
 ] as const;
-const STAGES = ["all", "considering", "paid", "hired", "refunded", "no_card"] as const;
+const STAGES = ["all", "considering", "paid", "hired", "taken", "refunded", "no_card"] as const;
 
 const DAY = 864e5;
 
