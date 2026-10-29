@@ -41,7 +41,7 @@ export default async function CareerArticlePage({ params }: PageProps<"/join/hel
             need exactly that.
           </p>
           <Link className="btn btn-gold btn-small" href="/apply">
-            Join the Collection
+            Become a candidate
           </Link>
         </div>
 

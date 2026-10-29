@@ -25,7 +25,7 @@ const STEPS = [
   },
   {
     t: "Employers ask to meet you",
-    d: "Business owners browse the Collection. When one wants to meet you, they reach out directly.",
+    d: "Business owners browse our candidates. When one wants to meet you, they reach out directly.",
   },
 ];
 
@@ -71,7 +71,7 @@ export default function JoinPage() {
             </p>
             <div className={styles.cta}>
               <Link className="btn btn-gold" href="/apply">
-                Join the Collection
+                Become a candidate
               </Link>
               <Link className={styles.signIn} href="/me">
                 Already with us? See your page
@@ -176,7 +176,7 @@ export default function JoinPage() {
           <p className={styles.closeLine}>Every person is built for something.</p>
           <h2>Let&rsquo;s find yours.</h2>
           <Link className="btn btn-gold" href="/apply">
-            Join the Collection
+            Become a candidate
           </Link>
           <p>
             Rather talk first? Text or call <a href={`sms:${contactPhoneHref()}`}>{contactPhone()}</a>. A real person
@@ -193,7 +193,7 @@ function YourPagePeek() {
   const rows = [
     ["done", "You joined", "Welcome!"],
     ["done", "Your conversation", "Great talking with you"],
-    ["done", "You're in the Collection", "Employers can find you"],
+    ["done", "You're officially a candidate", "Employers can find you"],
     ["now", "Employers want to meet you", "2 have asked so far"],
     ["next", "You're hired", ""],
   ] as const;

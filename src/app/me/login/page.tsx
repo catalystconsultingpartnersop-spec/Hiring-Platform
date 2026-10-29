@@ -20,7 +20,7 @@ export default async function CandidateLoginPage({ searchParams }: PageProps<"/m
       )}
       <LinkForm />
       <p className="small muted" style={{ marginTop: 26, textAlign: "center" }}>
-        Not with us yet? <Link href="/join">Join the Collection</Link>. Questions? Text{" "}
+        Not with us yet? <Link href="/join">Become a candidate</Link>. Questions? Text{" "}
         <a href={`sms:${contactPhoneHref()}`}>{contactPhone()}</a>.
       </p>
       <p className="small muted" style={{ textAlign: "center" }}>

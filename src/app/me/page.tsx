@@ -83,10 +83,10 @@ export default async function MyPage({ searchParams }: PageProps<"/me">) {
       ? { state: "done", title: "Your profile", detail: "Written and ready" }
       : { state: talked ? "now" : "next", title: "Your profile", detail: talked ? `${rep?.full_name ? `${repFirst} is` : "We're"} writing it now. You'll see it here when it's ready.` : undefined },
     s === "listed" || s === "hired"
-      ? { state: "done", title: "You're in the Collection", detail: c.listed_at ? `Since ${dateShort(c.listed_at)}` : "Employers can find you" }
+      ? { state: "done", title: "You're officially a candidate", detail: c.listed_at ? `Since ${dateShort(c.listed_at)}` : "Employers can find you" }
       : s === "paused" && wasListed
-        ? { state: "now", title: "You're in the Collection", detail: "Paused for now, so employers can't see you" }
-        : { state: "next", title: "You're in the Collection" },
+        ? { state: "now", title: "You're officially a candidate", detail: "Paused for now, so employers can't see you" }
+        : { state: "next", title: "You're officially a candidate" },
     s === "hired"
       ? { state: "done", title: "Employers want to meet you" }
       : meetCount > 0
