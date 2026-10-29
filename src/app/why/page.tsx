@@ -16,26 +16,29 @@ export default function WhyPage() {
         <div className="wrap">
           <p className={styles.label}>Why we started</p>
           <h1>Built by business owners, for business owners.</h1>
-          <p className={styles.lead}>We&rsquo;re business owners. When it came time to hire, we looked at our options and were unimpressed.</p>
+          <p className={styles.lead}>We&rsquo;re business owners. When it came time to hire, we looked at our options and were unimpressed, and honestly, a little sad.</p>
         </div>
       </section>
 
       <article className={`wrap ${styles.body}`}>
-        <p>
-          <strong>Everyone offered to do us a favor.</strong>
-        </p>
+        <p>Every time we needed to hire, it went the same way.</p>
         <ul className={styles.favors}>
           <li>
-            The job boards did us a favor: <b>hundreds of resumes</b> to sort through on our own time.
+            Before we met a single candidate, we were on <b>calls</b>, in <b>meetings</b>, answering <b>questions</b> and filling
+            out <b>checklists</b>.
           </li>
           <li>
-            The agencies did us a favor: <b>a call</b> to explain what we need, <b>forms</b> to fill out, <b>questions</b> about how
-            we run things, and <b>a fee</b> we&rsquo;d feel for months.
+            We were <b>told how to run the businesses</b> we&rsquo;d spent years building, by people who had known us for an
+            hour.
+          </li>
+          <li>
+            Then came <b>the fee</b>. And after all that, <b>30 to 60 days of wondering</b> whether we had hired the right person.
           </li>
         </ul>
-        <p className={styles.punch}>By the time we met a single candidate, we&rsquo;d been interviewed more than they had.</p>
+        <p className={styles.punch}>We were the ones being vetted. The candidates came second.</p>
         <p>
-          We didn&rsquo;t need a favor. <strong>We needed good people, and the freedom to choose.</strong>
+          We know our businesses. We know what we need and who we need.{" "}
+          <strong>We just wanted good people, and the freedom to choose.</strong>
         </p>
 
         <section className={styles.how}>
