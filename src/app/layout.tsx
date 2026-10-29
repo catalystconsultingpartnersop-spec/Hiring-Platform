@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     type: "website",
     siteName: brandName(),
     title: "Dear business owner, unimpressed with your hiring options?",
-    description: "By the time you meet a candidate, you’ve been interviewed more than they have. We’re business owners. So we built a better way to hire.",
+    description: "We’re business owners too. See the hiring experience we built: candidates met and coached first, and you choose for yourself.",
     images: [{ url: "/share/og.png", width: 1200, height: 630, alt: "Dear business owner, unimpressed with your hiring options?" }],
   },
   twitter: { card: "summary_large_image", images: ["/share/og.png"] },
