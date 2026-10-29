@@ -14,14 +14,14 @@ export function refSlug(s: string) {
     .slice(0, 30);
 }
 
-// "browse" goes straight to the candidates; "why" is the story page.
-export function shareLink(ref?: string | null, to: "browse" | "why" = "browse") {
+// "home" is our homepage; "why" is the story page.
+export function shareLink(ref?: string | null, to: "home" | "why" = "home") {
   const r = ref ? refSlug(ref) : "";
-  return `${siteUrl()}/${to === "browse" ? "candidates" : "why"}${r ? `?r=${r}` : ""}`;
+  return `${siteUrl()}/${to === "home" ? "" : "why"}${r ? `?r=${r}` : ""}`;
 }
 
 export function ownerMessage(ref?: string | null) {
-  return `If hiring has ever felt like more work than it should be, this is for you.\n\nBrowse candidates: ${shareLink(ref, "browse")}\n\nWhy we built it: ${shareLink(ref, "why")}`;
+  return `If hiring has ever felt like more work than it should be, this is for you.\n\nTake a look: ${shareLink(ref, "home")}\n\nWhy we built it: ${shareLink(ref, "why")}`;
 }
 
 // A new owner who came through someone's link: remember who sent them.
