@@ -35,6 +35,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           + Add candidate
         </Link>
         {admin && <Link href="/admin/team">Team</Link>}
+        {admin && <Link href="/admin/invite">Invite a rep</Link>}
         {admin && <Link href="/admin/settings">Fee settings</Link>}
         {admin && <Link href="/admin/activity">Activity</Link>}
         <Link href="/admin/guide">Rep guide</Link>

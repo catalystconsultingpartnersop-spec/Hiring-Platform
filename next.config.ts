@@ -2,7 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Resume readers load their own files at runtime; keep them out of the bundle.
-  serverExternalPackages: ["unpdf", "mammoth"],
+  serverExternalPackages: ["unpdf", "mammoth", "@react-pdf/renderer"],
+  // The rep invitation PDF reads its fonts from disk.
+  outputFileTracingIncludes: { "/api/admin/invite-pdf": ["./src/assets/fonts/**"] },
   experimental: {
     serverActions: {
       // Room for a resume upload (resumes are capped at 4 MB in the form).
