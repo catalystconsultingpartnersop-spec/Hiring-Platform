@@ -230,6 +230,23 @@ export function CandidateForm({
           <Req />
         </h2>
         <p className="small muted">Tap the six in order, strongest first. Tap one again to undo from there.</p>
+        <label className={styles.reportUpload}>
+          <span>
+            {c?.assessment_path ? "Replace their Working Genius report" : "Attach their Working Genius report (optional)"}
+          </span>
+          <input type="file" name="assessment" accept=".pdf,image/*" />
+          <small>
+            PDF or a photo. For the team only; clients never see it.
+            {c?.assessment_path && (
+              <>
+                {" "}
+                <a href={`/api/assessment/${c.id}`} target="_blank" rel="noopener noreferrer">
+                  Open the current one
+                </a>
+              </>
+            )}
+          </small>
+        </label>
         <div className={styles.letters} role="group" aria-label="Working Genius order">
           {LETTERS.map((l) => {
             const pos = order.indexOf(l.key);

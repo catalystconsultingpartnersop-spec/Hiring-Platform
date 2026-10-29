@@ -1,5 +1,6 @@
 import { brandName } from "@/lib/format";
 
+
 export const TAGLINE = "Browse talent with ease";
 
 // The one logo used everywhere: header, footer, agreements, receipts.

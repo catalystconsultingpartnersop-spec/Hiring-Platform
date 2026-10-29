@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { PublicCandidate } from "@/lib/db";
 import { describe, profileOf, TRAITS } from "@/lib/strengths";
 import { LEVEL_LABEL, WORK_MODE_LABEL, money, salaryRange } from "@/lib/format";
+
 import { ShortlistButton } from "./Shortlist";
 
 export function Strengths({ items, strong = false }: { items: string[]; strong?: boolean }) {

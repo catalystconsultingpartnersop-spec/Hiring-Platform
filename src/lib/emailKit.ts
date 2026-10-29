@@ -1,5 +1,5 @@
 import { legalEntity } from "./agreement";
-import { brandName, candidateUrl, contactPhone, siteUrl, teamUrl } from "./format";
+import { brandName, candidateUrl, siteUrl, teamUrl } from "./format";
 
 // One look for every email: the logo letterhead, the same buttons, and a
 // footer that fits who it's for. Bodies use the small helpers below.
@@ -25,12 +25,11 @@ function logo() {
 }
 
 function footer(a: Audience) {
-  const phone = esc(contactPhone());
   const line =
     a === "candidate"
-      ? `Every person is built for something. We're in your corner.<br>Questions? Text or call ${phone}, or just reply.`
+      ? `Every person is built for something. We're in your corner.<br>Questions? Just reply, or <a href="${candidateUrl()}/contact?kind=work" style="color:${MUTED}">ask us to call you</a>.`
       : a === "owner"
-        ? `Questions? Text or call ${phone}, or just reply. A real person answers.<br><a href="${siteUrl()}/candidates" style="color:${MUTED}">Browse candidates</a> · <a href="${siteUrl()}/hiring-help" style="color:${MUTED}">Hiring help</a>`
+        ? `<a href="${siteUrl()}/candidates" style="color:${MUTED}">Browse candidates</a> · <a href="${siteUrl()}/hiring-help" style="color:${MUTED}">Hiring help</a> · <a href="${siteUrl()}/contact" style="color:${MUTED}">Contact us</a>`
         : `<a href="${teamUrl()}/admin" style="color:${MUTED}">Back office</a> · <a href="${teamUrl()}/admin/guide" style="color:${MUTED}">Rep guide</a>`;
   return `<p style="margin:0 0 8px">${line}</p><p style="margin:0;font-size:11.5px;color:#8a93a6">${esc(brandName())} is a service of ${esc(legalEntity())}.</p>`;
 }

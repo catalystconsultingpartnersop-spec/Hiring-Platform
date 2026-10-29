@@ -304,3 +304,29 @@ alter table staff add column if not exists commission_type text check (commissio
 alter table staff add column if not exists commission_value numeric;
 alter table staff add column if not exists commission_note text;
 alter table staff add column if not exists package_sent_at timestamptz;
+-- "Contact us": requests for a reply or a callback, routed to the right person.
+create table if not exists contact_requests (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  kind text not null default 'other' check (kind in ('hiring', 'work', 'other')),
+  name text not null,
+  email text not null,
+  phone text,
+  best_time text,
+  message text,
+  candidate_id uuid references candidates(id) on delete set null,
+  owner_id uuid references owners(id) on delete set null,
+  routed_to uuid[] not null default '{}',   -- staff who were notified
+  status text not null default 'new' check (status in ('new', 'handled')),
+  handled_by text,
+  handled_at timestamptz
+);
+alter table contact_requests enable row level security;
+grant all on contact_requests to service_role;
+revoke all on contact_requests from anon, authenticated;
+
+-- The partner gets anything without a more specific person (e.g. no rep).
+alter table staff add column if not exists is_partner boolean not null default false;
+
+-- The candidate's Working Genius report, for the team only.
+alter table candidates add column if not exists assessment_path text;

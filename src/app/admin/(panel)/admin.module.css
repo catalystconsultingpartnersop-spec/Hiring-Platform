@@ -115,3 +115,5 @@ a.stat:hover { outline: 1.5px solid var(--ink); }
 .attention { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .attention li { display: flex; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px; }
 .attention a { font-weight: 600; }
+
+.badge { display: inline-block; margin-left: 6px; min-width: 18px; padding: 0 6px; border-radius: 999px; background: var(--marigold); color: var(--ink); font-size: 11.5px; font-weight: 800; text-align: center; line-height: 18px; }

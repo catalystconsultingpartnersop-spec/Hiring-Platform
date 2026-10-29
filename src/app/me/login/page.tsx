@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { contactPhone, contactPhoneHref } from "@/lib/format";
 import { currentCandidateId } from "@/lib/session";
 import { LinkForm } from "./LinkForm";
 
@@ -20,8 +19,7 @@ export default async function CandidateLoginPage({ searchParams }: PageProps<"/m
       )}
       <LinkForm />
       <p className="small muted" style={{ marginTop: 26, textAlign: "center" }}>
-        Not with us yet? <Link href="/join">Become a candidate</Link>. Questions? Text{" "}
-        <a href={`sms:${contactPhoneHref()}`}>{contactPhone()}</a>.
+        Not with us yet? <Link href="/join">Become a candidate</Link>. Questions? <Link href="/contact?kind=work">Contact us</Link>.
       </p>
       <p className="small muted" style={{ textAlign: "center" }}>
         Hiring? <Link href="/login">Business sign-in</Link>

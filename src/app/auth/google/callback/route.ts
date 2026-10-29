@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { db, logActivity } from "@/lib/db";
 import { siteUrl } from "@/lib/format";
+
 import { googleProfile } from "@/lib/google";
 import { safeNext, startOwnerSession } from "@/lib/session";
 

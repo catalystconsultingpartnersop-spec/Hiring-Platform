@@ -1,6 +1,6 @@
 import { db, logActivity } from "./db";
 import { emailAdmin, escapeHtml, sendEmail } from "./email";
-import { brandName, candidateUrl, contactPhone, teamUrl } from "./format";
+import { brandName, candidateUrl, teamUrl } from "./format";
 import { candidate as candMail } from "./emails";
 import { callIcs } from "./ics";
 import { signedToken } from "./session";
@@ -81,7 +81,6 @@ export async function sendBookingEmails(callId: string, cancelled: boolean) {
   const whenCandidate = formatInZone(call.starts_at, call.candidate_time_zone ?? COMPANY_TZ);
   const whenRep = formatInZone(call.starts_at, rep.time_zone ?? COMPANY_TZ);
   const manage = manageLink(call.id);
-  const phone = contactPhone();
 
   const ics = (forRep: boolean) =>
     callIcs({
@@ -91,7 +90,7 @@ export async function sendBookingEmails(callId: string, cancelled: boolean) {
       title: forRep ? `Onboarding call: ${c.full_name}` : `Career call with ${repFirst} (${brandName()})`,
       description: forRep
         ? `${c.full_name}, ${c.email}${c.phone ? `, ${c.phone}` : ""}\nLooking for: ${c.application?.looking_for || "not said"}`
-        : `Your 45-minute career call. Join here: ${link ?? "we'll send the link"}\nNeed to change it? ${manage}\nQuestions? Text or call ${phone}`,
+        : `Your 45-minute career call. Join here: ${link ?? "we'll send the link"}\nNeed to change it? ${manage}\nQuestions? Reply to the confirmation email.`,
       location: link,
       cancelled,
     });

@@ -5,6 +5,7 @@ import { AgreementDoc } from "@/components/AgreementDoc";
 import { PrintButton } from "@/components/PrintButton";
 import { db } from "@/lib/db";
 import { brandName } from "@/lib/format";
+
 import { repAgreementText, repTerms } from "@/lib/repAgreement";
 import { requireStaff } from "@/lib/session";
 import { commissionPercent } from "@/lib/settings";

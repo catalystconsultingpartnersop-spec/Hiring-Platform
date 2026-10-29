@@ -1,5 +1,4 @@
 import { getCall } from "@/lib/calls";
-import { contactPhone, contactPhoneHref } from "@/lib/format";
 import { readSignedToken } from "@/lib/session";
 import { openSlots } from "@/lib/slots";
 import { isPast } from "@/lib/time";
@@ -12,7 +11,6 @@ export default async function CallPage({ params }: PageProps<"/call/[token]">) {
   const { token } = await params;
   const callId = readSignedToken(token, "call_");
   const call = callId ? await getCall(callId) : null;
-  const phone = contactPhone();
 
   if (!call) {
     return (
@@ -20,8 +18,7 @@ export default async function CallPage({ params }: PageProps<"/call/[token]">) {
         <div className="page-head">
           <h1>We couldn&rsquo;t find that call</h1>
           <p>
-            The link may have expired. Text or call us at <a href={`sms:${contactPhoneHref()}`}>{phone}</a> and we&rsquo;ll
-            sort it out.
+            The link may have expired. <a href="/contact?kind=work">Send us a note</a> and we&rsquo;ll sort it out.
           </p>
         </div>
       </div>
@@ -39,8 +36,6 @@ export default async function CallPage({ params }: PageProps<"/call/[token]">) {
         rep={call.staff.full_name || "our team"}
         link={call.staff.meeting_link}
         times={times}
-        phone={phone}
-        phoneHref={contactPhoneHref()}
         past={isPast(call.starts_at)}
       />
     </div>

@@ -4,6 +4,7 @@ import { commissionOf, earnsCommission, latest, loadAgreements, repName, stageOf
 import { db, dbConfigProblem } from "@/lib/db";
 import { lastEmailProblem } from "@/lib/email";
 import { dateShort, money, refCode } from "@/lib/format";
+
 import { requireStaff } from "@/lib/session";
 import { nowMs } from "@/lib/time";
 import { commissionPercent } from "@/lib/settings";

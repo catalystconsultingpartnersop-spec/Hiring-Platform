@@ -287,7 +287,6 @@ export const candidate = {
   }),
 };
 
-export const contactLine = () => `Text or call ${contactPhone()}`;
 export const backOffice = (path = "/admin") => `${teamUrl()}${path}`;
 
 // ================================ TEAM ================================
@@ -298,7 +297,7 @@ export const team = {
     subject: `Welcome to ${brandName()}, ${first(o.name)}: how to start`,
     html:
       hi(o.name) +
-      p(`Welcome to the team. Before anything else: this work is about people. You're here because you care about candidates and want to help them find work that truly fits them. That comes first, always.`) +
+      p(`Welcome to the team. Before anything else: this work is about people. You're here because you care about candidates and want to help them find work that truly fits them. That comes first, always. The site guides clients for you, so your time and warmth go to candidates.`) +
       box(
         `<strong>Your terms</strong><br>` +
           (o.isAdmin ? "Admin access to the back office." : `Commission: <strong>${esc(o.terms)}</strong>, paid within 30 days after we collect the fee and the candidate starts work.<br>Independent contractor. Candidates never pay anything.`) +

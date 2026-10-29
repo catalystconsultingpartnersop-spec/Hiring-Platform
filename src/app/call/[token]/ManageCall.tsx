@@ -15,8 +15,6 @@ export function ManageCall({
   rep,
   link,
   times,
-  phone,
-  phoneHref,
   past,
 }: {
   token: string;
@@ -26,8 +24,6 @@ export function ManageCall({
   rep: string;
   link: string | null;
   times: string[];
-  phone: string;
-  phoneHref: string;
   past: boolean;
 }) {
   const tz = useSyncExternalStore(noop, browserZone, () => "America/New_York");
@@ -47,7 +43,7 @@ export function ManageCall({
 
   const contact = (
     <p className="apply-contact">
-      Questions? Text or call us at <a href={`sms:${phoneHref}`}>{phone}</a>.
+      Questions? <a href="/contact?kind=work">Send us a note</a>.
     </p>
   );
 

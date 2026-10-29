@@ -153,3 +153,6 @@
 .ideaMain:disabled { opacity: 0.4; cursor: default; }
 .addRow { display: flex; gap: 8px; margin-top: 8px; max-width: 420px; }
 .addRow .input { min-height: 38px; }
+.reportUpload { display: grid; gap: 4px; margin: 10px 0 14px; padding: 12px 14px; border: 1.5px dashed var(--line); border-radius: 12px; font-size: 14px; }
+.reportUpload > span { font-weight: 600; }
+.reportUpload small { color: var(--ink-2); }

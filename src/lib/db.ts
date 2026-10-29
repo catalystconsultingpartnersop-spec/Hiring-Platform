@@ -88,6 +88,7 @@ export type Candidate = PublicCandidate & {
   added_by?: string | null;
   profile_views?: number;
   self_paused_at?: string | null; // the candidate hid their own profile
+  assessment_path?: string | null; // their Working Genius report (team only)
 };
 
 export type FeeTier = { id: string; max_salary: number | null; fee_cents: number | null; sort: number };

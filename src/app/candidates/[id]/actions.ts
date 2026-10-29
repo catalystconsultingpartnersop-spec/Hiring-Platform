@@ -6,7 +6,7 @@ import { AGREEMENT_VERSION, agreementText } from "@/lib/agreement";
 import { getListed, getTiers } from "@/lib/catalog";
 import { db, logActivity, Unlock } from "@/lib/db";
 import { emailAdmin, escapeHtml } from "@/lib/email";
-import { brandName, contactPhone, feeFor, refCode, siteUrl, teamUrl } from "@/lib/format";
+import { brandName, feeFor, refCode, siteUrl, teamUrl } from "@/lib/format";
 import { PASS_REASONS } from "@/lib/pass";
 import { emailOwnerPassed } from "@/lib/pathEmails";
 import { cardSetupUrl, chargeCardOnFile, unlockWithSavedCard } from "@/lib/cards";
@@ -86,7 +86,7 @@ export async function signAgreement(candidateId: string, _prev: SignState, form:
   } catch (e) {
     console.error("card setup failed", e);
     await logActivity(`owner:${owner.email}`, "card_setup_failed", { candidate: refCode(candidateId), error: String(e) });
-    return { error: `We couldn't open the card form. Try again in a minute, or text or call ${contactPhone()}.` };
+    return { error: `We couldn't open the card form. Try again in a minute.` };
   }
   redirect(url);
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CAREER_ARTICLES } from "@/lib/careerArticles";
-import { brandName, contactPhone, contactPhoneHref } from "@/lib/format";
+import { brandName } from "@/lib/format";
 import styles from "./join.module.css";
 
 export const metadata: Metadata = {
@@ -179,7 +179,7 @@ export default function JoinPage() {
             Become a candidate
           </Link>
           <p>
-            Rather talk first? Text or call <a href={`sms:${contactPhoneHref()}`}>{contactPhone()}</a>. A real person
+            Rather talk first? <Link href="/contact?kind=work">Ask us to call you</Link>. A real person
             answers.
           </p>
         </div>

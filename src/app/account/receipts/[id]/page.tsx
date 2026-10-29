@@ -4,7 +4,7 @@ import { PrintButton } from "@/components/PrintButton";
 import { Letterhead } from "@/components/Logo";
 import { legalEntity } from "@/lib/agreement";
 import { db, Hire } from "@/lib/db";
-import { brandName, contactPhone, money, refCode } from "@/lib/format";
+import { brandName, money, refCode } from "@/lib/format";
 import { dateLong, receiptNumber } from "@/lib/receipt";
 import { currentOwner, isAdmin } from "@/lib/session";
 import styles from "./receipt.module.css";
@@ -50,7 +50,7 @@ export default async function ReceiptPage({ params }: PageProps<"/account/receip
         <PrintButton />
       </div>
 
-      <Letterhead right={<>Receipt {receiptNumber(h.id)}<br />{contactPhone()}</>} />
+      <Letterhead right={<>Receipt {receiptNumber(h.id)}</>} />
       <div className={styles.receipt}>
         <div className={styles.head}>
           <div>
@@ -89,8 +89,6 @@ export default async function ReceiptPage({ params }: PageProps<"/account/receip
               <strong>{legalEntity()}</strong>
               <br />
               doing business as {brandName()}
-              <br />
-              {contactPhone()}
             </p>
           </div>
         </div>

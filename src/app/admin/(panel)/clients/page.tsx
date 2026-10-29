@@ -2,6 +2,7 @@ import Link from "next/link";
 import { latest, loadAgreements } from "@/lib/adminData";
 import { db, Owner } from "@/lib/db";
 import { dateShort, money } from "@/lib/format";
+
 import { requireAdmin } from "@/lib/session";
 import styles from "../admin.module.css";
 

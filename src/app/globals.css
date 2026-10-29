@@ -571,3 +571,8 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
   .footer-grid > div:last-child { grid-column: 1 / -1; }
   .footer-bottom { margin-top: 24px; font-size: 12px; }
 }
+
+/* Small choice pills (contact form) */
+.chip { display: inline-flex; align-items: center; padding: 8px 14px; border: 1.5px solid var(--line); border-radius: 999px; font-weight: 600; font-size: 14.5px; background: #fff; }
+.chip-on { border-color: var(--ink); background: var(--wash); }
+.chip input { accent-color: var(--ink); }

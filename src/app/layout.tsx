@@ -3,7 +3,7 @@ import Link from "next/link";
 import "@fontsource-variable/bricolage-grotesque";
 import "@fontsource-variable/instrument-sans";
 import "./globals.css";
-import { brandName, contactPhone, contactPhoneHref } from "@/lib/format";
+import { brandName } from "@/lib/format";
 import { currentCandidateId, currentOwner } from "@/lib/session";
 import { ShortlistLink } from "@/components/Shortlist";
 import { Logo } from "@/components/Logo";
@@ -83,8 +83,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/mission">Our mission</Link>
             </nav>
             <div>
-              <h3>Talk to a person</h3>
-              <a href={`sms:${contactPhoneHref()}`}>Text or call {contactPhone()}</a>
+              <h3>Questions?</h3>
+              <Link href="/contact">Contact us</Link>
             </div>
           </div>
           <div className="wrap footer-bottom">

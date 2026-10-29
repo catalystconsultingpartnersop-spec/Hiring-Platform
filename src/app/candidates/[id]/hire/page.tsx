@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { brandName, dateShort, money, refCode } from "@/lib/format";
+
 import { Candidate, db, Unlock } from "@/lib/db";
 import { latestHire } from "@/lib/hires";
 import { requireOwner } from "@/lib/session";

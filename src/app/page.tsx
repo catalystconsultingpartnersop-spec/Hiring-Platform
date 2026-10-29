@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CandidateCard, isNew } from "@/components/CandidateCard";
 import { getTiers, listListed, rolesOf } from "@/lib/catalog";
 import type { FeeTier, PublicCandidate } from "@/lib/db";
-import { contactPhone, contactPhoneHref, feeFor } from "@/lib/format";
+import { feeFor } from "@/lib/format";
 import { nowMs } from "@/lib/time";
 import styles from "./home.module.css";
 
@@ -155,7 +155,7 @@ export default async function Home() {
             </div>
             <div>
               <h3>Your business, your call</h3>
-              <p>You know your business best. We suggest easy next steps, and you decide. Or just pick up the phone.</p>
+              <p>You know your business best. We&rsquo;re not here to tell you how to run it. We&rsquo;re here to help you find vetted candidates.</p>
             </div>
             <div>
               <h3>Nothing to fill out</h3>
@@ -221,7 +221,7 @@ export default async function Home() {
             Start browsing
           </Link>
           <p>
-            Rather talk to a person? Text or call <a href={`sms:${contactPhoneHref()}`}>{contactPhone()}</a>.
+            Questions? <Link href="/contact">Contact us</Link>.
           </p>
           <p className={styles.seeker}>
             Looking for work yourself? <Link href="/join">Start here</Link>

@@ -10,6 +10,9 @@ export const dynamic = "force-dynamic";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const me = await requireStaff();
   const admin = me.role === "admin";
+  let q = db().from("contact_requests").select("id", { count: "exact", head: true }).eq("status", "new");
+  if (!admin && me.id) q = q.contains("routed_to", [me.id]);
+  const { count: openRequests } = await q;
   // Reps sign the rep agreement once before using the back office.
   if (!admin && me.id) {
     const { data, error } = await db().from("staff").select("*").eq("id", me.id).maybeSingle();
@@ -23,6 +26,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {admin && <Link href="/admin/clients">Clients</Link>}
         {admin && <Link href="/admin/agreements">Agreements</Link>}
         {admin && <Link href="/admin/payments">Payments</Link>}
+        <Link href="/admin/requests">
+          Requests{openRequests ? <span className={styles.badge}>{openRequests}</span> : null}
+        </Link>
         <Link href="/admin/calls">{admin ? "Calls" : "My calls"}</Link>
         <Link href="/admin/hours">My hours</Link>
         <Link href="/admin/candidates/new" className={styles.addLink}>

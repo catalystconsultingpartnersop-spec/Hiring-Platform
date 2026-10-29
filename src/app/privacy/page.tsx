@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { legalEntity } from "@/lib/agreement";
-import { brandName, contactPhone } from "@/lib/format";
+import { brandName } from "@/lib/format";
 
 export const metadata: Metadata = { title: `Privacy policy | ${brandName()}` };
 
@@ -93,7 +93,7 @@ export default function PrivacyPage() {
             <br />
           </>
         )}
-        Phone or text: {contactPhone()}
+        Or use our <a href="/contact">Contact us</a> page.
       </p>
     </div>
   );

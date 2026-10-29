@@ -43,6 +43,17 @@ export default async function RepGuide() {
           Yes, you can earn good money doing this. But the money follows the mission, not the other way around. If you
           ever have to choose between what&rsquo;s right for the candidate and a quick fee, choose the candidate.
         </p>
+        <p className={styles.missionLabel} style={{ marginTop: 16 }}>
+          Who we look for
+        </p>
+        <ul className={styles.qualities}>
+          <li>Smart, intuitive people</li>
+          <li>Actively in the workforce</li>
+          <li>Compassion and empathy</li>
+          <li>Believe in what we&rsquo;re building</li>
+          <li>Communicate well</li>
+          <li>Follow up, every time</li>
+        </ul>
       </section>
 
       <div className={styles.facts}>
@@ -99,12 +110,13 @@ export default async function RepGuide() {
           <h3>Walk them to the hire</h3>
           <p>
             When an employer unlocks one of your candidates, you&rsquo;re emailed at every step: times offered, call
-            booked, how it went, meeting, references. The site nudges everyone automatically. You add the human touch: a
-            good-luck text before a call, a check-in after, help picking references.
+            booked, how it went, meeting, references. The site guides the client and nudges them automatically, so you
+            don&rsquo;t need to call clients. Your personal touch is for the candidate: a good-luck text before a call, a
+            check-in after, help picking references.
           </p>
           <p className={styles.tip}>
-            Your <Link href="/admin">dashboard</Link> shows every introduction and where it stands. If something stalls,
-            a quick call from you is the best nudge.
+            Your <Link href="/admin">dashboard</Link> shows every introduction and where it stands. If a candidate stalls,
+            call the candidate. If a client stalls, let the site nudge them.
           </p>
         </li>
         <li>
@@ -131,6 +143,8 @@ export default async function RepGuide() {
       <h2>A few house rules</h2>
       <ul className={styles.rules}>
         <li>Every candidate is free, always. Never ask a candidate for money.</li>
+        <li>Keep client contact to a minimum. The site guides clients; your time and warmth go to candidates.</li>
+        <li>Never advise a client on how to run their business. We help them find vetted candidates.</li>
         <li>Speak positively about everyone: candidates, employers and other recruiters.</li>
         <li>Never share a candidate&rsquo;s details outside the site. Employers get them by signing.</li>
         <li>If a candidate finds a job, say congratulations, and set them to Hired or Paused.</li>

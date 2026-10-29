@@ -1,5 +1,4 @@
 import { db } from "@/lib/db";
-import { contactPhone, contactPhoneHref } from "@/lib/format";
 import { readSignedToken } from "@/lib/session";
 import { availableTimes } from "../actions";
 import { ApplyFlow } from "../ApplyFlow";
@@ -26,14 +25,12 @@ export default async function BookPage({ searchParams }: PageProps<"/apply/book"
         <ApplyFlow
           times={times}
           assessmentUrl={process.env.ASSESSMENT_URL || "https://www.workinggenius.com"}
-          phone={contactPhone()}
-          phoneHref={contactPhoneHref()}
           startToken={token}
           startFirst={first || "again"}
         />
       ) : (
         <p className="notice">
-          This link has expired. Text or call us at <a href={`sms:${contactPhoneHref()}`}>{contactPhone()}</a> and
+          This link has expired. <a href="/contact?kind=work">Send us a note</a> and
           we&rsquo;ll set up a time.
         </p>
       )}

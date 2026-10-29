@@ -8,6 +8,7 @@ import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
 import { candidateHired, hireSummaryHtml } from "@/lib/notify";
 import { commissionTerms } from "@/lib/adminData";
 import { brandName, money, refCode, teamUrl } from "@/lib/format";
+
 import {
   checkAdminPassword,
   checkPasswordHash,
@@ -293,6 +294,21 @@ ${hireSummaryHtml(notice)}`,
   revalidatePath("/admin");
   revalidatePath("/candidates");
   // A new candidate always goes to their page, so saving again never makes a duplicate.
+  // Their Working Genius report (team only, never shown to clients).
+  const report = form.get("assessment");
+  if (report instanceof File && report.size > 0) {
+    const n = report.name.toLowerCase();
+    const ext = report.type === "application/pdf" || n.endsWith(".pdf") ? "pdf" : /\.(png|jpe?g)$/.test(n) || report.type.startsWith("image/") ? (n.endsWith(".png") || report.type === "image/png" ? "png" : "jpg") : null;
+    if (!ext) resumeProblem = "the Working Genius report needs to be a PDF or a photo";
+    else if (report.size > 6 * 1024 * 1024) resumeProblem = "the Working Genius report is over 6 MB";
+    else {
+      const path = `${candidateId}/assessment.${ext}`;
+      const type = ext === "pdf" ? "application/pdf" : ext === "png" ? "image/png" : "image/jpeg";
+      const { error } = await db().storage.from("resumes").upload(path, Buffer.from(await report.arrayBuffer()), { contentType: type, upsert: true });
+      if (error) resumeProblem = `the Working Genius report didn't upload (${error.message})`;
+      else await db().from("candidates").update({ assessment_path: path }).eq("id", candidateId);
+    }
+  }
   if (!id) redirect(`/admin/candidates/${candidateId}?saved=${status}${resumeProblem ? `&resume=${encodeURIComponent(resumeProblem)}` : ""}`);
   if (resumeProblem) return { error: `Saved, but ${resumeProblem}. Try attaching it again.` };
   return {
@@ -477,7 +493,7 @@ export async function saveRepTerms(staffId: string, _prev: FormState, form: Form
   return { ok: "Saved. These terms apply to their future hires and to their agreement if they haven't signed yet." };
 }
 
-export async function sendOnboardingPackage(staffId: string, _prev: FormState): Promise<FormState> {
+export async function sendOnboardingPackage(staffId: string): Promise<FormState> {
   const me = await requireAdmin();
   const r = await sendPackage(staffId);
   await logActivity(staffActor(me), "onboarding_package_sent", { staff: staffId, ok: r.ok });
@@ -651,9 +667,10 @@ export async function deleteCandidate(id: string, form: FormData) {
       `/admin/candidates/${id}?delete_error=${encodeURIComponent("A client has signed for this candidate, so their record has to stay. Set the status to Archived instead.")}`,
     );
   }
-  const { data: c } = await db().from("candidates").select("full_name, resume_path").eq("id", id).maybeSingle();
+  const { data: c } = await db().from("candidates").select("*").eq("id", id).maybeSingle();
   if (!c) redirect("/admin/candidates");
-  if (c.resume_path) await db().storage.from("resumes").remove([c.resume_path]);
+  const files = [c.resume_path, c.assessment_path].filter(Boolean) as string[];
+  if (files.length) await db().storage.from("resumes").remove(files);
   await db().from("onboarding_calls").delete().eq("candidate_id", id);
   const { error } = await db().from("candidates").delete().eq("id", id);
   if (error) redirect(`/admin/candidates/${id}?delete_error=${encodeURIComponent(error.message)}`);
@@ -682,4 +699,18 @@ export async function signRepAgreement(_prev: FormState, form: FormData): Promis
   await logActivity(staffActor(me), "rep_agreement_signed", { version: REP_AGREEMENT_VERSION });
   await emailAdmin(`${name} signed the rep agreement`, `<p><strong>${escapeHtml(name)}</strong> (${escapeHtml(me.email)}) signed the rep agreement.</p><p><a href="${teamUrl()}/admin/agreement?id=${me.id}">See their signed copy</a></p>`);
   redirect("/admin/agreement?signed=1");
+}
+
+export async function markRequestHandled(id: string) {
+  const me = await requireStaff();
+  await db().from("contact_requests").update({ status: "handled", handled_by: me.name, handled_at: new Date().toISOString() }).eq("id", id);
+  revalidatePath("/admin/requests");
+}
+
+// Partners get anything that has no more specific person (e.g. no rep).
+export async function setPartner(staffId: string, on: boolean) {
+  await requireAdmin();
+  await db().from("staff").update({ is_partner: on }).eq("id", staffId);
+  revalidatePath("/admin/team");
+  revalidatePath(`/admin/team/${staffId}`);
 }

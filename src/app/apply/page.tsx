@@ -1,4 +1,3 @@
-import { contactPhone, contactPhoneHref } from "@/lib/format";
 import { availableTimes } from "./actions";
 import { ApplyFlow } from "./ApplyFlow";
 
@@ -18,8 +17,6 @@ export default async function ApplyPage() {
       <ApplyFlow
         times={times}
         assessmentUrl={process.env.ASSESSMENT_URL || "https://www.workinggenius.com"}
-        phone={contactPhone()}
-        phoneHref={contactPhoneHref()}
       />
     </div>
   );

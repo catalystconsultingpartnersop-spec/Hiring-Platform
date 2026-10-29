@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { dateShort } from "@/lib/format";
+
 import { isOwnerEmail, requireAdmin } from "@/lib/session";
 import { minutesLabel } from "@/lib/time";
 import { commissionTerms } from "@/lib/adminData";
 import { commissionPercent } from "@/lib/settings";
-import { setStaffActive, setStaffRole } from "../../actions";
+import { setPartner, setStaffActive, setStaffRole } from "../../actions";
 import { AddStaffForm } from "./AddStaffForm";
 
 type Member = {
@@ -21,6 +22,7 @@ type Member = {
   commission_type?: "percent" | "flat" | null;
   commission_value?: number | null;
   package_sent_at?: string | null;
+  is_partner?: boolean;
 };
 
 const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -110,6 +112,7 @@ export default async function TeamPage() {
                       ) : (
                         <span className="tag">Rep</span>
                       )}
+                      {m.is_partner && <span className="tag tag-gold" style={{ marginLeft: 6 }}>Partner</span>}
                       {!m.active && <span className="tag" style={{ marginLeft: 6 }}>Switched off</span>}
                       {!owner && m.role === "rep" && (
                         <div className="small" style={{ marginTop: 4 }}>
@@ -147,6 +150,13 @@ export default async function TeamPage() {
                               {m.active ? "Switch off" : "Turn back on"}
                             </button>
                           </form>
+                          {m.active && (
+                            <form action={setPartner.bind(null, m.id, !m.is_partner)}>
+                              <button className="btn btn-small btn-ghost" type="submit" title="Partners get any request or update that has no specific rep">
+                                {m.is_partner ? "Remove partner" : "Make partner"}
+                              </button>
+                            </form>
+                          )}
                           {m.active && (me.owner || m.role !== "admin") && (
                             <form action={setStaffRole.bind(null, m.id, m.role === "admin" ? "rep" : "admin")}>
                               <button className="btn btn-small btn-ghost" type="submit">

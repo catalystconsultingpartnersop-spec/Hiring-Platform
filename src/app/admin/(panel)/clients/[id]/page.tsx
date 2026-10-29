@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { latest, loadAgreements, STAGE_LABEL, stageOf } from "@/lib/adminData";
 import { db, Owner } from "@/lib/db";
 import { dateShort, money, refCode } from "@/lib/format";
+
 import { receiptNumber } from "@/lib/receipt";
 import { requireAdmin } from "@/lib/session";
 import { RefundButton } from "../../RefundButton";

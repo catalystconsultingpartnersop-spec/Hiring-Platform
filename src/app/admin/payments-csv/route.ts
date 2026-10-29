@@ -1,5 +1,6 @@
 import { commissionOf, earnsCommission, loadAgreements, repName } from "@/lib/adminData";
 import { refCode } from "@/lib/format";
+
 import { receiptNumber } from "@/lib/receipt";
 import { currentStaff } from "@/lib/session";
 import { commissionPercent } from "@/lib/settings";

@@ -7,15 +7,11 @@ import { ApplyState, askUsToReachOut, bookTime, saveExtras, submitApplication } 
 export function ApplyFlow({
   times,
   assessmentUrl,
-  phone,
-  phoneHref,
   startToken = null,
   startFirst = "",
 }: {
   times: string[];
   assessmentUrl: string;
-  phone: string;
-  phoneHref: string;
   startToken?: string | null;
   startFirst?: string;
 }) {
@@ -53,7 +49,7 @@ export function ApplyFlow({
           <strong>You have your own page now.</strong> It shows where things stand, every step of the way.{" "}
           <a href="/me">See your page</a>
         </p>
-        <Contact phone={phone} phoneHref={phoneHref} />
+        <Contact />
       </div>
     );
   }
@@ -115,7 +111,7 @@ export function ApplyFlow({
             )}
           </div>
         )}
-        <Contact phone={phone} phoneHref={phoneHref} />
+        <Contact />
       </div>
     );
   }
@@ -181,7 +177,7 @@ export function ApplyFlow({
       <button className="btn btn-gold" type="submit" disabled={pending} style={{ marginTop: 20 }}>
         {pending ? "One moment…" : "Next: pick a time"}
       </button>
-      <Contact phone={phone} phoneHref={phoneHref} />
+      <Contact />
     </form>
   );
 }
@@ -219,10 +215,10 @@ function Extras({ token }: { token: string }) {
   );
 }
 
-function Contact({ phone, phoneHref }: { phone: string; phoneHref: string }) {
+function Contact() {
   return (
     <p className="apply-contact">
-      Questions? Text or call us at <a href={`sms:${phoneHref}`}>{phone}</a>. We&rsquo;re happy to help.
+      Questions? <a href="/contact?kind=work">Send us a note</a> and we&rsquo;ll get back to you. We&rsquo;re happy to help.
     </p>
   );
 }

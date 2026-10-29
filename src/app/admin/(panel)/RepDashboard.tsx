@@ -2,6 +2,7 @@ import Link from "next/link";
 import { commissionOf, commissionTerms, loadAgreements } from "@/lib/adminData";
 import { db } from "@/lib/db";
 import { dateShort, money, refCode } from "@/lib/format";
+
 import { commissionPercent } from "@/lib/settings";
 import { formatInZone, COMPANY_TZ } from "@/lib/time";
 import styles from "./admin.module.css";

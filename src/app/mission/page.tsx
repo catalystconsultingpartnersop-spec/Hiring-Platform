@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { brandName } from "@/lib/format";
+
 import styles from "./mission.module.css";
 
 export const metadata: Metadata = {

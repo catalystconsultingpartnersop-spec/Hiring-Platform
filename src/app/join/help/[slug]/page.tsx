@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CAREER_ARTICLES, getCareerArticle } from "@/lib/careerArticles";
 import { brandName } from "@/lib/format";
+
 import { markupToHtml } from "@/lib/markup";
 import styles from "../../../hiring-help/help.module.css";
 

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getTiers } from "@/lib/catalog";
 import { Candidate, db } from "@/lib/db";
 import { dateShort, feeFor, money, refCode } from "@/lib/format";
+
 import { deleteCandidate } from "../../../actions";
 import { CandidateForm } from "../CandidateForm";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";

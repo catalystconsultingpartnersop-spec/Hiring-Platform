@@ -7,6 +7,7 @@ import { allListed, getListed, getTiers, industriesOf, similarTo } from "@/lib/c
 import { wiredFor } from "@/lib/strengths";
 import { Candidate, db, Hire, PublicCandidate, Unlock } from "@/lib/db";
 import { dateShort, feeFor, LEVEL_LABEL, lines, money, refCode, salaryRange, WORK_MODE_LABEL } from "@/lib/format";
+
 import { latestHire, markPaidFromSession } from "@/lib/hires";
 import { PASS_REASONS } from "@/lib/pass";
 import { loadPath, PathState, pathState } from "@/lib/path";
@@ -185,7 +186,8 @@ function Teaser({
               <ShortlistButton id={c.id} label />
             </div>
             <p className={`small muted ${styles.sideNote}`}>
-              You&rsquo;ll sign a short agreement first. Seeing their name and contact details costs nothing.
+              You&rsquo;ll sign a short agreement first. Seeing their name and contact details costs nothing.{" "}
+              <Link href={`/contact?c=${c.id}`}>Questions about this candidate?</Link>
             </p>
           </div>
         </aside>

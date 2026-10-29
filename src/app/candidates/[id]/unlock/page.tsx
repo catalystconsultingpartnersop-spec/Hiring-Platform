@@ -6,7 +6,7 @@ import { WorksBest } from "@/components/CandidateCard";
 import { agreementText } from "@/lib/agreement";
 import { getListed, getTiers } from "@/lib/catalog";
 import { db } from "@/lib/db";
-import { brandName, contactPhone, contactPhoneHref, feeFor, LEVEL_LABEL, money, refCode, salaryRange } from "@/lib/format";
+import { brandName, feeFor, LEVEL_LABEL, money, refCode, salaryRange } from "@/lib/format";
 import { requireOwner } from "@/lib/session";
 import { SignForm } from "./SignForm";
 import styles from "./unlock.module.css";
@@ -131,7 +131,7 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
             <p className={styles.coached}>We sat down with them and learned how they work best.</p>
           </div>
           <p className="small muted" style={{ marginTop: 14 }}>
-            Questions first? Text or call <a href={`sms:${contactPhoneHref()}`}>{contactPhone()}</a>. A real person answers.
+            Questions first? <Link href={`/contact?c=${id}`}>Contact us</Link>.
           </p>
         </aside>
       </div>

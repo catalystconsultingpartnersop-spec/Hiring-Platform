@@ -3,7 +3,7 @@
 import { db, logActivity } from "@/lib/db";
 import { owner as ownerMail } from "@/lib/emails";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
-import { contactPhone, refCode } from "@/lib/format";
+import { refCode } from "@/lib/format";
 import { requireOwner } from "@/lib/session";
 
 export type GuidedState = { ok?: boolean; error?: string };
@@ -47,7 +47,7 @@ ${message ? `<p>Their note: ${escapeHtml(message)}</p>` : ""}
 <p>Reply to this email to reach them.</p>`,
     { replyTo: owner.email },
   );
-  if (!sent.ok) return { error: `That didn't go through. Text or call us at ${contactPhone()} instead.` };
+  if (!sent.ok) return { error: `That didn't go through. Please try again in a minute.` };
   await sendEmail({ to: owner.email, ...ownerMail.guidedReceived({ name: owner.full_name }) });
   return { ok: true };
 }

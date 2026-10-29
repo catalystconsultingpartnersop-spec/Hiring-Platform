@@ -5,7 +5,7 @@ import { CandidateCard } from "@/components/CandidateCard";
 import { manageLink } from "@/lib/calls";
 import { CAREER_ARTICLES } from "@/lib/careerArticles";
 import { Candidate, db } from "@/lib/db";
-import { contactPhone, contactPhoneHref, dateShort } from "@/lib/format";
+import { dateShort } from "@/lib/format";
 import { repFor } from "@/lib/notify";
 import { currentCandidateId, signedToken } from "@/lib/session";
 import { formatInZone, nowMs } from "@/lib/time";
@@ -229,8 +229,7 @@ export default async function MyPage({ searchParams }: PageProps<"/me">) {
               <p className={styles.repName}>Our team</p>
             )}
             <p className="small muted" style={{ margin: "10px 0 0" }}>
-              Questions about a job, an interview or an offer? We&rsquo;re here for all of it. Or text{" "}
-              <a href={`sms:${contactPhoneHref()}`}>{contactPhone()}</a>.
+              Questions about a job, an interview or an offer? We&rsquo;re here for all of it. Or <Link href="/contact?kind=work">send a note</Link>.
             </p>
           </div>
 

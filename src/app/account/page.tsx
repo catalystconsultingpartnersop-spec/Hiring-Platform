@@ -2,6 +2,7 @@ import Link from "next/link";
 import { signOut } from "@/app/login/actions";
 import { db, Hire } from "@/lib/db";
 import { dateShort, money, refCode } from "@/lib/format";
+
 import { requireOwner } from "@/lib/session";
 import styles from "./account.module.css";
 

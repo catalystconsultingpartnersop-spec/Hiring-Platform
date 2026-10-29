@@ -4,7 +4,7 @@ import { bookCall } from "@/lib/calls";
 import { candidate as candMail } from "@/lib/emails";
 import { db, logActivity } from "@/lib/db";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
-import { contactPhone, teamUrl } from "@/lib/format";
+import { teamUrl } from "@/lib/format";
 import { readSignedToken, signedToken, startCandidateSession } from "@/lib/session";
 import { openSlots } from "@/lib/slots";
 import { formatInZone } from "@/lib/time";
@@ -91,7 +91,7 @@ ${candidateId ? `<p><a href="${teamUrl()}/admin/candidates/${candidateId}">Open 
     },
   );
   if (!candidateId && !adminMail.ok) {
-    return fail(`Something went wrong on our end. Please try again in a few minutes, or text or call us at ${contactPhone()}.`);
+    return fail(`Something went wrong on our end. Please try again in a few minutes, or use the Contact us page.`);
   }
 
   // They're signed in to their own page (/me) right away; no email round-trip.

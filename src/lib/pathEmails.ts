@@ -3,9 +3,9 @@ import { escapeHtml as e, sendEmail } from "./email";
 import { candidate as toCand, owner as toOwner } from "./emails";
 import { candidateUrl, refCode, siteUrl, teamUrl } from "./format";
 import { callIcs } from "./ics";
-import { repFor } from "./notify";
+import { teamFor, TeamMember } from "./contact";
 import { Meeting, MODE_LABEL, Reference } from "./path";
-import { isOwnerEmail, signedToken } from "./session";
+import { signedToken } from "./session";
 import { COMPANY_TZ, formatInZone } from "./time";
 
 // Sends the emails in the path from "unlocked" to "hired". The words live in
@@ -15,7 +15,7 @@ type Ctx = {
   unlockId: string;
   cand: { id: string; full_name: string; email: string; phone: string | null; tz: string };
   owner: Owner;
-  rep: { email: string; full_name: string | null; active: boolean } | null;
+  team: TeamMember[]; // the candidate's rep, or the partners if there's no rep
 };
 
 const first = (n: string | null | undefined) => (n ?? "").split(" ")[0] || "there";
@@ -34,7 +34,7 @@ export async function pathCtx(unlockId: string): Promise<Ctx | null> {
     .maybeSingle();
   if (!data) return null;
   const row = data as unknown as { candidate_id: string; owners: Owner; candidates: Ctx["cand"] };
-  const [{ data: call }, rep] = await Promise.all([
+  const [{ data: call }, team] = await Promise.all([
     db()
       .from("onboarding_calls")
       .select("candidate_time_zone")
@@ -42,21 +42,20 @@ export async function pathCtx(unlockId: string): Promise<Ctx | null> {
       .order("starts_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
-    repFor(row.candidate_id),
+    teamFor(row.candidate_id),
   ]);
   return {
     unlockId,
     cand: { ...row.candidates, tz: call?.candidate_time_zone || COMPANY_TZ },
     owner: row.owners,
-    rep: rep && rep.active && !isOwnerEmail(rep.email) ? rep : null,
+    team,
   };
 }
 
 // The rep hears about every step, in one short line.
 async function toRep(c: Ctx, subject: string, line: string) {
-  if (!c.rep) return;
-  await sendEmail({
-    to: c.rep.email,
+  for (const t of c.team) await sendEmail({
+    to: t.email,
     audience: "team",
     subject,
     html: `<p style="margin:0 0 14px">${line}</p><p style="margin:0"><a href="${teamUrl()}/admin/candidates/${c.cand.id}" style="color:#17213a;font-weight:bold">Open ${e(c.cand.full_name)}'s profile</a></p>`,

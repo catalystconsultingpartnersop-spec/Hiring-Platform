@@ -10,7 +10,7 @@ import {
   PAY_BANDS,
   rolesOf,
 } from "@/lib/catalog";
-import { contactPhone, feeFor, LEVEL_LABEL, WORK_MODE_LABEL } from "@/lib/format";
+import { feeFor, LEVEL_LABEL, WORK_MODE_LABEL } from "@/lib/format";
 import { TRAIT_LIST, TRAITS } from "@/lib/strengths";
 import styles from "./catalog.module.css";
 import { FiltersToggle } from "./FiltersToggle";
@@ -233,7 +233,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
                   : all.length === 0
                     ? "New candidates are being coached and will be listed here soon. Check back shortly."
                     : f.q
-                      ? `Nobody listed for “${f.q}” right now. Text us what you need at ${contactPhone()} and we'll tell you when someone fits.`
+                      ? `Nobody listed for “${f.q}” right now. Tell us what you need on the Contact us page, and we'll let you know when someone fits.`
                       : "No one matches all of those filters. Remove one to see more people."}
               </p>
               <Link className="btn btn-small" href="/candidates" style={{ marginTop: 14 }}>

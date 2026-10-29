@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { commissionOf, earnsCommission, HireRow, loadAgreements, repName, StaffLite } from "@/lib/adminData";
 import { dateShort, money, refCode } from "@/lib/format";
+
 import { receiptNumber } from "@/lib/receipt";
 import { requireAdmin } from "@/lib/session";
 import { commissionPercent } from "@/lib/settings";
