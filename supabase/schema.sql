@@ -291,3 +291,11 @@ alter table meetings enable row level security;
 alter table reference_requests enable row level security;
 grant all on meetings, reference_requests to service_role;
 revoke all on meetings, reference_requests from anon, authenticated;
+alter table staff add column if not exists agreement_signed_at timestamptz;
+alter table staff add column if not exists agreement_name text;
+alter table staff add column if not exists agreement_version text;
+alter table staff add column if not exists agreement_text text;
+alter table staff add column if not exists agreement_ip text;
+-- A candidate can fit several kinds of roles and industries.
+alter table candidates add column if not exists also_roles text[] not null default '{}';
+alter table candidates add column if not exists also_industries text[] not null default '{}';

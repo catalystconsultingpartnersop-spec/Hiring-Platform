@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CandidateCard, isNew } from "@/components/CandidateCard";
-import { getTiers, listListed } from "@/lib/catalog";
+import { getTiers, listListed, rolesOf } from "@/lib/catalog";
 import type { FeeTier, PublicCandidate } from "@/lib/db";
 import { contactPhone, contactPhoneHref, feeFor } from "@/lib/format";
 import { nowMs } from "@/lib/time";
@@ -82,7 +82,7 @@ export default async function Home() {
 
   // Roles people can jump straight into, busiest first.
   const counts = new Map<string, number>();
-  for (const c of all) if (c.role_category) counts.set(c.role_category, (counts.get(c.role_category) ?? 0) + 1);
+  for (const c of all) for (const r of rolesOf(c)) counts.set(r, (counts.get(r) ?? 0) + 1);
   const chips = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([r, n]) => ({ role: r, n }));
   for (const r of POPULAR) if (chips.length < 8 && !counts.has(r)) chips.push({ role: r, n: 0 });
 
@@ -155,7 +155,7 @@ export default async function Home() {
             </div>
             <div>
               <h3>Your business, your call</h3>
-              <p>You know your business best. We&rsquo;re here to show you great people, not to give you advice.</p>
+              <p>You know your business best. We suggest easy next steps, and you decide. Or just pick up the phone.</p>
             </div>
             <div>
               <h3>Nothing to fill out</h3>

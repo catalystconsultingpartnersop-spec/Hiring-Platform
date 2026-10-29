@@ -6,7 +6,9 @@ import {
   CatalogFilters,
   facetCounts,
   getTiers,
+  industriesOf,
   PAY_BANDS,
+  rolesOf,
 } from "@/lib/catalog";
 import { contactPhone, feeFor, LEVEL_LABEL, WORK_MODE_LABEL } from "@/lib/format";
 import { TRAIT_LIST, TRAITS } from "@/lib/strengths";
@@ -36,10 +38,10 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
   const rows = applyFilters(all, f, feeOf);
 
   const roleCounts = facetCounts(all, f, "role");
-  const allRoles = [...new Set(all.map((c) => c.role_category).filter((r): r is string => !!r))].sort();
+  const allRoles = [...new Set(all.flatMap(rolesOf))].sort();
   const regions = [...facetCounts(all, f, "region").entries()].sort((a, b) => a[0].localeCompare(b[0]));
   const industryCounts = facetCounts(all, f, "industry");
-  const allIndustries = [...new Set(all.map((c) => c.industry).filter((r): r is string => !!r && r !== "Any"))].sort();
+  const allIndustries = [...new Set(all.flatMap(industriesOf))].sort();
   const shortlistView = !!f.saved;
   // Saved candidates who have since been hired (or taken down) drop out of the list; say so.
   const goneFromShortlist = shortlistView
@@ -181,13 +183,16 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
               </span>
             </h1>
             <div className={styles.tools}>
+              {/* On phones only; on larger screens the filter panel has industry. */}
               {allIndustries.length > 0 && (
-                <ParamSelect
-                  param="industry"
-                  label="Industry"
-                  value={f.industry ?? ""}
-                  options={[["", "All industries"], ...allIndustries.map((i): [string, string] => [i, i])]}
-                />
+                <span className={styles.narrowOnly}>
+                  <ParamSelect
+                    param="industry"
+                    label="Industry"
+                    value={f.industry ?? ""}
+                    options={[["", "All industries"], ...allIndustries.map((i): [string, string] => [i, i])]}
+                  />
+                </span>
               )}
               <ParamSelect
                 param="sort"

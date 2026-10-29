@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { CandidateCard, HowTheyWork, WorksBest } from "@/components/CandidateCard";
 import { MobileBar } from "@/components/MobileBar";
 import { ShortlistButton } from "@/components/Shortlist";
-import { allListed, getListed, getTiers, similarTo } from "@/lib/catalog";
+import { allListed, getListed, getTiers, industriesOf, similarTo } from "@/lib/catalog";
 import { wiredFor } from "@/lib/strengths";
 import { Candidate, db, Hire, PublicCandidate, Unlock } from "@/lib/db";
 import { dateShort, feeFor, LEVEL_LABEL, lines, money, refCode, salaryRange, WORK_MODE_LABEL } from "@/lib/format";
@@ -93,7 +93,8 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
 function Facts({ c }: { c: PublicCandidate }) {
   const rows: [string, string | null][] = [
     ["Role", c.role_category],
-    ["Industry", c.industry],
+    ["Also a fit for", (c.also_roles ?? []).join(", ") || null],
+    ["Industry", industriesOf(c).join(", ") || null],
     ["Experience", c.level ? LEVEL_LABEL[c.level] : null],
     ["Location", c.location_region],
     ["Work setting", c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null],
@@ -255,7 +256,12 @@ function Unlocked({
           {first} is back on your list.
         </p>
       )}
-      {justUnlocked && <p className="notice notice-good">Signed. Here&rsquo;s who they are. A copy of the agreement is in your email.</p>}
+      {justUnlocked && (
+        <p className="notice notice-good">
+          You&rsquo;re in. Here&rsquo;s who they are, with an easy first step below. Your copy of the agreement is in your
+          email.
+        </p>
+      )}
       {(paidNotice || hireNote === "paid") && hire && (
         <div className="notice notice-good" role="status">
           <strong>Payment received: {money(hire.amount_cents)}.</strong> Go ahead and make the offer to{" "}

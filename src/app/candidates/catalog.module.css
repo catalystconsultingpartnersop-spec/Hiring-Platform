@@ -119,6 +119,8 @@
 }
 
 .tools { display: flex; gap: 14px; flex-wrap: wrap; }
+.narrowOnly { display: contents; }
+@media (min-width: 861px) { .narrowOnly { display: none; } }
 
 .resultsHead h1 { font-size: clamp(22px, 2.6vw, 26px); }
 .resultsHead h1 span {

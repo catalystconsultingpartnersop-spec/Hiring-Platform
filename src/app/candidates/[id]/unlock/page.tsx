@@ -30,7 +30,6 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
   const c = await getListed(id);
   if (!c) notFound();
   const fee = feeFor(c, await getTiers());
-  const feeText = fee != null ? money(fee) : "a flat fee we agree with you up front";
   const text = agreementText({
     brand: brandName(),
     ownerName: owner.full_name ?? "",
@@ -41,88 +40,86 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
   const savedCard = owner.card_pm ? (owner.card_label ?? "card on file") : null;
   const first = (owner.full_name ?? "").split(" ")[0];
 
+  const candidateFee = fee != null ? money(fee) : "one flat fee";
   return (
     <div className={`wrap ${styles.page}`}>
       <Link href={`/candidates/${id}`} className="small muted">
         Back to the profile
       </Link>
 
+      <header className={styles.header}>
+        <h1 className={styles.title}>{first ? `${first}, here’s` : "Here’s"} how to meet them</h1>
+        <p className={styles.lede}>
+          Sign a short agreement and add a card. <strong>Nothing is charged today.</strong> You&rsquo;ll see their name,
+          resume and phone number right away, and we&rsquo;ll help you set up a first call.
+        </p>
+        <ol className={styles.flow} aria-label="Steps">
+          <li>Sign</li>
+          <li>{savedCard ? "Use your card on file" : "Add a card"}</li>
+          <li>Meet them</li>
+        </ol>
+      </header>
+
       <div className={styles.layout}>
         <div>
-          <p className={styles.kicker}>Free to see · You only pay if you hire</p>
-          <h1 className={styles.title}>{first ? `${first}, meet` : "Meet"} your next hire</h1>
-          <p className={styles.lede}>
-            Confirm a few simple terms and you&rsquo;ll see their name, resume and contact details right away. Reach out
-            directly, interview, take your time.
-          </p>
-
           {sp.card === "cancelled" && (
             <p className="notice notice-gold" role="status" style={{ marginTop: 18 }}>
-              No problem, nothing was charged. Whenever you&rsquo;re ready, finish below to see who this is.
+              No problem, nothing was charged. Whenever you&rsquo;re ready, sign below to see who this is.
             </p>
           )}
 
-          <ol className={styles.steps}>
-            <li>
-              <strong>Agree to the terms</strong>
-              <span>Takes 30 seconds.</span>
-            </li>
-            <li>
-              <strong>{savedCard ? "Use your card on file" : "Add a card"}</strong>
-              <span>Nothing is charged today.</span>
-            </li>
-            <li>
-              <strong>Meet them</strong>
-              <span>Name, resume and contact details, instantly.</span>
-            </li>
-          </ol>
-
-          <section className={styles.deal}>
-            <h2>The deal, in plain English</h2>
+          <section className={styles.deal} aria-label="The agreement in plain English">
+            <h2>The agreement, in plain English</h2>
             <ul>
               <li>
-                <b>Looking is free.</b> See who they are, talk to them, interview them. No cost.
+                <b>Meeting them is free.</b> Talk, interview, take your time.
               </li>
               <li>
-                <b>Hire them, and it&rsquo;s {feeText}, once.</b> No percentage of salary, no subscription, no surprises.
+                <b>{candidateFee}, only if you hire.</b> Once, never a percentage of salary. We charge it when you tell us
+                you&rsquo;re hiring.
               </li>
               <li>
-                <b>You pay when you decide to hire,</b> with one click. Not before.
+                <b>Not a fit? You owe nothing.</b> Just let us know, with one tap.
               </li>
               <li>
-                <b>Keep it between us.</b> Their details are for your hiring only. If you share them and someone else
-                hires them within 12 months, the fee still applies.
+                <b>Keep their details to yourself.</b> They&rsquo;re for your own hiring. If they&rsquo;re passed on and
+                someone else hires this person within 12 months, the fee still applies.
               </li>
             </ul>
           </section>
 
           <details className={styles.faq}>
-            <summary>Why do you need a card?</summary>
+            <summary>Why do you need a card if nothing is charged?</summary>
             <p>
-              It keeps the catalog serious and fair to candidates, who trust us with their details. Your card is stored
-              securely by Stripe, and nothing is charged unless you decide to hire.
+              Candidates trust us with their name and contact details, so we only share them with employers who are
+              serious. Your card is held securely by Stripe, and it&rsquo;s only charged if you hire.
             </p>
           </details>
           <details className={styles.faq}>
-            <summary>What if I already knew this person?</summary>
+            <summary>What if I already know this person?</summary>
             <p>
-              Tell us within two days of signing and send us something that shows it, like an application they sent
-              you or emails about a job. Then no fee applies.
+              Tell us within two business days of signing and send something dated before today that shows it, like an
+              application they sent you. Then there&rsquo;s no fee.
             </p>
           </details>
-
           <details className={styles.full}>
             <summary>Read the full agreement</summary>
             <AgreementDoc text={text} />
           </details>
 
           <div id="sign" style={{ scrollMarginTop: 16 }} />
-          <SignForm candidateId={id} defaultName={owner.full_name ?? ""} savedCard={savedCard} fee={fee != null ? money(fee) : null} />
+          <SignForm
+            candidateId={id}
+            defaultName={owner.full_name ?? ""}
+            company={owner.company ?? ""}
+            savedCard={savedCard}
+            fee={fee != null ? money(fee) : null}
+          />
         </div>
 
         <aside className={styles.side}>
           <div className={styles.who}>
-            <p className={styles.ref}>Candidate {refCode(id)}</p>
+            <p className={styles.ref}>You&rsquo;re about to meet</p>
             <h2>{c.headline ?? c.role_category ?? "Candidate"}</h2>
             <WorksBest c={c} compact />
             <ul className={styles.facts}>
@@ -131,18 +128,18 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
               {c.location_region && <li>{c.location_region}</li>}
               {(c.salary_min || c.salary_max) && <li>{salaryRange(c.salary_min, c.salary_max)}</li>}
             </ul>
-            <p className={styles.coached}>Coached and assessed by our team before listing.</p>
+            <p className={styles.coached}>We sat down with them and learned how they work best.</p>
           </div>
           <p className="small muted" style={{ marginTop: 14 }}>
-            Questions first? Text or call <a href={`sms:${contactPhoneHref()}`}>{contactPhone()}</a>. Happy to help.
+            Questions first? Text or call <a href={`sms:${contactPhoneHref()}`}>{contactPhone()}</a>. A real person answers.
           </p>
         </aside>
       </div>
       <MobileBar label="$0 today" sub={fee != null ? `${money(fee)} only if you hire` : "Pay only if you hire"}>
-          <a className="btn btn-gold" href="#sign">
-            Agree and meet them
-          </a>
-        </MobileBar>
+        <a className="btn btn-gold" href="#sign">
+          Sign and meet them
+        </a>
+      </MobileBar>
     </div>
   );
 }

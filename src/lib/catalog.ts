@@ -80,10 +80,18 @@ export type CatalogFilters = {
 const FILTER_KEYS = ["role", "level", "mode", "region", "strength", "pay", "industry"] as const;
 type FilterKey = (typeof FILTER_KEYS)[number];
 
+// Every kind of role and industry a candidate fits, main one first.
+export function rolesOf(c: PublicCandidate) {
+  return [...new Set([c.role_category, ...(c.also_roles ?? [])].filter((r): r is string => !!r))];
+}
+export function industriesOf(c: PublicCandidate) {
+  return [...new Set([c.industry, ...(c.also_industries ?? [])].filter((r): r is string => !!r && r !== "Any"))];
+}
+
 function valueOf(c: PublicCandidate, key: FilterKey): string[] {
   switch (key) {
     case "role":
-      return c.role_category ? [c.role_category] : [];
+      return rolesOf(c);
     case "level":
       return c.level ? [c.level] : [];
     case "mode":
@@ -93,7 +101,7 @@ function valueOf(c: PublicCandidate, key: FilterKey): string[] {
     case "strength":
       return strengthsOf(c);
     case "industry":
-      return c.industry ? [c.industry] : [];
+      return industriesOf(c);
     case "pay": {
       const b = payBand(c);
       return b ? [b] : [];
@@ -115,8 +123,8 @@ function matches(c: PublicCandidate, f: CatalogFilters, skip?: FilterKey) {
     const prof = profileOf(c.working_genius);
     const hay = [
       c.headline,
-      c.role_category,
-      c.industry,
+      ...rolesOf(c),
+      ...industriesOf(c),
       c.summary,
       c.location_region,
       prof.type?.name,
@@ -175,8 +183,8 @@ export function similarTo(c: PublicCandidate, rows: PublicCandidate[], n = 4) {
     .map((r) => ({
       r,
       score:
-        (r.role_category === c.role_category ? 3 : 0) +
-        (r.industry === c.industry ? 1 : 0) +
+        (r.role_category === c.role_category ? 3 : rolesOf(r).some((x) => rolesOf(c).includes(x)) ? 2 : 0) +
+        (industriesOf(r).some((x) => industriesOf(c).includes(x)) ? 1 : 0) +
         (r.level === c.level ? 1 : 0) +
         strengthsOf(r).filter((x) => g.has(x)).length,
     }))

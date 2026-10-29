@@ -21,13 +21,26 @@ export default async function RepGuide() {
           <p className={styles.eyebrow}>Rep guide</p>
           <h1>Welcome to the team.</h1>
           <p className={styles.lede}>
-            Your job is simple and it matters: sit with people looking for work, help them see what they&rsquo;re naturally
-            great at, and put them in front of employers who need exactly that. Treat every candidate with dignity and
-            respect. The site does the rest.
+            You&rsquo;re here to help people. You sit with someone looking for work, help them see what they&rsquo;re
+            naturally great at, and put them in front of employers who need exactly that.
           </p>
         </div>
         <PrintButton />
       </div>
+
+      <section className={styles.mission}>
+        <p className={styles.missionLabel}>Before anything else</p>
+        <h2>The mission comes first.</h2>
+        <p>
+          To be a rep here, you have to care about candidates and genuinely want to help them. That&rsquo;s the
+          requirement. Every person who talks to you deserves dignity and respect, whether or not they ever get hired
+          through us.
+        </p>
+        <p>
+          Yes, you can earn good money doing this. But the money follows the mission, not the other way around. If you
+          ever have to choose between what&rsquo;s right for the candidate and a quick fee, choose the candidate.
+        </p>
+      </section>
 
       <div className={styles.facts}>
         <div>

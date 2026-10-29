@@ -102,7 +102,8 @@ export default async function HirePage({ params, searchParams }: PageProps<"/can
             </li>
             <li>
               <strong>You make the offer and agree the details with {first} directly.</strong> Salary, start date and
-              paperwork are between you and {first}. We step out of the way.
+              paperwork are between you and {first}. Our <Link href="/hiring-help">hiring help</Link> has an offer letter
+              ready to fill in.
             </li>
           </>
         )}

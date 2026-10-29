@@ -81,7 +81,11 @@ export function CandidateCard({
   return (
     <div className="card">
       <div className="card-top">
-        <span>{[c.role_category, c.industry && c.industry !== "Any" ? c.industry : null].filter(Boolean).join(" in ")}</span>
+        <span>
+          {[[c.role_category, ...(c.also_roles ?? [])].filter(Boolean).slice(0, 2).join(" / "), c.industry && c.industry !== "Any" ? c.industry : null]
+            .filter(Boolean)
+            .join(" in ")}
+        </span>
         {example ? <span className="card-ref">Example</span> : isNew(c) ? <span className="tag tag-gold">New</span> : null}
       </div>
       <h3>

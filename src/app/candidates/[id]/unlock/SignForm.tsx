@@ -6,11 +6,13 @@ import { signAgreement, SignState } from "../actions";
 export function SignForm({
   candidateId,
   defaultName,
+  company,
   savedCard,
   fee,
 }: {
   candidateId: string;
   defaultName: string;
+  company: string;
   savedCard: string | null;
   fee: string | null;
 }) {
@@ -22,14 +24,16 @@ export function SignForm({
       action={action}
       style={{ marginTop: 22, background: "var(--marigold-soft)", borderRadius: 18, padding: "22px clamp(18px, 3vw, 26px)" }}
     >
-      <label className="field">
-        <span>Your name, as your signature</span>
+      <h2 style={{ fontSize: 20, margin: 0 }}>Sign here</h2>
+      <label className="field" style={{ marginTop: 12 }}>
+        <span>Your full name (this is your signature)</span>
         <input className="input" name="signed_name" defaultValue={defaultName} required autoComplete="name" />
       </label>
       <label className="check" style={{ marginTop: 14 }}>
         <input type="checkbox" name="agree" required />
         <span>
-          I agree to the terms above and the full agreement for my company{fee ? `, including the ${fee} fee if we hire` : ""}.
+          I agree to the agreement on behalf of {company || "my company"}
+          {fee ? `, including the ${fee} fee if we hire this person` : ""}.
         </span>
       </label>
       {savedCard && (
@@ -53,10 +57,10 @@ export function SignForm({
         </p>
       )}
       <button className="btn" type="submit" disabled={pending} style={{ marginTop: 18, width: "100%", minHeight: 52, fontSize: 16.5 }}>
-        {pending ? "One moment…" : useSaved ? "Agree and meet them" : "Agree and add a card · $0 today"}
+        {pending ? "One moment…" : useSaved ? "Sign and meet them" : "Sign and add a card"}
       </button>
       <p className="small" style={{ margin: "10px 0 0", textAlign: "center", color: "var(--ink-2)" }}>
-        {useSaved ? "Nothing is charged today." : "Secure card form by Stripe. Nothing is charged today."}
+        {useSaved ? "Nothing is charged today." : "Nothing is charged today. The card form is secure, by Stripe."}
       </p>
     </form>
   );

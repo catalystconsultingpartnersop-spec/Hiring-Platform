@@ -3,22 +3,19 @@
 import { startTransition, useActionState, useState } from "react";
 import type { Candidate } from "@/lib/db";
 import { describe, parseResult, suggestedHeadline, type Letter } from "@/lib/strengths";
+import {
+  headlineIdeas,
+  HIGHLIGHT_IDEAS,
+  INDUSTRY_LIST,
+  ROLE_LIST,
+  suggestRoles,
+  SUMMARY_STARTERS,
+  summaryDraft,
+  WRITING_TIPS,
+} from "@/lib/writingHelp";
 import { FormState, saveCandidate } from "../../actions";
 import styles from "./form.module.css";
 
-const ROLES = [
-  "Sales",
-  "Bookkeeping",
-  "Accounting",
-  "Executive assistant",
-  "Office manager",
-  "Administrative",
-  "Customer service",
-  "Operations",
-  "Project management",
-  "Estimating",
-  "Marketing",
-];
 
 // Staff-facing names for the six letters (owners never see these).
 const LETTERS: { key: Letter; name: string }[] = [
@@ -76,10 +73,21 @@ export function CandidateForm({
   const [role, setRole] = useState(v("role_category"));
   const [level, setLevel] = useState(v("level"));
   const [mode, setMode] = useState(v("work_mode"));
+  const [industry, setIndustry] = useState(v("industry"));
+  const [alsoRoles, setAlsoRoles] = useState<string[]>(c?.also_roles ?? []);
+  const [alsoIndustries, setAlsoIndustries] = useState<string[]>(c?.also_industries ?? []);
+  const [headline, setHeadline] = useState(v("headline"));
+  const [summary, setSummary] = useState(v("summary"));
+  const [highlights, setHighlights] = useState(c?.highlights.join("\n") ?? "");
 
   const code = order.join("");
   const d = describe(code);
   const autoHeadline = role ? suggestedHeadline(role, code) : "";
+  const roleIdeas = suggestRoles(code);
+  const ideas = headlineIdeas(role, code, level);
+  const highlightIdeas = [...new Set([role, ...alsoRoles].flatMap((r) => HIGHLIGHT_IDEAS[r] ?? []))].slice(0, 8);
+  const addLine = (line: string) => setHighlights((h) => (h.trim() ? `${h.trimEnd()}\n${line}` : line));
+  const addToSummary = (bit: string) => setSummary((cur) => (cur.trim() ? `${cur.trimEnd()} ${bit}` : bit));
   const app = c?.application ?? {};
   const hasApp = Object.values(app).some(Boolean);
 
@@ -279,7 +287,7 @@ export function CandidateForm({
         </h2>
         <label className="field">
           <span>
-            Role
+            Main role
             <Req />
           </span>
           <input
@@ -291,11 +299,23 @@ export function CandidateForm({
             placeholder="Pick or type, e.g. Sales"
           />
           <datalist id="roles">
-            {ROLES.map((r) => (
+            {ROLE_LIST.map((r) => (
               <option key={r} value={r} />
             ))}
           </datalist>
         </label>
+        <ChipPicker
+          name="also_roles"
+          label="Also a good fit for"
+          hint="Pick every kind of role they'd shine in. Owners can find them under each one."
+          options={ROLE_LIST}
+          suggested={roleIdeas}
+          suggestedNote="Suggested from their result"
+          exclude={role}
+          value={alsoRoles}
+          onChange={setAlsoRoles}
+          addPlaceholder="Add another role"
+        />
         <div className={styles.chipField}>
           <span>Experience</span>
           <input type="hidden" name="level" value={level} />
@@ -345,8 +365,20 @@ export function CandidateForm({
             <input className="input" name="location_region" defaultValue={v("location_region")} />
           </label>
           <label className="field">
-            <span>Industry</span>
-            <input className="input" name="industry" defaultValue={v("industry")} placeholder="e.g. Construction" />
+            <span>Main industry</span>
+            <input
+              className="input"
+              name="industry"
+              list="industries"
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value)}
+              placeholder="e.g. Construction"
+            />
+            <datalist id="industries">
+              {INDUSTRY_LIST.map((r) => (
+                <option key={r} value={r} />
+              ))}
+            </datalist>
           </label>
           <label className="field">
             <span>Salary from ($)</span>
@@ -357,6 +389,16 @@ export function CandidateForm({
             <input className="input" name="salary_max" inputMode="numeric" defaultValue={c?.salary_max ?? ""} placeholder="85000" />
           </label>
         </div>
+      <ChipPicker
+          name="also_industries"
+          label="Other industries they'd fit"
+          hint="Experience or interest in more than one? Add them all."
+          options={INDUSTRY_LIST}
+          exclude={industry}
+          value={alsoIndustries}
+          onChange={setAlsoIndustries}
+          addPlaceholder="Add another industry"
+        />
       </section>
 
       {/* 4. Story */}
@@ -367,33 +409,79 @@ export function CandidateForm({
         <p className="small muted">
           Owners see this before signing, so describe, don&rsquo;t identify: no names, employers, schools or exact titles.
         </p>
+        <ul className={styles.tips}>
+          {WRITING_TIPS.map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </ul>
         <label className="field" style={{ marginTop: 14 }}>
           <span>Headline</span>
           <input
             className="input"
             name="headline"
-            defaultValue={v("headline")}
+            value={headline}
+            onChange={(e) => setHeadline(e.target.value)}
             placeholder={autoHeadline ? `Leave blank to use: ${autoHeadline}` : "e.g. Bookkeeper who finds the mistake everyone else missed"}
           />
         </label>
+        {ideas.length > 0 && (
+          <div className={styles.ideas}>
+            <span>Ideas (tap to use, then make it yours):</span>
+            {ideas.map((h) => (
+              <button key={h} type="button" className={styles.idea} onClick={() => setHeadline(h)}>
+                {h}
+              </button>
+            ))}
+          </div>
+        )}
         <label className="field">
           <span>Short summary</span>
           <textarea
             className="textarea"
             name="summary"
-            defaultValue={v("summary")}
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
             placeholder="Two or three sentences: what they've done and where they shine."
           />
         </label>
+        <div className={styles.ideas}>
+          <button
+            type="button"
+            className={styles.ideaMain}
+            disabled={!role && !code}
+            onClick={() => {
+              if (summary.trim() && !window.confirm("Replace what you've written with a first draft?")) return;
+              setSummary(summaryDraft({ role, level, code }));
+            }}
+          >
+            Write a first draft for me
+          </button>
+          {SUMMARY_STARTERS.map((t) => (
+            <button key={t} type="button" className={styles.idea} onClick={() => addToSummary(t)}>
+              {t.trim()}…
+            </button>
+          ))}
+        </div>
         <label className="field">
           <span>Highlights (one per line)</span>
           <textarea
             className="textarea"
             name="highlights"
-            defaultValue={c?.highlights.join("\n") ?? ""}
+            value={highlights}
+            onChange={(e) => setHighlights(e.target.value)}
             placeholder={"Grew a territory to 40 accounts in 18 months\nComfortable on a job site and in a boardroom"}
           />
         </label>
+        {highlightIdeas.length > 0 && (
+          <div className={styles.ideas}>
+            <span>Ideas for {[role, ...alsoRoles].filter(Boolean).slice(0, 2).join(" and ").toLowerCase()} (tap to add, then fill in the [brackets]):</span>
+            {highlightIdeas.map((h) => (
+              <button key={h} type="button" className={styles.idea} onClick={() => addLine(h)}>
+                + {h}
+              </button>
+            ))}
+          </div>
+        )}
         <label className="field">
           <span>Full profile (shown only after a client signs)</span>
           <textarea className="textarea" name="full_profile" defaultValue={v("full_profile")} />
@@ -498,5 +586,85 @@ export function CandidateForm({
         )}
       </div>
     </form>
+  );
+}
+
+// Pick several from a list (with suggestions first), or type your own.
+function ChipPicker({
+  name,
+  label,
+  hint,
+  options,
+  suggested = [],
+  suggestedNote,
+  exclude,
+  value,
+  onChange,
+  addPlaceholder,
+}: {
+  name: string;
+  label: string;
+  hint: string;
+  options: string[];
+  suggested?: string[];
+  suggestedNote?: string;
+  exclude: string;
+  value: string[];
+  onChange: (v: string[]) => void;
+  addPlaceholder: string;
+}) {
+  const [typed, setTyped] = useState("");
+  const ex = exclude.trim().toLowerCase();
+  const all = [...new Set([...suggested, ...value, ...options])].filter((o) => o.toLowerCase() !== ex);
+  const toggle = (o: string) => onChange(value.includes(o) ? value.filter((x) => x !== o) : [...value, o]);
+  const add = () => {
+    const t = typed.trim();
+    if (t && !value.includes(t) && t.toLowerCase() !== ex) onChange([...value, t]);
+    setTyped("");
+  };
+  return (
+    <div className={styles.chipField}>
+      <span>{label}</span>
+      <small className="muted" style={{ display: "block", margin: "2px 0 8px" }}>
+        {hint}
+        {suggested.length > 0 && suggestedNote ? ` ★ ${suggestedNote}.` : ""}
+      </small>
+      {value
+        .filter((x) => x.toLowerCase() !== ex)
+        .map((x) => (
+          <input key={x} type="hidden" name={name} value={x} />
+        ))}
+      <div className={styles.chips}>
+        {all.map((o) => (
+          <button
+            key={o}
+            type="button"
+            className={value.includes(o) ? styles.chipOn : styles.chip}
+            aria-pressed={value.includes(o)}
+            onClick={() => toggle(o)}
+          >
+            {suggested.includes(o) ? "★ " : ""}
+            {o}
+          </button>
+        ))}
+      </div>
+      <div className={styles.addRow}>
+        <input
+          className="input"
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              add();
+            }
+          }}
+          placeholder={addPlaceholder}
+        />
+        <button type="button" className="btn btn-ghost btn-small" onClick={add} disabled={!typed.trim()}>
+          Add
+        </button>
+      </div>
+    </div>
   );
 }

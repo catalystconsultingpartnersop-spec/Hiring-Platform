@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db, logActivity } from "@/lib/db";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
@@ -25,6 +26,7 @@ import { cancelCall } from "@/lib/calls";
 import { chargeCardOnFile } from "@/lib/cards";
 import { commissionPercent, setSetting } from "@/lib/settings";
 import { receiptNumber } from "@/lib/receipt";
+import { REP_AGREEMENT_VERSION, repAgreementText } from "@/lib/repAgreement";
 import { describe, suggestedHeadline } from "@/lib/strengths";
 import { RESUME_CONTENT_TYPE, resumeKind } from "@/lib/resume";
 
@@ -193,7 +195,12 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
   const get = (k: string) => String(form.get(k) ?? "").trim();
 
   const status = get("status") || "draft";
+  // Extra roles and industries: unique, not repeating the main one, at most 10.
+  const many = (k: string, main: string) =>
+    [...new Set(form.getAll(k).map((x) => String(x).trim().slice(0, 60)).filter((x) => x && x.toLowerCase() !== main.toLowerCase()))].slice(0, 10);
   const record: Record<string, unknown> = {
+    also_roles: many("also_roles", get("role_category")),
+    also_industries: many("also_industries", get("industry")),
     status,
     headline: get("headline") || null,
     role_category: get("role_category") || null,
@@ -606,4 +613,24 @@ export async function deleteCandidate(id: string, form: FormData) {
   revalidatePath("/admin/candidates");
   revalidatePath("/candidates");
   redirect(`/admin/candidates?deleted=${encodeURIComponent(c.full_name)}`);
+}
+
+// A rep signs the rep agreement (once).
+export async function signRepAgreement(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requireStaff();
+  if (!me.id) redirect("/admin");
+  const name = String(form.get("signed_name") ?? "").trim().slice(0, 200);
+  if (name.length < 3) return { error: "Type your full name to sign." };
+  if (form.get("mission") !== "on" || form.get("agree") !== "on") return { error: "Tick both boxes to sign." };
+  const { data: row } = await db().from("staff").select("full_name").eq("id", me.id).single();
+  const text = repAgreementText({ brand: brandName(), repName: row?.full_name || name, percent: await commissionPercent() });
+  const h = await headers();
+  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  await db()
+    .from("staff")
+    .update({ agreement_signed_at: new Date().toISOString(), agreement_name: name, agreement_version: REP_AGREEMENT_VERSION, agreement_text: text, agreement_ip: ip })
+    .eq("id", me.id);
+  await logActivity(staffActor(me), "rep_agreement_signed", { version: REP_AGREEMENT_VERSION });
+  await emailAdmin(`${name} signed the rep agreement`, `<p><strong>${escapeHtml(name)}</strong> (${escapeHtml(me.email)}) signed the rep agreement.</p><p><a href="${teamUrl()}/admin/agreement?id=${me.id}">See their signed copy</a></p>`);
+  redirect("/admin/agreement?signed=1");
 }

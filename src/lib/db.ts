@@ -49,7 +49,7 @@ export function dbConfigProblem(): string | null {
 // Columns that are safe to show on an anonymous card. Anything not listed here
 // (name, email, phone, resume, full profile, notes) stays private.
 export const PUBLIC_CANDIDATE_COLUMNS =
-  "id, status, headline, role_category, industry, level, location_region, work_mode, salary_min, salary_max, strengths, working_genius, summary, highlights, fee_override_cents, listed_at";
+  "id, status, headline, role_category, industry, also_roles, also_industries, level, location_region, work_mode, salary_min, salary_max, strengths, working_genius, summary, highlights, fee_override_cents, listed_at";
 
 export type PublicCandidate = {
   id: string;
@@ -57,6 +57,8 @@ export type PublicCandidate = {
   headline: string | null;
   role_category: string | null;
   industry: string | null;
+  also_roles?: string[]; // other kinds of roles they'd be a good fit for
+  also_industries?: string[];
   level: "beginner" | "experienced" | "senior" | null;
   location_region: string | null;
   work_mode: "on-site" | "hybrid" | "remote" | "flexible" | null;

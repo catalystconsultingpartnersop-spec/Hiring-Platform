@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
 import { adminLogout } from "../actions";
 import styles from "./admin.module.css";
@@ -8,6 +10,11 @@ export const dynamic = "force-dynamic";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const me = await requireStaff();
   const admin = me.role === "admin";
+  // Reps sign the rep agreement once before using the back office.
+  if (!admin && me.id) {
+    const { data, error } = await db().from("staff").select("*").eq("id", me.id).maybeSingle();
+    if (!error && data && "agreement_signed_at" in data && !data.agreement_signed_at) redirect("/admin/agreement");
+  }
   return (
     <div className="wrap">
       <nav className={styles.bar} aria-label="Admin">

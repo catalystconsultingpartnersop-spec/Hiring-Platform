@@ -15,6 +15,7 @@ type Member = {
   last_login_at: string | null;
   meeting_link: string | null;
   time_zone: string | null;
+  agreement_signed_at?: string | null;
 };
 
 const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -104,6 +105,15 @@ export default async function TeamPage() {
                         <span className="tag">Rep</span>
                       )}
                       {!m.active && <span className="tag" style={{ marginLeft: 6 }}>Switched off</span>}
+                      {!owner && m.role === "rep" && (
+                        <div className="small" style={{ marginTop: 4 }}>
+                          {m.agreement_signed_at ? (
+                            <Link href={`/admin/agreement?id=${m.id}`}>Agreement signed {dateShort(m.agreement_signed_at)}</Link>
+                          ) : (
+                            <span className="muted">Agreement not signed yet</span>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="small">
                       {mine.length ? hoursSummary(mine) : <span className="muted">Not set</span>}
