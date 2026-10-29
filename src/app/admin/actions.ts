@@ -881,3 +881,27 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
   revalidatePath(`/admin/candidates/${candidateId}`);
   return { ok: rep ? `Assigned to ${rep.full_name || rep.email}.` : "Unassigned." };
 }
+
+// ---------- Message all reps ----------
+
+// One email to every active rep (not Heshy), e.g. "what's new".
+export async function messageAllReps(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requireAdmin();
+  const subject = String(form.get("subject") ?? "").trim().slice(0, 150);
+  const body = String(form.get("body") ?? "").trim().slice(0, 5000);
+  if (!subject || !body) return { error: "Add a subject and a message." };
+  const { data } = await db().from("staff").select("email, full_name, active").eq("active", true);
+  const reps = ((data ?? []) as { email: string; full_name: string | null }[]).filter((s) => !isOwnerEmail(s.email));
+  if (!reps.length) return { error: "No active reps to send to." };
+  let sent = 0;
+  const failed: string[] = [];
+  for (const r of reps) {
+    const res = await sendEmail({ to: r.email, ...teamExtra.broadcast({ name: r.full_name ?? "", subject, body }) });
+    if (res.ok) sent++;
+    else failed.push(r.full_name || r.email);
+  }
+  await logActivity(staffActor(me), "message_all_reps", { subject, sent, failed: failed.length });
+  return failed.length
+    ? { error: `Sent to ${sent}. Didn't go out to: ${failed.join(", ")}. Check Activity for why.` }
+    : { ok: `Sent to all ${sent} rep${sent === 1 ? "" : "s"}.` };
+}

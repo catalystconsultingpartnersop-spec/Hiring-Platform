@@ -324,6 +324,18 @@ ${o.isAdmin ? "" : '<li style="margin:6px 0"><strong>Sign your rep agreement.</s
 };
 
 export const teamExtra = {
+  broadcast: (o: { name: string; subject: string; body: string }): Mail => ({
+    audience: "team",
+    subject: o.subject,
+    html:
+      hi(o.name) +
+      o.body
+        .split(/\n\s*\n/)
+        .map((para) => p(esc(para.trim()).replace(/\n/g, "<br>")))
+        .join("") +
+      button(`${teamUrl()}/admin/guide`, "Open the rep guide"),
+  }),
+
   assigned: (o: { name: string; candidate: string; email: string; phone: string | null; lookingFor: string | null; link: string }): Mail => ({
     audience: "team",
     subject: `${o.candidate} is yours now`,

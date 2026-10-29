@@ -8,6 +8,7 @@ import { commissionTerms } from "@/lib/adminData";
 import { commissionPercent } from "@/lib/settings";
 import { setPartner, setStaffActive, setStaffRole } from "../../actions";
 import { AddStaffForm } from "./AddStaffForm";
+import { MessageReps } from "./MessageReps";
 
 type Member = {
   id: string;
@@ -75,6 +76,7 @@ export default async function TeamPage() {
       )}
 
       <AddStaffForm canAddAdmin={me.owner} defaultPercent={pct} />
+      <MessageReps />
 
       {members.length > 0 && (
         <div className="table-wrap" style={{ marginTop: 28 }}>
