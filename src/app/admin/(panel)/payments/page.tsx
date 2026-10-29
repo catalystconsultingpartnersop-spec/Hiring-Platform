@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/session";
 import { commissionPercent } from "@/lib/settings";
 import { markCommissionPaid, setCommissionAmount, setCommissionPercent, undoCommissionPaid } from "../../actions";
 import styles from "../admin.module.css";
+import { RefundButton } from "../RefundButton";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +88,16 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
           Download for your accountant (CSV)
         </a>
       </div>
+      {typeof sp.refunded === "string" && (
+        <p className="notice notice-good" role="status">
+          Refunded {sp.refunded}. The client was emailed, and the candidate is paused until you relist them.
+        </p>
+      )}
+      {typeof sp.refund_error === "string" && (
+        <p className="notice notice-bad" role="alert">
+          The refund didn&rsquo;t go through: {sp.refund_error}
+        </p>
+      )}
       {error && (
         <p className="notice notice-bad" role="alert">
           Couldn&rsquo;t load payments: {error.message}
@@ -215,13 +226,16 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
                     </td>
                     <td>
                       {money(h.amount_cents)}
-                      <div className="small">
+                      <div className="small" style={{ display: "grid", gap: 6, justifyItems: "start" }}>
                         {h.status === "refunded" ? (
-                          <span className="tag tag-bad">Refunded</span>
+                          <span className="tag tag-bad">Refunded {dateShort(h.refunded_at)}</span>
                         ) : h.status === "hired" ? (
                           <span className="tag tag-good">Hired</span>
                         ) : (
                           <span className="tag tag-good">Paid</span>
+                        )}
+                        {h.status !== "refunded" && (
+                          <RefundButton hireId={h.id} amount={money(h.amount_cents)} company={h.company} back="/admin/payments" />
                         )}
                       </div>
                     </td>

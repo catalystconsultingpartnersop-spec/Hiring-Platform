@@ -4,7 +4,8 @@ import { AgreementRow, latest, loadAgreements, repName, STAGE_LABEL, stageOf } f
 import { dateShort, money, refCode } from "@/lib/format";
 import { requireAdmin } from "@/lib/session";
 import { nowMs } from "@/lib/time";
-import { chargeAgreement, markHired, refundHire, setUnlockFee } from "../../actions";
+import { chargeAgreement, markHired, setUnlockFee } from "../../actions";
+import { RefundButton } from "../RefundButton";
 import styles from "../admin.module.css";
 
 export const dynamic = "force-dynamic";
@@ -89,11 +90,21 @@ export default async function AgreementsPage({ searchParams }: PageProps<"/admin
     <>
       <div className="page-head" style={{ paddingBottom: 4 }}>
         <h1>Agreements</h1>
-        <p>Every owner who signed to see a candidate, and where each one stands.</p>
+        <p>Every client who signed to see a candidate, and where each one stands.</p>
       </div>
       {error && (
         <p className="notice notice-bad" role="alert">
           Couldn&rsquo;t load agreements: {error.message}
+        </p>
+      )}
+      {typeof sp.refunded === "string" && (
+        <p className="notice notice-good" role="status">
+          Refunded {sp.refunded}. The client was emailed, and the candidate is paused until you relist them.
+        </p>
+      )}
+      {typeof sp.refund_error === "string" && (
+        <p className="notice notice-bad" role="alert">
+          The refund didn&rsquo;t go through: {sp.refund_error}
         </p>
       )}
       {sp.charged === "1" && (
@@ -214,7 +225,7 @@ export default async function AgreementsPage({ searchParams }: PageProps<"/admin
           )}
         </div>
         <div className="panel">
-          <h2 className={styles.h3}>Most active companies</h2>
+          <h2 className={styles.h3}>Most active clients</h2>
           {topCompanies.length === 0 ? (
             <p className="small muted">Nothing yet.</p>
           ) : (
@@ -251,7 +262,7 @@ export default async function AgreementsPage({ searchParams }: PageProps<"/admin
           <table className="table">
             <thead>
               <tr>
-                <th>Owner</th>
+                <th>Client</th>
                 <th>Candidate</th>
                 <th>Signed</th>
                 <th>Fee</th>
@@ -323,14 +334,7 @@ export default async function AgreementsPage({ searchParams }: PageProps<"/admin
                                 Mark started
                               </button>
                             </form>
-                            <form action={refundHire.bind(null, hire.id)}>
-                              <ConfirmButton
-                                className="btn btn-small btn-danger"
-                                message={`Refund ${money(hire.amount_cents)} to ${u.owners.company}? This can't be undone.`}
-                              >
-                                Refund
-                              </ConfirmButton>
-                            </form>
+                            <RefundButton hireId={hire.id} amount={money(hire.amount_cents)} company={u.owners.company ?? "this client"} back="/admin/agreements" />
                           </>
                         )}
                       </div>

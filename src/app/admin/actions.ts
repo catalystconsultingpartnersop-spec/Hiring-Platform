@@ -24,6 +24,7 @@ import { stripe } from "@/lib/stripe";
 import { cancelCall } from "@/lib/calls";
 import { chargeCardOnFile } from "@/lib/cards";
 import { commissionPercent, setSetting } from "@/lib/settings";
+import { receiptNumber } from "@/lib/receipt";
 import { describe, suggestedHeadline } from "@/lib/strengths";
 import { RESUME_CONTENT_TYPE, resumeKind } from "@/lib/resume";
 
@@ -356,29 +357,43 @@ export async function markHired(hireId: string) {
   revalidatePath("/admin");
 }
 
-export async function refundHire(hireId: string) {
-  await requireAdmin();
+// Full refund to the client's card. Works whether or not the hire has started.
+export async function refundHire(hireId: string, form?: FormData) {
+  const me = await requireAdmin();
+  const back = String(form?.get("back") ?? "/admin/payments");
+  const reason = String(form?.get("reason") ?? "").trim().slice(0, 300);
+  const go = (q: string) => redirect(`${back.startsWith("/admin") ? back : "/admin/payments"}${back.includes("?") ? "&" : "?"}${q}`);
+
   const { data: hire } = await db()
     .from("hires")
-    .select("id, status, amount_cents, stripe_payment_intent, unlocks(candidate_id, owners(email, full_name))")
+    .select("id, status, amount_cents, stripe_payment_intent, unlocks(candidate_id, owners(email, full_name, company))")
     .eq("id", hireId)
     .single();
-  if (!hire || hire.status !== "paid" || !hire.stripe_payment_intent) return;
+  if (!hire || !["paid", "hired"].includes(hire.status)) go("refund_error=This+payment+can%27t+be+refunded+(already+refunded%3F)");
+  if (!hire!.stripe_payment_intent) go("refund_error=No+card+payment+found+for+this+hire");
 
-  await stripe().refunds.create({ payment_intent: hire.stripe_payment_intent });
-  await db().from("hires").update({ status: "refunded", refunded_at: new Date().toISOString() }).eq("id", hireId).eq("status", "paid");
-  // Back off "hired" but not straight onto the catalog: Heshy or the rep relists them.
-  const cid = (hire as unknown as { unlocks: { candidate_id: string } }).unlocks.candidate_id;
-  await db().from("candidates").update({ status: "paused", updated_at: new Date().toISOString() }).eq("id", cid).eq("status", "hired");
+  try {
+    await stripe().refunds.create({ payment_intent: hire!.stripe_payment_intent!, reason: "requested_by_customer" });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    await logActivity(staffActor(me), "refund_failed", { hire_id: hireId, error: msg });
+    go(`refund_error=${encodeURIComponent(msg)}`);
+  }
+  await db().from("hires").update({ status: "refunded", refunded_at: new Date().toISOString() }).eq("id", hireId);
+  // Off "hired", but not straight back on the catalog: Heshy or the rep relists them.
+  const u = (hire as unknown as { unlocks: { candidate_id: string; owners: { email: string; full_name: string | null; company: string | null } } }).unlocks;
+  await db().from("candidates").update({ status: "paused", updated_at: new Date().toISOString() }).eq("id", u.candidate_id).eq("status", "hired");
 
-  const u = (hire as unknown as { unlocks: { candidate_id: string; owners: { email: string; full_name: string } } }).unlocks;
-  await logActivity("admin", "hire_refunded", { hire_id: hireId, candidate: refCode(u.candidate_id), amount_cents: hire.amount_cents });
+  await logActivity(staffActor(me), "hire_refunded", { hire_id: hireId, candidate: refCode(u.candidate_id), amount_cents: hire!.amount_cents, reason });
   await sendEmail({
     to: u.owners.email,
-    subject: `Refund of ${money(hire.amount_cents)} issued`,
-    html: `<p>Hi ${escapeHtml(u.owners.full_name ?? "")},</p><p>We've refunded ${money(hire.amount_cents)} for candidate ${refCode(u.candidate_id)}. It usually shows on your card within 5–10 business days.</p><p>${escapeHtml(brandName())}</p>`,
+    subject: `Refund of ${money(hire!.amount_cents)} issued`,
+    html: `<p>Hi ${escapeHtml((u.owners.full_name ?? "").split(" ")[0])},</p><p>We've refunded <strong>${money(hire!.amount_cents)}</strong> for candidate ${refCode(u.candidate_id)} (receipt ${receiptNumber(hireId)}). It usually shows on your card within 5–10 business days.</p><p>Questions? Just reply to this email.</p><p>${escapeHtml(brandName())}</p>`,
   });
   revalidatePath("/admin");
+  revalidatePath("/admin/payments");
+  revalidatePath("/admin/clients");
+  go(`refunded=${encodeURIComponent(money(hire!.amount_cents))}`);
 }
 
 // ---------- Team ----------

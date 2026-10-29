@@ -395,7 +395,7 @@ export function CandidateForm({
           />
         </label>
         <label className="field">
-          <span>Full profile (shown only after an owner signs)</span>
+          <span>Full profile (shown only after a client signs)</span>
           <textarea className="textarea" name="full_profile" defaultValue={v("full_profile")} />
         </label>
         <details className={styles.more}>

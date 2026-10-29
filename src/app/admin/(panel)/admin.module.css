@@ -2,11 +2,11 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 22px;
+  gap: 6px 16px;
   padding: 14px 0;
   border-bottom: 1px solid var(--line);
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14.5px;
 }
 
 .bar a { text-decoration: none; color: var(--ink-2); }

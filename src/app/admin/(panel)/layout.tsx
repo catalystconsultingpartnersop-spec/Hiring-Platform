@@ -13,6 +13,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <nav className={styles.bar} aria-label="Admin">
         <Link href="/admin">{admin ? "Dashboard" : "My dashboard"}</Link>
         <Link href="/admin/candidates">Candidates</Link>
+        {admin && <Link href="/admin/clients">Clients</Link>}
         {admin && <Link href="/admin/agreements">Agreements</Link>}
         {admin && <Link href="/admin/payments">Payments</Link>}
         <Link href="/admin/calls">{admin ? "Calls" : "My calls"}</Link>

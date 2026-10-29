@@ -77,7 +77,7 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
           <h2 className={styles.h3}>Hires and commission</h2>
           {hires.length === 0 ? (
             <p className="small muted">
-              No hires yet. When an owner hires one of {self ? "your" : "their"} candidates, it shows up here with the
+              No hires yet. When a client hires one of {self ? "your" : "their"} candidates, it shows up here with the
               commission.
             </p>
           ) : (
