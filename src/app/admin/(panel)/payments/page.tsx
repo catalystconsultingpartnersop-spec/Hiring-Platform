@@ -8,7 +8,8 @@ import { dateShort, money, refCode } from "@/lib/format";
 import { receiptNumber } from "@/lib/receipt";
 import { requireAdmin } from "@/lib/session";
 import { commissionPercent } from "@/lib/settings";
-import { deleteExpense, markCommissionPaid, payRepAll, setCommissionAmount, setCommissionPercent, undoCommissionPaid } from "../../actions";
+import { deleteExpense, markCommissionPaid, payRepAll, setCommissionAmount, undoCommissionPaid } from "../../actions";
+import { CommissionRateForm } from "./CommissionRateForm";
 import { ExpenseForm } from "./ExpenseForm";
 import styles from "../admin.module.css";
 import { RefundButton } from "../RefundButton";
@@ -245,14 +246,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
           </tbody>
         </table>
       </div>
-      <form action={setCommissionPercent} className={styles.inline} style={{ marginTop: 10 }}>
-        <span className="small muted">Standard commission for reps without their own terms:</span>
-        <input className="input" name="percent" defaultValue={pct} inputMode="decimal" aria-label="Commission percent" />
-        <span className="small">% of the fee</span>
-        <button className="btn btn-small btn-ghost" type="submit">
-          Save
-        </button>
-      </form>
+      <CommissionRateForm pct={pct} />
 
       <h2 className={styles.h3} style={{ marginTop: 28 }}>By month</h2>
       <div className="table-wrap">

@@ -677,13 +677,16 @@ function refreshMoney() {
   revalidatePath("/admin/payments");
 }
 
-export async function setCommissionPercent(form: FormData) {
+export async function setCommissionPercent(_prev: FormState, form: FormData): Promise<FormState> {
   const me = await requireAdmin();
   const pct = Number(String(form.get("percent") ?? "").replace("%", "").trim());
-  if (!Number.isFinite(pct) || pct < 0 || pct > 100) return;
-  await setSetting("commission_percent", Math.round(pct * 100) / 100);
-  await logActivity(staffActor(me), "commission_rate_set", { percent: pct });
+  if (!Number.isFinite(pct) || pct < 0 || pct > 100) return { error: "Enter a number from 0 to 100." };
+  const value = Math.round(pct * 100) / 100;
+  const { error } = await setSetting("commission_percent", value);
+  if (error) return { error: "Couldn't save. Try again." };
+  await logActivity(staffActor(me), "commission_rate_set", { percent: value });
   refreshMoney();
+  return { ok: `Saved. Reps without their own terms now earn ${value}% of each fee. Commissions already paid out don't change.` };
 }
 
 export async function setCommissionAmount(hireId: string, form: FormData) {
