@@ -1,6 +1,13 @@
 import { Resend } from "resend";
 import { db, logActivity } from "./db";
 import { Audience, layout } from "./emailKit";
+import { brandName } from "./format";
+
+// The sender always shows our name, whatever display name EMAIL_FROM carries.
+function senderFrom(raw: string) {
+  const address = raw.match(/<([^>]+)>/)?.[1]?.trim() ?? raw.trim();
+  return `${brandName()} <${address}>`;
+}
 
 export function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -31,7 +38,7 @@ export async function sendEmail(opts: {
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
       const { error } = await resend.emails.send({
-        from,
+        from: senderFrom(from),
         to: opts.to,
         subject: opts.subject,
         html: layout(opts.html, opts.audience ?? "team"),

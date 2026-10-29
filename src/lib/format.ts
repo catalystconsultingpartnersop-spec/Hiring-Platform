@@ -76,7 +76,9 @@ export function workEmailDomain() {
 }
 
 export function brandName() {
-  return process.env.NEXT_PUBLIC_BRAND_NAME || "The Candidate Collection";
+  const env = process.env.NEXT_PUBLIC_BRAND_NAME?.trim();
+  // Ignore the old name if it's still set somewhere.
+  return env && !/talent\s*catalog/i.test(env) ? env : "The Candidate Collection";
 }
 
 // How candidates and owners can reach a person.
