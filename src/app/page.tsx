@@ -224,7 +224,7 @@ export default async function Home() {
             Rather talk to a person? Text or call <a href={`sms:${contactPhoneHref()}`}>{contactPhone()}</a>.
           </p>
           <p className={styles.seeker}>
-            Looking for work yourself? <Link href="/apply">Start here</Link>
+            Looking for work yourself? <Link href="/join">Start here</Link>
           </p>
         </div>
       </section>

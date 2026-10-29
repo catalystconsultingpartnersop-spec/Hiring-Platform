@@ -62,11 +62,13 @@ export function CandidateCard({
   fee,
   href,
   example = false,
+  hideFee = false,
 }: {
   c: PublicCandidate;
   fee: number | null;
   href?: string;
   example?: boolean;
+  hideFee?: boolean; // the candidate looking at their own card
 }) {
   const salary = salaryRange(c.salary_min, c.salary_max);
   const meta = [
@@ -99,10 +101,12 @@ export function CandidateCard({
           ))}
         </div>
       )}
-      <div className="card-foot">
-        <span className="muted">Flat fee if you hire</span>
-        <strong>{fee != null ? money(fee) : "Ask"}</strong>
-      </div>
+      {!hideFee && (
+        <div className="card-foot">
+          <span className="muted">Flat fee if you hire</span>
+          <strong>{fee != null ? money(fee) : "Ask"}</strong>
+        </div>
+      )}
       {href && <ShortlistButton id={c.id} />}
     </div>
   );

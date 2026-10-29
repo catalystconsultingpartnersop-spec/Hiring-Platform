@@ -4,7 +4,7 @@ import "@fontsource-variable/bricolage-grotesque";
 import "@fontsource-variable/instrument-sans";
 import "./globals.css";
 import { brandName, contactPhone, contactPhoneHref } from "@/lib/format";
-import { currentOwner } from "@/lib/session";
+import { currentCandidateId, currentOwner } from "@/lib/session";
 import { ShortlistLink } from "@/components/Shortlist";
 import { Logo } from "@/components/Logo";
 import { legalEntity } from "@/lib/agreement";
@@ -17,8 +17,10 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   let signedIn = false;
+  let candidate = false;
   try {
     signedIn = !!(await currentOwner());
+    candidate = !signedIn && !!(await currentCandidateId());
   } catch {
     signedIn = false;
   }
@@ -36,7 +38,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 <span className="show-sm">Browse</span>
               </Link>
               <ShortlistLink />
-              <Link href="/apply" className="hide-sm">
+              <Link href="/join" className="hide-sm">
                 Looking for work?
               </Link>
               {signedIn && (
@@ -44,7 +46,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                   Hiring help
                 </Link>
               )}
-              {signedIn ? <Link href="/account">Your account</Link> : <Link href="/login">Sign in</Link>}
+              {signedIn ? (
+                <Link href="/account">Your account</Link>
+              ) : candidate ? (
+                <Link href="/me">Your page</Link>
+              ) : (
+                <Link href="/login">Sign in</Link>
+              )}
             </nav>
           </div>
         </header>
@@ -66,7 +74,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             </nav>
             <nav aria-label="For candidates">
               <h3>For candidates</h3>
-              <Link href="/apply">Looking for work?</Link>
+              <Link href="/join">Looking for work?</Link>
+              <Link href="/join#career-help">Career help</Link>
+              <Link href="/me">Your page</Link>
               <Link href="/mission">Our mission</Link>
             </nav>
             <div>

@@ -83,6 +83,9 @@ export type Candidate = PublicCandidate & {
   admin_notes: string | null;
   created_at: string;
   updated_at: string;
+  added_by?: string | null;
+  profile_views?: number;
+  self_paused_at?: string | null; // the candidate hid their own profile
 };
 
 export type FeeTier = { id: string; max_salary: number | null; fee_cents: number | null; sort: number };

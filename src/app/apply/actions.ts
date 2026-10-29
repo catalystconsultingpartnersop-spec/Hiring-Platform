@@ -4,7 +4,7 @@ import { bookCall } from "@/lib/calls";
 import { db, logActivity } from "@/lib/db";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
 import { brandName, contactPhone, teamUrl } from "@/lib/format";
-import { readSignedToken, signedToken } from "@/lib/session";
+import { readSignedToken, signedToken, startCandidateSession } from "@/lib/session";
 import { openSlots } from "@/lib/slots";
 import { formatInZone } from "@/lib/time";
 import { RESUME_CONTENT_TYPE, resumeKind } from "@/lib/resume";
@@ -93,6 +93,8 @@ ${candidateId ? `<p><a href="${teamUrl()}/admin/candidates/${candidateId}">Open 
     return fail(`Something went wrong on our end. Please try again in a few minutes, or text or call us at ${contactPhone()}.`);
   }
 
+  // They're signed in to their own page (/me) right away; no email round-trip.
+  if (candidateId) await startCandidateSession(candidateId);
   return { ok: true, first, token: candidateId ? signedToken(`cand_${candidateId}`, 30) : null };
 }
 

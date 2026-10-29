@@ -104,7 +104,7 @@ export default function MissionPage() {
             <Link className="btn btn-gold" href="/candidates">
               Browse candidates
             </Link>
-            <Link className={`btn btn-ghost ${styles.light}`} href="/apply">
+            <Link className={`btn btn-ghost ${styles.light}`} href="/join">
               I&rsquo;m looking for work
             </Link>
           </div>

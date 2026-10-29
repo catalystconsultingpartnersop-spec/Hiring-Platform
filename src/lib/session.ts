@@ -5,6 +5,7 @@ import { db, Owner } from "./db";
 
 const ADMIN_COOKIE = "hp_admin";
 const OWNER_COOKIE = "hp_owner";
+const CANDIDATE_COOKIE = "hp_cand";
 const ADMIN_DAYS = 30;
 const OWNER_DAYS = 90;
 
@@ -169,6 +170,21 @@ export async function requireOwner(nextPath: string): Promise<Owner> {
   if (!owner) redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   if (!owner.full_name || !owner.company) redirect(`/account/setup?next=${encodeURIComponent(nextPath)}`);
   return owner;
+}
+
+// ---------- Candidates (their own page, /me) ----------
+
+export async function startCandidateSession(candidateId: string) {
+  (await cookies()).set(CANDIDATE_COOKIE, makeToken(`cand_${candidateId}`, OWNER_DAYS), cookieOptions(OWNER_DAYS));
+}
+
+export async function endCandidateSession() {
+  (await cookies()).delete(CANDIDATE_COOKIE);
+}
+
+export async function currentCandidateId(): Promise<string | null> {
+  const subject = readToken((await cookies()).get(CANDIDATE_COOKIE)?.value);
+  return subject?.startsWith("cand_") ? subject.slice(5) : null;
 }
 
 // ---------- One-time sign-in links ----------

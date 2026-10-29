@@ -49,6 +49,10 @@ export function ApplyFlow({
           </a>
         </div>
         {state.token && <Extras token={state.token} />}
+        <p className="notice" style={{ marginTop: 18 }}>
+          <strong>You have your own page now.</strong> It shows where things stand, every step of the way.{" "}
+          <a href="/me">See your page</a>
+        </p>
         <Contact phone={phone} phoneHref={phoneHref} />
       </div>
     );

@@ -8,7 +8,7 @@ import { Candidate, db, Hire, PublicCandidate, Unlock } from "@/lib/db";
 import { dateShort, feeFor, LEVEL_LABEL, lines, money, refCode, salaryRange, WORK_MODE_LABEL } from "@/lib/format";
 import { latestHire, markPaidFromSession } from "@/lib/hires";
 import { PASS_REASONS } from "@/lib/pass";
-import { currentOwner } from "@/lib/session";
+import { currentOwner, currentStaff } from "@/lib/session";
 import { passOnCandidate, reconsiderCandidate } from "./actions";
 import styles from "./detail.module.css";
 
@@ -66,6 +66,13 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
 
   const c = await getListed(id);
   if (!c) notFound();
+  // Count the view for the candidate's own page (not when our team is looking).
+  if (!(await currentStaff().catch(() => null))) {
+    await db().rpc("bump_profile_view", { cid: id }).then(
+      () => undefined,
+      () => undefined,
+    );
+  }
   const [tiers, { rows }] = await Promise.all([getTiers(), allListed()]);
   const similar = similarTo(c, rows).map((s) => ({ c: s, fee: feeFor(s, tiers) }));
   return <Teaser c={c} fee={feeFor(c, tiers)} similar={similar} />;
