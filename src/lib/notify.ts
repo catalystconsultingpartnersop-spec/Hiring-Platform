@@ -1,3 +1,4 @@
+import { tellShortlisters } from "./shortlist";
 import { db, logActivity } from "./db";
 import { owner as ownerMail } from "./emails";
 import { escapeHtml, sendEmail } from "./email";
@@ -45,6 +46,7 @@ export async function candidateHired(
     .neq("status", "hired");
   await logActivity("system", "candidate_marked_hired", { candidate: refCode(candidateId) });
   const toldOwners = await tellOtherOwners(candidateId, owner?.email ?? "");
+  await tellShortlisters(candidateId, "hired");
 
   const rep = await repFor(candidateId);
   if (!rep || !rep.active || isOwnerEmail(rep.email)) return { rep, repEmailed: false, toldOwners };

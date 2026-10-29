@@ -73,6 +73,16 @@ export const owner = {
       button(o.browse, "See similar candidates"),
   }),
 
+  savedUnavailable: (o: { name: string | null; headline: string; ref: string; hired: boolean; browse: string; role: string | null }): Mail => ({
+    audience: "owner",
+    subject: o.hired ? "A candidate on your shortlist was hired" : "A candidate on your shortlist is no longer available",
+    html:
+      hi(o.name) +
+      p(`A candidate you saved, <strong>${esc(o.headline)}</strong> (${esc(o.ref)}), ${o.hired ? "has been hired" : "is no longer available"}.`) +
+      p(o.role ? `Other ${esc(o.role.toLowerCase())} candidates are ready to meet.` : "Other candidates are ready to meet.") +
+      button(o.browse, "See similar candidates"),
+  }),
+
   startNudge: (o: { name: string | null; candidate: string; candidateId: string; phone: string | null }): Mail => ({
     audience: "owner",
     subject: `Ready to talk to ${first(o.candidate)}?`,

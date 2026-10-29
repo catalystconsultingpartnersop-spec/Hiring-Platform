@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { currentOwner } from "@/lib/session";
 import { CandidateCard } from "@/components/CandidateCard";
 import {
   allListed,
@@ -30,6 +31,7 @@ function href(f: CatalogFilters, change: Partial<CatalogFilters>) {
 
 export default async function Catalog({ searchParams }: PageProps<"/candidates">) {
   const sp = await searchParams;
+  const signedIn = !!(await currentOwner().catch(() => null));
   const f: CatalogFilters = {};
   for (const k of KEYS) if (typeof sp[k] === "string" && sp[k]) f[k] = sp[k] as string;
 
@@ -170,9 +172,15 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
           {goneFromShortlist > 0 && (
             <p className="notice notice-gold" role="status" style={{ marginBottom: 16 }}>
               {goneFromShortlist === 1
-                ? "One person you saved is no longer available. They've been hired."
-                : `${goneFromShortlist} people you saved are no longer available. They've been hired.`}{" "}
+                ? "One person you saved is no longer available."
+                : `${goneFromShortlist} people you saved are no longer available.`}{" "}
               Here&rsquo;s who&rsquo;s still on your list.
+            </p>
+          )}
+          {shortlistView && !signedIn && (
+            <p className="small muted" style={{ marginBottom: 12 }}>
+              <Link href="/login">Sign in</Link> to keep your shortlist on any device. We&rsquo;ll email you if someone you saved
+              is hired.
             </p>
           )}
           <div className={styles.resultsHead}>

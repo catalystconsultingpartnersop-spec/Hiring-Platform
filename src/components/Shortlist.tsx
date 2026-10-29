@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
+import { saveToShortlist, syncShortlist } from "@/app/candidates/shortlistActions";
 
 // The shortlist is kept in the browser, like a shopping wishlist: no sign-in
-// needed to save candidates while browsing.
+// needed to save candidates while browsing. For signed-in owners it's also
+// kept on their account, so it follows them and we can tell them if someone
+// they saved is hired.
 const KEY = "shortlist";
 const EVENT = "shortlist-change";
 
@@ -67,6 +70,7 @@ export function ShortlistButton({ id, label }: { id: string; label?: boolean }) 
         e.stopPropagation();
         const cur = read();
         write(saved ? cur.filter((x) => x !== id) : [...cur, id]);
+        saveToShortlist(id, !saved).catch(() => {});
       }}
     >
       <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
@@ -90,4 +94,16 @@ export function ShortlistLink() {
       Shortlist{ids.length ? ` (${ids.length})` : ""}
     </Link>
   );
+}
+
+// Signed-in owners: merge this browser's shortlist with their account's.
+export function ShortlistSync() {
+  useEffect(() => {
+    syncShortlist(read())
+      .then((ids) => {
+        if (ids && JSON.stringify(ids) !== JSON.stringify(read())) write(ids);
+      })
+      .catch(() => {});
+  }, []);
+  return null;
 }

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { db, logActivity } from "@/lib/db";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
 import { candidateHired, hireSummaryHtml } from "@/lib/notify";
+import { tellShortlisters } from "@/lib/shortlist";
 import { commissionTerms } from "@/lib/adminData";
 import { brandName, money, refCode, teamUrl, workEmailDomain } from "@/lib/format";
 
@@ -258,6 +259,7 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
 ${hireSummaryHtml(notice)}`,
       );
     }
+    if (before?.status === "listed" && status === "archived") await tellShortlisters(id, "removed");
     if (before?.status === "hired" && status === "listed") {
       await logActivity(actor, "candidate_relisted_after_hire", { candidate: refCode(id) });
     }

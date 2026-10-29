@@ -5,7 +5,7 @@ import "@fontsource-variable/instrument-sans";
 import "./globals.css";
 import { brandName } from "@/lib/format";
 import { currentCandidateId, currentOwner } from "@/lib/session";
-import { ShortlistLink } from "@/components/Shortlist";
+import { ShortlistLink, ShortlistSync } from "@/components/Shortlist";
 import { Logo } from "@/components/Logo";
 import { legalEntity } from "@/lib/agreement";
 
@@ -38,6 +38,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 <span className="show-sm">Browse</span>
               </Link>
               <ShortlistLink />
+              {signedIn && <ShortlistSync />}
               <Link href="/join" className="hide-sm">
                 Looking for work?
               </Link>
