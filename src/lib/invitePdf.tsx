@@ -6,7 +6,7 @@ import { fillName, Invite, Item } from "./repInvite";
 
 const fontDir = path.join(process.cwd(), "src/assets/fonts");
 let registered = false;
-function registerFonts() {
+export function registerFonts() {
   if (registered) return;
   Font.register({
     family: "Display",
