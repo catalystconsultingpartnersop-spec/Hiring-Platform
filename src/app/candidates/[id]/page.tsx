@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CandidateCard, HowTheyWork, Strengths, WorksBest } from "@/components/CandidateCard";
+import { CandidateCard, HowTheyWork, WorksBest } from "@/components/CandidateCard";
 import { MobileBar } from "@/components/MobileBar";
 import { ShortlistButton } from "@/components/Shortlist";
 import { allListed, getListed, getTiers, similarTo } from "@/lib/catalog";
@@ -111,10 +111,14 @@ function Profile({ c }: { c: PublicCandidate }) {
       </p>
       <h1 className={styles.headline}>{c.headline}</h1>
       {wiredFor(c).length > 0 && (
-        <p className={styles.wired}>
-          <span className="muted">Wired for </span>
-          <Strengths items={wiredFor(c)} strong />
-        </p>
+        <div className={styles.wired}>
+          <p className={styles.wiredLabel}>Wired for</p>
+          <ul className={styles.wiredList}>
+            {wiredFor(c).map((w) => (
+              <li key={w}>{w}</li>
+            ))}
+          </ul>
+        </div>
       )}
       <div className={styles.tagsRow}>
         <WorksBest c={c} detail />

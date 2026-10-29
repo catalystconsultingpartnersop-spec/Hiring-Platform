@@ -25,7 +25,14 @@
   max-width: 20ch;
 }
 
-.wired { font-size: 19px; line-height: 1.8; margin-top: 18px; max-width: 60ch; }
+.wired { margin: 18px 0 16px; }
+.wiredLabel { margin: 0 0 8px; font-size: 12.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #9a7300; }
+.wiredList { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.wiredList li {
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px;
+  background: #fff8e1; border: 1px solid #f3dd94; color: var(--ink); font-size: 16px; font-weight: 600; line-height: 1.3;
+}
+.wiredList li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--marigold); flex: none; }
 
 .summary { margin-top: 22px; max-width: 64ch; font-size: 17px; }
 .summary p + p { margin-top: 12px; }
