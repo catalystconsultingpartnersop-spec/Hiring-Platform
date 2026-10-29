@@ -20,7 +20,7 @@ export function shareLink(ref?: string | null) {
 }
 
 export function ownerMessage(link: string) {
-  return `Business owner? You know what you need. Skip the recruiter calls, the checklists, and the person explaining your own business to you.\n\nBrowse candidates we've already vetted in person, beginner to seasoned. Pick the one you want and hire them. Free to browse, one flat fee only if you hire.\n\n${link}`;
+  return `Business owner? You built your business. You don't need anyone telling you how to run it, who to hire, or why.\n\nBrowse candidates we've already vetted in person. See exactly what each one brings. Pick the one you want and hire them. That's it.\n\nFree to browse. One flat fee, only if you hire.\n${link}`;
 }
 
 // A new owner who came through someone's link: remember who sent them.

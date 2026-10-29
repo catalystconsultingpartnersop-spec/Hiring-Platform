@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     type: "website",
     siteName: brandName(),
     title: "You know your business. Pick your hire.",
-    description: "No recruiter calls, no checklists. Candidates already vetted in person. Free to browse, one flat fee only if you hire.",
+    description: "No one telling you how to run your business, who to hire, or why. Candidates vetted in person. Free to browse, one flat fee only if you hire.",
     images: [{ url: "/share/og.png", width: 1200, height: 630, alt: "The Candidate Collection: you know your business, pick your hire" }],
   },
   twitter: { card: "summary_large_image", images: ["/share/og.png"] },
