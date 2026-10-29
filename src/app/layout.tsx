@@ -41,11 +41,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/join" className="hide-sm">
                 Looking for work?
               </Link>
-              {signedIn && (
-                <Link href="/hiring-help" className="hide-sm">
-                  Hiring help
-                </Link>
-              )}
+              <Link href="/hiring-help" className="hide-sm">
+                Hiring help
+              </Link>
               {signedIn ? (
                 <Link href="/account">
                   <span className="hide-sm">Your account</span>

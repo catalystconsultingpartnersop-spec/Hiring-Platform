@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireOwner } from "@/lib/session";
 import { getTemplate } from "@/lib/templates";
@@ -23,6 +23,8 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
     .not("confirmed_at", "is", null)
     .order("signed_at", { ascending: false });
   const mine = (data ?? []) as unknown as { candidate_id: string; candidates: { full_name: string; role_category: string | null } }[];
+  // The hiring documents come with your first unlocked candidate.
+  if (!mine.length) redirect("/hiring-help?locked=1#documents");
   const picked = mine.find((m) => m.candidate_id === sp.c) ?? (mine.length === 1 ? mine[0] : undefined);
 
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });

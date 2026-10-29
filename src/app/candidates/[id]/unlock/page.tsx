@@ -82,6 +82,9 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
                 <b>Not a fit? You owe nothing.</b> Just let us know, with one tap.
               </li>
               <li>
+                <b>Hiring documents included.</b> Offer letter, NDA, scorecard and more, ready to fill in.
+              </li>
+              <li>
                 <b>Keep their details to yourself.</b> They&rsquo;re for your own hiring. If they&rsquo;re passed on and
                 someone else hires this person within 12 months, the fee still applies.
               </li>

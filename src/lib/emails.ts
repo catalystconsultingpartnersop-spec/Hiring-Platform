@@ -39,7 +39,7 @@ export const owner = {
       p(`You're in. You can now see <strong>${esc(o.candidate)}</strong>'s name, resume and phone number.`) +
       p(`The easiest next step is a short first call: offer a few times on their page and ${esc(first(o.candidate))} picks one.`) +
       button(`${siteUrl()}/candidates/${o.candidateId}#next`, `Meet ${first(o.candidate)}`) +
-      box(`<strong>Nothing has been charged.</strong> Your ${esc(o.card)} is on file and is only charged if you hire ${esc(first(o.candidate))}. Your signed agreement is below, and <a href="${siteUrl()}/account/agreements/${o.unlockId}" style="color:#17213a">here to print</a>.`) +
+      box(`<strong>Nothing has been charged.</strong> Your ${esc(o.card)} is on file and is only charged if you hire ${esc(first(o.candidate))}. Your signed agreement is below, and <a href="${siteUrl()}/account/agreements/${o.unlockId}" style="color:#17213a">here to print</a>.<br>Your hiring documents (offer letter, NDA and more) are now open in <a href="${siteUrl()}/hiring-help#documents" style="color:#17213a">Hiring help</a>.`) +
       o.agreementHtml,
   }),
 
@@ -61,14 +61,6 @@ export const owner = {
       hi(o.name) +
       p(`We've refunded <strong>${money(o.amount)}</strong> for ${esc(o.candidate)} (receipt ${esc(o.receipt)}).`) +
       p("It usually reaches your card within 5 to 10 business days."),
-  }),
-
-  guidedReceived: (o: { name: string | null }): Mail => ({
-    audience: "owner",
-    subject: "We got your guided hiring request",
-    html:
-      hi(o.name) +
-      p("Thanks. We'll call you within one business day to hear what you need and give you a flat price before anything starts."),
   }),
 
   noLongerAvailable: (o: { name: string | null; candidate: string; browse: string }): Mail => ({

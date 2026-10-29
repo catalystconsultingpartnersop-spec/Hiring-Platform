@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getArticle } from "@/lib/articles";
+import { ownerHasDocs } from "@/lib/docsAccess";
 import { markupToHtml } from "@/lib/markup";
-import { requireOwner } from "@/lib/session";
 import { getTemplate } from "@/lib/templates";
 import styles from "../../help.module.css";
 
@@ -12,8 +12,8 @@ export default async function ArticlePage({ params }: PageProps<"/hiring-help/ar
   const { slug } = await params;
   const a = getArticle(slug);
   if (!a) notFound();
-  await requireOwner(`/hiring-help/articles/${slug}`);
   const related = (a.related ?? []).map(getTemplate).filter((t) => t !== null);
+  const { hasDocs } = await ownerHasDocs();
 
   return (
     <div className="wrap" style={{ paddingTop: 24, paddingBottom: 56 }}>
@@ -34,21 +34,24 @@ export default async function ArticlePage({ params }: PageProps<"/hiring-help/ar
                 <Link key={t.slug} href={`/hiring-help/templates/${t.slug}`} className={styles.tile}>
                   <strong>{t.title}</strong>
                   <span>{t.blurb}</span>
-                  <em>Fill it in →</em>
+                  <em>{hasDocs ? "Fill it in →" : "Included when you unlock a candidate"}</em>
                 </Link>
               ))}
             </div>
           </>
         )}
+        {!hasDocs && (
         <div className="panel panel-wash" style={{ marginTop: 32 }}>
-          <strong>Want someone to walk you through it?</strong>
+          <strong>Looking for someone who fits?</strong>
           <p className="small muted" style={{ margin: "6px 0 12px" }}>
-            Our guided hiring service handles the offer, paperwork and first weeks with you.
+            Every candidate is interviewed, with how they work best spelled out in plain words. Unlock one and these
+            hiring documents come with it, ready to fill in.
           </p>
-          <Link className="btn btn-small" href="/hiring-help#guided">
-            Learn about guided hiring
+          <Link className="btn btn-gold btn-small" href="/candidates">
+            Browse candidates
           </Link>
         </div>
+        )}
       </div>
     </div>
   );
