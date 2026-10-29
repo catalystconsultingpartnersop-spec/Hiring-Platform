@@ -11,7 +11,7 @@ import { db, logActivity } from "@/lib/db";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
 import { candidateHired, hireSummaryHtml } from "@/lib/notify";
 import { tellShortlisters } from "@/lib/shortlist";
-import { commissionTerms } from "@/lib/adminData";
+import { commissionOf, commissionTerms, HireRow, StaffLite } from "@/lib/adminData";
 import { brandName, money, refCode, teamUrl, workEmailDomain } from "@/lib/format";
 
 import {
@@ -696,19 +696,72 @@ export async function setCommissionAmount(hireId: string, form: FormData) {
   refreshMoney();
 }
 
+// The commission for one hire, using the rep's own terms (or the default rate).
+async function commissionDue(hireId: string) {
+  const { data: h } = await db().from("hires").select("*, unlocks(candidates(added_by))").eq("id", hireId).single();
+  if (!h) return null;
+  const repId = h.rep_id ?? (h as unknown as { unlocks: { candidates: { added_by: string | null } } }).unlocks?.candidates?.added_by;
+  const [{ data: rep }, pct] = await Promise.all([
+    repId ? db().from("staff").select("*").eq("id", repId).maybeSingle() : Promise.resolve({ data: null }),
+    commissionPercent(),
+  ]);
+  return commissionOf(h as HireRow, pct, (rep ?? undefined) as StaffLite | undefined);
+}
+
 export async function markCommissionPaid(hireId: string, form: FormData) {
   const me = await requireAdmin();
   const note = String(form.get("note") ?? "").trim().slice(0, 200) || null;
-  const pct = await commissionPercent();
-  const { data: h } = await db().from("hires").select("amount_cents, commission_cents").eq("id", hireId).single();
-  if (!h) return;
-  // Freeze the amount that was paid, so changing the default rate later doesn't change history.
-  const amount = h.commission_cents ?? Math.round((h.amount_cents * pct) / 100);
+  // Freeze the amount that was paid, so changing a rate later doesn't change history.
+  const amount = await commissionDue(hireId);
+  if (amount == null) return;
   await db()
     .from("hires")
     .update({ commission_paid_at: new Date().toISOString(), commission_note: note, commission_cents: amount })
     .eq("id", hireId);
   await logActivity(staffActor(me), "commission_paid_out", { hire_id: hireId, cents: amount, note });
+  refreshMoney();
+}
+
+// Pays out everything owed to one rep in one go.
+export async function payRepAll(repId: string, hireIds: string, form: FormData) {
+  const me = await requireAdmin();
+  const note = String(form.get("note") ?? "").trim().slice(0, 200) || null;
+  let total = 0;
+  for (const id of hireIds.split(",").filter((x) => /^[0-9a-f-]{36}$/i.test(x))) {
+    const { data: h } = await db().from("hires").select("commission_paid_at").eq("id", id).single();
+    if (!h || h.commission_paid_at) continue;
+    const amount = await commissionDue(id);
+    if (amount == null) continue;
+    await db().from("hires").update({ commission_paid_at: new Date().toISOString(), commission_note: note, commission_cents: amount }).eq("id", id);
+    total += amount;
+  }
+  await logActivity(staffActor(me), "commission_paid_out_all", { rep: repId, cents: total, note });
+  refreshMoney();
+}
+
+// ---------- Expenses ----------
+
+export async function addExpense(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requireAdmin();
+  const what = String(form.get("what") ?? "").trim().slice(0, 120);
+  const cents = dollarsToCents(String(form.get("amount") ?? ""));
+  const day = String(form.get("spent_on") ?? "").trim();
+  const category = String(form.get("category") ?? "Other").slice(0, 40);
+  if (!what) return { error: "Say what it was for." };
+  if (cents == null || cents < 0) return { error: "Enter the amount in dollars, e.g. 49.99." };
+  const { error } = await db()
+    .from("expenses")
+    .insert({ what, amount_cents: cents, category, spent_on: /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : undefined, note: String(form.get("note") ?? "").trim().slice(0, 200) || null });
+  if (error) return { error: "Couldn't save. Has the expenses table been added in Supabase?" };
+  await logActivity(staffActor(me), "expense_added", { what, cents });
+  refreshMoney();
+  return { ok: "Added." };
+}
+
+export async function deleteExpense(id: string) {
+  const me = await requireAdmin();
+  await db().from("expenses").delete().eq("id", id);
+  await logActivity(staffActor(me), "expense_deleted", { id });
   refreshMoney();
 }
 

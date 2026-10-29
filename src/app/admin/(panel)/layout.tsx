@@ -23,22 +23,34 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <nav className={styles.bar} aria-label="Admin">
         <Link href="/admin">{admin ? "Dashboard" : "My dashboard"}</Link>
         <Link href="/admin/candidates">Candidates</Link>
+        {admin && <Link href="/admin/agreements">Introductions</Link>}
         {admin && <Link href="/admin/clients">Clients</Link>}
-        {admin && <Link href="/admin/agreements">Agreements</Link>}
-        {admin && <Link href="/admin/payments">Payments</Link>}
+        {admin && <Link href="/admin/payments">Finance</Link>}
         <Link href="/admin/requests">
           Requests{openRequests ? <span className={styles.badge}>{openRequests}</span> : null}
         </Link>
         <Link href="/admin/calls">{admin ? "Calls" : "My calls"}</Link>
-        <Link href="/admin/hours">My hours</Link>
+        {admin && <Link href="/admin/team">Team</Link>}
         <Link href="/admin/candidates/new" className={styles.addLink}>
           + Add candidate
         </Link>
-        {admin && <Link href="/admin/team">Team</Link>}
-        {admin && <Link href="/admin/invite">Invite a rep</Link>}
-        {admin && <Link href="/admin/settings">Fee settings</Link>}
-        {admin && <Link href="/admin/activity">Activity</Link>}
-        <Link href="/admin/guide">Rep guide</Link>
+        {admin ? (
+          <details className={styles.more}>
+            <summary>More</summary>
+            <div>
+              <Link href="/admin/hours">My hours</Link>
+              <Link href="/admin/invite">Invite a rep</Link>
+              <Link href="/admin/settings">Fee settings</Link>
+              <Link href="/admin/activity">Activity</Link>
+              <Link href="/admin/guide">Rep guide</Link>
+            </div>
+          </details>
+        ) : (
+          <>
+            <Link href="/admin/hours">My hours</Link>
+            <Link href="/admin/guide">Rep guide</Link>
+          </>
+        )}
         <Link href="/admin/password" className={styles.me} title="Change your password">
           {me.name}
           {admin ? "" : " (rep)"}

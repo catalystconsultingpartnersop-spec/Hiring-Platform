@@ -90,8 +90,8 @@ export default async function AgreementsPage({ searchParams }: PageProps<"/admin
   return (
     <>
       <div className="page-head" style={{ paddingBottom: 4 }}>
-        <h1>Agreements</h1>
-        <p>Every client who signed to see a candidate, and where each one stands.</p>
+        <h1>Introductions</h1>
+        <p>Every client who signed to meet a candidate, and where each one stands.</p>
       </div>
       {error && (
         <p className="notice notice-bad" role="alert">
