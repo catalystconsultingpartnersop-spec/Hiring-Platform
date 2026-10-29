@@ -21,7 +21,7 @@ export default async function ShareKit() {
         <h1>Share with business owners</h1>
         <p>
           You know people who own businesses. Send them this: one picture, one short message, your link. On your phone,
-          &ldquo;Share picture and message&rdquo; sends both at once.
+          tap &ldquo;Share&rdquo; and pick the person.
           {ref && (
             <>
               {" "}

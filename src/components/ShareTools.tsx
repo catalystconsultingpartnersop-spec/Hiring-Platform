@@ -33,11 +33,19 @@ export function ShareTools({ message, link, image }: { message: string; link: st
     setTimeout(() => setDone(""), 4000);
   }
 
-  // WhatsApp drops the picture when it gets a picture and text together, so we
-  // copy the message first and share just the picture; they paste the message
-  // as the caption. (Pasting the link alone also shows the picture as a preview.)
-  async function shareAll() {
-    // Start both right away, inside the tap: phones only allow sharing straight after a tap.
+  // WhatsApp on iPhone takes a picture or text, never both. The main Share
+  // button sends the message with the link, and WhatsApp shows our graphic as
+  // the link preview, so both arrive in one tap.
+  async function shareMessage() {
+    try {
+      await navigator.share({ text: message });
+    } catch {
+      /* they closed the share sheet */
+    }
+  }
+
+  // The tall picture itself: copy the message first so they can paste it as the caption.
+  async function sharePicture() {
     navigator.clipboard
       .writeText(message)
       .then(() => setDone("Message copied. In WhatsApp, tap the caption box and paste it."))
@@ -54,8 +62,13 @@ export function ShareTools({ message, link, image }: { message: string; link: st
     <div style={{ display: "grid", gap: 12 }}>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {canShareFiles && (
-          <button type="button" className="btn btn-gold" onClick={shareAll}>
-            Share picture and message
+          <button type="button" className="btn btn-gold" onClick={shareMessage}>
+            Share
+          </button>
+        )}
+        {canShareFiles && (
+          <button type="button" className="btn btn-ghost" onClick={sharePicture}>
+            Share picture only
           </button>
         )}
         <button type="button" className={`btn ${canShareFiles ? "btn-ghost" : "btn-gold"}`} onClick={() => copy(message, "Message")}>
@@ -78,7 +91,7 @@ export function ShareTools({ message, link, image }: { message: string; link: st
         {done}
       </p>
       <p className="small muted" style={{ margin: 0 }}>
-        Tip: just pasting the link also shows the picture as a preview in WhatsApp and Messages.
+        &ldquo;Share&rdquo; sends the message and link; WhatsApp and Messages show our picture as a preview above it.
       </p>
     </div>
   );

@@ -133,9 +133,9 @@ export default async function RepGuide() {
         <h2>Send them the share kit. That&rsquo;s it.</h2>
         <p>
           Everyone has business owners in their contacts. Open <Link href="/admin/share">Share with owners</Link> in your menu.
-          On your phone, tap <b>Share picture and message</b>: the picture goes out and the message is copied for you, so in
-          WhatsApp you just paste it as the caption. You can also copy the message or the link on its own. The link shows the
-          picture as a preview.
+          On your phone, tap <b>Share</b> and pick the person: the message goes out with your link, and WhatsApp shows our
+          picture as a preview above it. Want the tall picture itself? Tap <b>Share picture only</b>; the message is copied
+          for you, so just paste it as the caption.
         </p>
         <p>
           Your link carries your name, so every owner who joins through it is credited to you. You don&rsquo;t need to follow
