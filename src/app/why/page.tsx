@@ -35,7 +35,10 @@ export default function WhyPage() {
             Then came <b>the fee</b>. And after all that, <b>30 to 60 days of wondering</b> whether we had hired the right person.
           </li>
         </ul>
-        <p className={styles.punch}>We were the ones being vetted. The candidates came second.</p>
+        <p className={styles.punch}>By the time we met a single candidate, we&rsquo;d been interviewed more than they had.</p>
+        <p>
+          <strong>We were the ones being vetted. The candidates came second.</strong>
+        </p>
         <p>
           We know our businesses. We know what we need and who we need.{" "}
           <strong>We just wanted good people, and the freedom to choose.</strong>
