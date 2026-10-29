@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { Candidate, db, logActivity } from "@/lib/db";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
-import { brandName, siteUrl, teamUrl } from "@/lib/format";
+import { brandName, candidateUrl, teamUrl } from "@/lib/format";
 import { repFor } from "@/lib/notify";
 import { currentCandidateId, endCandidateSession, hashToken, isOwnerEmail, newLoginToken, startCandidateSession } from "@/lib/session";
 
@@ -36,7 +36,7 @@ export async function requestCandidateLink(_prev: LinkState, form: FormData): Pr
     await db()
       .from("login_tokens")
       .insert({ token_hash: hash, email, kind: "candidate", next_path: "/me", expires_at: new Date(Date.now() + 60 * 60e3).toISOString() });
-    const link = `${siteUrl()}/me/verify?token=${token}`;
+    const link = `${candidateUrl()}/me/verify?token=${token}`;
     await sendEmail({
       to: email,
       subject: `Your page at ${brandName()}`,

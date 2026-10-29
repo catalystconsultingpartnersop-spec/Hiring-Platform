@@ -83,6 +83,12 @@ export function contactEmail() {
 
 // The back-office address for links in staff emails, e.g.
 // https://team.thecandidatecollection.com. Falls back to the main site.
+// The candidate side's own address, if it ever gets one (CANDIDATE_URL in
+// Vercel, e.g. https://example.com). Until then it's the main site.
+export function candidateUrl() {
+  return (process.env.CANDIDATE_URL || siteUrl()).replace(/\/+$/, "");
+}
+
 export function teamUrl() {
   if (process.env.TEAM_URL) return process.env.TEAM_URL.replace(/\/+$/, "");
   const site = siteUrl();

@@ -1,6 +1,6 @@
 import { db, logActivity } from "./db";
 import { emailAdmin, escapeHtml, sendEmail } from "./email";
-import { brandName, contactPhone, siteUrl, teamUrl } from "./format";
+import { brandName, candidateUrl, contactPhone, teamUrl } from "./format";
 import { callIcs } from "./ics";
 import { signedToken } from "./session";
 import { CALL_MINUTES, repsFreeAt } from "./slots";
@@ -9,7 +9,7 @@ import { COMPANY_TZ, formatInZone, validTimeZone } from "./time";
 export type BookResult = { ok: true; callId: string; manageToken: string } | { ok: false; error: string };
 
 export function manageLink(callId: string) {
-  return `${siteUrl()}/call/${signedToken(`call_${callId}`, 60)}`;
+  return `${candidateUrl()}/call/${signedToken(`call_${callId}`, 60)}`;
 }
 
 export async function bookCall(candidateId: string, startIso: string, candidateTz: string): Promise<BookResult> {
@@ -101,7 +101,7 @@ export async function sendBookingEmails(callId: string, cancelled: boolean) {
       to: c.email,
       subject: "Your career call is cancelled",
       html: `<p>Hi ${escapeHtml(first)},</p><p>Your call on <strong>${escapeHtml(whenCandidate)}</strong> is cancelled.</p>
-<p><a href="${siteUrl()}/apply/book?c=${encodeURIComponent(signedToken(`cand_${c.id}`, 30))}">Pick a new time</a> whenever you're ready, or text or call us at ${escapeHtml(phone)}.</p>`,
+<p><a href="${candidateUrl()}/apply/book?c=${encodeURIComponent(signedToken(`cand_${c.id}`, 30))}">Pick a new time</a> whenever you're ready, or text or call us at ${escapeHtml(phone)}.</p>`,
       attachments: [{ filename: "cancelled.ics", content: ics(false) }],
     });
     await sendEmail({
