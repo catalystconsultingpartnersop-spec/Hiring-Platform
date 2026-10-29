@@ -20,7 +20,7 @@ export function shareLink(ref?: string | null) {
 }
 
 export function ownerMessage(link: string) {
-  return `Dear business owner,\n\nUnimpressed with your hiring options? Calls, meetings and checklists before you meet a single candidate. Being told how to run your business. Fees that sting. Then 60 days of wondering if you hired the right person.\n\nBy the time you meet a candidate, you've been interviewed more than they have.\n\nWe're business owners. We built something better:\n${link}`;
+  return `Dear business owner,\n\nUnimpressed with your hiring options? Calls, meetings and checklists before you meet a single candidate. Being told how to run your business. Fees that sting. And by the time you meet a candidate, you've been interviewed more than they have.\n\nWe're business owners. So we built a better way to hire:\n${link}`;
 }
 
 // A new owner who came through someone's link: remember who sent them.
