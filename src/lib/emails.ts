@@ -284,7 +284,7 @@ export const backOffice = (path = "/admin") => `${teamUrl()}${path}`;
 // ================================ TEAM ================================
 
 export const team = {
-  onboardingPackage: (o: { name: string; terms: string; note: string | null; setPasswordLink: string; isAdmin: boolean }): Mail => ({
+  onboardingPackage: (o: { name: string; terms: string; note: string | null; setPasswordLink: string; isAdmin: boolean; workEmail: string | null }): Mail => ({
     audience: "team",
     subject: `Welcome to ${brandName()}, ${first(o.name)}: how to start`,
     html:
@@ -303,7 +303,22 @@ ${o.isAdmin ? "" : '<li style="margin:6px 0"><strong>Sign your rep agreement.</s
 <li style="margin:6px 0"><strong>Read the <a href="${teamUrl()}/admin/guide" style="color:#17213a">rep guide</a></strong>. Three minutes, everything you do.</li>
 <li style="margin:6px 0"><strong>Take your first call.</strong> Know someone looking for work? Add them yourself with <a href="${teamUrl()}/admin/candidates/new" style="color:#17213a">+ Add candidate</a>.</li>
 </ol>` +
+      (o.workEmail
+        ? box(`<strong>Your work email is on its way:</strong> ${esc(o.workEmail)}. Google will email you a link to sign in and choose a password. Until then, everything works with this email, so you can start today.`)
+        : "") +
       button(o.setPasswordLink, "Set your password") +
       quiet(`The button works once, for 7 days. After that, sign in at ${esc(teamUrl().replace(/^https?:\/\//, ""))} with your email and password. Questions? Text Heshy at ${esc(contactPhone())}.`),
+  }),
+};
+
+export const teamExtra = {
+  workEmailReady: (o: { name: string; workEmail: string }): Mail => ({
+    audience: "team",
+    subject: "You're all set with your work email",
+    html:
+      hi(o.name) +
+      p(`From now on, sign in to the back office with <strong>${esc(o.workEmail)}</strong>, using the same password as before.`) +
+      p("Booking invites and updates about your candidates now go to your work email too.") +
+      button(`${teamUrl()}/admin/login`, "Sign in"),
   }),
 };

@@ -7,7 +7,7 @@ import { db, logActivity } from "@/lib/db";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
 import { candidateHired, hireSummaryHtml } from "@/lib/notify";
 import { commissionTerms } from "@/lib/adminData";
-import { brandName, money, refCode, teamUrl } from "@/lib/format";
+import { brandName, money, refCode, teamUrl, workEmailDomain } from "@/lib/format";
 
 import {
   checkAdminPassword,
@@ -28,7 +28,7 @@ import { cancelCall } from "@/lib/calls";
 import { chargeCardOnFile } from "@/lib/cards";
 import { commissionPercent, setSetting } from "@/lib/settings";
 import { receiptNumber } from "@/lib/receipt";
-import { owner as ownerMail, team as teamMail } from "@/lib/emails";
+import { owner as ownerMail, team as teamMail, teamExtra } from "@/lib/emails";
 import { REP_AGREEMENT_VERSION, repAgreementText, repTerms } from "@/lib/repAgreement";
 import { describe, suggestedHeadline } from "@/lib/strengths";
 import { RESUME_CONTENT_TYPE, resumeKind } from "@/lib/resume";
@@ -451,10 +451,40 @@ async function sendPackage(staffId: string) {
       note: m.commission_note ?? null,
       setPasswordLink: `${teamUrl()}/admin/verify?token=${token}`,
       isAdmin: m.role === "admin",
+      // Not on a work email yet? Tell them which one is coming.
+      workEmail: m.email.endsWith(`@${workEmailDomain()}`) ? null : suggestedWorkEmail(m.full_name ?? m.email),
     }),
   });
   if (r.ok) await db().from("staff").update({ package_sent_at: new Date().toISOString() }).eq("id", staffId);
   return r;
+}
+
+function suggestedWorkEmail(name: string) {
+  const first = name.split(/[\s@]/)[0].toLowerCase().replace(/[^a-z]/g, "");
+  return `${first || "you"}@${workEmailDomain()}`;
+}
+
+// Move a teammate from their personal email to their work email. Same
+// password; sign-in, invites and updates use the work email from now on.
+export async function switchToWorkEmail(staffId: string, _prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requireAdmin();
+  const email = String(form.get("work_email") ?? "").trim().toLowerCase();
+  const domain = workEmailDomain();
+  if (!email.endsWith(`@${domain}`) || !/^[^\s@]+@[^\s@]+$/.test(email)) return { error: `Enter their @${domain} address.` };
+  const { data: m } = await db().from("staff").select("*").eq("id", staffId).single();
+  if (!m) return { error: "Not found." };
+  if (m.email === email) return { ok: "They're already on that email." };
+  const { data: taken } = await db().from("staff").select("id").eq("email", email).maybeSingle();
+  if (taken) return { error: "Someone on the team already uses that email." };
+  const { error } = await db().from("staff").update({ email }).eq("id", staffId);
+  if (error) return { error: `Could not switch: ${error.message}` };
+  await logActivity(staffActor(me), "work_email_set", { staff: staffId, from: m.email, to: email });
+  const mail = teamExtra.workEmailReady({ name: m.full_name ?? email, workEmail: email });
+  await sendEmail({ to: email, ...mail });
+  await sendEmail({ to: m.email, ...mail });
+  revalidatePath(`/admin/team/${staffId}`);
+  revalidatePath("/admin/team");
+  return { ok: `Switched. ${m.full_name?.split(" ")[0] ?? "They"} now signs in with ${email}, and was told at both addresses.` };
 }
 
 export async function addStaff(_prev: FormState, form: FormData): Promise<FormState> {

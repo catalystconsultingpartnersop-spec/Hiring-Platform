@@ -64,6 +64,17 @@ export function siteUrl() {
   return (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 }
 
+// Our own email domain, for team work emails (e.g. thecandidatecollection.com).
+export function workEmailDomain() {
+  if (process.env.WORK_EMAIL_DOMAIN) return process.env.WORK_EMAIL_DOMAIN.trim().toLowerCase();
+  try {
+    const h = new URL(siteUrl()).hostname.replace(/^www\./, "");
+    return h === "localhost" || h.endsWith(".vercel.app") ? "thecandidatecollection.com" : h;
+  } catch {
+    return "thecandidatecollection.com";
+  }
+}
+
 export function brandName() {
   return process.env.NEXT_PUBLIC_BRAND_NAME || "The Candidate Collection";
 }
