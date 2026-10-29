@@ -1,25 +1,41 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, useTransition } from "react";
 import { assignRep, FormState } from "../../actions";
 
-// A small dropdown that saves as soon as Heshy picks a rep.
+// A small dropdown that saves as soon as Heshy picks a rep. It calls the save
+// directly (not through a form), so nothing resets the choice after saving.
 export function RepPicker(p: { candidateId: string; value: string; options: [string, string][]; note?: string }) {
-  const [state, action, pending] = useActionState<FormState, FormData>(assignRep.bind(null, p.candidateId), {});
-  // Controlled, so the choice stays showing after the save (forms reset themselves).
   const [value, setValue] = useState(p.value);
+  const [state, setState] = useState<FormState>({});
+  const [pending, start] = useTransition();
+
+  function pick(next: string) {
+    const before = value;
+    setValue(next);
+    setState({});
+    start(async () => {
+      const fd = new FormData();
+      fd.set("rep", next);
+      try {
+        const r = await assignRep(p.candidateId, {}, fd);
+        if (r.error) setValue(before);
+        setState(r);
+      } catch {
+        setValue(before);
+        setState({ error: "Couldn't save. Try again." });
+      }
+    });
+  }
+
   return (
-    <form action={action} style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
       <select
         className="select"
-        name="rep"
         aria-label="Rep"
         value={value}
         disabled={pending}
-        onChange={(e) => {
-          setValue(e.currentTarget.value);
-          e.currentTarget.form?.requestSubmit();
-        }}
+        onChange={(e) => pick(e.currentTarget.value)}
         style={{ minHeight: 36, padding: "4px 30px 4px 10px", fontSize: 14, width: "auto" }}
       >
         <option value="">Not assigned</option>
@@ -34,10 +50,10 @@ export function RepPicker(p: { candidateId: string; value: string; options: [str
       ) : state.error ? (
         <span className="small" style={{ color: "var(--rust)" }}>{state.error}</span>
       ) : state.ok ? (
-        <span className="small" style={{ color: "var(--moss)" }}>Saved</span>
+        <span className="small" style={{ color: "var(--moss)" }}>{state.ok}</span>
       ) : p.note ? (
         <span className="small muted">{p.note}</span>
       ) : null}
-    </form>
+    </span>
   );
 }
