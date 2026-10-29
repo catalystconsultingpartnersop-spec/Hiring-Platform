@@ -1,5 +1,7 @@
 "use server";
 
+import { tagReferral } from "@/lib/shareKit";
+
 import { redirect } from "next/navigation";
 import { owner as ownerMail } from "@/lib/emails";
 import { db, logActivity } from "@/lib/db";
@@ -96,6 +98,7 @@ export async function createAccount(_prev: LoginState, form: FormData): Promise<
     .select("id, full_name, company")
     .single();
   if (error || !owner) return { error: "Something went wrong creating your account. Try again.", fields };
+  await tagReferral(owner.id);
   await logActivity(`owner:${email}`, "owner_signed_up", { company });
   return signedIn(owner, email, next, "signup");
 }

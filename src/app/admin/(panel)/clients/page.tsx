@@ -4,6 +4,7 @@ import { db, Owner } from "@/lib/db";
 import { dateShort, money } from "@/lib/format";
 
 import { requireAdmin } from "@/lib/session";
+import { refSlug } from "@/lib/shareKit";
 import styles from "../admin.module.css";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,10 @@ export default async function ClientsPage({ searchParams }: PageProps<"/admin/cl
     q ? [o.company, o.full_name, o.email, o.phone].join(" ").toLowerCase().includes(q) : true,
   );
 
+  const { data: staffRows } = await db().from("staff").select("full_name, email");
+  const sentBy = new Map(
+    ((staffRows ?? []) as { full_name: string | null; email: string }[]).map((s) => [refSlug((s.full_name ?? s.email).split(" ")[0]), s.full_name ?? s.email]),
+  );
   const byOwner = new Map<string, { signed: number; hires: number; paid: number; considering: number }>();
   for (const a of agreements) {
     const key = a.owners.email;
@@ -111,6 +116,11 @@ export default async function ClientsPage({ searchParams }: PageProps<"/admin/cl
                     <td>
                       {dateShort(o.created_at)}
                       <div className="small muted">Last seen {dateShort(o.last_login_at)}</div>
+                      {(o as { referred_by?: string | null }).referred_by && (
+                        <div className="small">
+                          Via {sentBy.get((o as { referred_by?: string }).referred_by!) ?? (o as { referred_by?: string }).referred_by}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
