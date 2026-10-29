@@ -162,7 +162,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
             ["all", "All time"],
           ] as const
         ).map(([v, label]) => (
-          <Link key={v} href={`/admin/payments?period=${v}`} aria-current={v === period ? "page" : undefined}>
+          <Link key={v} href={`/admin/payments?period=${v}`} scroll={false} aria-current={v === period ? "page" : undefined}>
             {label}
           </Link>
         ))}
@@ -184,7 +184,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
           <strong style={{ color: pNet < 0 ? "var(--rust)" : undefined }}>{money(pNet)}</strong>
           <span>Left for the company</span>
         </div>
-        <Link className={styles.stat} href={qs("owed", "")}>
+        <Link className={styles.stat} href={`${qs("owed", "")}#payments`}>
           <strong>{money(sum(owed))}</strong>
           <span>Owed to reps now ({owed.length} hire{owed.length === 1 ? "" : "s"})</span>
         </Link>
@@ -220,7 +220,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
                   <td>
                     <Link href={`/admin/team/${r.rep.id}`}>{repName(r.rep)}</Link>
                     <div className="small">
-                      <Link href={qs("all", r.rep.id)}>Their hires</Link>
+                      <Link href={`${qs("all", r.rep.id)}#payments`}>Their hires</Link>
                     </div>
                   </td>
                   <td className="small">{commissionTerms(r.rep, pct)}</td>
@@ -280,7 +280,12 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
 
       <h2 className={styles.h3} style={{ marginTop: 28 }}>Expenses</h2>
       {expErr ? (
-        <p className="notice notice-gold">Expenses need one quick setup step in Supabase before they can be saved.</p>
+        <p className="notice notice-gold">
+          Expenses need one quick setup step in Supabase before they can be saved.
+          <span className="small" style={{ display: "block", marginTop: 4 }}>
+            Details: {[expErr.code, expErr.message].filter(Boolean).join(" ")}
+          </span>
+        </p>
       ) : (
         <ExpenseForm />
       )}
@@ -320,15 +325,17 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
         </div>
       )}
 
-      <h2 className={styles.h3} style={{ marginTop: 32 }}>Every payment</h2>
+      <h2 className={styles.h3} id="payments" style={{ marginTop: 32, scrollMarginTop: 16 }}>
+        Every payment
+      </h2>
       <div className={styles.tabs}>
         {VIEWS.map(([v, label]) => (
-          <Link key={v} href={qs(v)} aria-current={v === view ? "page" : undefined}>
+          <Link key={v} href={qs(v)} scroll={false} aria-current={v === view ? "page" : undefined}>
             {label}
           </Link>
         ))}
         {repFilter && (
-          <Link href={qs(view, "")} aria-current="page">
+          <Link href={qs(view, "")} scroll={false} aria-current="page">
             {repName(people.get(repFilter)) ?? "Rep"} ✕
           </Link>
         )}

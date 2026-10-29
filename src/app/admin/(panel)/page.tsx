@@ -91,7 +91,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
 
   const todo: { text: React.ReactNode; href: string; cta: string }[] = [];
   if (count("applied")) todo.push({ text: <>{count("applied")} new application{count("applied") > 1 ? "s" : ""} to review</>, href: "/admin/candidates?view=applied", cta: "Review" });
-  if (owed.length) todo.push({ text: <>{money(owedTotal)} in rep commission to pay out ({owed.length} hire{owed.length > 1 ? "s" : ""})</>, href: "/admin/payments?view=owed", cta: "Pay out" });
+  if (owed.length) todo.push({ text: <>{money(owedTotal)} in rep commission to pay out ({owed.length} hire{owed.length > 1 ? "s" : ""})</>, href: "/admin/payments?view=owed#payments", cta: "Pay out" });
   if (needFee.length) todo.push({ text: <>{needFee.length} agreement{needFee.length > 1 ? "s" : ""} need a fee set</>, href: "/admin/agreements?stage=considering", cta: "Set fee" });
   if (failedMail?.length)
     todo.push({
