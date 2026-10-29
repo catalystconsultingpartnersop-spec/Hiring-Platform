@@ -1,7 +1,13 @@
 import { db, Hire } from "./db";
 import { isOwnerEmail } from "./session";
 
-export type StaffLite = { id: string; email: string; full_name: string | null };
+export type StaffLite = {
+  id: string;
+  email: string;
+  full_name: string | null;
+  commission_type?: "percent" | "flat" | null;
+  commission_value?: number | null;
+};
 
 export type HireRow = Hire & {
   rep_id: string | null;
@@ -33,7 +39,7 @@ export async function loadAgreements() {
         "*, candidates(full_name, added_by, role_category, industry, status), owners(email, full_name, company, phone), hires(*)",
       )
       .order("signed_at", { ascending: false }),
-    db().from("staff").select("id, email, full_name"),
+    db().from("staff").select("*"),
   ]);
   const people = new Map<string, StaffLite>(((staff ?? []) as StaffLite[]).map((s) => [s.id, s]));
   return { rows: (data ?? []) as unknown as AgreementRow[], error, people };
@@ -70,8 +76,22 @@ export function repName(p: StaffLite | undefined) {
 }
 
 // Commission for a hire: a fixed override, or the default % of the fee.
-export function commissionOf(h: HireRow, percent: number) {
-  return h.commission_cents ?? Math.round((h.amount_cents * percent) / 100);
+// A hire's commission: a hand-set amount if there is one, otherwise the rep's
+// own terms (percent or flat per hire), otherwise the default percent.
+export function commissionOf(h: HireRow, percent: number, rep?: StaffLite) {
+  if (h.commission_cents != null) return h.commission_cents;
+  const v = rep?.commission_value != null ? Number(rep.commission_value) : null;
+  if (rep?.commission_type === "flat" && v != null) return Math.round(v * 100);
+  if (rep?.commission_type === "percent" && v != null) return Math.round((h.amount_cents * v) / 100);
+  return Math.round((h.amount_cents * percent) / 100);
+}
+
+// In words, e.g. "15% of each fee" or "$750 per hire".
+export function commissionTerms(rep: Pick<StaffLite, "commission_type" | "commission_value"> | null | undefined, percent: number) {
+  const v = rep?.commission_value != null ? Number(rep.commission_value) : null;
+  if (rep?.commission_type === "flat" && v != null) return `$${v.toLocaleString("en-US")} per hire`;
+  if (rep?.commission_type === "percent" && v != null) return `${v}% of each fee`;
+  return `${percent}% of each fee`;
 }
 
 // Does this hire earn a rep commission at all?

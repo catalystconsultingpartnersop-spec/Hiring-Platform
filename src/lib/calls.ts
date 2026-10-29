@@ -1,6 +1,7 @@
 import { db, logActivity } from "./db";
 import { emailAdmin, escapeHtml, sendEmail } from "./email";
 import { brandName, candidateUrl, contactPhone, teamUrl } from "./format";
+import { candidate as candMail } from "./emails";
 import { callIcs } from "./ics";
 import { signedToken } from "./session";
 import { CALL_MINUTES, repsFreeAt } from "./slots";
@@ -75,7 +76,6 @@ export async function sendBookingEmails(callId: string, cancelled: boolean) {
   if (!call) return;
   const c = call.candidates;
   const rep = call.staff;
-  const first = c.full_name.split(" ")[0];
   const repFirst = (rep.full_name || "our team").split(" ")[0];
   const link = rep.meeting_link;
   const whenCandidate = formatInZone(call.starts_at, call.candidate_time_zone ?? COMPANY_TZ);
@@ -99,9 +99,11 @@ export async function sendBookingEmails(callId: string, cancelled: boolean) {
   if (cancelled) {
     await sendEmail({
       to: c.email,
-      subject: "Your career call is cancelled",
-      html: `<p>Hi ${escapeHtml(first)},</p><p>Your call on <strong>${escapeHtml(whenCandidate)}</strong> is cancelled.</p>
-<p><a href="${candidateUrl()}/apply/book?c=${encodeURIComponent(signedToken(`cand_${c.id}`, 30))}">Pick a new time</a> whenever you're ready, or text or call us at ${escapeHtml(phone)}.</p>`,
+      ...candMail.onboardingCancelled({
+        name: c.full_name,
+        when: whenCandidate,
+        rebook: `${candidateUrl()}/apply/book?c=${encodeURIComponent(signedToken(`cand_${c.id}`, 30))}`,
+      }),
       attachments: [{ filename: "cancelled.ics", content: ics(false) }],
     });
     await sendEmail({
@@ -115,16 +117,7 @@ export async function sendBookingEmails(callId: string, cancelled: boolean) {
 
   await sendEmail({
     to: c.email,
-    subject: `You're booked: ${whenCandidate}`,
-    html: `<p>Hi ${escapeHtml(first)},</p>
-<p>You're all set for a 45-minute video call with <strong>${escapeHtml(rep.full_name || "our team")}</strong>:</p>
-<p style="font-size:18px"><strong>${escapeHtml(whenCandidate)}</strong></p>
-${link ? `<p><a href="${escapeHtml(link)}" style="display:inline-block;background:#f2b300;color:#17213a;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Join the video call</a></p>` : "<p>We'll email you the video link before the call.</p>"}
-<p>We'll talk about what you're good at, what you enjoy, and the kind of role where you'd do your best work. No preparation needed.</p>
-<p><strong>One thing that helps:</strong> if you can, take the Working Genius assessment before we talk. It takes about 10 minutes and makes the call much more useful. It's optional.</p>
-<p>Need to change the time? <a href="${manage}">Reschedule or cancel here</a>.<br>
-Questions? Text or call us at ${escapeHtml(phone)}, or just reply to this email.</p>
-<p>Talk soon,<br>${escapeHtml(brandName())}</p>`,
+    ...candMail.onboardingBooked({ name: c.full_name, rep: rep.full_name || "our team", when: whenCandidate, link, manage }),
     attachments: [{ filename: "career-call.ics", content: ics(false) }],
   });
 

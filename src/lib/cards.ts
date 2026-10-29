@@ -5,6 +5,7 @@ import { emailAdmin, escapeHtml, sendEmail } from "./email";
 import { money, refCode, siteUrl, teamUrl } from "./format";
 import { HireDetails, markHirePaid } from "./hires";
 import { emailIntroStarted } from "./pathEmails";
+import { owner as ownerMail } from "./emails";
 import { stripe } from "./stripe";
 
 // Card on file: owners add a card when they sign an agreement (nothing is
@@ -87,19 +88,22 @@ async function activate(unlock: Unlock, owner: Owner, pmId: string, label: strin
   await logActivity(`owner:${owner.email}`, "agreement_signed", { candidate: ref, fee_cents: unlock.fee_cents, card: label });
   await sendEmail({
     to: owner.email,
-    subject: `Your signed agreement for candidate ${ref}`,
-    html: `<p>Hi ${escapeHtml((owner.full_name ?? "").split(" ")[0])},</p>
-<p>Thanks for signing. Here is your copy of the agreement for candidate ${ref}. Your <strong>${escapeHtml(label)}</strong> is on file. <strong>Nothing has been charged.</strong></p>
-<p style="margin:18px 0"><a href="${siteUrl()}/candidates/${unlock.candidate_id}" style="display:inline-block;background:#f2b300;color:#17213a;padding:11px 18px;border-radius:999px;text-decoration:none;font-weight:bold">See the candidate</a>
-&nbsp; <a href="${siteUrl()}/account/agreements/${unlock.id}" style="color:#17213a">View or print the agreement</a></p>
-${agreementEmailHtml(unlock.agreement_text, {
-  name: unlock.signed_name,
-  company: owner.company ?? "",
-  email: owner.email,
-  signedAt: unlock.signed_at,
-  ip: unlock.ip,
-})}`,
+    ...ownerMail.agreementSigned({
+      name: owner.full_name,
+      candidate: cand?.full_name ?? `candidate ${ref}`,
+      candidateId: unlock.candidate_id,
+      unlockId: unlock.id,
+      card: label,
+      agreementHtml: agreementEmailHtml(unlock.agreement_text, {
+        name: unlock.signed_name,
+        company: owner.company ?? "",
+        email: owner.email,
+        signedAt: unlock.signed_at,
+        ip: unlock.ip,
+      }),
+    }),
   });
+
   await emailAdmin(
     `Unlocked: ${owner.company} signed for ${cand?.full_name} (${ref})`,
     `<p><strong>${escapeHtml(owner.company ?? "")}</strong> (${escapeHtml(owner.full_name ?? "")}, ${escapeHtml(owner.email)}${owner.phone ? `, ${escapeHtml(owner.phone)}` : ""}) signed the agreement for <strong>${escapeHtml(cand?.full_name ?? "")}</strong> (${ref}). Fee: ${money(unlock.fee_cents)}. Card on file: ${escapeHtml(label)}.</p>

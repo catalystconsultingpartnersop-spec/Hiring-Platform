@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { dateShort } from "@/lib/format";
 import { isOwnerEmail, requireAdmin } from "@/lib/session";
 import { minutesLabel } from "@/lib/time";
+import { commissionTerms } from "@/lib/adminData";
+import { commissionPercent } from "@/lib/settings";
 import { setStaffActive, setStaffRole } from "../../actions";
 import { AddStaffForm } from "./AddStaffForm";
 
@@ -16,6 +18,9 @@ type Member = {
   meeting_link: string | null;
   time_zone: string | null;
   agreement_signed_at?: string | null;
+  commission_type?: "percent" | "flat" | null;
+  commission_value?: number | null;
+  package_sent_at?: string | null;
 };
 
 const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -35,6 +40,7 @@ function hoursSummary(wins: Win[]) {
 export default async function TeamPage() {
   const me = await requireAdmin();
   const { data, error } = await db().from("staff").select("*").order("created_at");
+  const pct = await commissionPercent();
   const members = (data ?? []) as Member[];
 
   const { data: counts } = await db().from("candidates").select("added_by").not("added_by", "is", null);
@@ -66,7 +72,7 @@ export default async function TeamPage() {
         </p>
       )}
 
-      <AddStaffForm canAddAdmin={me.owner} />
+      <AddStaffForm canAddAdmin={me.owner} defaultPercent={pct} />
 
       {members.length > 0 && (
         <div className="table-wrap" style={{ marginTop: 28 }}>
@@ -105,6 +111,13 @@ export default async function TeamPage() {
                         <span className="tag">Rep</span>
                       )}
                       {!m.active && <span className="tag" style={{ marginLeft: 6 }}>Switched off</span>}
+                      {!owner && m.role === "rep" && (
+                        <div className="small" style={{ marginTop: 4 }}>
+                          <Link href={`/admin/team/${m.id}#terms`}>{commissionTerms(m, pct)}</Link>
+                          {" · "}
+                          {m.package_sent_at ? `Package sent ${dateShort(m.package_sent_at)}` : <span style={{ color: "#9a7300" }}>Package not sent</span>}
+                        </div>
+                      )}
                       {!owner && m.role === "rep" && (
                         <div className="small" style={{ marginTop: 4 }}>
                           {m.agreement_signed_at ? (

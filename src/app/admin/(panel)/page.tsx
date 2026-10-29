@@ -76,7 +76,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
   const live = hires.filter(({ h }) => h.status === "paid" || h.status === "hired");
   const net = live.reduce((s, { h }) => s + h.amount_cents, 0);
   const owed = live.filter(({ h, rep }) => earnsCommission(h, rep) && !h.commission_paid_at);
-  const owedTotal = owed.reduce((s, { h }) => s + commissionOf(h, pct), 0);
+  const owedTotal = owed.reduce((s, { h, rep }) => s + commissionOf(h, pct, rep), 0);
   const thisMonth = live.filter(({ h }) => (h.paid_at ?? "").slice(0, 7) === now.toISOString().slice(0, 7));
   const needFee = active.filter((a) => a.fee_cents == null && stageOf(a) === "considering");
   const toConfirm = agreements.filter((a) => stageOf(a) === "paid" && NOW - new Date(latest(a.hires)!.paid_at!).getTime() > 14 * DAY);
@@ -181,7 +181,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
                           {h.commission_paid_at ? (
                             <span className="muted">Paid out</span>
                           ) : (
-                            <span style={{ color: "#6b4f00" }}>{money(commissionOf(h, pct))} owed</span>
+                            <span style={{ color: "#6b4f00" }}>{money(commissionOf(h, pct, rep))} owed</span>
                           )}
                         </div>
                       )}

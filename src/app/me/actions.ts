@@ -1,9 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { candidate as candMail } from "@/lib/emails";
 import { Candidate, db, logActivity } from "@/lib/db";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
-import { brandName, candidateUrl, teamUrl } from "@/lib/format";
+import { candidateUrl, teamUrl } from "@/lib/format";
 import { repFor } from "@/lib/notify";
 import { Meeting, Reference, RefRequest } from "@/lib/path";
 import { emailBooked, emailCandidateDeclined, emailNeedOtherTimes, emailRefsGiven, emailVerdict } from "@/lib/pathEmails";
@@ -39,14 +40,7 @@ export async function requestCandidateLink(_prev: LinkState, form: FormData): Pr
       .from("login_tokens")
       .insert({ token_hash: hash, email, kind: "candidate", next_path: "/me", expires_at: new Date(Date.now() + 60 * 60e3).toISOString() });
     const link = `${candidateUrl()}/me/verify?token=${token}`;
-    await sendEmail({
-      to: email,
-      subject: `Your page at ${brandName()}`,
-      html: `<p>Hi ${escapeHtml(cand.full_name.split(" ")[0])},</p>
-<p>Here's your link. It shows where things stand, how your profile looks to employers, and how to reach your rep.</p>
-<p style="margin:18px 0"><a href="${link}" style="display:inline-block;background:#f2b300;color:#17213a;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Open my page</a></p>
-<p style="color:#4a5570;font-size:13px">The link works once and expires in an hour. After that, you'll stay signed in on this device. If you didn't ask for this, you can ignore it.</p>`,
-    });
+    await sendEmail({ to: email, ...candMail.pageLink({ name: cand.full_name, link }) });
     await logActivity(`candidate:${email}`, "candidate_link_sent");
   }
   return { sent: email };

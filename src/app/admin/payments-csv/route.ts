@@ -28,7 +28,7 @@ export async function GET() {
         a.owners.full_name ?? "",
         a.owners.email,
         repName(rep) ?? "",
-        earns ? (commissionOf(h, pct) / 100).toFixed(2) : "",
+        earns ? (commissionOf(h, pct, rep) / 100).toFixed(2) : "",
         h.commission_paid_at ? h.commission_paid_at.slice(0, 10) : "",
         h.commission_note ?? "",
       ]);

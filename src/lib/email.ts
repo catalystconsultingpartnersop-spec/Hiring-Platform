@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { db, logActivity } from "./db";
+import { Audience, layout } from "./emailKit";
 
 export function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -11,6 +12,7 @@ export async function sendEmail(opts: {
   to: string;
   subject: string;
   html: string;
+  audience?: Audience; // whose letterhead and footer: owner, candidate or team
   replyTo?: string;
   attachments?: { filename: string; content: Buffer }[];
 }) {
@@ -32,7 +34,7 @@ export async function sendEmail(opts: {
         from,
         to: opts.to,
         subject: opts.subject,
-        html: wrap(opts.html),
+        html: layout(opts.html, opts.audience ?? "team"),
         replyTo: opts.replyTo ?? process.env.ADMIN_EMAIL,
         attachments: opts.attachments,
       });
@@ -64,9 +66,6 @@ export async function emailAdmin(
   return sendEmail({ to, subject, html, ...extra });
 }
 
-function wrap(body: string) {
-  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:#1c2433;max-width:560px">${body}</div>`;
-}
 
 // The most recent email failure in the last day, if any.
 export async function lastEmailProblem(): Promise<string | null> {

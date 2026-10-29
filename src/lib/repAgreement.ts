@@ -4,7 +4,11 @@ import { legalEntity } from "./agreement";
 // signature stores the exact text and version signed. Have a lawyer review it.
 export const REP_AGREEMENT_VERSION = "2026-10-29";
 
-export function repAgreementText(opts: { brand: string; repName: string; percent: number }) {
+export function repAgreementText(opts: { brand: string; repName: string; percent: number; flat?: number | null }) {
+  const pay =
+    opts.flat != null
+      ? `$${opts.flat.toLocaleString("en-US")} for each hire of a candidate you brought in, once we have actually collected the placement fee for that hire`
+      : `${opts.percent}% of the placement fee we actually collect for that candidate's hire`;
   const us = `${legalEntity()}, doing business as ${opts.brand}`;
   return `REP AGREEMENT
 Independent representative
@@ -24,10 +28,10 @@ You hold onboarding conversations with candidates, write their profiles on our s
 3.3 You may not sign anything, make any promise, or agree any fee on our behalf.
 
 4. COMMISSION
-4.1 For each candidate you bring in, we pay you ${opts.percent}% of the placement fee we actually collect for that candidate's hire, unless we agree a different amount in writing for a specific hire.
+4.1 For each candidate you bring in, we pay you ${pay}, unless we agree a different amount in writing for a specific hire.
 4.2 Commission is paid within 30 days after the later of (a) our receiving the fee and (b) the candidate's first day of work.
 4.3 If a fee is refunded, no commission is owed on it, and any commission already paid on it will be repaid or deducted from future commission.
-4.4 We may change the commission rate for future hires with 30 days' written notice. Changes never affect fees already collected.
+4.4 We may change your commission for future hires with 30 days' written notice. Changes never affect fees already collected.
 
 5. CANDIDATES COME FIRST, AND STAY FREE
 You will never ask for or accept money, gifts or favors from a candidate. Our service is always free for candidates.
@@ -49,4 +53,12 @@ You will not promise anyone a job, salary or result. You will speak positively a
 
 10. GENERAL
 This Agreement is governed by the laws of the State of New York. It is the entire agreement between us about this work, and changes must be in writing. Typing your name and confirming is your electronic signature and has the same effect as a handwritten one. We keep a record of the date, time and IP address.`;
+}
+
+// The commission in a rep's own agreement: their terms, or the default percent.
+export function repTerms(row: { commission_type?: string | null; commission_value?: number | string | null } | null, defaultPercent: number) {
+  const v = row?.commission_value != null ? Number(row.commission_value) : null;
+  if (row?.commission_type === "flat" && v != null) return { percent: defaultPercent, flat: v };
+  if (row?.commission_type === "percent" && v != null) return { percent: v, flat: null };
+  return { percent: defaultPercent, flat: null };
 }

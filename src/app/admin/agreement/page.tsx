@@ -5,7 +5,7 @@ import { AgreementDoc } from "@/components/AgreementDoc";
 import { PrintButton } from "@/components/PrintButton";
 import { db } from "@/lib/db";
 import { brandName } from "@/lib/format";
-import { repAgreementText } from "@/lib/repAgreement";
+import { repAgreementText, repTerms } from "@/lib/repAgreement";
 import { requireStaff } from "@/lib/session";
 import { commissionPercent } from "@/lib/settings";
 import { SignRep } from "./SignRep";
@@ -22,6 +22,8 @@ type Row = {
   agreement_version: string | null;
   agreement_text: string | null;
   agreement_ip: string | null;
+  commission_type?: string | null;
+  commission_value?: number | null;
 };
 
 // A rep signs this once, before using the back office. Heshy can open any rep's
@@ -75,7 +77,7 @@ export default async function RepAgreementPage({ searchParams }: PageProps<"/adm
     );
   }
 
-  const text = repAgreementText({ brand: brandName(), repName: row.full_name ?? "", percent: await commissionPercent() });
+  const text = repAgreementText({ brand: brandName(), repName: row.full_name ?? "", ...repTerms(row, await commissionPercent()) });
   return (
     <div className="wrap" style={{ maxWidth: 820, paddingTop: 24, paddingBottom: 56 }}>
       <div className="page-head" style={{ paddingBottom: 8 }}>

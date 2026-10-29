@@ -2,8 +2,9 @@
 
 import { useActionState } from "react";
 import { addStaff, FormState } from "../../actions";
+import { CommissionFields } from "./CommissionFields";
 
-export function AddStaffForm({ canAddAdmin }: { canAddAdmin: boolean }) {
+export function AddStaffForm({ canAddAdmin, defaultPercent }: { canAddAdmin: boolean; defaultPercent: number }) {
   const [state, action, pending] = useActionState<FormState, FormData>(addStaff, {});
   return (
     <form action={action} className="panel panel-wash" key={state.ok ?? "form"}>
@@ -25,6 +26,11 @@ export function AddStaffForm({ canAddAdmin }: { canAddAdmin: boolean }) {
           {canAddAdmin && <option value="admin">Admin: everything, including money</option>}
         </select>
       </label>
+      <CommissionFields defaultPercent={defaultPercent} />
+      <label className="check" style={{ marginTop: 14 }}>
+        <input type="checkbox" name="send_package" defaultChecked />
+        <span>Email them their onboarding package now (their terms, how to start, and a link to set a password)</span>
+      </label>
       {state.error && (
         <p className="notice notice-bad" role="alert" style={{ marginTop: 14 }}>
           {state.error}
@@ -36,7 +42,7 @@ export function AddStaffForm({ canAddAdmin }: { canAddAdmin: boolean }) {
         </p>
       )}
       <button className="btn" type="submit" disabled={pending} style={{ marginTop: 16 }}>
-        {pending ? "Adding…" : "Add and email them a sign-in link"}
+        {pending ? "Adding…" : "Add to the team"}
       </button>
     </form>
   );

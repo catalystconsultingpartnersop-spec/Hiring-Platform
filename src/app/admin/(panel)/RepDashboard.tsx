@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { commissionOf, loadAgreements } from "@/lib/adminData";
+import { commissionOf, commissionTerms, loadAgreements } from "@/lib/adminData";
 import { db } from "@/lib/db";
 import { dateShort, money, refCode } from "@/lib/format";
 import { commissionPercent } from "@/lib/settings";
@@ -9,7 +9,7 @@ import { Introductions } from "./Introductions";
 
 // One rep's numbers: who they brought in, what it earned, and their commission.
 export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: string; name: string; self: boolean; nowIso: string }) {
-  const [{ rows: agreements }, pct, { data: cands }, { data: calls }] = await Promise.all([
+  const [{ rows: agreements, people }, pct, { data: cands }, { data: calls }] = await Promise.all([
     loadAgreements(),
     commissionPercent(),
     db().from("candidates").select("id, full_name, status, headline, created_at").eq("added_by", staffId).order("created_at", { ascending: false }),
@@ -35,8 +35,9 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
     .sort((x, y) => (y.h.paid_at ?? "").localeCompare(x.h.paid_at ?? ""));
   const live = hires.filter(({ h }) => h.status === "paid" || h.status === "hired");
   const brought = live.reduce((s, { h }) => s + h.amount_cents, 0);
-  const earned = live.reduce((s, { h }) => s + commissionOf(h, pct), 0);
-  const paidOut = live.filter(({ h }) => h.commission_paid_at).reduce((s, { h }) => s + commissionOf(h, pct), 0);
+  const me = people.get(staffId);
+  const earned = live.reduce((s, { h }) => s + commissionOf(h, pct, me), 0);
+  const paidOut = live.filter(({ h }) => h.commission_paid_at).reduce((s, { h }) => s + commissionOf(h, pct, me), 0);
   const owed = earned - paidOut;
 
   return (
@@ -115,7 +116,7 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
                         <span className="muted small">None (refunded)</span>
                       ) : (
                         <>
-                          <strong>{money(commissionOf(h, pct))}</strong>{" "}
+                          <strong>{money(commissionOf(h, pct, me))}</strong>{" "}
                           {h.commission_paid_at ? (
                             <span className="tag tag-good">Paid {dateShort(h.commission_paid_at)}</span>
                           ) : (
@@ -130,7 +131,7 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
             </table>
           )}
           <p className="small muted" style={{ margin: "12px 0 0" }}>
-            Commission is {pct}% of the fee unless agreed otherwise.
+            {self ? "Your" : "Their"} commission: {commissionTerms(me, pct)}, unless agreed otherwise for a hire.
           </p>
         </div>
         <div className="panel">

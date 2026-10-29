@@ -1,8 +1,9 @@
 "use server";
 
 import { db, logActivity } from "@/lib/db";
+import { owner as ownerMail } from "@/lib/emails";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
-import { brandName, contactPhone, refCode } from "@/lib/format";
+import { contactPhone, refCode } from "@/lib/format";
 import { requireOwner } from "@/lib/session";
 
 export type GuidedState = { ok?: boolean; error?: string };
@@ -47,10 +48,6 @@ ${message ? `<p>Their note: ${escapeHtml(message)}</p>` : ""}
     { replyTo: owner.email },
   );
   if (!sent.ok) return { error: `That didn't go through. Text or call us at ${contactPhone()} instead.` };
-  await sendEmail({
-    to: owner.email,
-    subject: `We got your request for guided hiring`,
-    html: `<p>Hi ${escapeHtml((owner.full_name ?? "").split(" ")[0])},</p><p>Thanks for reaching out. We'll contact you within one business day to talk through what you need and give you a flat price before anything starts.</p><p>${escapeHtml(brandName())}<br>${escapeHtml(contactPhone())}</p>`,
-  });
+  await sendEmail({ to: owner.email, ...ownerMail.guidedReceived({ name: owner.full_name }) });
   return { ok: true };
 }

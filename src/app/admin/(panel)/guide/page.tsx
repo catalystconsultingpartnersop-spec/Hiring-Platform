@@ -4,14 +4,17 @@ import { PrintButton } from "@/components/PrintButton";
 import { contactPhone, teamUrl } from "@/lib/format";
 import { requireStaff } from "@/lib/session";
 import { commissionPercent } from "@/lib/settings";
+import { commissionTerms } from "@/lib/adminData";
+import { db } from "@/lib/db";
 import styles from "./guide.module.css";
 
 export const metadata: Metadata = { title: "Rep guide" };
 
 // Short and clear: what a rep does, and how, in one page.
 export default async function RepGuide() {
-  await requireStaff();
+  const me = await requireStaff();
   const pct = await commissionPercent();
+  const { data: row } = me.id ? await db().from("staff").select("*").eq("id", me.id).maybeSingle() : { data: null };
   const team = teamUrl().replace(/^https?:\/\//, "");
 
   return (
@@ -49,7 +52,7 @@ export default async function RepGuide() {
         </div>
         <div>
           <strong>Your pay</strong>
-          <span>{pct}% of the fee on every hire of a candidate you brought in</span>
+          <span>{commissionTerms(row, pct)} for candidates you bring in</span>
         </div>
         <div>
           <strong>Stuck?</strong>

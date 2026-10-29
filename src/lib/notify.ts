@@ -1,7 +1,8 @@
 import { db, logActivity } from "./db";
+import { owner as ownerMail } from "./emails";
 import { escapeHtml, sendEmail } from "./email";
 import { isOwnerEmail } from "./session";
-import { brandName, contactPhone, money, refCode, siteUrl, teamUrl } from "./format";
+import { money, refCode, siteUrl, teamUrl } from "./format";
 import type { HireDetails } from "./hires";
 
 type Rep = { id: string; email: string; full_name: string | null; active: boolean };
@@ -55,7 +56,7 @@ export async function candidateHired(
     to: rep.email,
     subject: owner?.company ? `${c.full_name} is being hired by ${owner.company}` : `${c.full_name} has been hired`,
     html: `<p>Hi ${escapeHtml(first)},</p>
-<p>Good news: ${who} is hiring <strong>${escapeHtml(c.full_name)}</strong> (${refCode(candidateId)})${amountCents ? ` and paid the ${money(amountCents)} fee` : ""}. ${escapeHtml(c.full_name.split(" ")[0])} is now off the catalog.</p>
+<p>Good news: ${who} is hiring <strong>${escapeHtml(c.full_name)}</strong> (${refCode(candidateId)})${amountCents ? ` and paid the ${money(amountCents)} fee` : ""}. ${escapeHtml(c.full_name.split(" ")[0])} is now off the site.</p>
 <table style="border-collapse:collapse;font-size:14px">
 ${owner ? `<tr><td style="padding:4px 14px 4px 0;color:#4a5570">Employer</td><td>${escapeHtml(owner.company ?? "")}, ${escapeHtml(owner.full_name ?? "")}, ${escapeHtml(owner.email)}${owner.phone ? `, ${escapeHtml(owner.phone)}` : ""}</td></tr>` : ""}
 ${details.jobTitle ? `<tr><td style="padding:4px 14px 4px 0;color:#4a5570">Role</td><td>${escapeHtml(details.jobTitle)}</td></tr>` : ""}
@@ -78,10 +79,10 @@ export function hireSummaryHtml(n: HireNotice) {
       : `${escapeHtml(n.rep.full_name || n.rep.email)} (their rep) ${n.repEmailed ? "was emailed" : "could not be emailed; tell them directly"}.`;
   return `<p style="margin-top:16px;padding:12px 14px;background:#eef1f6;border-radius:8px;font-size:14px">
 <strong>Done automatically:</strong><br>
-Taken off the catalog.<br>
+Taken off the site.<br>
 ${repLine}<br>
 ${n.toldOwners.length ? `${n.toldOwners.length} other owner${n.toldOwners.length > 1 ? "s" : ""} who were considering them ${n.toldOwners.length > 1 ? "were" : "was"} told they're no longer available: ${n.toldOwners.map(escapeHtml).join(", ")}.` : "No other owners were considering them."}<br>
-To put them back on the catalog later, set their status to Listed.</p>`;
+To put them back on the site later, set their status to Listed.</p>`;
 }
 
 // Other owners who were considering this candidate: let them know, kindly,
@@ -97,24 +98,13 @@ export async function tellOtherOwners(candidateId: string, hiringOwnerEmail: str
     db().from("candidates").select("full_name, role_category").eq("id", candidateId).single(),
   ]);
   if (!c) return told;
-  const first = c.full_name.split(" ")[0];
   const browse = `${siteUrl()}/candidates${c.role_category ? `?role=${encodeURIComponent(c.role_category)}` : ""}`;
   type Row = { id: string; passed_at?: string | null; owners: { email: string; full_name: string | null }; hires: { status: string }[] };
   for (const r of (rows ?? []) as unknown as Row[]) {
     if (r.owners.email.toLowerCase() === hiringOwnerEmail.toLowerCase()) continue;
     if (r.hires.some((h) => h.status === "paid" || h.status === "hired")) continue;
     if (r.passed_at) continue; // they already said not a fit
-    await sendEmail({
-      to: r.owners.email,
-      subject: `${c.full_name} is no longer available`,
-      html: `<p>Hi ${escapeHtml((r.owners.full_name ?? "").split(" ")[0] || "there")},</p>
-<p>A quick update: <strong>${escapeHtml(c.full_name)}</strong> (${refCode(candidateId)}) has accepted a position with another employer, so ${escapeHtml(first)} is no longer available.</p>
-<p>Nothing was charged, and you owe nothing for ${escapeHtml(first)}.</p>
-<p>We know that's disappointing. There are other strong candidates waiting, and we're happy to point you to the best fits.</p>
-<p style="margin:18px 0"><a href="${browse}" style="display:inline-block;background:#f2b300;color:#17213a;padding:11px 18px;border-radius:999px;text-decoration:none;font-weight:bold">See similar candidates</a></p>
-<p>Or just reply to this email or text ${escapeHtml(contactPhone())} and tell us what you're looking for.</p>
-<p>${escapeHtml(brandName())}</p>`,
-    });
+    await sendEmail({ to: r.owners.email, ...ownerMail.noLongerAvailable({ name: r.owners.full_name, candidate: c.full_name, browse }) });
     await logActivity("system", "owner_told_unavailable", { candidate: refCode(candidateId), owner: r.owners.email });
     told.push(r.owners.email);
   }

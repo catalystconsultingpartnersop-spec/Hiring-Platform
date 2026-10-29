@@ -299,3 +299,8 @@ alter table staff add column if not exists agreement_ip text;
 -- A candidate can fit several kinds of roles and industries.
 alter table candidates add column if not exists also_roles text[] not null default '{}';
 alter table candidates add column if not exists also_industries text[] not null default '{}';
+-- Each rep can have their own commission: a percent of the fee, or a flat amount per hire.
+alter table staff add column if not exists commission_type text check (commission_type in ('percent', 'flat'));
+alter table staff add column if not exists commission_value numeric;
+alter table staff add column if not exists commission_note text;
+alter table staff add column if not exists package_sent_at timestamptz;

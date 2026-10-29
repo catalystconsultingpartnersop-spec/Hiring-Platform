@@ -1,9 +1,10 @@
 "use server";
 
 import { bookCall } from "@/lib/calls";
+import { candidate as candMail } from "@/lib/emails";
 import { db, logActivity } from "@/lib/db";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
-import { brandName, contactPhone, teamUrl } from "@/lib/format";
+import { contactPhone, teamUrl } from "@/lib/format";
 import { readSignedToken, signedToken, startCandidateSession } from "@/lib/session";
 import { openSlots } from "@/lib/slots";
 import { formatInZone } from "@/lib/time";
@@ -138,11 +139,7 @@ export async function askUsToReachOut(token: string) {
       `Please schedule: ${c.full_name}`,
       `<p>${escapeHtml(c.full_name)} (${escapeHtml(c.email)}, ${escapeHtml(c.phone ?? "")}) applied and asked us to reach out to set up their onboarding call.</p>`,
     );
-    await sendEmail({
-      to: c.email,
-      subject: `Thanks, ${c.full_name.split(" ")[0]}. We'll be in touch`,
-      html: `<p>Thanks for reaching out to ${escapeHtml(brandName())}. Someone from our team will contact you within one business day to find a time to talk.</p><p>Questions before then? Text or call ${escapeHtml(contactPhone())}.</p>`,
-    });
+    await sendEmail({ to: c.email, ...candMail.reachOutThanks({ name: c.full_name }) });
   }
   return { ok: true };
 }

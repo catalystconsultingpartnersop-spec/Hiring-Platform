@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { db, logActivity } from "@/lib/db";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
 import { candidateHired, hireSummaryHtml } from "@/lib/notify";
+import { commissionTerms } from "@/lib/adminData";
 import { brandName, money, refCode, teamUrl } from "@/lib/format";
 import {
   checkAdminPassword,
@@ -26,7 +27,8 @@ import { cancelCall } from "@/lib/calls";
 import { chargeCardOnFile } from "@/lib/cards";
 import { commissionPercent, setSetting } from "@/lib/settings";
 import { receiptNumber } from "@/lib/receipt";
-import { REP_AGREEMENT_VERSION, repAgreementText } from "@/lib/repAgreement";
+import { owner as ownerMail, team as teamMail } from "@/lib/emails";
+import { REP_AGREEMENT_VERSION, repAgreementText, repTerms } from "@/lib/repAgreement";
 import { describe, suggestedHeadline } from "@/lib/strengths";
 import { RESUME_CONTENT_TYPE, resumeKind } from "@/lib/resume";
 
@@ -394,8 +396,7 @@ export async function refundHire(hireId: string, form?: FormData) {
   await logActivity(staffActor(me), "hire_refunded", { hire_id: hireId, candidate: refCode(u.candidate_id), amount_cents: hire!.amount_cents, reason });
   await sendEmail({
     to: u.owners.email,
-    subject: `Refund of ${money(hire!.amount_cents)} issued`,
-    html: `<p>Hi ${escapeHtml((u.owners.full_name ?? "").split(" ")[0])},</p><p>We've refunded <strong>${money(hire!.amount_cents)}</strong> for candidate ${refCode(u.candidate_id)} (receipt ${receiptNumber(hireId)}). It usually shows on your card within 5–10 business days.</p><p>Questions? Just reply to this email.</p><p>${escapeHtml(brandName())}</p>`,
+    ...ownerMail.refund({ name: u.owners.full_name, amount: hire!.amount_cents, candidate: `candidate ${refCode(u.candidate_id)}`, receipt: receiptNumber(hireId) }),
   });
   revalidatePath("/admin");
   revalidatePath("/admin/payments");
@@ -404,6 +405,41 @@ export async function refundHire(hireId: string, form?: FormData) {
 }
 
 // ---------- Team ----------
+
+// Commission terms from a form: default, a percent, or a flat amount per hire.
+function termsFrom(form: FormData): { commission_type: "percent" | "flat" | null; commission_value: number | null; commission_note: string | null } | string {
+  const type = String(form.get("commission_type") ?? "default");
+  const raw = String(form.get("commission_value") ?? "").replace(/[$,%\s]/g, "");
+  const note = String(form.get("commission_note") ?? "").trim().slice(0, 300) || null;
+  if (type === "default") return { commission_type: null, commission_value: null, commission_note: note };
+  const v = Number(raw);
+  if (!raw || !Number.isFinite(v) || v <= 0) return type === "flat" ? "Enter the flat amount per hire, e.g. 750." : "Enter the percent, e.g. 15.";
+  if (type === "percent" && v > 100) return "A percent can't be more than 100.";
+  return { commission_type: type === "flat" ? "flat" : "percent", commission_value: v, commission_note: note };
+}
+
+// Emails a rep (or admin) their onboarding package: their terms, how to start,
+// and a fresh link to set their password.
+async function sendPackage(staffId: string) {
+  const { data: m } = await db().from("staff").select("*").eq("id", staffId).single();
+  if (!m) return { ok: false, error: "Not found." };
+  const { token, hash } = newLoginToken();
+  await db()
+    .from("login_tokens")
+    .insert({ token_hash: hash, email: m.email, kind: "staff", expires_at: new Date(Date.now() + 7 * 864e5).toISOString() });
+  const r = await sendEmail({
+    to: m.email,
+    ...teamMail.onboardingPackage({
+      name: m.full_name ?? m.email,
+      terms: commissionTerms(m, await commissionPercent()),
+      note: m.commission_note ?? null,
+      setPasswordLink: `${teamUrl()}/admin/verify?token=${token}`,
+      isAdmin: m.role === "admin",
+    }),
+  });
+  if (r.ok) await db().from("staff").update({ package_sent_at: new Date().toISOString() }).eq("id", staffId);
+  return r;
+}
 
 export async function addStaff(_prev: FormState, form: FormData): Promise<FormState> {
   const me = await requireAdmin();
@@ -414,26 +450,39 @@ export async function addStaff(_prev: FormState, form: FormData): Promise<FormSt
   if (isOwnerEmail(email)) return { error: "That's the owner's email. It's already on the team." };
   if (role === "admin" && !me.owner) return { error: "Only Heshy can add admins." };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Enter a valid email address." };
-  const { error } = await db()
+  const terms = termsFrom(form);
+  if (typeof terms === "string") return { error: terms };
+  const { data, error } = await db()
     .from("staff")
-    .upsert({ email, full_name, role, active: true }, { onConflict: "email" });
-  if (error) return { error: `Could not add them: ${error.message}` };
+    .upsert({ email, full_name, role, active: true, ...terms }, { onConflict: "email" })
+    .select("id")
+    .single();
+  if (error || !data) return { error: `Could not add them: ${error?.message}` };
   await logActivity(staffActor(me), "staff_added", { email, role });
-  const { token, hash } = newLoginToken();
-  await db()
-    .from("login_tokens")
-    .insert({ token_hash: hash, email, kind: "staff", expires_at: new Date(Date.now() + 7 * 864e5).toISOString() });
-  await sendEmail({
-    to: email,
-    subject: `You've been added to the ${brandName()} team`,
-    html: `<p>Hi ${escapeHtml(full_name.split(" ")[0])},</p>
-<p>You now have access to the ${escapeHtml(brandName())} back office, where you'll set your hours for onboarding calls and add candidates.</p>
-<p><a href="${teamUrl()}/admin/verify?token=${token}" style="display:inline-block;background:#17213a;color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Set your password</a></p>
-<p>Once you're in, read the <a href="${teamUrl()}/admin/guide">rep guide</a>. It takes 3 minutes and covers everything you do.</p>
-<p style="color:#4a5570;font-size:13px">This link works once, for 7 days. After that, sign in at ${teamUrl()}/admin/login with your email and password.</p>`,
-  });
   revalidatePath("/admin/team");
-  return { ok: `${full_name} was added and emailed a sign-in link.` };
+  if (form.get("send_package") === "on") {
+    const r = await sendPackage(data.id);
+    return r.ok ? { ok: `${full_name} was added and emailed their onboarding package.` } : { error: `Added, but the email didn't send: ${r.error}` };
+  }
+  return { ok: `${full_name} was added. Send their onboarding package from their page when you're ready.` };
+}
+
+export async function saveRepTerms(staffId: string, _prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requireAdmin();
+  const terms = termsFrom(form);
+  if (typeof terms === "string") return { error: terms };
+  await db().from("staff").update(terms).eq("id", staffId);
+  await logActivity(staffActor(me), "rep_terms_set", { staff: staffId, ...terms });
+  revalidatePath(`/admin/team/${staffId}`);
+  return { ok: "Saved. These terms apply to their future hires and to their agreement if they haven't signed yet." };
+}
+
+export async function sendOnboardingPackage(staffId: string, _prev: FormState): Promise<FormState> {
+  const me = await requireAdmin();
+  const r = await sendPackage(staffId);
+  await logActivity(staffActor(me), "onboarding_package_sent", { staff: staffId, ok: r.ok });
+  revalidatePath(`/admin/team/${staffId}`);
+  return r.ok ? { ok: "Sent. They have a fresh link that works for 7 days." } : { error: `It didn't send: ${r.error}` };
 }
 
 // Who an admin is allowed to change: never the owner, and only the owner
@@ -622,8 +671,8 @@ export async function signRepAgreement(_prev: FormState, form: FormData): Promis
   const name = String(form.get("signed_name") ?? "").trim().slice(0, 200);
   if (name.length < 3) return { error: "Type your full name to sign." };
   if (form.get("mission") !== "on" || form.get("agree") !== "on") return { error: "Tick both boxes to sign." };
-  const { data: row } = await db().from("staff").select("full_name").eq("id", me.id).single();
-  const text = repAgreementText({ brand: brandName(), repName: row?.full_name || name, percent: await commissionPercent() });
+  const { data: row } = await db().from("staff").select("*").eq("id", me.id).single();
+  const text = repAgreementText({ brand: brandName(), repName: row?.full_name || name, ...repTerms(row, await commissionPercent()) });
   const h = await headers();
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
   await db()

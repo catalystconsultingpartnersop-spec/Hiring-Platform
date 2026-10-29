@@ -57,15 +57,15 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
   const earning = live.filter((h) => earnsCommission(h, h.rep));
   const owed = earning.filter((h) => !h.commission_paid_at);
   const paidOut = earning.filter((h) => h.commission_paid_at);
-  const sum = (rs: Row[]) => rs.reduce((s, h) => s + commissionOf(h, pct), 0);
+  const sum = (rs: Row[]) => rs.reduce((s, h) => s + commissionOf(h, pct, h.rep), 0);
 
   // Per-rep totals
   const reps = new Map<string, { rep: StaffLite; hires: number; owed: number; paid: number }>();
   for (const h of earning) {
     const r = reps.get(h.rep!.id) ?? { rep: h.rep!, hires: 0, owed: 0, paid: 0 };
     r.hires += 1;
-    if (h.commission_paid_at) r.paid += commissionOf(h, pct);
-    else r.owed += commissionOf(h, pct);
+    if (h.commission_paid_at) r.paid += commissionOf(h, pct, h.rep);
+    else r.owed += commissionOf(h, pct, h.rep);
     reps.set(h.rep!.id, r);
   }
 
@@ -163,8 +163,8 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
         <form action={setCommissionPercent} className="panel">
           <h2 className={styles.h3}>Commission rate</h2>
           <p className="small muted" style={{ marginTop: 0 }}>
-            Default share of each fee that goes to the rep who brought the candidate in. You can change the amount on
-            any single hire below.
+            The standard share of each fee for the rep who brought the candidate in. A rep can have their own terms (set
+            on their page under Team), and you can change any single hire below.
           </p>
           <div className={styles.inline}>
             <input className="input" name="percent" defaultValue={pct} inputMode="decimal" aria-label="Commission percent" />
@@ -207,7 +207,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
             <tbody>
               {shown.map((h) => {
                 const earns = earnsCommission(h, h.rep);
-                const amount = commissionOf(h, pct);
+                const amount = commissionOf(h, pct, h.rep);
                 return (
                   <tr key={h.id}>
                     <td>

@@ -1,8 +1,9 @@
 import { db, Hire, logActivity } from "./db";
 import { stripe } from "./stripe";
 import { emailAdmin, escapeHtml, sendEmail } from "./email";
-import { brandName, money, refCode, teamUrl } from "./format";
-import { receiptEmailHtml, receiptNumber } from "./receipt";
+import { owner as ownerMail } from "./emails";
+import { money, refCode, teamUrl } from "./format";
+import { receiptEmailHtml } from "./receipt";
 import { candidateHired, hireSummaryHtml } from "./notify";
 
 export async function latestHire(unlockId: string): Promise<Hire | null> {
@@ -67,10 +68,11 @@ export async function markHirePaid(hireId: string, paymentIntent: string | null,
 
   await sendEmail({
     to: owner.email,
-    subject: `Receipt ${receiptNumber(hireId)}: ${money(hire.amount_cents)} for ${cand.full_name}`,
-    html: `<p>Hi ${escapeHtml((owner.full_name ?? "").split(" ")[0])},</p>
-<p>Payment received, so you're all set to hire ${escapeHtml(cand.full_name)}. Your receipt is below.</p>
-${receiptEmailHtml({
+    ...ownerMail.receipt({
+      name: owner.full_name,
+      candidate: cand.full_name,
+      candidateId: unlock!.candidate_id,
+      receiptHtml: receiptEmailHtml({
   hireId,
   paidAt: hire.paid_at ?? new Date().toISOString(),
   amountCents: hire.amount_cents,
@@ -82,9 +84,10 @@ ${receiptEmailHtml({
   paidWith: viaCardOnFile && card ? card : "Card, paid on Stripe",
   agreementSignedAt: signedAt,
   ...details,
-})}
-<p>Congratulations, and thank you.<br>${escapeHtml(brandName())}</p>`,
+}),
+    }),
   });
+
   await emailAdmin(
     `Paid: ${owner.company} is hiring ${cand.full_name} (${money(hire.amount_cents)})`,
     `<p><strong>${escapeHtml(owner.company ?? "")}</strong> (${escapeHtml(owner.full_name ?? "")}, ${escapeHtml(owner.email)}) paid ${money(hire.amount_cents)} to hire <strong>${escapeHtml(cand.full_name)}</strong> (${ref}).</p>

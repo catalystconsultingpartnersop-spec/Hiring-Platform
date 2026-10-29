@@ -1,9 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { owner as ownerMail } from "@/lib/emails";
 import { db, logActivity } from "@/lib/db";
-import { escapeHtml, sendEmail } from "@/lib/email";
-import { brandName, siteUrl } from "@/lib/format";
+import { sendEmail } from "@/lib/email";
+import { siteUrl } from "@/lib/format";
 import {
   checkPasswordHash,
   endOwnerSession,
@@ -119,13 +120,7 @@ export async function requestLink(_prev: LoginState, form: FormData): Promise<Lo
   if (error) return { error: "Something went wrong. Try again." };
 
   const link = `${siteUrl()}/auth/verify?token=${token}`;
-  await sendEmail({
-    to: email,
-    subject: `Your sign-in link for ${brandName()}`,
-    html: `<p>Click below to sign in and set your password. After that, you'll sign in with your email and password. The link works once and expires in 30 minutes.</p>
-<p><a href="${link}" style="display:inline-block;background:#f2b300;color:#17213a;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Sign in to ${escapeHtml(brandName())}</a></p>
-<p style="color:#4a5570;font-size:13px">If you didn't ask for this, ignore this email.</p>`,
-  });
+  await sendEmail({ to: email, ...ownerMail.signInLink(link) });
   return { sent: email };
 }
 
