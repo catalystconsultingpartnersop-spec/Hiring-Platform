@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { commissionOf, earnsCommission, latest, loadAgreements, repName, stageOf } from "@/lib/adminData";
+import { commissionOf, earnsCommission, latest, loadAgreements, stageOf } from "@/lib/adminData";
 import { db, dbConfigProblem } from "@/lib/db";
 import { lastEmailProblem } from "@/lib/email";
-import { dateShort, money, refCode } from "@/lib/format";
+import { money } from "@/lib/format";
 
 import { requireStaff } from "@/lib/session";
 import { nowMs } from "@/lib/time";
@@ -99,6 +99,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
       href: "/admin/activity",
       cta: "See which",
     });
+  if (calls?.length) todo.push({ text: <>{calls.length} onboarding call{calls.length > 1 ? "s" : ""} in the next 7 days</>, href: "/admin/calls", cta: "See calls" });
   if (toConfirm.length) todo.push({ text: <>{toConfirm.length} paid hire{toConfirm.length > 1 ? "s" : ""} not yet marked as started</>, href: "/admin/agreements?stage=paid", cta: "Check" });
 
   return (
@@ -119,18 +120,32 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
       )}
       <EmailCheck problem={emailProblem} settings={emailSettings} />
 
+      <div className="panel" style={{ marginTop: 16 }}>
+        <h2 className={styles.h3}>Needs your attention</h2>
+        {todo.length === 0 ? (
+          <p className="small muted">All caught up.</p>
+        ) : (
+          <ul className={styles.attention}>
+            {todo.map((t, i) => (
+              <li key={i}>
+                <span>{t.text}</span>
+                <Link href={t.href} className="small">
+                  {t.cta}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <div className={styles.stats}>
         <Link className={styles.stat} href="/admin/payments">
-          <strong>{money(net)}</strong>
-          <span>Fees collected · {money(thisMonth.reduce((s, { h }) => s + h.amount_cents, 0))} this month</span>
+          <strong>{money(thisMonth.reduce((s, { h }) => s + h.amount_cents, 0))}</strong>
+          <span>Fees this month · {money(net)} all time</span>
         </Link>
         <Link className={styles.stat} href="/admin/agreements">
-          <strong>{active.length}</strong>
-          <span>Agreements signed · {considering.length} considering</span>
-        </Link>
-        <Link className={`${styles.stat} ${owed.length ? styles.statActive : ""}`} href="/admin/payments?view=owed">
-          <strong>{money(owedTotal)}</strong>
-          <span>Commission owed to reps</span>
+          <strong>{considering.length}</strong>
+          <span>Introductions in progress</span>
         </Link>
         <Link className={`${styles.stat} ${count("applied") ? styles.statActive : ""}`} href="/admin/candidates?view=applied">
           <strong>{count("applied")}</strong>
@@ -140,80 +155,8 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
           <strong>{count("listed")}</strong>
           <span>Listed now · {count("hired")} hired</span>
         </Link>
-        <Link className={styles.stat} href="/admin/calls">
-          <strong>{calls?.length ?? 0}</strong>
-          <span>Onboarding calls next 7 days</span>
-        </Link>
       </div>
 
-      <div className={styles.split}>
-        <div className="panel">
-          <h2 className={styles.h3}>Recent hires</h2>
-          {hires.length === 0 ? (
-            <p className="small muted">No hires yet. They&rsquo;ll show here with the rep who brought them in.</p>
-          ) : (
-            <table className="table" style={{ fontSize: 14 }}>
-              <thead>
-                <tr>
-                  <th>Hired</th>
-                  <th>By</th>
-                  <th>Fee</th>
-                  <th>Rep</th>
-                </tr>
-              </thead>
-              <tbody>
-                {hires.slice(0, 6).map(({ h, a, rep }) => (
-                  <tr key={h.id}>
-                    <td>
-                      <Link href={`/admin/candidates/${a.candidate_id}`}>{a.candidates.full_name}</Link>
-                      <div className="small muted">
-                        {refCode(a.candidate_id)}, {dateShort(h.paid_at)}
-                      </div>
-                    </td>
-                    <td>{a.owners.company}</td>
-                    <td>
-                      {money(h.amount_cents)}
-                      {h.status === "refunded" && <div className="small" style={{ color: "var(--rust)" }}>Refunded</div>}
-                    </td>
-                    <td>
-                      {repName(rep) ?? <span className="muted">Online</span>}
-                      {earnsCommission(h, rep) && (
-                        <div className="small">
-                          {h.commission_paid_at ? (
-                            <span className="muted">Paid out</span>
-                          ) : (
-                            <span style={{ color: "#6b4f00" }}>{money(commissionOf(h, pct, rep))} owed</span>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          <p className="small" style={{ margin: "12px 0 0" }}>
-            <Link href="/admin/payments">All payments and commissions</Link>
-          </p>
-        </div>
-        <div className="panel">
-          <h2 className={styles.h3}>Needs your attention</h2>
-          {todo.length === 0 ? (
-            <p className="small muted">All caught up.</p>
-          ) : (
-            <ul className={styles.attention}>
-              {todo.map((t, i) => (
-                <li key={i}>
-                  <span>{t.text}</span>
-                  <Link href={t.href} className="small">
-                    {t.cta}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
       <Introductions rows={agreements} now={NOW} />
     </>
   );

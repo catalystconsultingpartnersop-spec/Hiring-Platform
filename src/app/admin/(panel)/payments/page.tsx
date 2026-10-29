@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { commissionOf, earnsCommission, HireRow, loadAgreements, repName, StaffLite } from "@/lib/adminData";
+import { commissionOf, commissionTerms, earnsCommission, HireRow, loadAgreements, repName, StaffLite, stageOf } from "@/lib/adminData";
+import { db } from "@/lib/db";
+import { isOwnerEmail } from "@/lib/session";
 import { dateShort, money, refCode } from "@/lib/format";
 
 import { receiptNumber } from "@/lib/receipt";
 import { requireAdmin } from "@/lib/session";
 import { commissionPercent } from "@/lib/settings";
-import { markCommissionPaid, setCommissionAmount, setCommissionPercent, undoCommissionPaid } from "../../actions";
+import { deleteExpense, markCommissionPaid, payRepAll, setCommissionAmount, setCommissionPercent, undoCommissionPaid } from "../../actions";
+import { ExpenseForm } from "./ExpenseForm";
 import styles from "../admin.module.css";
 import { RefundButton } from "../RefundButton";
 
@@ -22,7 +25,7 @@ type Row = HireRow & {
 };
 
 const VIEWS = [
-  ["all", "All payments"],
+  ["all", "All"],
   ["owed", "Commission owed"],
   ["paidout", "Commission paid out"],
   ["refunded", "Refunded"],
@@ -31,7 +34,14 @@ const VIEWS = [
 export default async function PaymentsPage({ searchParams }: PageProps<"/admin/payments">) {
   const sp = await searchParams;
   await requireAdmin();
-  const [{ rows: agreements, error, people }, pct] = await Promise.all([loadAgreements(), commissionPercent()]);
+  const [{ rows: agreements, error, people }, pct, { data: expRows, error: expErr }] = await Promise.all([
+    loadAgreements(),
+    commissionPercent(),
+    db().from("expenses").select("*").order("spent_on", { ascending: false }),
+  ]);
+  type Expense = { id: string; spent_on: string; what: string; category: string; amount_cents: number; note: string | null };
+  const expenses = (expRows ?? []) as Expense[];
+  const period = sp.period === "year" || sp.period === "all" ? sp.period : "month";
   const view = typeof sp.view === "string" && VIEWS.some(([v]) => v === sp.view) ? sp.view : "all";
   const repFilter = typeof sp.rep === "string" ? sp.rep : "";
 
@@ -53,8 +63,6 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
     .sort((a, b) => (b.paid_at ?? "").localeCompare(a.paid_at ?? ""));
 
   const live = all.filter((h) => h.status === "paid" || h.status === "hired");
-  const gross = all.reduce((s, h) => s + h.amount_cents, 0);
-  const refunded = all.filter((h) => h.status === "refunded").reduce((s, h) => s + h.amount_cents, 0);
   const earning = live.filter((h) => earnsCommission(h, h.rep));
   const owed = earning.filter((h) => !h.commission_paid_at);
   const paidOut = earning.filter((h) => h.commission_paid_at);
@@ -76,14 +84,54 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
   if (view === "refunded") shown = all.filter((h) => h.status === "refunded");
   if (repFilter) shown = shown.filter((h) => h.rep?.id === repFilter);
 
-  const qs = (v: string, r = repFilter) => `/admin/payments?view=${v}${r ? `&rep=${r}` : ""}`;
+  const qs = (v: string, r = repFilter) => `/admin/payments?view=${v}${r ? `&rep=${r}` : ""}${period !== "month" ? `&period=${period}` : ""}`;
+
+  // ----- The whole company, for the chosen period -----
+  const nowIso = new Date().toISOString();
+  const inPeriod = (d: string | null | undefined) =>
+    !!d && (period === "all" || (period === "year" ? d.slice(0, 4) === nowIso.slice(0, 4) : d.slice(0, 7) === nowIso.slice(0, 7)));
+  const totals = (match: (d: string | null | undefined) => boolean) => {
+    const paid = all.filter((h) => match(h.paid_at));
+    const gross = paid.reduce((s, h) => s + h.amount_cents, 0);
+    const refunds = all.filter((h) => h.status === "refunded" && match(h.refunded_at ?? h.paid_at)).reduce((s, h) => s + h.amount_cents, 0);
+    const comm = paid.filter((h) => earnsCommission(h, h.rep)).reduce((s, h) => s + commissionOf(h, pct, h.rep), 0);
+    const exp = expenses.filter((e) => match(e.spent_on)).reduce((s, e) => s + e.amount_cents, 0);
+    return { in: gross - refunds, refunds, comm, exp, net: gross - refunds - comm - exp };
+  };
+  const { in: pIn, refunds: pRefunds, comm: pComm, exp: pExp, net: pNet } = totals(inPeriod);
+  const inProgress = agreements.filter((a) => ["considering", "checkout"].includes(stageOf(a)));
+  const pipeline = inProgress.reduce((s, a) => s + (a.fee_cents ?? 0), 0);
+
+  // Last 12 months, newest first.
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date();
+    d.setUTCDate(1);
+    d.setUTCMonth(d.getUTCMonth() - i);
+    const key = d.toISOString().slice(0, 7);
+    return { key, label: d.toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" }), ...totals((x) => !!x && x.slice(0, 7) === key) };
+  });
+  // Start from the first month with any money in or out.
+  const firstMonth = [...all.map((h) => h.paid_at ?? ""), ...expenses.map((e) => e.spent_on)].filter(Boolean).sort()[0]?.slice(0, 7) ?? nowIso.slice(0, 7);
+  const shownMonths = months.filter((m) => m.key >= firstMonth);
+
+  // Every rep, even before their first hire.
+  const repRows = [...people.values()]
+    .filter((p) => !isOwnerEmail(p.email) && ((p as StaffLite & { active?: boolean }).active !== false || reps.has(p.id)))
+    .map((p) => {
+      const r = reps.get(p.id);
+      const owedIds = earning.filter((h) => h.rep?.id === p.id && !h.commission_paid_at).map((h) => h.id);
+      return { rep: p, hires: r?.hires ?? 0, owed: r?.owed ?? 0, paid: r?.paid ?? 0, owedIds };
+    })
+    .sort((a, b) => b.owed - a.owed || b.hires - a.hires);
 
   return (
     <>
       <div className="page-head" style={{ paddingBottom: 4, display: "flex", justifyContent: "space-between", alignItems: "end", gap: 16, flexWrap: "wrap" }}>
         <div>
-          <h1>Payments</h1>
-          <p>Every fee collected, who was hired, which rep brought them in, and what you owe in commission.</p>
+          <h1>Finance</h1>
+          <p>
+            Money in, what reps are owed, expenses, and what&rsquo;s left. Fees are set in <Link href="/admin/settings">Fee settings</Link>.
+          </p>
         </div>
         <a className="btn btn-ghost btn-small" href="/admin/payments-csv">
           Download for your accountant (CSV)
@@ -105,79 +153,181 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
         </p>
       )}
 
+      <div className={styles.tabs}>
+        {(
+          [
+            ["month", "This month"],
+            ["year", "This year"],
+            ["all", "All time"],
+          ] as const
+        ).map(([v, label]) => (
+          <Link key={v} href={`/admin/payments?period=${v}`} aria-current={v === period ? "page" : undefined}>
+            {label}
+          </Link>
+        ))}
+      </div>
       <div className={styles.stats}>
         <div className={styles.stat}>
-          <strong>{money(gross - refunded)}</strong>
-          <span>Collected, after refunds</span>
+          <strong>{money(pIn)}</strong>
+          <span>Fees collected{pRefunds ? `, after ${money(pRefunds)} refunded` : ""}</span>
         </div>
         <div className={styles.stat}>
-          <strong>{live.length}</strong>
-          <span>Paid hires</span>
+          <strong>{money(pComm)}</strong>
+          <span>Rep commissions earned</span>
         </div>
-        <Link className={`${styles.stat} ${owed.length ? styles.statActive : ""}`} href={qs("owed", "")}>
+        <div className={styles.stat}>
+          <strong>{money(pExp)}</strong>
+          <span>Expenses</span>
+        </div>
+        <div className={`${styles.stat} ${styles.statActive}`}>
+          <strong style={{ color: pNet < 0 ? "var(--rust)" : undefined }}>{money(pNet)}</strong>
+          <span>Left for the company</span>
+        </div>
+        <Link className={styles.stat} href={qs("owed", "")}>
           <strong>{money(sum(owed))}</strong>
-          <span>Commission owed ({owed.length})</span>
+          <span>Owed to reps now ({owed.length} hire{owed.length === 1 ? "" : "s"})</span>
         </Link>
-        <Link className={styles.stat} href={qs("paidout", "")}>
-          <strong>{money(sum(paidOut))}</strong>
-          <span>Commission paid out</span>
-        </Link>
-        <Link className={styles.stat} href={qs("refunded", "")}>
-          <strong>{money(refunded)}</strong>
-          <span>Refunded</span>
+        <Link className={styles.stat} href="/admin/agreements?stage=considering">
+          <strong>{money(pipeline)}</strong>
+          <span>In progress: fees if {inProgress.length} introduction{inProgress.length === 1 ? "" : "s"} hire</span>
         </Link>
       </div>
 
-      <div className={styles.split}>
-        <div className="panel">
-          <h2 className={styles.h3}>By rep</h2>
-          {reps.size === 0 ? (
-            <p className="small muted">No rep commissions yet. Hires of candidates you added yourself don&rsquo;t earn a commission.</p>
-          ) : (
-            <table className="table" style={{ fontSize: 14 }}>
-              <thead>
-                <tr>
-                  <th>Rep</th>
-                  <th>Hires</th>
-                  <th>Owed</th>
-                  <th>Paid out</th>
+      <h2 className={styles.h3} style={{ marginTop: 28 }}>Reps</h2>
+      <div className="table-wrap">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Rep</th>
+              <th>Terms</th>
+              <th>Hires</th>
+              <th>Earned</th>
+              <th>Paid</th>
+              <th>Owed</th>
+            </tr>
+          </thead>
+          <tbody>
+            {repRows.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="muted small">
+                  No reps yet.
+                </td>
+              </tr>
+            ) : (
+              repRows.map((r) => (
+                <tr key={r.rep.id}>
+                  <td>
+                    <Link href={`/admin/team/${r.rep.id}`}>{repName(r.rep)}</Link>
+                    <div className="small">
+                      <Link href={qs("all", r.rep.id)}>Their hires</Link>
+                    </div>
+                  </td>
+                  <td className="small">{commissionTerms(r.rep, pct)}</td>
+                  <td>{r.hires}</td>
+                  <td>{r.paid + r.owed ? money(r.paid + r.owed) : "—"}</td>
+                  <td>{r.paid ? money(r.paid) : "—"}</td>
+                  <td>
+                    {r.owed ? (
+                      <form action={payRepAll.bind(null, r.rep.id, r.owedIds.join(","))} className={styles.inline}>
+                        <strong>{money(r.owed)}</strong>
+                        <input className="input" name="note" placeholder="Note, e.g. Zelle" aria-label="Payment note" style={{ width: 130 }} />
+                        <ConfirmButton className="btn btn-small" message={`Mark ${money(r.owed)} as paid to ${repName(r.rep)}?`}>
+                          Mark all paid
+                        </ConfirmButton>
+                      </form>
+                    ) : (
+                      <span className="muted">—</span>
+                    )}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {[...reps.values()].map((r) => (
-                  <tr key={r.rep.id}>
-                    <td>
-                      <Link href={qs("all", r.rep.id)}>{repName(r.rep)}</Link>
-                      <div className="small">
-                        <Link href={`/admin/team/${r.rep.id}`}>Their dashboard</Link>
-                      </div>
-                    </td>
-                    <td>{r.hires}</td>
-                    <td>{r.owed ? <strong>{money(r.owed)}</strong> : "—"}</td>
-                    <td>{r.paid ? money(r.paid) : "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-        <form action={setCommissionPercent} className="panel">
-          <h2 className={styles.h3}>Commission rate</h2>
-          <p className="small muted" style={{ marginTop: 0 }}>
-            The standard share of each fee for the rep who brought the candidate in. A rep can have their own terms (set
-            on their page under Team), and you can change any single hire below.
-          </p>
-          <div className={styles.inline}>
-            <input className="input" name="percent" defaultValue={pct} inputMode="decimal" aria-label="Commission percent" />
-            <span>% of the fee</span>
-            <button className="btn btn-small" type="submit">
-              Save
-            </button>
-          </div>
-        </form>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+      <form action={setCommissionPercent} className={styles.inline} style={{ marginTop: 10 }}>
+        <span className="small muted">Standard commission for reps without their own terms:</span>
+        <input className="input" name="percent" defaultValue={pct} inputMode="decimal" aria-label="Commission percent" />
+        <span className="small">% of the fee</span>
+        <button className="btn btn-small btn-ghost" type="submit">
+          Save
+        </button>
+      </form>
+
+      <h2 className={styles.h3} style={{ marginTop: 28 }}>By month</h2>
+      <div className="table-wrap">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Fees collected</th>
+              <th>Refunds</th>
+              <th>Rep commissions</th>
+              <th>Expenses</th>
+              <th>Left for the company</th>
+            </tr>
+          </thead>
+          <tbody>
+            {shownMonths.map((m) => (
+              <tr key={m.key}>
+                <td>{m.label}</td>
+                <td>{m.in ? money(m.in) : "—"}</td>
+                <td>{m.refunds ? money(m.refunds) : "—"}</td>
+                <td>{m.comm ? money(m.comm) : "—"}</td>
+                <td>{m.exp ? money(m.exp) : "—"}</td>
+                <td>
+                  <strong style={{ color: m.net < 0 ? "var(--rust)" : undefined }}>{money(m.net)}</strong>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      <div className={styles.tabs} style={{ marginTop: 28 }}>
+      <h2 className={styles.h3} style={{ marginTop: 28 }}>Expenses</h2>
+      {expErr ? (
+        <p className="notice notice-gold">Expenses need one quick setup step in Supabase before they can be saved.</p>
+      ) : (
+        <ExpenseForm />
+      )}
+      {expenses.length > 0 && (
+        <div className="table-wrap" style={{ marginTop: 12 }}>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>What</th>
+                <th>Category</th>
+                <th>Amount</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {expenses.slice(0, 50).map((e) => (
+                <tr key={e.id}>
+                  <td>{dateShort(e.spent_on)}</td>
+                  <td>
+                    {e.what}
+                    {e.note && <div className="small muted">{e.note}</div>}
+                  </td>
+                  <td>{e.category}</td>
+                  <td>{money(e.amount_cents)}</td>
+                  <td>
+                    <form action={deleteExpense.bind(null, e.id)}>
+                      <ConfirmButton className="linkish small" message={`Delete "${e.what}"?`}>
+                        Delete
+                      </ConfirmButton>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <h2 className={styles.h3} style={{ marginTop: 32 }}>Every payment</h2>
+      <div className={styles.tabs}>
         {VIEWS.map(([v, label]) => (
           <Link key={v} href={qs(v)} aria-current={v === view ? "page" : undefined}>
             {label}
