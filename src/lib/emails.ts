@@ -199,7 +199,7 @@ export const candidate = {
       big(esc(o.when)) +
       (o.link ? button(o.link, "Join the video call") : p("We'll email you the video link before the call.")) +
       p("We'll talk about what you're good at, what you enjoy, and the kind of role where you'd shine. No preparation needed.") +
-      box("<strong>Optional, but it helps:</strong> take the Working Genius assessment before we talk. It takes about 10 minutes and shows the kind of work that gives you energy.") +
+      box(`<strong>Before we talk:</strong> please take the 6 Working Genius assessment at <a href="https://www.workinggenius.com" style="color:#17213a">workinggenius.com</a>. It takes about 10 minutes and shows the kind of work that gives you energy. Reply to this email with your results, or bring them to the call.`) +
       quiet(`Need a different time? <a href="${o.manage}" style="color:#5b667e">Reschedule or cancel here</a>.`),
   }),
 
@@ -300,6 +300,7 @@ export const team = {
     html:
       hi(o.name) +
       p(`Welcome to the team. Before anything else: this work is about people. You're here because you care about candidates and want to help them find work that truly fits them. That comes first, always. The site guides clients for you, so your time and warmth go to candidates.`) +
+      p(`<strong>Your job, in one line:</strong> help each candidate discover what they're naturally great at, and the kind of role they belong in. We use the 6 Working Genius assessment to put words to it: ask every candidate to take it at <a href="https://www.workinggenius.com" style="color:#17213a">workinggenius.com</a> before your call (they buy it themselves), then walk through their results together.`) +
       box(
         `<strong>Your terms</strong><br>` +
           (o.isAdmin ? "Admin access to the back office." : `Commission: <strong>${esc(o.terms)}</strong>, paid within 30 days after we collect the fee and the candidate starts work.<br>Independent contractor. Candidates never pay anything.`) +
@@ -310,7 +311,7 @@ export const team = {
 <li style="margin:6px 0"><strong>Set your password</strong> with the button below.</li>
 ${o.isAdmin ? "" : '<li style="margin:6px 0"><strong>Sign your rep agreement.</strong> It opens when you first sign in, one page, about three minutes.</li>'}
 <li style="margin:6px 0"><strong>Set your hours</strong> and paste your Google Meet or Zoom link on <a href="${teamUrl()}/admin/hours" style="color:#17213a">My hours</a>. Candidates can then book calls with you.</li>
-<li style="margin:6px 0"><strong>Read the <a href="${teamUrl()}/admin/guide" style="color:#17213a">rep guide</a></strong>. Three minutes, everything you do.</li>
+<li style="margin:6px 0"><strong>Read the <a href="${teamUrl()}/admin/guide" style="color:#17213a">rep guide</a></strong>. A few minutes: what each part of your dashboard does, how to add a candidate, and how to run the call.</li>
 <li style="margin:6px 0"><strong>Find your first candidates.</strong> Send the &ldquo;looking for work&rdquo; picture from your <a href="${teamUrl()}/admin/share" style="color:#17213a">Share kit</a> to your network. Anyone who signs up through your link is added as yours. You can also add someone yourself with <a href="${teamUrl()}/admin/candidates/new" style="color:#17213a">+ Add candidate</a>.</li>
 </ol>` +
       p(`<strong>Know business owners?</strong> Send them the owner picture from the same <a href="${teamUrl()}/admin/share" style="color:#17213a">Share kit</a>: one picture, one short message, your own link. Owners who join through it are credited to you, and the site does the rest.`) +

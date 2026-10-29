@@ -43,6 +43,11 @@ export default async function RepGuide() {
           Yes, you can earn good money doing this. But the money follows the mission, not the other way around. If you
           ever have to choose between what&rsquo;s right for the candidate and a quick fee, choose the candidate.
         </p>
+        <p>
+          <strong>Your job, in one line:</strong> help each candidate discover what they&rsquo;re naturally great at, and the
+          kind of role they belong in. We use the 6 Working Genius assessment to put words to it. When a candidate knows
+          where they shine, and an employer knows what they need, that&rsquo;s a setup for success.
+        </p>
         <p className={styles.missionLabel} style={{ marginTop: 16 }}>
           Who we look for
         </p>
@@ -71,6 +76,58 @@ export default async function RepGuide() {
         </div>
       </div>
 
+      <h2>Your dashboard, at a glance</h2>
+      <div className={styles.two} style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+        <div>
+          <p className={styles.label}>
+            <Link href="/admin">My dashboard</Link>
+          </p>
+          <p>Your candidates and where each one stands, your hires, and your commission: earned, owed and paid.</p>
+        </div>
+        <div>
+          <p className={styles.label}>
+            <Link href="/admin/candidates">Candidates</Link>
+          </p>
+          <p>Everyone in the system, by status. Search by name, email or ref, and open anyone to edit their profile.</p>
+        </div>
+        <div>
+          <p className={styles.label}>
+            <Link href="/admin/candidates/new">+ Add candidate</Link>
+          </p>
+          <p>Add someone you know. Upload their resume and most of the details fill themselves in.</p>
+        </div>
+        <div>
+          <p className={styles.label}>
+            <Link href="/admin/calls">My calls</Link>
+          </p>
+          <p>Your booked onboarding calls. After each one, mark it Done or No-show.</p>
+        </div>
+        <div>
+          <p className={styles.label}>
+            <Link href="/admin/hours">My hours</Link>
+          </p>
+          <p>When candidates can book you, and the video link they join.</p>
+        </div>
+        <div>
+          <p className={styles.label}>
+            <Link href="/admin/share">Share kit</Link>
+          </p>
+          <p>Ready-made pictures and messages: one to find candidates, one for business owners. Your links credit you.</p>
+        </div>
+        <div>
+          <p className={styles.label}>
+            <Link href="/admin/requests">Requests</Link>
+          </p>
+          <p>Callback requests sent to you, usually from your own candidates. Mark them handled when you&rsquo;ve called back.</p>
+        </div>
+        <div>
+          <p className={styles.label}>
+            <Link href="/admin/guide">Rep guide</Link>
+          </p>
+          <p>This page. Come back any time.</p>
+        </div>
+      </div>
+
       <h2>The five things you do</h2>
       <ol className={styles.steps}>
         <li>
@@ -88,11 +145,18 @@ export default async function RepGuide() {
           </p>
         </li>
         <li>
-          <h3>Take the call (45 minutes)</h3>
+          <h3>Get them assessed, then take the call (45 minutes)</h3>
+          <p>
+            As soon as a candidate books, ask them to take the <b>6 Working Genius assessment</b> at{" "}
+            <a href="https://www.workinggenius.com" target="_blank" rel="noreferrer">workinggenius.com</a> before your call.
+            They buy it themselves. Ask them to send you their results.
+          </p>
           <p>
             You get an email and calendar invite for every booking. On the call, get to know them: what gives them
-            energy, what drains them, what they&rsquo;ve done, what they want next. Use their Working Genius result if they
-            have it. Be warm. For many people, this is the first time someone has really listened.
+            energy, what drains them, what they&rsquo;ve done, what they want next. Walk through their Working Genius
+            results together: their two geniuses (the work that gives them energy), and their frustrations (the work that
+            drains them). Then talk about the roles where that would shine. Be warm. For many people, this is the first time
+            someone has really listened.
           </p>
           <p className={styles.tip}>
             Afterwards, mark it <b>Done</b> (or <b>No-show</b>) on <Link href="/admin/calls">My calls</Link>.
@@ -102,7 +166,8 @@ export default async function RepGuide() {
           <h3>Write their profile</h3>
           <p>
             Click <Link href="/admin/candidates/new">+ Add candidate</Link> (or open them from Candidates). Add their
-            resume, which fills in their details. Tap their Working Genius letters, strongest first. Fill in role,
+            resume, which fills in their details. Tap their Working Genius letters, strongest first, and upload their results
+            report (only our team ever sees it). The site then suggests roles and words for the headline. Fill in role,
             location and salary, then a headline and a short story.
           </p>
           <p className={styles.tip}>

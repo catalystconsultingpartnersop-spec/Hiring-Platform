@@ -118,6 +118,8 @@ export async function sendBookingEmails(callId: string, cancelled: boolean) {
     to: c.email,
     ...candMail.onboardingBooked({ name: c.full_name, rep: rep.full_name || "our team", when: whenCandidate, link, manage }),
     attachments: [{ filename: "career-call.ics", content: ics(false) }],
+    // Replies (like their assessment results) go straight to their rep.
+    replyTo: rep.email,
   });
 
   const app = c.application ?? {};
@@ -128,6 +130,7 @@ export async function sendBookingEmails(callId: string, cancelled: boolean) {
 <p>${escapeHtml(c.email)}${c.phone ? `, ${escapeHtml(c.phone)}` : ""}</p>
 ${app.looking_for ? `<p>Looking for: ${escapeHtml(app.looking_for)}</p>` : ""}
 ${link ? `<p>Your video link: <a href="${escapeHtml(link)}">${escapeHtml(link)}</a></p>` : `<p><strong>You don't have a video link saved.</strong> Add one on your My hours page, or email the candidate a link.</p>`}
+<p style="padding:10px 12px;background:#fff8e1;border-radius:8px">We asked them to take the <strong>6 Working Genius assessment</strong> at workinggenius.com before the call. Their replies come straight to you. If you don't have their results a day before, send them a friendly reminder.</p>
 <p><a href="${teamUrl()}/admin/candidates/${c.id}">Open their profile</a> · <a href="${teamUrl()}/admin/calls">All your calls</a></p>`,
     attachments: [{ filename: "onboarding-call.ics", content: ics(true) }],
   });
