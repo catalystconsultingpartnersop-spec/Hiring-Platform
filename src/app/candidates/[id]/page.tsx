@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CandidateCard, HowTheyWork, Strengths, WorksBest } from "@/components/CandidateCard";
+import { MobileBar } from "@/components/MobileBar";
 import { ShortlistButton } from "@/components/Shortlist";
 import { allListed, getListed, getTiers, similarTo } from "@/lib/catalog";
 import { wiredFor } from "@/lib/strengths";
@@ -183,6 +184,11 @@ function Teaser({
           </div>
         </section>
       )}
+      <MobileBar label={fee != null ? money(fee) : "Flat fee"} sub="only if you hire">
+        <Link className="btn btn-gold" href={`/candidates/${c.id}/unlock`}>
+          See who this is
+        </Link>
+      </MobileBar>
     </div>
   );
 }
@@ -379,6 +385,13 @@ function Unlocked({
           </div>
         </aside>
       </div>
+      {!passed && !taken && (!status || status === "pending") && (
+        <MobileBar label={unlock.fee_cents != null ? money(unlock.fee_cents) : "Flat fee"} sub="charged only when you hire">
+          <Link className="btn btn-gold" href={`/candidates/${c.id}/hire`}>
+            I&rsquo;ve decided to hire
+          </Link>
+        </MobileBar>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AgreementDoc } from "@/components/AgreementDoc";
+import { MobileBar } from "@/components/MobileBar";
 import { WorksBest } from "@/components/CandidateCard";
 import { agreementText } from "@/lib/agreement";
 import { getListed, getTiers } from "@/lib/catalog";
@@ -115,6 +116,7 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
             <AgreementDoc text={text} />
           </details>
 
+          <div id="sign" style={{ scrollMarginTop: 16 }} />
           <SignForm candidateId={id} defaultName={owner.full_name ?? ""} savedCard={savedCard} fee={fee != null ? money(fee) : null} />
         </div>
 
@@ -136,6 +138,11 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
           </p>
         </aside>
       </div>
+      <MobileBar label="$0 today" sub={fee != null ? `${money(fee)} only if you hire` : "Pay only if you hire"}>
+          <a className="btn btn-gold" href="#sign">
+            Agree and meet them
+          </a>
+        </MobileBar>
     </div>
   );
 }

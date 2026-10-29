@@ -47,7 +47,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 </Link>
               )}
               {signedIn ? (
-                <Link href="/account">Your account</Link>
+                <Link href="/account">
+                  <span className="hide-sm">Your account</span>
+                  <span className="show-sm">Account</span>
+                </Link>
               ) : candidate ? (
                 <Link href="/me">Your page</Link>
               ) : (
