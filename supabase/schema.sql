@@ -366,3 +366,7 @@ create table if not exists expenses (
 );
 create index if not exists expenses_spent_on_idx on expenses (spent_on desc);
 alter table expenses enable row level security;
+
+-- 013_owner_referrals.sql
+-- Who sent a business owner to us (a rep or a networker), from their share link.
+alter table owners add column if not exists referred_by text;

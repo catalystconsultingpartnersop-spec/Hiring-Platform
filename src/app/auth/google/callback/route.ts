@@ -1,3 +1,4 @@
+import { tagReferral } from "@/lib/shareKit";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { db, logActivity } from "@/lib/db";
@@ -38,6 +39,7 @@ export async function GET(req: NextRequest) {
         .single();
       if (error) throw error;
       owner = data;
+      await tagReferral(data.id);
     } else {
       await db()
         .from("owners")
