@@ -8,6 +8,12 @@ export const metadata: Metadata = {
   title: `Looking for work? | ${brandName()}`,
   description:
     "Free for job seekers. Sit down with us, discover what you're naturally great at, and meet employers who need exactly that.",
+  // Candidates' own link preview, without the employer picture.
+  openGraph: {
+    type: "website",
+    title: "You're built for something. Let's find it together.",
+    description: "Free for job seekers. Sit down with us, discover what you're naturally great at, and meet employers who need exactly that.",
+  },
 };
 
 const STEPS = [

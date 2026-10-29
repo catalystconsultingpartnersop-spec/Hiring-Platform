@@ -1,21 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Copy, download and send buttons for the owner share kit. On phones, "Share"
 // sends the picture and the message together (WhatsApp, Messages, email).
 export function ShareTools({ message, link, image }: { message: string; link: string; image: string }) {
   const [done, setDone] = useState("");
   const [canShareFiles, setCanShareFiles] = useState(false);
+  const picture = useRef<File | null>(null);
 
   useEffect(() => {
+    // Load the picture ahead of time, so tapping Share opens the share sheet right away.
+    fetch(image)
+      .then((r) => r.blob())
+      .then((b) => (picture.current = new File([b], "the-candidate-collection.png", { type: "image/png" })))
+      .catch(() => {});
     try {
       const f = new File([new Blob()], "x.png", { type: "image/png" });
       setCanShareFiles(!!navigator.canShare?.({ files: [f] }));
     } catch {
       setCanShareFiles(false);
     }
-  }, []);
+  }, [image]);
 
   async function copy(text: string, what: string) {
     try {
@@ -24,14 +30,21 @@ export function ShareTools({ message, link, image }: { message: string; link: st
     } catch {
       setDone("Select the text and copy it");
     }
-    setTimeout(() => setDone(""), 2500);
+    setTimeout(() => setDone(""), 4000);
   }
 
+  // WhatsApp drops the picture when it gets a picture and text together, so we
+  // copy the message first and share just the picture; they paste the message
+  // as the caption. (Pasting the link alone also shows the picture as a preview.)
   async function shareAll() {
+    // Start both right away, inside the tap: phones only allow sharing straight after a tap.
+    navigator.clipboard
+      .writeText(message)
+      .then(() => setDone("Message copied. In WhatsApp, tap the caption box and paste it."))
+      .catch(() => setDone(""));
     try {
-      const blob = await (await fetch(image)).blob();
-      const file = new File([blob], "the-candidate-collection.png", { type: "image/png" });
-      await navigator.share({ files: [file], text: message });
+      const file = picture.current ?? new File([await (await fetch(image)).blob()], "the-candidate-collection.png", { type: "image/png" });
+      await navigator.share({ files: [file] });
     } catch {
       /* they closed the share sheet */
     }
@@ -63,6 +76,9 @@ export function ShareTools({ message, link, image }: { message: string; link: st
       </div>
       <p className="small" role="status" style={{ minHeight: 20, color: "var(--moss)", margin: 0 }}>
         {done}
+      </p>
+      <p className="small muted" style={{ margin: 0 }}>
+        Tip: just pasting the link also shows the picture as a preview in WhatsApp and Messages.
       </p>
     </div>
   );

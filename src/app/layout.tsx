@@ -8,11 +8,22 @@ import { currentCandidateId, currentOwner } from "@/lib/session";
 import { ShortlistLink, ShortlistSync } from "@/components/Shortlist";
 import { Logo } from "@/components/Logo";
 import { legalEntity } from "@/lib/agreement";
+import { siteUrl } from "@/lib/format";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: `${brandName()} — browse coached, assessed candidates`,
   description:
     "Browse candidates who have been coached and assessed. Sign to see who they are. Pay one flat fee when you decide to hire.",
+  // The picture that shows when someone pastes our link (WhatsApp, iMessage, LinkedIn, email).
+  openGraph: {
+    type: "website",
+    siteName: brandName(),
+    title: "Your next great hire is already vetted.",
+    description: "Every candidate met and vetted in person. See strengths, experience and pay at a glance. Free to browse, one flat fee only if you hire.",
+    images: [{ url: "/share/og.png", width: 1200, height: 630, alt: "The Candidate Collection: your next great hire is already vetted" }],
+  },
+  twitter: { card: "summary_large_image", images: ["/share/og.png"] },
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
