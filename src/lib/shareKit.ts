@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { db } from "./db";
-import { siteUrl } from "./format";
+import { candidateUrl, siteUrl } from "./format";
 
 // The owner share kit: one short message, one graphic, one link.
 export const REF_COOKIE = "tcc_ref";
@@ -22,6 +22,29 @@ export function shareLink(ref?: string | null, to: "home" | "why" = "home") {
 
 export function ownerMessage(ref?: string | null) {
   return `If hiring has ever felt like more work than it should be, this is for you.\n\nTake a look: ${shareLink(ref, "home")}\n\nWhy we built it: ${shareLink(ref, "why")}`;
+}
+
+// The candidate side: a warm note from a rep to their network.
+export function candidateLink(ref?: string | null) {
+  const r = ref ? refSlug(ref) : "";
+  return `${candidateUrl()}/join${r ? `?r=${r}` : ""}`;
+}
+
+export function candidateMessage(ref?: string | null) {
+  return `I help people find work that truly fits them. It starts with a real conversation about what you're great at. Your name stays private, and it's always free.\n\nIf you're looking, or know someone who is, here's where to start:\n${candidateLink(ref)}`;
+}
+
+// A new candidate who came through a rep's link: that rep brought them in.
+export async function referringRep(): Promise<string | null> {
+  try {
+    const ref = refSlug((await cookies()).get(REF_COOKIE)?.value ?? "");
+    if (!ref) return null;
+    const { data } = await db().from("staff").select("id, full_name, email, active").eq("active", true);
+    const match = (data ?? []).find((s) => refSlug(((s.full_name as string | null) ?? (s.email as string)).split(" ")[0]) === ref);
+    return (match?.id as string) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 // A new owner who came through someone's link: remember who sent them.

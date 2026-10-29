@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { KitView } from "@/components/ShareTools";
 import { brandName } from "@/lib/format";
-import { ownerMessage, refSlug, shareLink } from "@/lib/shareKit";
+import { candidateLink, candidateMessage, ownerMessage, refSlug, shareLink } from "@/lib/shareKit";
 
 export const metadata: Metadata = {
   title: `Share ${brandName()}`,
@@ -24,6 +24,11 @@ export default async function SharePage({ searchParams }: PageProps<"/share">) {
         </p>
       </div>
       <KitView message={ownerMessage(ref)} link={link} image="/share/owner-card.png" />
+      <h2 style={{ fontSize: 26, margin: "56px 0 6px" }}>Know someone looking for work?</h2>
+      <p className="muted" style={{ margin: "0 0 18px" }}>
+        Send them this one. It&rsquo;s free for them, private, and starts with a real conversation.
+      </p>
+      <KitView message={candidateMessage(ref)} link={candidateLink(ref)} image="/share/candidate-card.png" />
     </div>
   );
 }

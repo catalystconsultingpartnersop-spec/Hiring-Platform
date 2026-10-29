@@ -82,6 +82,10 @@ export default async function RepGuide() {
           <p className={styles.tip}>
             Google Meet link: meet.google.com → New meeting → Create a meeting for later. Reuse the same link every time.
           </p>
+          <p className={styles.tip}>
+            To find candidates, open <Link href="/admin/share#candidates">Share kit</Link> and send the &ldquo;looking for
+            work&rdquo; picture to your network. Anyone who signs up through your link is added as yours.
+          </p>
         </li>
         <li>
           <h3>Take the call (45 minutes)</h3>
@@ -132,7 +136,7 @@ export default async function RepGuide() {
         <p className={styles.missionLabel}>Know business owners?</p>
         <h2>Send them the share kit. That&rsquo;s it.</h2>
         <p>
-          Everyone has business owners in their contacts. Open <Link href="/admin/share">Share with owners</Link> in your menu.
+          Everyone has business owners in their contacts. Open <Link href="/admin/share#owners">Share kit</Link> in your menu.
           On your phone, tap <b>Share</b> and pick the person: the message goes out with your link, and WhatsApp shows our
           picture as a preview above it. Want the tall picture itself? Tap <b>Share picture only</b>; the message is copied
           for you, so just paste it as the caption.

@@ -38,7 +38,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <details className={styles.more}>
             <summary>More</summary>
             <div>
-              <Link href="/admin/share">Share with owners</Link>
+              <Link href="/admin/share">Share kit</Link>
               <Link href="/admin/hours">My hours</Link>
               <Link href="/admin/invite">Invite a rep</Link>
               <Link href="/admin/settings">Fee settings</Link>
@@ -48,7 +48,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </details>
         ) : (
           <>
-            <Link href="/admin/share">Share with owners</Link>
+            <Link href="/admin/share">Share kit</Link>
             <Link href="/admin/hours">My hours</Link>
             <Link href="/admin/guide">Rep guide</Link>
           </>

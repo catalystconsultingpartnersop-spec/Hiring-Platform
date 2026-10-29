@@ -13,7 +13,9 @@ export const metadata: Metadata = {
     type: "website",
     title: "You're built for something. Let's find it together.",
     description: "Free for job seekers. Sit down with us, discover what you're naturally great at, and meet employers who need exactly that.",
+    images: [{ url: "/share/og-candidate.png", width: 1200, height: 630, alt: "You're built for something. Let's find it together." }],
   },
+  twitter: { card: "summary_large_image", images: ["/share/og-candidate.png"] },
 };
 
 const STEPS = [

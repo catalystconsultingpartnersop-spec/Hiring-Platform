@@ -91,7 +91,7 @@ export function ShareTools({ message, link, image }: { message: string; link: st
         {done}
       </p>
       <p className="small muted" style={{ margin: 0 }}>
-        &ldquo;Share&rdquo; sends the message and link; WhatsApp and Messages show our picture as a preview above it.
+        &ldquo;Share&rdquo; sends the message and link; WhatsApp and Messages show the picture as a preview above it.
       </p>
     </div>
   );
@@ -101,7 +101,7 @@ export function KitView({ message, link, image }: { message: string; link: strin
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 28, alignItems: "start" }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={image} alt="Dear business owner, unimpressed with your hiring options?" style={{ width: "100%", maxWidth: 460, borderRadius: 16, boxShadow: "0 12px 30px rgba(23,33,58,.15)" }} />
+      <img src={image} alt="Share picture" style={{ width: "100%", maxWidth: 460, borderRadius: 16, boxShadow: "0 12px 30px rgba(23,33,58,.15)" }} />
       <div style={{ display: "grid", gap: 16, minWidth: 0 }}>
         <div>
           <p className="small muted" style={{ margin: "0 0 6px", fontWeight: 600 }}>

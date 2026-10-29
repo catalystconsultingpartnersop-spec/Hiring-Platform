@@ -311,9 +311,9 @@ export const team = {
 ${o.isAdmin ? "" : '<li style="margin:6px 0"><strong>Sign your rep agreement.</strong> It opens when you first sign in, one page, about three minutes.</li>'}
 <li style="margin:6px 0"><strong>Set your hours</strong> and paste your Google Meet or Zoom link on <a href="${teamUrl()}/admin/hours" style="color:#17213a">My hours</a>. Candidates can then book calls with you.</li>
 <li style="margin:6px 0"><strong>Read the <a href="${teamUrl()}/admin/guide" style="color:#17213a">rep guide</a></strong>. Three minutes, everything you do.</li>
-<li style="margin:6px 0"><strong>Take your first call.</strong> Know someone looking for work? Add them yourself with <a href="${teamUrl()}/admin/candidates/new" style="color:#17213a">+ Add candidate</a>.</li>
+<li style="margin:6px 0"><strong>Find your first candidates.</strong> Send the &ldquo;looking for work&rdquo; picture from your <a href="${teamUrl()}/admin/share" style="color:#17213a">Share kit</a> to your network. Anyone who signs up through your link is added as yours. You can also add someone yourself with <a href="${teamUrl()}/admin/candidates/new" style="color:#17213a">+ Add candidate</a>.</li>
 </ol>` +
-      p(`<strong>Know business owners?</strong> Send them our share kit from <a href="${teamUrl()}/admin/share" style="color:#17213a">Share with owners</a>: one picture, one short message, your own link. Owners who join through it are credited to you, and the site does the rest.`) +
+      p(`<strong>Know business owners?</strong> Send them the owner picture from the same <a href="${teamUrl()}/admin/share" style="color:#17213a">Share kit</a>: one picture, one short message, your own link. Owners who join through it are credited to you, and the site does the rest.`) +
       (o.workEmail
         ? box(`<strong>Your work email is on its way:</strong> ${esc(o.workEmail)}. Google will email you a link to sign in and choose a password. Until then, everything works with this email, so you can start today.`)
         : "") +

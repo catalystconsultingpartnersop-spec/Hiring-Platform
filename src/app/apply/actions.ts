@@ -1,6 +1,7 @@
 "use server";
 
 import { allow, SLOW_DOWN } from "@/lib/throttle";
+import { referringRep } from "@/lib/shareKit";
 
 import { bookCall } from "@/lib/calls";
 import { candidate as candMail } from "@/lib/emails";
@@ -61,6 +62,7 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
         phone,
         application: { looking_for },
         consent_at: new Date().toISOString(),
+        added_by: await referringRep(),
       })
       .select("id")
       .single();
