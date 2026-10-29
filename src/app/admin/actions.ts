@@ -578,3 +578,31 @@ export async function undoCommissionPaid(hireId: string) {
   await logActivity(staffActor(me), "commission_paid_undone", { hire_id: hireId });
   refreshMoney();
 }
+
+// ---------- Delete a candidate ----------
+
+// Permanently removes a candidate (e.g. a test entry). Only when no client has
+// signed for them, so agreements and payments are never lost; otherwise archive.
+export async function deleteCandidate(id: string, form: FormData) {
+  const me = await requireAdmin();
+  if (String(form.get("confirm") ?? "").trim().toUpperCase() !== "DELETE") {
+    redirect(`/admin/candidates/${id}?delete_error=${encodeURIComponent("Type DELETE to confirm.")}`);
+  }
+  const { count } = await db().from("unlocks").select("id", { count: "exact", head: true }).eq("candidate_id", id);
+  if ((count ?? 0) > 0) {
+    redirect(
+      `/admin/candidates/${id}?delete_error=${encodeURIComponent("A client has signed for this candidate, so their record has to stay. Set the status to Archived instead.")}`,
+    );
+  }
+  const { data: c } = await db().from("candidates").select("full_name, resume_path").eq("id", id).maybeSingle();
+  if (!c) redirect("/admin/candidates");
+  if (c.resume_path) await db().storage.from("resumes").remove([c.resume_path]);
+  await db().from("onboarding_calls").delete().eq("candidate_id", id);
+  const { error } = await db().from("candidates").delete().eq("id", id);
+  if (error) redirect(`/admin/candidates/${id}?delete_error=${encodeURIComponent(error.message)}`);
+  await logActivity(staffActor(me), "candidate_deleted", { candidate: refCode(id), name: c.full_name });
+  revalidatePath("/admin");
+  revalidatePath("/admin/candidates");
+  revalidatePath("/candidates");
+  redirect(`/admin/candidates?deleted=${encodeURIComponent(c.full_name)}`);
+}

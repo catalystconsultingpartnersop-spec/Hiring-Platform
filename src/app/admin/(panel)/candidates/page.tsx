@@ -55,6 +55,11 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
           </button>
         </form>
       </div>
+      {typeof sp.deleted === "string" && (
+        <p className="notice notice-good" role="status">
+          {sp.deleted} was deleted.
+        </p>
+      )}
       {sp.password === "set" && (
         <p className="notice notice-good" role="status">
           Password saved. Next time, sign in with your email and password.

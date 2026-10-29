@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getTiers } from "@/lib/catalog";
 import { Candidate, db } from "@/lib/db";
 import { dateShort, feeFor, money, refCode } from "@/lib/format";
+import { deleteCandidate } from "../../../actions";
 import { CandidateForm } from "../CandidateForm";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 
@@ -81,6 +82,36 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         )}
       </div>
       <CandidateForm c={c} tierFeeLabel={tierFee != null ? money(tierFee) : "set by hand"} isAdmin={me.role === "admin"} />
+      {me.role === "admin" && (
+        <details className="panel" style={{ marginTop: 32, borderColor: "var(--rust-soft)" }} open={typeof sp.delete_error === "string"}>
+          <summary style={{ cursor: "pointer", fontWeight: 700, color: "var(--rust)" }}>Delete this candidate</summary>
+          {(unlocks ?? []).length > 0 ? (
+            <p className="small" style={{ marginTop: 10 }}>
+              A client has signed for this candidate, so their record has to stay for your agreements and payments. To
+              take them off the site, set the status to <strong>Archived</strong> above.
+            </p>
+          ) : (
+            <form action={deleteCandidate.bind(null, c.id)} style={{ marginTop: 12, display: "grid", gap: 10, maxWidth: 420 }}>
+              <p className="small" style={{ margin: 0 }}>
+                Permanently removes {c.full_name}, their resume and any booked calls. Use this for test entries or
+                mistakes. It can&rsquo;t be undone.
+              </p>
+              <label className="field">
+                <span>Type DELETE to confirm</span>
+                <input className="input" name="confirm" autoComplete="off" />
+              </label>
+              {typeof sp.delete_error === "string" && (
+                <p className="notice notice-bad" role="alert" style={{ margin: 0 }}>
+                  {sp.delete_error}
+                </p>
+              )}
+              <button className="btn btn-danger" type="submit" style={{ justifySelf: "start" }}>
+                Delete permanently
+              </button>
+            </form>
+          )}
+        </details>
+      )}
     </>
   );
 }
