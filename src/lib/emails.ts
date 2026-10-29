@@ -313,6 +313,7 @@ ${o.isAdmin ? "" : '<li style="margin:6px 0"><strong>Sign your rep agreement.</s
 <li style="margin:6px 0"><strong>Read the <a href="${teamUrl()}/admin/guide" style="color:#17213a">rep guide</a></strong>. Three minutes, everything you do.</li>
 <li style="margin:6px 0"><strong>Take your first call.</strong> Know someone looking for work? Add them yourself with <a href="${teamUrl()}/admin/candidates/new" style="color:#17213a">+ Add candidate</a>.</li>
 </ol>` +
+      p(`<strong>Know business owners?</strong> Send them our share kit from <a href="${teamUrl()}/admin/share" style="color:#17213a">Share with owners</a>: one picture, one short message, your own link. Owners who join through it are credited to you, and the site does the rest.`) +
       (o.workEmail
         ? box(`<strong>Your work email is on its way:</strong> ${esc(o.workEmail)}. Google will email you a link to sign in and choose a password. Until then, everything works with this email, so you can start today.`)
         : "") +

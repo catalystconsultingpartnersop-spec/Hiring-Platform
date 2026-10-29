@@ -128,6 +128,22 @@ export default async function RepGuide() {
         </li>
       </ol>
 
+      <section className={styles.mission} style={{ marginTop: 8 }}>
+        <p className={styles.missionLabel}>Know business owners?</p>
+        <h2>Send them the share kit. That&rsquo;s it.</h2>
+        <p>
+          Everyone has business owners in their contacts. Open <Link href="/admin/share">Share with owners</Link> in your menu.
+          On your phone, tap <b>Share picture and message</b>: the picture goes out and the message is copied for you, so in
+          WhatsApp you just paste it as the caption. You can also copy the message or the link on its own. The link shows the
+          picture as a preview.
+        </p>
+        <p>
+          Your link carries your name, so every owner who joins through it is credited to you. You don&rsquo;t need to follow
+          up or explain anything. The page they land on does that, and the site takes it from there. Your time still goes to
+          candidates.
+        </p>
+      </section>
+
       <h2>What employers see, and what they don&rsquo;t</h2>
       <div className={styles.two}>
         <div>
