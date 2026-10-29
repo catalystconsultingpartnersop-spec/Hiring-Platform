@@ -107,7 +107,7 @@ export default async function RepGuide() {
           </p>
         </li>
         <li>
-          <h3>Walk them to the hire</h3>
+          <h3>Walk them through</h3>
           <p>
             When an employer unlocks one of your candidates, you&rsquo;re emailed at every step: times offered, call
             booked, how it went, meeting, references. The site guides the client and nudges them automatically, so you
