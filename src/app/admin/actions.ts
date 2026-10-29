@@ -242,6 +242,7 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
   }
 
   let candidateId = id;
+  let merged = false;
   if (id) {
     const { data: before } = await db().from("candidates").select("status, listed_at").eq("id", id).single();
     if (status === "listed" && !before?.listed_at) record.listed_at = new Date().toISOString();
@@ -264,6 +265,29 @@ ${hireSummaryHtml(notice)}`,
       await logActivity(actor, "candidate_relisted_after_hire", { candidate: refCode(id) });
     }
   } else {
+    // Already in the system (they applied or booked a call themselves)? Save to
+    // that profile instead of making a second one, so nothing gets split up.
+    const { data: existing } = await db()
+      .from("candidates")
+      .select("id, status, listed_at")
+      .ilike("email", String(record.email).replace(/[%_\\]/g, "\\$&"))
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (existing) {
+      const filled = Object.fromEntries(
+        Object.entries(record).filter(([, v]) => (Array.isArray(v) ? v.length > 0 : v !== null && v !== "")),
+      );
+      if (existing.status === "hired") delete filled.status;
+      if (filled.status === "listed" && !existing.listed_at) filled.listed_at = new Date().toISOString();
+      const { error } = await db().from("candidates").update(filled).eq("id", existing.id);
+      if (error) return { error: `Could not save: ${error.message}` };
+      candidateId = existing.id;
+      merged = true;
+      await logActivity(actor, "candidate_merged_into_existing", { candidate: refCode(existing.id) });
+    }
+  }
+  if (!id && !merged) {
     if (status === "listed") record.listed_at = new Date().toISOString();
     record.consent_at = form.get("consent") === "on" ? new Date().toISOString() : null;
     if (me.id) record.added_by = me.id;
@@ -311,7 +335,7 @@ ${hireSummaryHtml(notice)}`,
       else await db().from("candidates").update({ assessment_path: path }).eq("id", candidateId);
     }
   }
-  if (!id) redirect(`/admin/candidates/${candidateId}?saved=${status}${resumeProblem ? `&resume=${encodeURIComponent(resumeProblem)}` : ""}`);
+  if (!id) redirect(`/admin/candidates/${candidateId}?saved=${status}${merged ? "&merged=1" : ""}${resumeProblem ? `&resume=${encodeURIComponent(resumeProblem)}` : ""}`);
   if (resumeProblem) return { error: `Saved, but ${resumeProblem}. Try attaching it again.` };
   return {
     ok: status === "listed" ? "Saved. They're live in the catalog." : `Saved as ${status}. Owners won't see them until the status is Listed.`,

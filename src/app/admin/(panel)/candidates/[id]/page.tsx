@@ -57,6 +57,12 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
               : "Saved as a draft. Owners won't see them until you set the status to Listed."}
           </p>
         )}
+        {sp.merged === "1" && (
+          <p className="notice notice-gold" style={{ marginTop: 10 }}>
+            {c.full_name.split(" ")[0]} was already in the system with this email, so everything you entered was added to
+            their existing profile instead of making a second one.
+          </p>
+        )}
         {typeof sp.resume === "string" && (
           <p className="notice notice-bad" role="alert" style={{ marginTop: 10 }}>
             Everything else was saved, but {sp.resume}. Attach it again in section 1 and save.
