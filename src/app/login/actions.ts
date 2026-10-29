@@ -1,5 +1,7 @@
 "use server";
 
+import { allow, SLOW_DOWN } from "@/lib/throttle";
+
 import { redirect } from "next/navigation";
 import { owner as ownerMail } from "@/lib/emails";
 import { db, logActivity } from "@/lib/db";
@@ -47,6 +49,7 @@ export async function signInWithPassword(_prev: LoginState, form: FormData): Pro
   const fields = { email };
   if (!EMAIL.test(email)) return { error: "Enter a valid email address.", fields };
   if (await tooManyTries(email)) return { error: "Too many tries. Wait 15 minutes, or use “Forgot password?” below.", fields };
+  if (!(await allow("owner_login", 30, 15))) return { error: SLOW_DOWN, fields };
 
   const { data: owner } = await db().from("owners").select("id, full_name, company, password_hash").eq("email", email).maybeSingle();
   if (!owner) return { error: "We don't have an account for that email. Create one below. It takes 30 seconds.", fields };
@@ -78,6 +81,7 @@ export async function createAccount(_prev: LoginState, form: FormData): Promise<
   const next = safeNext(get("next"));
   const fields = { email, full_name, company, phone: phone ?? "" };
   if (full_name.length < 2) return { error: "Enter your full name.", fields };
+  if (!(await allow("owner_signup", 10, 60))) return { error: SLOW_DOWN, fields };
   if (company.length < 2) return { error: "Enter your company name.", fields };
   if (!EMAIL.test(email)) return { error: "Enter a valid email address.", fields };
   if (password.length < 8) return { error: "Pick a password with at least 8 characters.", fields };
@@ -104,6 +108,7 @@ export async function requestLink(_prev: LoginState, form: FormData): Promise<Lo
   const email = String(form.get("email") ?? "").trim().toLowerCase();
   const next = safeNext(String(form.get("next") ?? ""));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Enter a valid email address." };
+  if (!(await allow("owner_link", 10, 60))) return { error: SLOW_DOWN };
 
   // At most 5 links per email per hour.
   const since = new Date(Date.now() - 3600e3).toISOString();

@@ -1,3 +1,4 @@
+import { clearCatalog } from "./catalog";
 import { tellShortlisters } from "./shortlist";
 import { db, logActivity } from "./db";
 import { owner as ownerMail } from "./emails";
@@ -44,6 +45,7 @@ export async function candidateHired(
     .update({ status: "hired", updated_at: new Date().toISOString() })
     .eq("id", candidateId)
     .neq("status", "hired");
+  clearCatalog();
   await logActivity("system", "candidate_marked_hired", { candidate: refCode(candidateId) });
   const toldOwners = await tellOtherOwners(candidateId, owner?.email ?? "");
   await tellShortlisters(candidateId, "hired");

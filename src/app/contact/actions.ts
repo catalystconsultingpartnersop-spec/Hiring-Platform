@@ -1,5 +1,7 @@
 "use server";
 
+import { allow, SLOW_DOWN } from "@/lib/throttle";
+
 import { db, logActivity } from "@/lib/db";
 import { teamFor } from "@/lib/contact";
 import { emailAdmin, escapeHtml as e, sendEmail } from "@/lib/email";
@@ -20,6 +22,7 @@ export async function sendContact(_prev: ContactState, form: FormData): Promise<
   if (fields.name.length < 2) return { error: "Add your name.", fields };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email)) return { error: "That email doesn't look quite right.", fields };
   if (!fields.message && !fields.phone) return { error: "Tell us a little about what you need, or leave a number for a callback.", fields };
+  if (!(await allow("contact", 5, 60))) return { error: SLOW_DOWN, fields };
   const kind = (["hiring", "work", "other"].includes(fields.kind) ? fields.kind : "other") as keyof typeof KIND_LABEL;
 
   const [owner, candId] = await Promise.all([currentOwner().catch(() => null), currentCandidateId().catch(() => null)]);

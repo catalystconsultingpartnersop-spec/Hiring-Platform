@@ -1,3 +1,4 @@
+import { revalidateTag, unstable_cache } from "next/cache";
 import { db, FeeTier, PublicCandidate, PUBLIC_CANDIDATE_COLUMNS } from "./db";
 import { profileOf, TRAITS, wiredFor } from "./strengths";
 import { blockedIdsFor, isBlockedFor } from "./blocklist";
@@ -9,28 +10,58 @@ const DEFAULT_TIERS: FeeTier[] = [
   { id: "t3", max_salary: null, fee_cents: null, sort: 3 },
 ];
 
-export async function getTiers(): Promise<FeeTier[]> {
+// Kept for 30 seconds so a rush of visitors doesn't hit the database on every
+// page view. Saving a candidate or the fees clears it right away (CATALOG_TAG).
+export const CATALOG_TAG = "catalog";
+
+// Call after anything that changes who's listed, their profile, or the fees.
+export function clearCatalog() {
   try {
+    revalidateTag(CATALOG_TAG, { expire: 0 });
+  } catch {
+    /* outside a request (e.g. a script): the 30-second refresh covers it */
+  }
+}
+
+const cachedTiers = unstable_cache(
+  async (): Promise<FeeTier[]> => {
     const { data, error } = await db().from("fee_tiers").select("*").order("sort");
     if (error) throw error;
-    return data?.length ? (data as FeeTier[]) : DEFAULT_TIERS;
+    return (data ?? []) as FeeTier[];
+  },
+  ["fee-tiers"],
+  { revalidate: 30, tags: [CATALOG_TAG] },
+);
+
+export async function getTiers(): Promise<FeeTier[]> {
+  try {
+    const rows = await cachedTiers();
+    return rows.length ? rows : DEFAULT_TIERS;
   } catch (e) {
     console.error("fee tiers unavailable, using defaults", e);
     return DEFAULT_TIERS;
   }
 }
 
-// Every listed candidate. If the database can't be reached, the catalog shows
-// as empty rather than breaking.
-export async function allListed(): Promise<{ rows: PublicCandidate[] }> {
-  try {
+const cachedListed = unstable_cache(
+  async (): Promise<PublicCandidate[]> => {
     const { data, error } = await db()
       .from("candidates")
       .select(PUBLIC_CANDIDATE_COLUMNS)
       .eq("status", "listed")
       .order("listed_at", { ascending: false });
     if (error) throw error;
-    const rows = (data ?? []) as unknown as PublicCandidate[];
+    return (data ?? []) as unknown as PublicCandidate[];
+  },
+  ["catalog-listed"],
+  { revalidate: 30, tags: [CATALOG_TAG] },
+);
+
+// Every listed candidate. If the database can't be reached, the catalog shows
+// as empty rather than breaking.
+export async function allListed(): Promise<{ rows: PublicCandidate[] }> {
+  try {
+    const rows = await cachedListed();
     // Hide candidates who asked not to be shown to this owner's company.
     const blocked = await blockedIdsFor(await currentOwner().catch(() => null));
     return { rows: blocked.size ? rows.filter((r) => !blocked.has(r.id)) : rows };

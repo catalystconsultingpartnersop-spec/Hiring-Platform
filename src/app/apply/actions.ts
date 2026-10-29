@@ -1,5 +1,7 @@
 "use server";
 
+import { allow, SLOW_DOWN } from "@/lib/throttle";
+
 import { bookCall } from "@/lib/calls";
 import { candidate as candMail } from "@/lib/emails";
 import { db, logActivity } from "@/lib/db";
@@ -36,6 +38,7 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
   if (phone.replace(/\D/g, "").length < 7) return fail("Add a phone number in case we need to reach you.");
   if (!looking_for) return fail("Tell us a little about the work you're hoping for. A sentence is plenty.");
   if (form.get("consent") !== "on") return fail("Tick the box at the bottom so we can list you.");
+  if (!(await allow("apply", 5, 60))) return fail(SLOW_DOWN);
 
   const resume = form.get("resume");
   const hasResume = resume instanceof File && resume.size > 0;

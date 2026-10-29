@@ -1,5 +1,9 @@
 "use server";
 
+import { clearCatalog } from "@/lib/catalog";
+
+import { allow, SLOW_DOWN } from "@/lib/throttle";
+
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -45,6 +49,7 @@ export async function staffLogin(_prev: FormState, form: FormData): Promise<Form
   const password = String(form.get("password") ?? "");
   await new Promise((r) => setTimeout(r, 500)); // slows down password guessing
   if (!email || !password) return { error: "Enter your email and password." };
+  if (!(await allow("staff_login", 30, 15))) return { error: SLOW_DOWN };
 
   // Too many wrong tries for this email in 15 minutes: pause.
   const since = new Date(Date.now() - 15 * 60e3).toISOString();
@@ -110,6 +115,7 @@ export async function requestStaffLink(_prev: FormState, form: FormData): Promis
   const email = String(form.get("email") ?? "").trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Enter a valid email address." };
   const done: FormState = { ok: `If ${email} is on the team, a sign-in link is on its way. It works for 30 minutes.` };
+  if (!(await allow("staff_link", 10, 60))) return { error: SLOW_DOWN };
 
   const isOwnerEmail = email === (process.env.ADMIN_EMAIL ?? "").toLowerCase();
   const { data: member } = await db().from("staff").select("id, active").eq("email", email).maybeSingle();
@@ -319,6 +325,7 @@ ${hireSummaryHtml(notice)}`,
 
   revalidatePath("/admin");
   revalidatePath("/candidates");
+  clearCatalog();
   // A new candidate always goes to their page, so saving again never makes a duplicate.
   // Their Working Genius report (team only, never shown to clients).
   const report = form.get("assessment");
@@ -346,6 +353,7 @@ ${hireSummaryHtml(notice)}`,
 
 export async function saveTiers(_prev: FormState, form: FormData): Promise<FormState> {
   await requireAdmin();
+  clearCatalog();
   const ids = form.getAll("tier_id").map(String);
   for (let i = 0; i < ids.length; i++) {
     const maxRaw = String(form.getAll("max_salary")[i] ?? "");
@@ -364,6 +372,7 @@ export async function saveTiers(_prev: FormState, form: FormData): Promise<FormS
 
 export async function addTier() {
   await requireAdmin();
+  clearCatalog();
   const { data } = await db().from("fee_tiers").select("sort").order("sort", { ascending: false }).limit(1);
   await db().from("fee_tiers").insert({ max_salary: null, fee_cents: null, sort: (data?.[0]?.sort ?? 0) + 1 });
   revalidatePath("/admin/settings");
@@ -371,6 +380,7 @@ export async function addTier() {
 
 export async function removeTier(id: string) {
   await requireAdmin();
+  clearCatalog();
   const { count } = await db().from("fee_tiers").select("id", { count: "exact", head: true });
   if ((count ?? 0) <= 1) return;
   await db().from("fee_tiers").delete().eq("id", id);
@@ -411,6 +421,7 @@ export async function markHired(hireId: string) {
 // Full refund to the client's card. Works whether or not the hire has started.
 export async function refundHire(hireId: string, form?: FormData) {
   const me = await requireAdmin();
+  clearCatalog();
   const back = String(form?.get("back") ?? "/admin/payments");
   const reason = String(form?.get("reason") ?? "").trim().slice(0, 300);
   const go = (q: string) => redirect(`${back.startsWith("/admin") ? back : "/admin/payments"}${back.includes("?") ? "&" : "?"}${q}`);
@@ -714,6 +725,7 @@ export async function undoCommissionPaid(hireId: string) {
 // signed for them, so agreements and payments are never lost; otherwise archive.
 export async function deleteCandidate(id: string, form: FormData) {
   const me = await requireAdmin();
+  clearCatalog();
   if (String(form.get("confirm") ?? "").trim().toUpperCase() !== "DELETE") {
     redirect(`/admin/candidates/${id}?delete_error=${encodeURIComponent("Type DELETE to confirm.")}`);
   }
@@ -759,7 +771,10 @@ export async function signRepAgreement(_prev: FormState, form: FormData): Promis
 
 export async function markRequestHandled(id: string) {
   const me = await requireStaff();
-  await db().from("contact_requests").update({ status: "handled", handled_by: me.name, handled_at: new Date().toISOString() }).eq("id", id);
+  // Reps can only close requests that were sent to them.
+  let q = db().from("contact_requests").update({ status: "handled", handled_by: me.name, handled_at: new Date().toISOString() }).eq("id", id);
+  if (me.role !== "admin") q = me.id ? q.contains("routed_to", [me.id]) : q.eq("id", "00000000-0000-0000-0000-000000000000");
+  await q;
   revalidatePath("/admin/requests");
 }
 

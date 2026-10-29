@@ -200,6 +200,7 @@ export function hashToken(token: string) {
 
 // Only allow redirects to paths on this site.
 export function safeNext(next: string | null | undefined, fallback = "/account") {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return fallback;
+  // No "//", no backslashes or control characters: those can point browsers off-site.
+  if (!next || !next.startsWith("/") || next.startsWith("//") || /[\\\u0000-\u001f]/.test(next)) return fallback;
   return next;
 }

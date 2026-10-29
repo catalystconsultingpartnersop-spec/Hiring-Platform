@@ -10,7 +10,12 @@ export async function GET() {
   const me = await currentStaff();
   if (me?.role !== "admin") return new Response("Not allowed", { status: 403 });
   const [{ rows, people }, pct] = await Promise.all([loadAgreements(), commissionPercent()]);
-  const cell = (v: string | number | null | undefined) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  // Text starting with = + - @ could run as a formula in Excel; prefix it so it stays text.
+  const cell = (v: string | number | null | undefined) => {
+    let s = String(v ?? "");
+    if (typeof v === "string" && /^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+    return `"${s.replace(/"/g, '""')}"`;
+  };
   const lines = [
     ["Receipt", "Paid date", "Status", "Fee ($)", "Candidate", "Candidate ref", "Company", "Owner", "Owner email", "Rep", "Commission ($)", "Commission paid out", "Commission note"],
   ];

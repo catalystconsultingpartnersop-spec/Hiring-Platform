@@ -1,5 +1,9 @@
 "use server";
 
+import { clearCatalog } from "@/lib/catalog";
+
+import { allow, SLOW_DOWN } from "@/lib/throttle";
+
 import { redirect } from "next/navigation";
 import { candidate as candMail } from "@/lib/emails";
 import { Candidate, db, logActivity } from "@/lib/db";
@@ -18,6 +22,7 @@ export type LinkState = { sent?: string; error?: string };
 export async function requestCandidateLink(_prev: LinkState, form: FormData): Promise<LinkState> {
   const email = String(form.get("email") ?? "").trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "That email doesn't look quite right." };
+  if (!(await allow("cand_link", 10, 60))) return { error: SLOW_DOWN };
 
   const since = new Date(Date.now() - 3600e3).toISOString();
   const { count } = await db()
@@ -94,6 +99,7 @@ export async function hideMyProfile() {
   const c = await me();
   if (c.status !== "listed") redirect("/me");
   await db().from("candidates").update({ status: "paused", self_paused_at: new Date().toISOString() }).eq("id", c.id);
+  clearCatalog();
   await logActivity(`candidate:${c.email}`, "candidate_paused_self");
   await tellTeam(
     c,
@@ -108,6 +114,7 @@ export async function showMyProfile() {
   // Only undo a pause the candidate made themselves; anything else goes through the rep.
   if (c.status !== "paused" || !c.self_paused_at) redirect("/me");
   await db().from("candidates").update({ status: "listed", self_paused_at: null }).eq("id", c.id);
+  clearCatalog();
   await logActivity(`candidate:${c.email}`, "candidate_unpaused_self");
   await tellTeam(
     c,
@@ -122,6 +129,7 @@ export async function tellUsAJob(form: FormData) {
   const where = String(form.get("where") ?? "").trim().slice(0, 300);
   const wasListed = c.status === "listed";
   if (wasListed) await db().from("candidates").update({ status: "paused", self_paused_at: new Date().toISOString() }).eq("id", c.id);
+  clearCatalog();
   await logActivity(`candidate:${c.email}`, "candidate_found_job", { where });
   await tellTeam(
     c,
