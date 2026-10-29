@@ -1,6 +1,6 @@
 import { brandName } from "@/lib/format";
 
-export const TAGLINE = "Vetted candidates, ready when you are";
+export const TAGLINE = "Browse talent with ease";
 
 // The one logo used everywhere: header, footer, agreements, receipts.
 export function Logo({ tagline = false, size = "md" }: { tagline?: boolean; size?: "md" | "lg" }) {
