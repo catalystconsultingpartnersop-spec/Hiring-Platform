@@ -6,6 +6,7 @@ import { money, refCode, siteUrl, teamUrl } from "./format";
 import { HireDetails, markHirePaid } from "./hires";
 import { emailIntroStarted } from "./pathEmails";
 import { owner as ownerMail } from "./emails";
+import { getSetting, setSetting } from "./settings";
 import { stripe } from "./stripe";
 
 // Card on file: owners add a card when they sign an agreement (nothing is
@@ -18,8 +19,27 @@ function cardLabel(pm: Stripe.PaymentMethod | string | null | undefined) {
   return `${brand === "Amex" ? "American Express" : brand} ending ${pm.card.last4}`;
 }
 
+// Cards saved with test keys don't exist in live mode (and the reverse). The first
+// time the site runs with keys of a new mode, forget the old cards so owners add
+// a real one. Returns true when it just cleared them.
+async function ensureStripeMode() {
+  const key = process.env.STRIPE_SECRET_KEY ?? "";
+  const mode = /^(sk|rk)_live_/.test(key) ? "live" : "test";
+  const was = await getSetting<string | null>("stripe_mode", null);
+  if (was === mode) return false;
+  if (was !== null || mode === "live") {
+    await db().from("owners").update({ stripe_customer_id: null, card_pm: null, card_label: null }).not("id", "is", null);
+  }
+  await setSetting("stripe_mode", mode);
+  await logActivity("system", "stripe_mode", { from: was, to: mode });
+  return was !== null || mode === "live";
+}
+
 async function customerFor(owner: Owner) {
-  if (owner.stripe_customer_id) return owner.stripe_customer_id;
+  await ensureStripeMode();
+  // Read it fresh: the saved customer may have just been cleared.
+  const { data: fresh } = await db().from("owners").select("stripe_customer_id").eq("id", owner.id).maybeSingle();
+  if (fresh?.stripe_customer_id) return fresh.stripe_customer_id as string;
   const c = await stripe().customers.create({
     email: owner.email,
     name: owner.company ?? undefined,
@@ -68,8 +88,10 @@ export async function confirmCardSetup(sessionId: string): Promise<{ candidateId
 
 // Unlocks using the card the owner already has on file.
 export async function unlockWithSavedCard(unlock: Unlock, owner: Owner) {
-  if (!owner.card_pm) return false;
-  await activate(unlock, owner, owner.card_pm, owner.card_label ?? "card on file");
+  if (await ensureStripeMode()) return false;
+  const { data: fresh } = await db().from("owners").select("card_pm, card_label").eq("id", owner.id).maybeSingle();
+  if (!fresh?.card_pm) return false;
+  await activate(unlock, owner, fresh.card_pm, fresh.card_label ?? "card on file");
   return true;
 }
 
@@ -125,6 +147,7 @@ export async function chargeCardOnFile(
   amountCents?: number,
   details: HireDetails = {},
 ): Promise<{ ok: true; hireId: string } | { ok: false; error: string }> {
+  await ensureStripeMode();
   const { data } = await db().from("unlocks").select("*, owners(*)").eq("id", unlockId).maybeSingle();
   if (!data) return { ok: false, error: "Agreement not found." };
   const unlock = data as Unlock;

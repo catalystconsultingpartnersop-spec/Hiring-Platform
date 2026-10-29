@@ -76,8 +76,7 @@ export async function signAgreement(candidateId: string, _prev: SignState, form:
 
   // A card is already on file: use it, unless they asked to add a new one.
   if (owner.card_pm && form.get("new_card") !== "1") {
-    await unlockWithSavedCard(unlock, owner);
-    redirect(`/candidates/${candidateId}?unlocked=1`);
+    if (await unlockWithSavedCard(unlock, owner)) redirect(`/candidates/${candidateId}?unlocked=1`);
   }
 
   let url: string;
