@@ -19,9 +19,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: brandName(),
-    title: "You know your business. Pick your hire.",
-    description: "No one telling you how to run your business, who to hire, or why. Candidates vetted in person. Free to browse, one flat fee only if you hire.",
-    images: [{ url: "/share/og.png", width: 1200, height: 630, alt: "The Candidate Collection: you know your business, pick your hire" }],
+    title: "Dear business owner, is hiring a hassle? There’s a better way.",
+    description: "It’s your business. You know who you need. Browse candidates who were met and coached, and pick the person who fits.",
+    images: [{ url: "/share/og.png", width: 1200, height: 630, alt: "Dear business owner, is hiring a hassle? There’s a better way." }],
   },
   twitter: { card: "summary_large_image", images: ["/share/og.png"] },
 };

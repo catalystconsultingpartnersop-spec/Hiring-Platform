@@ -20,7 +20,7 @@ export function shareLink(ref?: string | null) {
 }
 
 export function ownerMessage(link: string) {
-  return `Business owner? You built your business. You don't need anyone telling you how to run it, who to hire, or why.\n\nBrowse candidates we've already vetted in person. See exactly what each one brings. Pick the one you want and hire them. That's it.\n\nFree to browse. One flat fee, only if you hire.\n${link}`;
+  return `Dear business owner,\n\nIs hiring a hassle? Tired of the calls, meetings and questions before you even meet a candidate? Tired of being told how to run your business? Tired of high fees, then wondering for 60 days if the hire will work out?\n\nThere's a better way. It's your business. You know who you need. Browse, scroll, and pick the person who fits.\n\nEvery candidate was met and coached, so they know the role they belong in. They know what they're looking for. So do you. That's a setup for success.\n\n${link}`;
 }
 
 // A new owner who came through someone's link: remember who sent them.
