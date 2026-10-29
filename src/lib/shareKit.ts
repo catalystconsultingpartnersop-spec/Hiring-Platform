@@ -20,7 +20,7 @@ export function shareLink(ref?: string | null) {
 }
 
 export function ownerMessage(link: string) {
-  return `Hiring? Take a look at The Candidate Collection. Every candidate is met and vetted in person, so you see their strengths, experience and pay range at a glance. No job post, no pile of resumes. Free to browse, and one flat fee only if you hire.\n\n${link}`;
+  return `Business owner? You know what you need. Skip the recruiter calls, the checklists, and the person explaining your own business to you.\n\nBrowse candidates we've already vetted in person, beginner to seasoned. Pick the one you want and hire them. Free to browse, one flat fee only if you hire.\n\n${link}`;
 }
 
 // A new owner who came through someone's link: remember who sent them.

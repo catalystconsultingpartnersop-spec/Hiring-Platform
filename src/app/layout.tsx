@@ -19,9 +19,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: brandName(),
-    title: "Your next great hire is already vetted.",
-    description: "Every candidate met and vetted in person. See strengths, experience and pay at a glance. Free to browse, one flat fee only if you hire.",
-    images: [{ url: "/share/og.png", width: 1200, height: 630, alt: "The Candidate Collection: your next great hire is already vetted" }],
+    title: "You know your business. Pick your hire.",
+    description: "No recruiter calls, no checklists. Candidates already vetted in person. Free to browse, one flat fee only if you hire.",
+    images: [{ url: "/share/og.png", width: 1200, height: 630, alt: "The Candidate Collection: you know your business, pick your hire" }],
   },
   twitter: { card: "summary_large_image", images: ["/share/og.png"] },
 };
