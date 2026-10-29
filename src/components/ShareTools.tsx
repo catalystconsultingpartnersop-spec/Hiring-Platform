@@ -88,7 +88,7 @@ export function KitView({ message, link, image }: { message: string; link: strin
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 28, alignItems: "start" }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={image} alt="The Candidate Collection: your next great hire is already vetted" style={{ width: "100%", maxWidth: 460, borderRadius: 16, boxShadow: "0 12px 30px rgba(23,33,58,.15)" }} />
+      <img src={image} alt="Dear business owner, everyone wants to do you a favor." style={{ width: "100%", maxWidth: 460, borderRadius: 16, boxShadow: "0 12px 30px rgba(23,33,58,.15)" }} />
       <div style={{ display: "grid", gap: 16, minWidth: 0 }}>
         <div>
           <p className="small muted" style={{ margin: "0 0 6px", fontWeight: 600 }}>

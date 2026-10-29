@@ -16,11 +16,11 @@ export function refSlug(s: string) {
 
 export function shareLink(ref?: string | null) {
   const r = ref ? refSlug(ref) : "";
-  return `${siteUrl()}/${r ? `?r=${r}` : ""}`;
+  return `${siteUrl()}/why${r ? `?r=${r}` : ""}`;
 }
 
 export function ownerMessage(link: string) {
-  return `Hiring? Take a look at The Candidate Collection. Every candidate is met and vetted in person, so you see their strengths, experience and pay range at a glance. No job post, no pile of resumes. Free to browse, and one flat fee only if you hire.\n\n${link}`;
+  return `Dear business owner,\n\nEveryone wants to do you a favor when you hire. Hundreds of resumes. A call to explain what you need. Questions about how you run your business. A fee you'll feel for months.\n\nBy the time you meet a candidate, you've been interviewed more than they have.\n\nWe're business owners too. We built something better:\n${link}`;
 }
 
 // A new owner who came through someone's link: remember who sent them.

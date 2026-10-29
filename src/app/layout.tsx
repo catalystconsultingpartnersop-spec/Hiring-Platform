@@ -19,9 +19,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: brandName(),
-    title: "Your next great hire is already vetted.",
-    description: "Every candidate met and vetted in person. See strengths, experience and pay at a glance. Free to browse, one flat fee only if you hire.",
-    images: [{ url: "/share/og.png", width: 1200, height: 630, alt: "The Candidate Collection: your next great hire is already vetted" }],
+    title: "Dear business owner, everyone wants to do you a favor.",
+    description: "By the time you meet a candidate, you’ve been interviewed more than they have. We’re business owners too. We built something better.",
+    images: [{ url: "/share/og.png", width: 1200, height: 630, alt: "Dear business owner, everyone wants to do you a favor." }],
   },
   twitter: { card: "summary_large_image", images: ["/share/og.png"] },
 };
@@ -83,6 +83,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <h3>For businesses</h3>
               <Link href="/candidates">Browse candidates</Link>
               <Link href="/hiring-help">Hiring help</Link>
+              <Link href="/why">Why we started</Link>
               <Link href={signedIn ? "/account" : "/login"}>{signedIn ? "Your account" : "Sign in"}</Link>
             </nav>
             <nav aria-label="For candidates">

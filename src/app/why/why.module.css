@@ -1,0 +1,29 @@
+.hero { background: var(--ink); color: #fff; padding: clamp(56px, 8vw, 104px) 0 clamp(48px, 7vw, 88px); }
+.label { margin: 0 0 14px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 800; color: var(--marigold); }
+.hero h1 { font-size: clamp(40px, 6.5vw, 76px); line-height: 1.02; letter-spacing: -0.03em; max-width: 15ch; text-wrap: balance; }
+.lead { margin: 22px 0 0; font-size: clamp(19px, 2.2vw, 24px); line-height: 1.5; color: rgba(255, 255, 255, 0.85); max-width: 40ch; }
+
+.body { max-width: 760px; padding-top: clamp(44px, 6vw, 76px); }
+.body p { font-size: 19px; line-height: 1.7; color: var(--ink-2); margin: 0 0 18px; }
+.body strong { color: var(--ink); }
+.favors { list-style: none; padding: 0; margin: 4px 0 22px; display: grid; gap: 10px; }
+.favors li { padding-left: 18px; border-left: 3px solid var(--line); font-size: 19px; line-height: 1.55; color: var(--ink-2); }
+.favors li b { color: var(--ink); }
+.punch { font-family: var(--display); font-weight: 800; font-size: clamp(26px, 3.4vw, 36px) !important; line-height: 1.2 !important; color: var(--ink) !important; margin: 28px 0 !important; padding-left: 20px; border-left: 6px solid var(--marigold); text-wrap: balance; }
+
+.how { margin: 44px 0 8px; }
+.how h2 { font-size: clamp(26px, 3.2vw, 34px); margin-bottom: 18px; }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.step { background: var(--wash); border-radius: 16px; padding: 20px; }
+.step strong { display: block; font-family: var(--display); font-size: 21px; margin-bottom: 6px; }
+.step span { color: var(--ink-2); font-size: 16.5px; line-height: 1.5; }
+
+.works { margin-top: 40px; background: #fff8e1; border-radius: 18px; padding: clamp(22px, 3vw, 32px); }
+.works h2 { font-size: clamp(22px, 2.6vw, 28px); margin-bottom: 10px; }
+.works p { margin: 0 !important; }
+
+.closing { background: var(--ink); color: #fff; text-align: center; padding: clamp(52px, 8vw, 92px) 0; margin-top: clamp(48px, 6vw, 80px); }
+.closing h2 { font-size: clamp(28px, 4.5vw, 46px); max-width: 22ch; margin: 0 auto; text-wrap: balance; }
+.closing p { margin: 14px auto 0; color: rgba(255, 255, 255, 0.8); max-width: 44ch; }
+.actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 26px; }
+.light { color: #fff !important; border-color: rgba(255, 255, 255, 0.5) !important; }
