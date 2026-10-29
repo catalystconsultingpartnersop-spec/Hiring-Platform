@@ -7,6 +7,8 @@ import { dateShort, feeFor, money, refCode } from "@/lib/format";
 
 import { deleteCandidate } from "../../../actions";
 import { CandidateForm } from "../CandidateForm";
+import { RepPicker } from "../RepPicker";
+import { effectiveReps, repOptions } from "@/lib/reps";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 
 export default async function EditCandidate({ params, searchParams }: PageProps<"/admin/candidates/[id]">) {
@@ -68,6 +70,9 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
             Everything else was saved, but {sp.resume}. Attach it again in section 1 and save.
           </p>
         )}
+        {me.role === "admin" && (
+          <RepRow candidateId={c.id} addedBy={(c as unknown as { added_by: string | null }).added_by ?? null} />
+        )}
         {callRows.length > 0 && (
           <p style={{ marginTop: 10 }}>
             Onboarding call:{" "}
@@ -120,5 +125,16 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         </details>
       )}
     </>
+  );
+}
+
+async function RepRow({ candidateId, addedBy }: { candidateId: string; addedBy: string | null }) {
+  const [options, reps] = await Promise.all([repOptions(), effectiveReps([{ id: candidateId, added_by: addedBy }])]);
+  const r = reps.get(candidateId);
+  return (
+    <p style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <strong>Rep:</strong>
+      <RepPicker candidateId={candidateId} value={r?.id ?? ""} options={options} note={r?.viaCall ? "from their onboarding call" : undefined} />
+    </p>
   );
 }

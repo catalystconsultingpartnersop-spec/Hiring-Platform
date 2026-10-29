@@ -322,6 +322,18 @@ ${o.isAdmin ? "" : '<li style="margin:6px 0"><strong>Sign your rep agreement.</s
 };
 
 export const teamExtra = {
+  assigned: (o: { name: string; candidate: string; email: string; phone: string | null; lookingFor: string | null; link: string }): Mail => ({
+    audience: "team",
+    subject: `${o.candidate} is yours now`,
+    html:
+      hi(o.name) +
+      p(`<strong>${esc(o.candidate)}</strong> is now your candidate. Please reach out in the next day or two and set up a time to talk.`) +
+      box(
+        `${esc(o.email)}${o.phone ? `<br>${esc(o.phone)}` : ""}` + (o.lookingFor ? `<br><br><strong>Looking for:</strong> ${esc(o.lookingFor)}` : ""),
+      ) +
+      button(o.link, `Open ${first(o.candidate)}'s profile`),
+  }),
+
   workEmailReady: (o: { name: string; workEmail: string }): Mail => ({
     audience: "team",
     subject: "You're all set with your work email",

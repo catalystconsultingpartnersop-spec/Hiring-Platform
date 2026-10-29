@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { dateShort, refCode } from "@/lib/format";
 
 import { requireStaff } from "@/lib/session";
+import { effectiveReps, repOptions } from "@/lib/reps";
+import { RepPicker } from "./RepPicker";
 import styles from "../admin.module.css";
 
 export const dynamic = "force-dynamic";
@@ -26,24 +28,28 @@ type CandRow = {
   created_at: string;
   listed_at: string | null;
   updated_at: string;
+  added_by: string | null;
   staff: { full_name: string | null; email: string } | null;
 };
 
 export default async function CandidatesList({ searchParams }: PageProps<"/admin/candidates">) {
   const sp = await searchParams;
-  await requireStaff();
+  const me = await requireStaff();
+  const admin = me.role === "admin";
   const view = typeof sp.view === "string" && VIEWS.some(([v]) => v === sp.view) ? sp.view : "applied";
   const q = typeof sp.q === "string" ? sp.q.trim().toLowerCase() : "";
 
   const { data, error } = await db()
     .from("candidates")
-    .select("id, status, full_name, email, headline, role_category, created_at, listed_at, updated_at, staff(full_name, email)")
+    .select("id, status, full_name, email, headline, role_category, created_at, listed_at, updated_at, added_by, staff(full_name, email)")
     .order("created_at", { ascending: false });
   const cands = (data ?? []) as unknown as CandRow[];
   const count = (s: string) => cands.filter((c) => c.status === s).length;
   const shown = cands.filter((c) =>
     q ? [c.full_name, c.email, c.headline, c.role_category, refCode(c.id)].join(" ").toLowerCase().includes(q) : c.status === view,
   );
+  const [options, reps] = admin ? await Promise.all([repOptions(), effectiveReps(shown)]) : [[], new Map()];
+  const nameOf = new Map(options);
 
   return (
     <>
@@ -91,7 +97,7 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
                 <th>Name</th>
                 <th>Profile</th>
                 {q && <th>Status</th>}
-                <th>Added by</th>
+                <th>Rep</th>
                 <th>{view === "listed" && !q ? "Listed" : view === "hired" && !q ? "Hired" : "Added"}</th>
               </tr>
             </thead>
@@ -114,7 +120,20 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
                       <span className="tag">{c.status}</span>
                     </td>
                   )}
-                  <td>{c.staff ? c.staff.full_name || c.staff.email : <span className="muted">Applied online</span>}</td>
+                  <td>
+                    {admin ? (
+                      <RepPicker
+                        candidateId={c.id}
+                        value={reps.get(c.id)?.id ?? ""}
+                        options={options}
+                        note={reps.get(c.id)?.viaCall ? "from their call" : undefined}
+                      />
+                    ) : c.staff ? (
+                      c.staff.full_name || c.staff.email
+                    ) : (
+                      <span className="muted">Applied online</span>
+                    )}
+                  </td>
                   <td>{dateShort(view === "listed" && !q ? c.listed_at : view === "hired" && !q ? c.updated_at : c.created_at)}</td>
                 </tr>
               ))}

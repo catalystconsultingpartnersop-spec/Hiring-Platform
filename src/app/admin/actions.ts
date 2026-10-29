@@ -770,3 +770,43 @@ export async function setPartner(staffId: string, on: boolean) {
   revalidatePath("/admin/team");
   revalidatePath(`/admin/team/${staffId}`);
 }
+
+// ---------- Assigning a rep ----------
+
+// Heshy picks which rep a candidate belongs to (credit and commission follow).
+// The rep gets a short email unless they assigned themselves.
+export async function assignRep(candidateId: string, _prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requireAdmin();
+  const staffId = String(form.get("rep") ?? "");
+  let rep: { id: string; email: string; full_name: string | null } | null = null;
+  if (staffId) {
+    const { data } = await db().from("staff").select("id, email, full_name, active").eq("id", staffId).maybeSingle();
+    if (!data || !data.active) return { error: "That rep isn't active." };
+    rep = data;
+  }
+  const { data: c, error } = await db()
+    .from("candidates")
+    .update({ added_by: rep?.id ?? null })
+    .eq("id", candidateId)
+    .select("full_name, email, phone, application")
+    .single();
+  if (error || !c) return { error: "Couldn't save. Try again." };
+  await logActivity(staffActor(me), "rep_assigned", { candidate: refCode(candidateId), rep: rep?.email ?? null });
+  if (rep && rep.id !== me.id && rep.email.toLowerCase() !== me.email.toLowerCase()) {
+    const app = (c.application ?? {}) as Record<string, string | undefined>;
+    await sendEmail({
+      to: rep.email,
+      ...teamExtra.assigned({
+        name: rep.full_name ?? "",
+        candidate: c.full_name,
+        email: c.email,
+        phone: c.phone,
+        lookingFor: app.looking_for ?? null,
+        link: `${teamUrl()}/admin/candidates/${candidateId}`,
+      }),
+    });
+  }
+  revalidatePath("/admin/candidates");
+  revalidatePath(`/admin/candidates/${candidateId}`);
+  return { ok: rep ? `Assigned to ${rep.full_name || rep.email}.` : "Unassigned." };
+}
