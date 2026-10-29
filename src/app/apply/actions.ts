@@ -3,7 +3,7 @@
 import { bookCall } from "@/lib/calls";
 import { db, logActivity } from "@/lib/db";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
-import { brandName, contactPhone, siteUrl } from "@/lib/format";
+import { brandName, contactPhone, teamUrl } from "@/lib/format";
 import { readSignedToken, signedToken } from "@/lib/session";
 import { openSlots } from "@/lib/slots";
 import { formatInZone } from "@/lib/time";
@@ -83,7 +83,7 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
     `New candidate: ${full_name}${candidateId ? "" : " (not saved on the site; details below)"}`,
     `<p><strong>${escapeHtml(full_name)}</strong>, ${escapeHtml(email)}, ${escapeHtml(phone)}</p>
 <p>Looking for: ${escapeHtml(looking_for)}</p>
-${candidateId ? `<p><a href="${siteUrl()}/admin/candidates/${candidateId}">Open in admin</a></p>` : "<p><strong>This application couldn't be saved to the site, so this email is the only copy.</strong> The resume, if they sent one, is attached.</p>"}`,
+${candidateId ? `<p><a href="${teamUrl()}/admin/candidates/${candidateId}">Open in admin</a></p>` : "<p><strong>This application couldn't be saved to the site, so this email is the only copy.</strong> The resume, if they sent one, is attached.</p>"}`,
     {
       replyTo: email,
       attachments: resumeBuf ? [{ filename: `${full_name.replace(/[^\w ]/g, "")} resume.${resumeExt}`, content: resumeBuf }] : undefined,

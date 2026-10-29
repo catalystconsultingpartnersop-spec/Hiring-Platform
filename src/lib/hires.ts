@@ -1,7 +1,7 @@
 import { db, Hire, logActivity } from "./db";
 import { stripe } from "./stripe";
 import { emailAdmin, escapeHtml, sendEmail } from "./email";
-import { brandName, money, refCode, siteUrl } from "./format";
+import { brandName, money, refCode, teamUrl } from "./format";
 import { receiptEmailHtml, receiptNumber } from "./receipt";
 import { candidateHired, hireSummaryHtml } from "./notify";
 
@@ -90,7 +90,7 @@ ${receiptEmailHtml({
     `<p><strong>${escapeHtml(owner.company ?? "")}</strong> (${escapeHtml(owner.full_name ?? "")}, ${escapeHtml(owner.email)}) paid ${money(hire.amount_cents)} to hire <strong>${escapeHtml(cand.full_name)}</strong> (${ref}).</p>
 ${details.jobTitle ? `<p>Role: ${escapeHtml(details.jobTitle)}</p>` : ""}${details.startDate ? `<p>Expected start: ${escapeHtml(details.startDate)}</p>` : ""}
 ${hireSummaryHtml(notice)}
-<p><a href="${siteUrl()}/admin">Open the admin dashboard</a></p>`,
+<p><a href="${teamUrl()}/admin">Open the admin dashboard</a></p>`,
   );
   return { ok: true as const, already: false };
 }

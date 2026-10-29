@@ -1,7 +1,7 @@
 import { db, logActivity } from "./db";
 import { escapeHtml, sendEmail } from "./email";
 import { isOwnerEmail } from "./session";
-import { brandName, contactPhone, money, refCode, siteUrl } from "./format";
+import { brandName, contactPhone, money, refCode, siteUrl, teamUrl } from "./format";
 import type { HireDetails } from "./hires";
 
 type Rep = { id: string; email: string; full_name: string | null; active: boolean };
@@ -63,7 +63,7 @@ ${details.startDate ? `<tr><td style="padding:4px 14px 4px 0;color:#4a5570">Expe
 <tr><td style="padding:4px 14px 4px 0;color:#4a5570">Candidate</td><td>${escapeHtml(c.email)}${c.phone ? `, ${escapeHtml(c.phone)}` : ""}</td></tr>
 </table>
 <p><strong>Please check in with ${escapeHtml(c.full_name.split(" ")[0])}</strong> in the next day or two: congratulate them, make sure the offer arrived, and let us know if anything looks off.</p>
-<p><a href="${siteUrl()}/admin/candidates/${candidateId}">Open their profile</a></p>`,
+<p><a href="${teamUrl()}/admin/candidates/${candidateId}">Open their profile</a></p>`,
   });
   await logActivity("system", "rep_notified_of_hire", { candidate: refCode(candidateId), rep: rep.email });
   return { rep, repEmailed: sent.ok, toldOwners };

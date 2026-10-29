@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { db, logActivity } from "@/lib/db";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
 import { candidateHired, hireSummaryHtml } from "@/lib/notify";
-import { brandName, money, refCode, siteUrl } from "@/lib/format";
+import { brandName, money, refCode, teamUrl } from "@/lib/format";
 import {
   checkAdminPassword,
   checkPasswordHash,
@@ -128,7 +128,7 @@ export async function requestStaffLink(_prev: FormState, form: FormData): Promis
     to: email,
     subject: `Your ${brandName()} team sign-in link`,
     html: `<p>Click below to sign in to the ${escapeHtml(brandName())} back office. The link works once and expires in 30 minutes.</p>
-<p><a href="${siteUrl()}/admin/verify?token=${token}" style="display:inline-block;background:#17213a;color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Sign in</a></p>`,
+<p><a href="${teamUrl()}/admin/verify?token=${token}" style="display:inline-block;background:#17213a;color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Sign in</a></p>`,
   });
   return done;
 }
@@ -244,7 +244,7 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
       await emailAdmin(
         `Marked hired: ${c?.full_name} (${refCode(id)})`,
         `<p>${escapeHtml(me.name)} marked <strong>${escapeHtml(c?.full_name ?? "")}</strong> (${refCode(id)}) as hired from the back office. No payment went through the site for this hire.</p>
-<p><a href="${siteUrl()}/admin/candidates/${id}">Open their profile</a></p>
+<p><a href="${teamUrl()}/admin/candidates/${id}">Open their profile</a></p>
 ${hireSummaryHtml(notice)}`,
       );
     }
@@ -421,8 +421,8 @@ export async function addStaff(_prev: FormState, form: FormData): Promise<FormSt
     subject: `You've been added to the ${brandName()} team`,
     html: `<p>Hi ${escapeHtml(full_name.split(" ")[0])},</p>
 <p>You now have access to the ${escapeHtml(brandName())} back office, where you'll set your hours for onboarding calls and add candidates.</p>
-<p><a href="${siteUrl()}/admin/verify?token=${token}" style="display:inline-block;background:#17213a;color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Set your password</a></p>
-<p style="color:#4a5570;font-size:13px">This link works once, for 7 days. After that, sign in at ${siteUrl()}/admin/login with your email and password.</p>`,
+<p><a href="${teamUrl()}/admin/verify?token=${token}" style="display:inline-block;background:#17213a;color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Set your password</a></p>
+<p style="color:#4a5570;font-size:13px">This link works once, for 7 days. After that, sign in at ${teamUrl()}/admin/login with your email and password.</p>`,
   });
   revalidatePath("/admin/team");
   return { ok: `${full_name} was added and emailed a sign-in link.` };

@@ -1,6 +1,6 @@
 import { db, logActivity } from "./db";
 import { emailAdmin, escapeHtml, sendEmail } from "./email";
-import { brandName, contactPhone, siteUrl } from "./format";
+import { brandName, contactPhone, siteUrl, teamUrl } from "./format";
 import { callIcs } from "./ics";
 import { signedToken } from "./session";
 import { CALL_MINUTES, repsFreeAt } from "./slots";
@@ -136,7 +136,7 @@ Questions? Text or call us at ${escapeHtml(phone)}, or just reply to this email.
 <p>${escapeHtml(c.email)}${c.phone ? `, ${escapeHtml(c.phone)}` : ""}</p>
 ${app.looking_for ? `<p>Looking for: ${escapeHtml(app.looking_for)}</p>` : ""}
 ${link ? `<p>Your video link: <a href="${escapeHtml(link)}">${escapeHtml(link)}</a></p>` : `<p><strong>You don't have a video link saved.</strong> Add one on your My hours page, or email the candidate a link.</p>`}
-<p><a href="${siteUrl()}/admin/candidates/${c.id}">Open their profile</a> · <a href="${siteUrl()}/admin/calls">All your calls</a></p>`,
+<p><a href="${teamUrl()}/admin/candidates/${c.id}">Open their profile</a> · <a href="${teamUrl()}/admin/calls">All your calls</a></p>`,
     attachments: [{ filename: "onboarding-call.ics", content: ics(true) }],
   });
   await emailAdmin(

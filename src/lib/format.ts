@@ -80,3 +80,17 @@ export function contactPhoneHref() {
 export function contactEmail() {
   return process.env.ADMIN_EMAIL || "";
 }
+
+// The back-office address for links in staff emails, e.g.
+// https://team.thecandidatecollection.com. Falls back to the main site.
+export function teamUrl() {
+  if (process.env.TEAM_URL) return process.env.TEAM_URL.replace(/\/+$/, "");
+  const site = siteUrl();
+  try {
+    const u = new URL(site);
+    if (u.hostname === "localhost" || u.hostname.endsWith(".vercel.app") || u.hostname.startsWith("team.")) return site;
+    return `${u.protocol}//team.${u.hostname.replace(/^www\./, "")}`;
+  } catch {
+    return site;
+  }
+}
