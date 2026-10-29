@@ -70,6 +70,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/apply">Looking for work?</Link>
               {" · "}
               <Link href="/mission">Our mission</Link>
+              {" · "}
+              <Link href="/privacy">Privacy</Link>
             </span>
           </div>
         </footer>
