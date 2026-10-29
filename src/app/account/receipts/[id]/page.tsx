@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PrintButton } from "@/components/PrintButton";
+import { Letterhead } from "@/components/Logo";
 import { legalEntity } from "@/lib/agreement";
 import { db, Hire } from "@/lib/db";
 import { brandName, contactPhone, money, refCode } from "@/lib/format";
@@ -49,10 +50,10 @@ export default async function ReceiptPage({ params }: PageProps<"/account/receip
         <PrintButton />
       </div>
 
+      <Letterhead right={<>Receipt {receiptNumber(h.id)}<br />{contactPhone()}</>} />
       <div className={styles.receipt}>
         <div className={styles.head}>
           <div>
-            <p className={styles.brand}>{brandName()}</p>
             <h1>Receipt</h1>
           </div>
           <div className={styles.number}>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AgreementDoc } from "@/components/AgreementDoc";
 import { PrintButton } from "@/components/PrintButton";
+import { Letterhead } from "@/components/Logo";
 import { db, Owner, Unlock } from "@/lib/db";
 import { refCode } from "@/lib/format";
 import { currentOwner, isAdmin } from "@/lib/session";
@@ -28,6 +29,7 @@ export default async function SignedAgreement({ params }: PageProps<"/account/ag
         </Link>
         <PrintButton />
       </div>
+      <Letterhead right={<>Signed agreement<br />Candidate {refCode(unlock.candidate_id)}</>} />
       <AgreementDoc
         text={unlock.agreement_text}
         signature={{
