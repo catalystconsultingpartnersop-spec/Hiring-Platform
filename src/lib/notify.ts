@@ -91,7 +91,7 @@ export async function tellOtherOwners(candidateId: string, hiringOwnerEmail: str
   const [{ data: rows }, { data: c }] = await Promise.all([
     db()
       .from("unlocks")
-      .select("id, owners(email, full_name), hires(status)")
+      .select("*, owners(email, full_name), hires(status)")
       .eq("candidate_id", candidateId)
       .not("confirmed_at", "is", null),
     db().from("candidates").select("full_name, role_category").eq("id", candidateId).single(),
@@ -99,10 +99,11 @@ export async function tellOtherOwners(candidateId: string, hiringOwnerEmail: str
   if (!c) return told;
   const first = c.full_name.split(" ")[0];
   const browse = `${siteUrl()}/candidates${c.role_category ? `?role=${encodeURIComponent(c.role_category)}` : ""}`;
-  type Row = { id: string; owners: { email: string; full_name: string | null }; hires: { status: string }[] };
+  type Row = { id: string; passed_at?: string | null; owners: { email: string; full_name: string | null }; hires: { status: string }[] };
   for (const r of (rows ?? []) as unknown as Row[]) {
     if (r.owners.email.toLowerCase() === hiringOwnerEmail.toLowerCase()) continue;
     if (r.hires.some((h) => h.status === "paid" || h.status === "hired")) continue;
+    if (r.passed_at) continue; // they already said not a fit
     await sendEmail({
       to: r.owners.email,
       subject: `${c.full_name} is no longer available`,

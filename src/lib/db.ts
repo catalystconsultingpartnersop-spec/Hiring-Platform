@@ -112,6 +112,8 @@ export type Unlock = {
   card_label?: string | null;
   ip?: string | null;
   confirmed_at?: string | null; // set once a card is on file; until then nothing is unlocked
+  passed_at?: string | null; // the client said this candidate isn't a fit
+  pass_reason?: string | null;
 };
 
 export type Hire = {

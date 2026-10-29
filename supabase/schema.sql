@@ -226,3 +226,8 @@ revoke all on app_settings from anon, authenticated;
 
 -- 007: owner passwords
 alter table owners add column if not exists password_hash text;
+
+-- ---------- Passing on a candidate (same as migrations/008_passed.sql) ----------
+-- A client can step back from a candidate they signed for ("not a fit").
+alter table unlocks add column if not exists passed_at timestamptz;
+alter table unlocks add column if not exists pass_reason text;

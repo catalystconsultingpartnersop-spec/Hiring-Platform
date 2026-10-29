@@ -11,6 +11,7 @@ type Row = {
   candidate_id: string;
   signed_at: string;
   fee_cents: number | null;
+  passed_at?: string | null;
   candidates: { full_name: string; headline: string | null; status: string };
   hires: Hire[];
 };
@@ -20,11 +21,13 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
   const owner = await requireOwner("/account");
   const { data } = await db()
     .from("unlocks")
-    .select("id, candidate_id, signed_at, fee_cents, candidates(full_name, headline, status), hires(*)")
+    .select("*, candidates(full_name, headline, status), hires(*)")
     .eq("owner_id", owner.id)
     .not("confirmed_at", "is", null)
     .order("signed_at", { ascending: false });
-  const rows = (data ?? []) as unknown as Row[];
+  const all = (data ?? []) as unknown as Row[];
+  // Candidates they passed on go to the bottom.
+  const rows = [...all.filter((r) => !r.passed_at), ...all.filter((r) => r.passed_at)];
 
   return (
     <div className="wrap">
@@ -39,6 +42,13 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
         <p className="notice notice-bad" role="alert" style={{ marginBottom: 20 }}>
           We couldn&rsquo;t confirm your card, so nothing was unlocked and nothing was charged. Open the candidate and
           try again.
+        </p>
+      )}
+
+      {typeof sp.passed === "string" && (
+        <p className="notice notice-good" role="status" style={{ marginBottom: 20 }}>
+          Done. {sp.passed} is off your list, and nothing was charged. Thanks for telling us. If you change your mind,
+          open {sp.passed}&rsquo;s page and put them back.
         </p>
       )}
 
@@ -64,7 +74,7 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
               {rows.map((r) => {
                 const hire = [...r.hires].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
                 return (
-                  <tr key={r.id}>
+                  <tr key={r.id} style={r.passed_at ? { opacity: 0.6 } : undefined}>
                     <td>
                       <Link href={`/candidates/${r.candidate_id}`}>{r.candidates.full_name}</Link>
                       <div className="small muted">
@@ -91,6 +101,8 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
                         <span className="tag tag-good">Hired</span>
                       ) : hire?.status === "refunded" ? (
                         <span className="tag">Refunded</span>
+                      ) : r.passed_at ? (
+                        <span className="tag">Not a fit</span>
                       ) : r.candidates.status === "hired" ? (
                         <span className="tag">No longer available</span>
                       ) : (

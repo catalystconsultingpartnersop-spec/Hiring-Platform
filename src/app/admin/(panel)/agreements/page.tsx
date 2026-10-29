@@ -16,7 +16,7 @@ const PERIODS = [
   ["365", "Last 12 months"],
   ["all", "All time"],
 ] as const;
-const STAGES = ["all", "considering", "paid", "hired", "taken", "refunded", "no_card"] as const;
+const STAGES = ["all", "considering", "paid", "hired", "taken", "passed", "refunded", "no_card"] as const;
 
 const DAY = 864e5;
 
@@ -308,10 +308,16 @@ export default async function AgreementsPage({ searchParams }: PageProps<"/admin
                     </td>
                     <td>
                       <div className={styles.inline}>
-                        <span className={`tag ${st === "paid" || st === "hired" ? "tag-good" : st === "refunded" || st === "no_card" ? "" : "tag-gold"}`}>
+                        <span className={`tag ${st === "paid" || st === "hired" ? "tag-good" : st === "refunded" || st === "no_card" || st === "passed" ? "" : "tag-gold"}`}>
                           {STAGE_LABEL[st]}
                           {hire?.paid_at && st !== "refunded" ? ` ${dateShort(hire.paid_at)}` : ""}
                         </span>
+                        {st === "passed" && (
+                          <span className="small muted">
+                            {dateShort(u.passed_at)}
+                            {u.pass_reason ? `: ${u.pass_reason}` : ""}
+                          </span>
+                        )}
                         {hire?.paid_at && (
                           <Link className="small" href={`/account/receipts/${hire.id}`}>
                             Receipt

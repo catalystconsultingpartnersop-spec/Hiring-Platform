@@ -6,7 +6,8 @@ import { AGREEMENT_VERSION, agreementText } from "@/lib/agreement";
 import { getListed, getTiers } from "@/lib/catalog";
 import { db, logActivity, Unlock } from "@/lib/db";
 import { emailAdmin, escapeHtml } from "@/lib/email";
-import { brandName, contactPhone, feeFor, refCode, siteUrl } from "@/lib/format";
+import { brandName, contactPhone, feeFor, refCode, siteUrl, teamUrl } from "@/lib/format";
+import { PASS_REASONS } from "@/lib/pass";
 import { cardSetupUrl, chargeCardOnFile, unlockWithSavedCard } from "@/lib/cards";
 import { HireDetails } from "@/lib/hires";
 import { latestHire } from "@/lib/hires";
@@ -105,6 +106,8 @@ export async function startHire(candidateId: string, form: FormData) {
 
   const existing = await latestHire(unlock.id);
   if (existing && (existing.status === "paid" || existing.status === "hired")) redirect(`/candidates/${candidateId}`);
+  // Hiring someone they had passed on puts them back on the list.
+  if (unlock.passed_at) await db().from("unlocks").update({ passed_at: null, pass_reason: null }).eq("id", unlock.id);
   const { data: still } = await db().from("candidates").select("status").eq("id", candidateId).single();
   if (still?.status === "hired") redirect(`/candidates/${candidateId}`); // no longer available
   if (form.get("confirm") !== "on") redirect(`${hirePage}?error=confirm`);
@@ -178,4 +181,47 @@ export async function startHire(candidateId: string, form: FormData) {
   }
   await logActivity(`owner:${owner.email}`, "hire_checkout_started", { candidate: ref, amount_cents: unlock.fee_cents });
   redirect(url);
+}
+
+// The client met the candidate (or changed plans) and wants them off their list.
+
+async function ownUnlock(candidateId: string) {
+  const owner = await requireOwner(`/candidates/${candidateId}`);
+  const { data } = await db()
+    .from("unlocks")
+    .select("*, candidates(full_name)")
+    .eq("owner_id", owner.id)
+    .eq("candidate_id", candidateId)
+    .not("confirmed_at", "is", null)
+    .maybeSingle();
+  if (!data) redirect(`/candidates/${candidateId}`);
+  return { owner, unlock: data as Unlock & { candidates: { full_name: string } } };
+}
+
+export async function passOnCandidate(candidateId: string, form: FormData) {
+  const { owner, unlock } = await ownUnlock(candidateId);
+  const hire = await latestHire(unlock.id);
+  if (hire && (hire.status === "paid" || hire.status === "hired")) redirect(`/candidates/${candidateId}`);
+  const pick = String(form.get("reason") ?? "");
+  const note = String(form.get("note") ?? "").trim().slice(0, 500);
+  const reason = [(PASS_REASONS as readonly string[]).includes(pick) ? pick : "", note].filter(Boolean).join(". ") || null;
+  await db().from("unlocks").update({ passed_at: new Date().toISOString(), pass_reason: reason }).eq("id", unlock.id);
+  const name = unlock.candidates.full_name;
+  const ref = refCode(candidateId);
+  await logActivity(`owner:${owner.email}`, "candidate_passed", { candidate: ref, reason });
+  await emailAdmin(
+    `Passed: ${owner.company ?? owner.email} passed on ${name} (${ref})`,
+    `<p><strong>${escapeHtml(owner.company ?? "")}</strong> (${escapeHtml(owner.full_name ?? "")}, ${escapeHtml(owner.email)}) took <strong>${escapeHtml(name)}</strong> (${ref}) off their list.</p>
+<p><strong>Why:</strong> ${reason ? escapeHtml(reason) : "No reason given."}</p>
+<p>${escapeHtml(name.split(" ")[0])} stays listed for other clients. The signed agreement stays on file, so if this client hires them later, the fee still applies.</p>
+<p><a href="${teamUrl()}/admin/candidates/${candidateId}">Open the candidate</a></p>`,
+  );
+  redirect(`/account?passed=${encodeURIComponent(name.split(" ")[0])}`);
+}
+
+export async function reconsiderCandidate(candidateId: string) {
+  const { owner, unlock } = await ownUnlock(candidateId);
+  await db().from("unlocks").update({ passed_at: null, pass_reason: null }).eq("id", unlock.id);
+  await logActivity(`owner:${owner.email}`, "candidate_reconsidered", { candidate: refCode(candidateId) });
+  redirect(`/candidates/${candidateId}?back=1`);
 }

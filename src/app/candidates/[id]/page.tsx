@@ -7,7 +7,9 @@ import { wiredFor } from "@/lib/strengths";
 import { Candidate, db, Hire, PublicCandidate, Unlock } from "@/lib/db";
 import { dateShort, feeFor, LEVEL_LABEL, lines, money, refCode, salaryRange, WORK_MODE_LABEL } from "@/lib/format";
 import { latestHire, markPaidFromSession } from "@/lib/hires";
+import { PASS_REASONS } from "@/lib/pass";
 import { currentOwner } from "@/lib/session";
+import { passOnCandidate, reconsiderCandidate } from "./actions";
 import styles from "./detail.module.css";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +59,7 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
         justUnlocked={sp.unlocked === "1"}
         paidNotice={paidNotice}
         hireNote={typeof sp.hire === "string" ? sp.hire : ""}
+        cameBack={sp.back === "1"}
       />
     );
   }
@@ -184,6 +187,7 @@ function Unlocked({
   justUnlocked,
   paidNotice,
   hireNote,
+  cameBack,
 }: {
   c: Candidate;
   unlock: Unlock;
@@ -191,10 +195,12 @@ function Unlocked({
   justUnlocked: boolean;
   paidNotice: boolean;
   hireNote: string;
+  cameBack: boolean;
 }) {
   const status = hire?.status;
+  const passed = !!unlock.passed_at && status !== "paid" && status !== "hired";
   // Hired by another company while this owner was still considering.
-  const taken = c.status === "hired" && status !== "paid" && status !== "hired";
+  const taken = !passed && c.status === "hired" && status !== "paid" && status !== "hired";
   const first = c.full_name.split(" ")[0];
   return (
     <div className={`wrap ${styles.page}`}>
@@ -209,6 +215,11 @@ function Unlocked({
             See similar candidates
           </Link>
         </div>
+      )}
+      {cameBack && (
+        <p className="notice notice-good" role="status">
+          {first} is back on your list.
+        </p>
       )}
       {justUnlocked && <p className="notice notice-good">Signed. Here&rsquo;s who they are. A copy of the agreement is in your email.</p>}
       {(paidNotice || hireNote === "paid") && hire && (
@@ -266,7 +277,27 @@ function Unlocked({
 
         <aside className={styles.side}>
           <div className="panel">
-            {taken ? (
+            {passed ? (
+              <>
+                <span className="tag">Not a fit · {dateShort(unlock.passed_at)}</span>
+                <p className={styles.sideMsg}>
+                  You took {first} off your list{unlock.pass_reason ? `: “${unlock.pass_reason}”` : "."} Thanks for
+                  letting us know.
+                </p>
+                <form action={reconsiderCandidate.bind(null, c.id)}>
+                  <button className="btn btn-ghost" type="submit" style={{ width: "100%", marginTop: 14 }}>
+                    Changed your mind? Put {first} back
+                  </button>
+                </form>
+                <Link
+                  className="btn btn-gold"
+                  href={`/candidates${c.role_category ? `?role=${encodeURIComponent(c.role_category)}` : ""}`}
+                  style={{ width: "100%", marginTop: 10 }}
+                >
+                  See similar candidates
+                </Link>
+              </>
+            ) : taken ? (
               <>
                 <span className="tag">No longer available</span>
                 <p className={styles.sideMsg}>
@@ -291,6 +322,27 @@ function Unlocked({
                 <Link className="btn btn-gold" href={`/candidates/${c.id}/hire`} style={{ width: "100%", marginTop: 18 }}>
                   I&rsquo;ve decided to hire
                 </Link>
+                <details className={styles.pass}>
+                  <summary>Not a fit? Take {first} off your list</summary>
+                  <form action={passOnCandidate.bind(null, c.id)}>
+                    <p className="small muted" style={{ margin: "10px 0 8px" }}>
+                      No problem. It helps us find you better matches if you tell us why.
+                    </p>
+                    {PASS_REASONS.map((r, i) => (
+                      <label key={r} className={styles.passReason}>
+                        <input type="radio" name="reason" value={r} defaultChecked={i === 0} /> {r}
+                      </label>
+                    ))}
+                    <textarea className="input" name="note" rows={2} maxLength={500} placeholder="Anything else? (optional)" />
+                    <button className="btn btn-ghost btn-small" type="submit" style={{ marginTop: 10, width: "100%" }}>
+                      Remove from my list
+                    </button>
+                    <p className="small muted" style={{ margin: "10px 0 0" }}>
+                      Nothing is charged. Your agreement stays on file, so if you ever do hire {first}, the usual fee
+                      applies. You can put {first} back anytime.
+                    </p>
+                  </form>
+                </details>
               </>
             ) : status === "paid" ? (
               <>
