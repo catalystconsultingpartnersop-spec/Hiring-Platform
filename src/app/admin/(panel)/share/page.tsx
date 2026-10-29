@@ -31,7 +31,7 @@ export default async function ShareKit() {
           )}
         </p>
       </div>
-      <KitView message={ownerMessage(link)} link={link} image="/share/owner-card.png" />
+      <KitView message={ownerMessage(ref)} link={link} image="/share/owner-card.png" />
       {admin && (
         <section className="panel" style={{ marginTop: 32 }}>
           <h2 style={{ fontSize: 19, margin: 0 }}>Give the kit to a networker</h2>

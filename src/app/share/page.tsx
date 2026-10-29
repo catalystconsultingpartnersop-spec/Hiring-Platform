@@ -23,7 +23,7 @@ export default async function SharePage({ searchParams }: PageProps<"/share">) {
           they make this year.
         </p>
       </div>
-      <KitView message={ownerMessage(link)} link={link} image="/share/owner-card.png" />
+      <KitView message={ownerMessage(ref)} link={link} image="/share/owner-card.png" />
     </div>
   );
 }
