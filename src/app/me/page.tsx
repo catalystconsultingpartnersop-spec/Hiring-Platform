@@ -9,7 +9,9 @@ import { contactPhone, contactPhoneHref, dateShort } from "@/lib/format";
 import { repFor } from "@/lib/notify";
 import { currentCandidateId, signedToken } from "@/lib/session";
 import { formatInZone, nowMs } from "@/lib/time";
+import { loadPath, pathState } from "@/lib/path";
 import { hideMyProfile, showMyProfile, signOutCandidate, tellUsAJob } from "./actions";
+import { Intro, Intros } from "./Intros";
 import styles from "./me.module.css";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +24,13 @@ const DONE: Record<string, React.ReactNode> = {
   paused: "Your profile is hidden from employers. Turn it back on whenever you're ready.",
   back: "Welcome back! Your profile is visible to employers again.",
   job: "Congratulations! We've let your rep know, and your profile is hidden from employers.",
+  booked: "You're booked. We've emailed you both a calendar invite.",
+  retime: "Got it. We've asked them for other times.",
+  yes: "Thanks! We've let them know.",
+  declined: "Done. We've let them know kindly.",
+  refs: "Sent. They'll have your references right away.",
+  "pick-error": "That time is no longer available. Pick another one.",
+  "refs-error": "Add at least one reference with a phone or email.",
 };
 
 export default async function MyPage({ searchParams }: PageProps<"/me">) {
@@ -32,7 +41,7 @@ export default async function MyPage({ searchParams }: PageProps<"/me">) {
   if (!data || data.status === "archived") redirect("/me/login");
   const c = data as Candidate;
 
-  const [{ data: calls }, { count: asked }, rep] = await Promise.all([
+  const [{ data: calls }, { data: unlockRows }, rep] = await Promise.all([
     db()
       .from("onboarding_calls")
       .select("id, starts_at, status, candidate_time_zone")
@@ -40,17 +49,43 @@ export default async function MyPage({ searchParams }: PageProps<"/me">) {
       .neq("status", "cancelled")
       .order("starts_at", { ascending: false })
       .limit(1),
-    db().from("unlocks").select("id", { count: "exact", head: true }).eq("candidate_id", id).not("confirmed_at", "is", null),
+    db()
+      .from("unlocks")
+      .select("*, owners(company, full_name), hires(status, created_at)")
+      .eq("candidate_id", id)
+      .not("confirmed_at", "is", null)
+      .order("signed_at", { ascending: false }),
     repFor(id),
   ]);
   const call = (calls?.[0] as Call | undefined) ?? null;
-  const meetCount = asked ?? 0;
+  type URow = {
+    id: string;
+    passed_at: string | null;
+    candidate_declined_at: string | null;
+    owners: { company: string | null; full_name: string | null };
+    hires: { status: string; created_at: string }[];
+  };
+  const urows = (unlockRows ?? []) as URow[];
+  const meetCount = urows.length;
+  const NOW = nowMs();
+  const paths = await loadPath(urows.map((u) => u.id));
+  const intros: Intro[] = urows.map((u) => ({
+    id: u.id,
+    company: u.owners.company || "An employer",
+    contact: u.owners.full_name,
+    path: pathState(u, paths, {
+      hireStatus: [...u.hires].sort((a, b) => b.created_at.localeCompare(a.created_at))[0]?.status,
+      candidateStatus: c.status,
+      nowMs: NOW,
+    }),
+  }));
+  const myTz = (calls?.[0] as Call | undefined)?.candidate_time_zone || "America/New_York";
   const views = c.profile_views ?? 0;
   const first = c.full_name.split(" ")[0];
 
   const s = c.status;
   const wasListed = !!c.listed_at || s === "listed" || s === "hired";
-  const upcoming = call && call.status === "booked" && Date.parse(call.starts_at) > nowMs() ? call : null;
+  const upcoming = call && call.status === "booked" && Date.parse(call.starts_at) > NOW ? call : null;
   const talked = s !== "applied" || call?.status === "done" || (!!call && call.status === "booked" && !upcoming);
   const callWhen = upcoming ? formatInZone(upcoming.starts_at, upcoming.candidate_time_zone ?? "America/New_York") : "";
   const bookLink = `/apply/book?c=${signedToken(`cand_${id}`, 30)}`;
@@ -90,7 +125,7 @@ export default async function MyPage({ searchParams }: PageProps<"/me">) {
     s === "hired"
       ? { state: "done", title: "Employers want to meet you" }
       : meetCount > 0
-        ? { state: "now", title: "Employers want to meet you", detail: `${meetCount} ${meetCount === 1 ? "has" : "have"} asked so far. Expect them to reach out.` }
+        ? { state: "now", title: "Employers want to meet you", detail: `${meetCount} ${meetCount === 1 ? "has" : "have"} asked so far. See below.` }
         : s === "listed"
           ? { state: "now", title: "Employers want to meet you", detail: "Employers are browsing. We'll show it here when one asks to meet you." }
           : { state: "next", title: "Employers want to meet you" },
@@ -128,6 +163,8 @@ export default async function MyPage({ searchParams }: PageProps<"/me">) {
               ))}
             </ol>
           </section>
+
+          <Intros intros={intros} tz={myTz} now={NOW} />
 
           {showCard ? (
             <section className={styles.cardWrap}>

@@ -116,6 +116,7 @@ export type Unlock = {
   ip?: string | null;
   confirmed_at?: string | null; // set once a card is on file; until then nothing is unlocked
   passed_at?: string | null; // the client said this candidate isn't a fit
+  candidate_declined_at?: string | null; // the candidate said no to this employer
   pass_reason?: string | null;
 };
 

@@ -8,6 +8,7 @@ import { requireStaff } from "@/lib/session";
 import { nowMs } from "@/lib/time";
 import { commissionPercent } from "@/lib/settings";
 import { EmailCheck } from "./EmailCheck";
+import { Introductions } from "./Introductions";
 import { RepDashboard } from "./RepDashboard";
 import styles from "./admin.module.css";
 
@@ -212,6 +213,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
           )}
         </div>
       </div>
+      <Introductions rows={agreements} now={NOW} />
     </>
   );
 }

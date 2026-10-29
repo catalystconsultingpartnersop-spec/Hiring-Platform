@@ -5,6 +5,7 @@ import { dateShort, money, refCode } from "@/lib/format";
 import { commissionPercent } from "@/lib/settings";
 import { formatInZone, COMPANY_TZ } from "@/lib/time";
 import styles from "./admin.module.css";
+import { Introductions } from "./Introductions";
 
 // One rep's numbers: who they brought in, what it earned, and their commission.
 export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: string; name: string; self: boolean; nowIso: string }) {
@@ -42,7 +43,15 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
     <>
       <div className="page-head" style={{ paddingBottom: 0 }}>
         <h1>{self ? `Hi, ${name.split(" ")[0]}` : name}</h1>
-        <p>{self ? "Your candidates, your hires and your commission." : "This rep's candidates, hires and commission."}</p>
+        <p>
+          {self ? "Your candidates, your hires and your commission." : "This rep's candidates, hires and commission."}
+          {self && (
+            <>
+              {" "}
+              New here? <Link href="/admin/guide">Read the rep guide</Link> (3 minutes).
+            </>
+          )}
+        </p>
       </div>
 
       <div className={styles.stats}>
@@ -160,6 +169,8 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
           )}
         </div>
       </div>
+
+      <Introductions rows={agreements.filter((a) => a.candidates.added_by === staffId)} now={Date.parse(nowIso)} title={self ? "Your candidates' introductions" : "Introductions in progress"} />
 
       <h2 className={styles.h2}>Recently added</h2>
       {mine.length === 0 ? (

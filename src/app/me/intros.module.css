@@ -1,0 +1,29 @@
+.wrap { margin-top: 28px; scroll-margin-top: 16px; }
+.h2 { font-size: 22px; margin: 0; }
+.list { display: grid; gap: 14px; }
+.card { border: 2px solid var(--ink); border-radius: 18px; padding: 18px 20px; background: #fff; box-shadow: 0 20px 40px -32px rgba(23, 33, 58, 0.6); }
+.closed { border-color: var(--line); box-shadow: none; opacity: 0.75; }
+.top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.top :global(.tag) { white-space: nowrap; }
+.co { margin: 0; font-family: var(--display); font-weight: 800; font-size: 20px; }
+.body { margin-top: 10px; }
+.body p { margin: 0 0 10px; line-height: 1.5; }
+.note { font-style: italic; color: var(--ink-2); border-left: 3px solid var(--marigold); padding-left: 10px; }
+.when { font-family: var(--display); font-size: 19px; font-weight: 700; }
+.pick { display: grid; gap: 8px; margin-top: 6px; }
+.pick label { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 12px; cursor: pointer; font-weight: 600; }
+.pick label:has(input:checked) { border-color: var(--ink); background: var(--wash); }
+.pick input { accent-color: var(--ink); }
+.pick :global(.btn) { justify-self: start; margin-top: 4px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; }
+.more { margin-top: 12px; font-size: 14px; }
+.more summary { cursor: pointer; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; }
+.more form { margin-top: 8px; }
+.refs { display: grid; gap: 12px; }
+.refs fieldset { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.refs legend { font-weight: 700; font-size: 14px; padding: 0 4px; }
+.refs :global(.btn) { justify-self: start; }
+@media (max-width: 560px) {
+  .refs fieldset { grid-template-columns: 1fr; }
+  .pick :global(.btn) { justify-self: stretch; }
+}

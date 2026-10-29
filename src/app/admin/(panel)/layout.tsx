@@ -24,6 +24,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {admin && <Link href="/admin/team">Team</Link>}
         {admin && <Link href="/admin/settings">Fee settings</Link>}
         {admin && <Link href="/admin/activity">Activity</Link>}
+        <Link href="/admin/guide">Rep guide</Link>
         <Link href="/admin/password" className={styles.me} title="Change your password">
           {me.name}
           {admin ? "" : " (rep)"}

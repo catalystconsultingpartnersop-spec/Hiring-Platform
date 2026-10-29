@@ -8,6 +8,7 @@ import { db, logActivity, Unlock } from "@/lib/db";
 import { emailAdmin, escapeHtml } from "@/lib/email";
 import { brandName, contactPhone, feeFor, refCode, siteUrl, teamUrl } from "@/lib/format";
 import { PASS_REASONS } from "@/lib/pass";
+import { emailOwnerPassed } from "@/lib/pathEmails";
 import { cardSetupUrl, chargeCardOnFile, unlockWithSavedCard } from "@/lib/cards";
 import { HireDetails } from "@/lib/hires";
 import { latestHire } from "@/lib/hires";
@@ -209,6 +210,12 @@ export async function passOnCandidate(candidateId: string, form: FormData) {
   const name = unlock.candidates.full_name;
   const ref = refCode(candidateId);
   await logActivity(`owner:${owner.email}`, "candidate_passed", { candidate: ref, reason });
+  await db().from("meetings").update({ status: "cancelled" }).eq("unlock_id", unlock.id).in("status", ["proposed", "declined"]);
+  try {
+    await emailOwnerPassed(unlock.id, reason);
+  } catch (e) {
+    console.error(e);
+  }
   await emailAdmin(
     `Passed: ${owner.company ?? owner.email} passed on ${name} (${ref})`,
     `<p><strong>${escapeHtml(owner.company ?? "")}</strong> (${escapeHtml(owner.full_name ?? "")}, ${escapeHtml(owner.email)}) took <strong>${escapeHtml(name)}</strong> (${ref}) off their list.</p>

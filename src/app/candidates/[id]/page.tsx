@@ -9,7 +9,10 @@ import { Candidate, db, Hire, PublicCandidate, Unlock } from "@/lib/db";
 import { dateShort, feeFor, LEVEL_LABEL, lines, money, refCode, salaryRange, WORK_MODE_LABEL } from "@/lib/format";
 import { latestHire, markPaidFromSession } from "@/lib/hires";
 import { PASS_REASONS } from "@/lib/pass";
+import { loadPath, PathState, pathState } from "@/lib/path";
 import { currentOwner, currentStaff } from "@/lib/session";
+import { nowMs } from "@/lib/time";
+import { NextSteps } from "./NextSteps";
 import { passOnCandidate, reconsiderCandidate } from "./actions";
 import styles from "./detail.module.css";
 
@@ -52,8 +55,16 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
   if (unlock) {
     const { data } = await db().from("candidates").select("*").eq("id", id).single();
     const hire = await latestHire(unlock.id);
+    const path = pathState(unlock, await loadPath([unlock.id]), {
+      hireStatus: hire?.status,
+      candidateStatus: (data as Candidate).status,
+      nowMs: nowMs(),
+    });
     return (
       <Unlocked
+        path={path}
+        again={sp.again === "1"}
+        step={typeof sp.step === "string" ? sp.step : ""}
         c={data as Candidate}
         unlock={unlock}
         hire={hire}
@@ -205,7 +216,13 @@ function Unlocked({
   paidNotice,
   hireNote,
   cameBack,
+  path,
+  again,
+  step,
 }: {
+  path: PathState;
+  again: boolean;
+  step: string;
   c: Candidate;
   unlock: Unlock;
   hire: Hire | null;
@@ -280,6 +297,7 @@ function Unlocked({
               )}
             </ul>
           </div>
+          <NextSteps c={c} path={path} again={again} step={step} />
           <Profile c={c} />
           {c.full_profile && (
             <section className={styles.full}>

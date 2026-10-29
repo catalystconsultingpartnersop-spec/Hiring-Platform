@@ -422,6 +422,7 @@ export async function addStaff(_prev: FormState, form: FormData): Promise<FormSt
     html: `<p>Hi ${escapeHtml(full_name.split(" ")[0])},</p>
 <p>You now have access to the ${escapeHtml(brandName())} back office, where you'll set your hours for onboarding calls and add candidates.</p>
 <p><a href="${teamUrl()}/admin/verify?token=${token}" style="display:inline-block;background:#17213a;color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Set your password</a></p>
+<p>Once you're in, read the <a href="${teamUrl()}/admin/guide">rep guide</a>. It takes 3 minutes and covers everything you do.</p>
 <p style="color:#4a5570;font-size:13px">This link works once, for 7 days. After that, sign in at ${teamUrl()}/admin/login with your email and password.</p>`,
   });
   revalidatePath("/admin/team");

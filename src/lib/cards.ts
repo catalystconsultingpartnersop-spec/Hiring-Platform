@@ -4,6 +4,7 @@ import { agreementEmailHtml } from "./agreementView";
 import { emailAdmin, escapeHtml, sendEmail } from "./email";
 import { money, refCode, siteUrl, teamUrl } from "./format";
 import { HireDetails, markHirePaid } from "./hires";
+import { emailIntroStarted } from "./pathEmails";
 import { stripe } from "./stripe";
 
 // Card on file: owners add a card when they sign an agreement (nothing is
@@ -104,6 +105,12 @@ ${agreementEmailHtml(unlock.agreement_text, {
     `<p><strong>${escapeHtml(owner.company ?? "")}</strong> (${escapeHtml(owner.full_name ?? "")}, ${escapeHtml(owner.email)}${owner.phone ? `, ${escapeHtml(owner.phone)}` : ""}) signed the agreement for <strong>${escapeHtml(cand?.full_name ?? "")}</strong> (${ref}). Fee: ${money(unlock.fee_cents)}. Card on file: ${escapeHtml(label)}.</p>
 <p><a href="${teamUrl()}/admin">Open the admin dashboard</a></p>`,
   );
+  // Tell the candidate (and their rep) that someone wants to meet them.
+  try {
+    await emailIntroStarted(unlock.id);
+  } catch (e) {
+    console.error("intro email failed", e);
+  }
 }
 
 // Charges the fee to the card on file for this agreement. Returns the hire id

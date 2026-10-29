@@ -243,3 +243,51 @@ language sql security definer set search_path = public as $$
 $$;
 revoke all on function bump_profile_view(uuid) from public, anon, authenticated;
 grant execute on function bump_profile_view(uuid) to service_role;
+
+-- ---------- Hiring path (same as migrations/010_hiring_path.sql) ----------
+-- The path from "unlocked" to "hired": calls and meetings the client offers
+-- times for, both sides' feedback, and reference requests.
+create table if not exists meetings (
+  id uuid primary key default gen_random_uuid(),
+  unlock_id uuid not null references unlocks(id) on delete cascade,
+  kind text not null check (kind in ('call', 'meeting')),
+  mode text not null check (mode in ('phone', 'video', 'in_person')),
+  place text,                               -- video link or address
+  slots jsonb not null default '[]'::jsonb, -- start times the client offered (ISO)
+  minutes integer not null default 30,
+  note text,
+  time_zone text,                           -- the client's time zone
+  status text not null default 'proposed'
+    check (status in ('proposed', 'booked', 'declined', 'cancelled')),
+  starts_at timestamptz,
+  owner_verdict text check (owner_verdict in ('yes', 'no')),
+  candidate_verdict text check (candidate_verdict in ('yes', 'no')),
+  candidate_note text,                      -- e.g. "none of these times work"
+  asked_feedback_at timestamptz,
+  nudged_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists meetings_unlock_idx on meetings (unlock_id);
+
+create table if not exists reference_requests (
+  id uuid primary key default gen_random_uuid(),
+  unlock_id uuid not null references unlocks(id) on delete cascade,
+  note text,
+  refs jsonb,                               -- [{name, relation, phone, email}]
+  given_at timestamptz,
+  nudged_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists reference_requests_unlock_idx on reference_requests (unlock_id);
+
+-- The candidate can politely decline an employer.
+alter table unlocks add column if not exists candidate_declined_at timestamptz;
+alter table unlocks add column if not exists candidate_decline_note text;
+-- When we last nudged the client to take the next step.
+alter table unlocks add column if not exists owner_nudged_at timestamptz;
+
+alter table meetings enable row level security;
+alter table reference_requests enable row level security;
+grant all on meetings, reference_requests to service_role;
+revoke all on meetings, reference_requests from anon, authenticated;

@@ -5,6 +5,8 @@ import { Candidate, db, logActivity } from "@/lib/db";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
 import { brandName, candidateUrl, teamUrl } from "@/lib/format";
 import { repFor } from "@/lib/notify";
+import { Meeting, Reference, RefRequest } from "@/lib/path";
+import { emailBooked, emailCandidateDeclined, emailNeedOtherTimes, emailRefsGiven, emailVerdict } from "@/lib/pathEmails";
 import { currentCandidateId, endCandidateSession, hashToken, isOwnerEmail, newLoginToken, startCandidateSession } from "@/lib/session";
 
 export type LinkState = { sent?: string; error?: string };
@@ -138,4 +140,127 @@ export async function tellUsAJob(form: FormData) {
 export async function signOutCandidate() {
   await endCandidateSession();
   redirect("/join");
+}
+
+// ---------- The hiring path, candidate's side ----------
+
+async function myMeeting(meetingId: string) {
+  const c = await me();
+  const { data } = await db().from("meetings").select("*, unlocks(id, candidate_id)").eq("id", meetingId).maybeSingle();
+  const row = data as (Meeting & { unlocks: { id: string; candidate_id: string } }) | null;
+  if (!row || row.unlocks.candidate_id !== c.id) redirect("/me");
+  return { c, m: row };
+}
+
+export async function pickTime(meetingId: string, form: FormData) {
+  const { c, m } = await myMeeting(meetingId);
+  const slot = String(form.get("slot") ?? "");
+  if (m.status !== "proposed" || !m.slots.includes(slot) || Date.parse(slot) < Date.now()) redirect("/me?done=pick-error#intros");
+  const { data } = await db()
+    .from("meetings")
+    .update({ status: "booked", starts_at: slot, updated_at: new Date().toISOString() })
+    .eq("id", m.id)
+    .eq("status", "proposed")
+    .select("*")
+    .maybeSingle();
+  if (!data) redirect("/me#intros");
+  await logActivity(`candidate:${c.email}`, "time_picked", { meeting: m.id, kind: m.kind });
+  try {
+    await emailBooked(data as Meeting);
+  } catch (e) {
+    console.error(e);
+  }
+  redirect("/me?done=booked#intros");
+}
+
+export async function noTimesWork(meetingId: string, form: FormData) {
+  const { c, m } = await myMeeting(meetingId);
+  if (m.status !== "proposed") redirect("/me#intros");
+  const note = String(form.get("note") ?? "").trim().slice(0, 500) || null;
+  const { data } = await db()
+    .from("meetings")
+    .update({ status: "declined", candidate_note: note, updated_at: new Date().toISOString() })
+    .eq("id", m.id)
+    .select("*")
+    .single();
+  await logActivity(`candidate:${c.email}`, "asked_other_times", { meeting: m.id });
+  try {
+    await emailNeedOtherTimes(data as Meeting);
+  } catch (e) {
+    console.error(e);
+  }
+  redirect("/me?done=retime#intros");
+}
+
+export async function candidateKeepGoing(meetingId: string) {
+  const { c, m } = await myMeeting(meetingId);
+  const { data } = await db()
+    .from("meetings")
+    .update({ candidate_verdict: "yes", updated_at: new Date().toISOString() })
+    .eq("id", m.id)
+    .select("*")
+    .single();
+  await logActivity(`candidate:${c.email}`, "candidate_keep_going", { meeting: m.id });
+  try {
+    await emailVerdict(data as Meeting, "candidate", "yes");
+  } catch (e) {
+    console.error(e);
+  }
+  redirect("/me?done=yes#intros");
+}
+
+// "Not for me": politely decline this employer, at any step.
+export async function declineEmployer(unlockId: string, form: FormData) {
+  const c = await me();
+  const note = String(form.get("note") ?? "").trim().slice(0, 500) || null;
+  const { data } = await db()
+    .from("unlocks")
+    .update({ candidate_declined_at: new Date().toISOString(), candidate_decline_note: note })
+    .eq("id", unlockId)
+    .eq("candidate_id", c.id)
+    .is("candidate_declined_at", null)
+    .select("id")
+    .maybeSingle();
+  if (data) {
+    await db().from("meetings").update({ status: "cancelled" }).eq("unlock_id", unlockId).in("status", ["proposed", "declined"]);
+    const { data: last } = await db()
+      .from("meetings")
+      .select("id")
+      .eq("unlock_id", unlockId)
+      .eq("status", "booked")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (last) await db().from("meetings").update({ candidate_verdict: "no" }).eq("id", last.id).is("candidate_verdict", null);
+    try {
+      await emailCandidateDeclined(unlockId, note);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  redirect("/me?done=declined#intros");
+}
+
+export async function sendReferences(requestId: string, form: FormData) {
+  const c = await me();
+  const { data: req } = await db().from("reference_requests").select("*, unlocks(id, candidate_id)").eq("id", requestId).maybeSingle();
+  const row = req as (RefRequest & { unlocks: { id: string; candidate_id: string } }) | null;
+  if (!row || row.unlocks.candidate_id !== c.id) redirect("/me");
+  const get = (k: string) => form.getAll(k).map((v) => String(v).trim().slice(0, 200));
+  const names = get("ref_name");
+  const relations = get("ref_relation");
+  const phones = get("ref_phone");
+  const emails = get("ref_email");
+  const refs: Reference[] = names
+    .map((name, i) => ({ name, relation: relations[i] ?? "", phone: phones[i] ?? "", email: emails[i] ?? "" }))
+    .filter((r) => r.name && (r.phone || r.email));
+  if (!refs.length) redirect("/me?done=refs-error#intros");
+  await db().from("reference_requests").update({ refs, given_at: new Date().toISOString() }).eq("id", requestId);
+  await logActivity(`candidate:${c.email}`, "references_given", { count: refs.length });
+  try {
+    await emailRefsGiven(row.unlocks.id, refs);
+  } catch (e) {
+    console.error(e);
+  }
+  redirect("/me?done=refs#intros");
 }
