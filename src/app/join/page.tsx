@@ -7,7 +7,7 @@ import styles from "./join.module.css";
 export const metadata: Metadata = {
   title: `Looking for work? | ${brandName()}`,
   description:
-    "Free for job seekers. Sit down with us, discover what you're naturally great at, and meet employers who need exactly that.",
+    "Sit down with us, discover what you're naturally great at, and meet employers who need exactly that. It doesn't cost you a thing.",
   // Candidates' own link preview, without the employer picture.
   openGraph: {
     type: "website",
@@ -40,13 +40,13 @@ const STEPS = [
 const PROMISES = [
   ["A real conversation, not a form", "Every person who joins sits down with one of us. You're a person, not a keyword match."],
   ["Your name stays private", "Employers see what you're great at, not who you are, until they sign an agreement to meet you."],
-  ["Always free for you", "You never pay us anything. Employers pay a flat fee only when they hire."],
+  ["It doesn't cost you a thing", "Our job is to help you find work that fits you."],
   ["You'll always know where you stand", "You get your own page that shows what's happening, with no chasing anyone for updates."],
   ["You're in control", "Need a break? Found a job? Hide your profile yourself, any time, with one click."],
 ] as const;
 
 const FAQ = [
-  ["Does it cost anything?", "No. It's free for you, always. Employers pay us a flat fee if they hire."],
+  ["Does it cost anything?", "No. It doesn't cost you a thing."],
   [
     "Will my current boss see that I'm looking?",
     "Your profile doesn't show your name, and you can tell us companies that should never see it. We do our best to keep you hidden from them.",
@@ -75,7 +75,7 @@ export default function JoinPage() {
             </h1>
             <p className={styles.lede}>
               We sit down with you, learn what you&rsquo;re naturally great at, and introduce you to employers who need
-              exactly that. It&rsquo;s free, it&rsquo;s private, and you&rsquo;ll always know where you stand.
+              exactly that. It doesn&rsquo;t cost you a thing, it&rsquo;s private, and you&rsquo;ll always know where you stand.
             </p>
             <div className={styles.cta}>
               <Link className="btn btn-gold" href="/apply">
@@ -110,7 +110,7 @@ export default function JoinPage() {
             kind of talent.
           </p>
           <p className={styles.heardNote}>
-            And it never costs you a thing. The business owners who hire cover our fee, so our only job is to help you shine.
+            And it doesn&rsquo;t cost you a thing. Our only job is to help you shine.
           </p>
         </div>
       </section>

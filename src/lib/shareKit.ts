@@ -31,7 +31,7 @@ export function candidateLink(ref?: string | null) {
 }
 
 export function candidateMessage(ref?: string | null) {
-  return `Looking for work, or know someone who is? Everyone has a talent. We sit down with you, help you discover yours and the role it belongs in, then put you in front of business owners looking for exactly that. It costs you nothing: the business owners cover our fee. And it's completely private.\n\n${candidateLink(ref)}`;
+  return `Looking for work, or know someone who is? Everyone has a talent. We sit down with you, help you discover yours and the role it belongs in, then put you in front of business owners looking for exactly that. It doesn't cost you a thing, and it's completely private.\n\n${candidateLink(ref)}`;
 }
 
 // A new candidate who came through a rep's link: that rep brought them in.

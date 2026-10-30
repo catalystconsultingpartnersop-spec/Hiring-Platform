@@ -87,7 +87,7 @@ export default function MissionPage() {
             <h2>Dignity, always</h2>
             <p>
               Looking for work can be hard. Every candidate who comes to us is treated with dignity and respect, and our
-              coaching is free for them. We&rsquo;re here to help people shine, not to fill seats.
+              coaching doesn&rsquo;t cost them a thing. We&rsquo;re here to help people shine, not to fill seats.
             </p>
           </div>
         </section>

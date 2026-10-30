@@ -38,7 +38,7 @@ export default async function CareerArticlePage({ params }: PageProps<"/join/hel
         <div className="panel" style={{ marginTop: 32, background: "#fff8e1", borderColor: "#f3dd94" }}>
           <strong>Want help finding work that fits you?</strong>
           <p className="small muted" style={{ margin: "6px 0 12px" }}>
-            It&rsquo;s free. We sit down with you, learn what you&rsquo;re great at, and introduce you to employers who
+            It doesn&rsquo;t cost you a thing. We sit down with you, learn what you&rsquo;re great at, and introduce you to employers who
             need exactly that.
           </p>
           <Link className="btn btn-gold btn-small" href="/apply">

@@ -10,7 +10,7 @@ export default async function ApplyPage() {
       <div className="page-head">
         <h1>Let&rsquo;s find work that fits you.</h1>
         <p>
-          It&rsquo;s free. Tell us a little about yourself, then pick a time for a relaxed video call. We&rsquo;ll help you
+          It doesn&rsquo;t cost you a thing. Tell us a little about yourself, then pick a time for a relaxed video call. We&rsquo;ll help you
           figure out where you&rsquo;d do your best work and introduce you to employers looking for someone like you.
         </p>
       </div>
