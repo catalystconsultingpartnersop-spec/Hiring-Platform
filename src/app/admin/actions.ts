@@ -319,7 +319,9 @@ ${hireSummaryHtml(notice)}`,
         .from("candidates")
         .update({ status: "draft", list_on_sign: true, ...(prevListedAt ? {} : { listed_at: null }) })
         .eq("id", candidateId);
-      await requestPromise(candidateId, true);
+      // Send the agreement only the first time; saving again shouldn't email them again.
+      // ("Send it again" on their profile is there for reminders.)
+      if (!row.promise_requested_at) await requestPromise(candidateId, true);
       clearCatalog();
       awaitingPromise = true;
     }
@@ -368,7 +370,7 @@ ${hireSummaryHtml(notice)}`,
   if (resumeProblem) return { error: `Saved, but ${resumeProblem}. Try attaching it again.` };
   return {
     ok: awaitingPromise
-      ? "Saved. We've emailed them their candidate agreement. Their profile goes live the moment they sign."
+      ? "Saved. They go live the moment they sign their candidate agreement (we've emailed it to them). Until then, owners can't see them."
       : status === "listed"
         ? "Saved. They're live in the catalog."
         : `Saved as ${status}. Owners won't see them until the status is Listed.`,

@@ -58,6 +58,9 @@ export function CandidateForm({
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveCandidate.bind(null, c?.id ?? null), {});
   const v = <K extends keyof Candidate>(k: K) => (c?.[k] ?? "") as string;
+  // Set to Listed, but waiting for them to sign their candidate agreement first.
+  const signing = c as (Candidate & { list_on_sign?: boolean; promise_signed_at?: string | null }) | null;
+  const waitingToSign = !!signing && signing.status === "draft" && !!signing.list_on_sign && !signing.promise_signed_at;
 
   // Contact details can be filled in from the resume.
   const [contact, setContact] = useState({
@@ -568,8 +571,8 @@ export function CandidateForm({
           <>
             <label className={styles.statusPick}>
               <span>Status</span>
-              <select className="select" name="status" defaultValue={c.status}>
-                <option value="listed">Listed: owners can see them</option>
+              <select className="select" name="status" defaultValue={waitingToSign ? "listed" : c.status}>
+                <option value="listed">{waitingToSign ? "Listed: goes live when they sign" : "Listed: owners can see them"}</option>
                 <option value="draft">Draft: hidden</option>
                 <option value="paused">Paused: hidden</option>
                 <option value="applied">New application</option>
@@ -580,6 +583,11 @@ export function CandidateForm({
             <button className="btn btn-gold" type="submit" disabled={pending}>
               {pending ? "Saving…" : "Save"}
             </button>
+            {waitingToSign && !state.ok && !state.error && (
+              <span className="notice" role="status">
+                Waiting for them to sign their candidate agreement. They go live the moment they do.
+              </span>
+            )}
           </>
         ) : (
           <>
