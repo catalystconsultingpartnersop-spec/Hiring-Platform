@@ -108,7 +108,7 @@ export function CandidateCard({
       )}
       {!hideFee && (
         <div className="card-foot">
-          <span className="muted">Flat fee if you hire</span>
+          <span className="card-fee-label">Flat fee if you hire</span>
           <strong>{fee != null ? money(fee) : "Ask"}</strong>
         </div>
       )}

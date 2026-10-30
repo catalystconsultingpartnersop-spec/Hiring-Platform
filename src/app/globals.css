@@ -324,11 +324,21 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
   border-top: 1px solid var(--wash);
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
+  gap: 8px;
   font-size: 13px;
 }
 
 .card-foot strong { font-family: var(--display); font-size: 16px; }
+.card-fee-label {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--ink);
+  background: var(--marigold-soft);
+  border-radius: 999px;
+  padding: 4px 11px;
+}
 
 .cards {
   display: grid;
