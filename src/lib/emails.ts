@@ -177,8 +177,8 @@ export const candidate = {
     subject: "One quick step before your profile goes live",
     html:
       hi(o.name) +
-      p(`Your profile is ready${o.rep ? `, and ${esc(first(o.rep))} did a lovely job on it` : ""}. Before employers can see it, there's one quick step: your candidate promise. It's short, and it takes about 30 seconds.`) +
-      p("In short: it doesn't cost you a thing, your name stays private until an employer signs to meet you, and you'll let us know when you get hired.") +
+      p(`Your profile is ready${o.rep ? `, and ${esc(first(o.rep))} did a lovely job on it` : ""}. Before employers can see it, there's one quick step: your candidate agreement. It's short, and it takes about 30 seconds.`) +
+      p("In short: it doesn't cost you a thing, your name and contact details are shared only with employers who sign to meet you, and you let us know when you get hired.") +
       button(o.link, "Read and sign") +
       quiet("Your profile goes live the moment you sign."),
   }),

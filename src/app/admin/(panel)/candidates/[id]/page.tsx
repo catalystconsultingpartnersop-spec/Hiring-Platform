@@ -57,7 +57,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
             {sp.saved === "listed"
               ? "Saved. They're live in the catalog."
               : sp.saved === "promise"
-                ? "Saved. We've emailed them their candidate promise. Their profile goes live the moment they sign."
+                ? "Saved. We've emailed them their candidate agreement. Their profile goes live the moment they sign."
                 : "Saved as a draft. Owners won't see them until you set the status to Listed."}
           </p>
         )}
@@ -151,14 +151,14 @@ function PromiseRow({
   if (c.promise_signed_at)
     return (
       <p style={{ marginTop: 10 }}>
-        <strong>Candidate promise:</strong> signed by {c.promise_name} on {dateShort(c.promise_signed_at)}.
+        <strong>Candidate agreement:</strong> signed by {c.promise_name} on {dateShort(c.promise_signed_at)}.
       </p>
     );
   if (!c.promise_requested_at) return null;
   return (
     <form action={resendPromise.bind(null, c.id)} style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
       <span>
-        <strong>Candidate promise:</strong> sent {dateShort(c.promise_requested_at)}, not signed yet.
+        <strong>Candidate agreement:</strong> sent {dateShort(c.promise_requested_at)}, not signed yet.
         {c.list_on_sign ? " Their profile goes live the moment they sign." : ""}
       </span>
       <button className="btn btn-ghost btn-small" type="submit">

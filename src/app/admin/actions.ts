@@ -309,7 +309,7 @@ ${hireSummaryHtml(notice)}`,
     await logActivity(actor, "candidate_created", { candidate: refCode(data.id) });
   }
 
-  // Before a profile goes live, the candidate signs their candidate promise.
+  // Before a profile goes live, the candidate signs their candidate agreement.
   // Until they do, it stays a draft; it goes live the moment they sign.
   let awaitingPromise = false;
   if (status === "listed" && candidateId && !wasListed) {
@@ -368,7 +368,7 @@ ${hireSummaryHtml(notice)}`,
   if (resumeProblem) return { error: `Saved, but ${resumeProblem}. Try attaching it again.` };
   return {
     ok: awaitingPromise
-      ? "Saved. We've emailed them their candidate promise. Their profile goes live the moment they sign."
+      ? "Saved. We've emailed them their candidate agreement. Their profile goes live the moment they sign."
       : status === "listed"
         ? "Saved. They're live in the catalog."
         : `Saved as ${status}. Owners won't see them until the status is Listed.`,
@@ -932,7 +932,7 @@ export async function messageAllReps(_prev: FormState, form: FormData): Promise<
     : { ok: `Sent to all ${sent} rep${sent === 1 ? "" : "s"}.` };
 }
 
-// Sends the candidate promise again (e.g. they lost the email).
+// Sends the candidate agreement again (e.g. they lost the email).
 export async function resendPromise(candidateId: string) {
   const me = await requireStaff();
   const { data } = await db().from("candidates").select("*").eq("id", candidateId).single();

@@ -24,8 +24,8 @@ const DONE: Record<string, React.ReactNode> = {
   paused: "Your profile is hidden from employers. Turn it back on whenever you're ready.",
   back: "Welcome back! Your profile is visible to employers again.",
   job: "Congratulations! We've let your rep know, and your profile is hidden from employers.",
-  promise: "Thank you for signing your candidate promise.",
-  "promise-live": "Thank you! You've signed your candidate promise, and your profile is now live for employers.",
+  promise: "Thank you for signing your candidate agreement.",
+  "promise-live": "Thank you! You've signed your candidate agreement, and your profile is now live for employers.",
   looking: "Thanks for letting us know. We're on it, and your rep is here if you need anything.",
   booked: "You're booked. We've emailed you both a calendar invite.",
   retime: "Got it. We've asked them for other times.",
@@ -157,7 +157,7 @@ export default async function MyPage({ searchParams }: PageProps<"/me">) {
             !(c as Candidate & { promise_signed_at?: string | null }).promise_signed_at && (
               <div className="notice notice-gold" style={{ marginTop: 0, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
                 <span>
-                  <strong>One quick step:</strong> sign your candidate promise
+                  <strong>One quick step:</strong> sign your candidate agreement
                   {(c as Candidate & { list_on_sign?: boolean }).list_on_sign ? " and your profile goes live" : ""}.
                 </span>
                 <Link className="btn btn-gold btn-small" href="/me/promise">

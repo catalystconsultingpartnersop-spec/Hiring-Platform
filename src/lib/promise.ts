@@ -5,20 +5,21 @@ import { candidateUrl, refCode } from "./format";
 import { repFor } from "./notify";
 import { signedToken } from "./session";
 
-// The candidate promise: a short agreement every candidate signs before their
-// profile goes live. It doesn't cost them anything; they promise to tell us
+// The candidate agreement: a short agreement every candidate signs before
+// their profile goes live. It doesn't cost them anything; they agree to tell us
 // when they're hired, anywhere, and by whom if it came through us.
 
-export const OUR_SIDE = [
+// How it works for them: plain facts.
+export const HOW_IT_WORKS = [
   "It doesn't cost you a thing.",
-  "Your name and contact details stay private until an employer signs to meet you.",
-  "We'll keep you posted at every step, and your rep is here for you.",
+  "Your name and contact details are shared only with employers who sign to meet you.",
 ];
 
-export const YOUR_SIDE = [
-  "If you get hired anywhere, you'll let us know within 7 days, so we can take your profile down.",
-  "If you're hired by an employer you met through us, you'll tell us who.",
-  "You'll keep your details up to date, and be honest with us and with employers.",
+// What we ask of them.
+export const YOUR_PART = [
+  "If you get hired anywhere, let us know within 7 days, so we can take your profile down.",
+  "If you're hired by an employer you met through us, tell us who.",
+  "Keep your details up to date, and be honest with us and with employers.",
 ];
 
 // A signed link that opens the candidate's page, then a given section.
@@ -28,7 +29,7 @@ export function candidateLinkTo(candidateId: string, to: "promise" | "hired" | "
   return `${candidateUrl()}/me/open?t=${t}${to ? `&to=${to}` : ""}`;
 }
 
-// Emails the candidate their promise to sign. listOnSign: their profile goes
+// Emails the candidate their agreement to sign. listOnSign: their profile goes
 // live the moment they sign.
 export async function requestPromise(candidateId: string, listOnSign: boolean) {
   const { data: c } = await db().from("candidates").select("full_name, email, promise_signed_at").eq("id", candidateId).single();

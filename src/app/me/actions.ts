@@ -269,7 +269,7 @@ export async function sendReferences(requestId: string, form: FormData) {
   redirect("/me?done=refs#intros");
 }
 
-// ---------- The candidate promise ----------
+// ---------- The candidate agreement ----------
 
 export async function signPromise(form: FormData) {
   const c = await me();
@@ -289,8 +289,8 @@ export async function signPromise(form: FormData) {
   await logActivity(`candidate:${c.email}`, "promise_signed", { name, live: goLive });
   await tellTeam(
     c,
-    goLive ? `${c.full_name} signed their promise and is now live` : `${c.full_name} signed their candidate promise`,
-    `<p><strong>${escapeHtml(c.full_name)}</strong> signed their candidate promise as &ldquo;${escapeHtml(name)}&rdquo;.${goLive ? " Their profile is now live for employers." : ""}</p>`,
+    goLive ? `${c.full_name} signed their agreement and is now live` : `${c.full_name} signed their candidate agreement`,
+    `<p><strong>${escapeHtml(c.full_name)}</strong> signed their candidate agreement as &ldquo;${escapeHtml(name)}&rdquo;.${goLive ? " Their profile is now live for employers." : ""}</p>`,
   );
   redirect(`/me?done=${goLive ? "promise-live" : "promise"}`);
 }

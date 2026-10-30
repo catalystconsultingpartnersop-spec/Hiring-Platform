@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Not allowed" }, { status: 401 });
   }
-  // Candidate promise requests and "still looking?" check-ins.
+  // Candidate agreement requests and "still looking?" check-ins.
   const checkins = await dailyCandidateCheckins().catch(() => null);
 
   const now = Date.now();

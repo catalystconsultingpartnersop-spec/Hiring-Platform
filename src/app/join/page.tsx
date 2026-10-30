@@ -133,7 +133,7 @@ export default function JoinPage() {
       <section className={styles.promise}>
         <div className={`wrap ${styles.promiseGrid}`}>
           <div>
-            <p className={styles.label}>Our promise to you</p>
+            <p className={styles.label}>How we work with you</p>
             <h2 className={styles.h2}>You&rsquo;ll be treated with dignity and respect. Every step.</h2>
             <p className={styles.promiseLede}>
               Looking for work can be hard. We want this to be the one part of it that feels good.
