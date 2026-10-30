@@ -131,3 +131,12 @@
   .six { grid-template-columns: 1fr 1fr; }
   .six span { font-size: 15px; padding: 14px; }
 }
+
+/* "We hear you": the heart of our message to candidates */
+.heard { padding: clamp(48px, 7vw, 88px) 0; background: var(--paper); }
+.heardInner { max-width: 760px; }
+.heard h3 { font-size: clamp(21px, 2.4vw, 26px); margin: 30px 0 8px; }
+.heard p { font-size: 19px; line-height: 1.7; color: var(--ink-2); margin: 0; }
+.heard em { font-style: italic; color: var(--ink); }
+.heardNote { margin-top: 26px !important; padding: 18px 20px; background: var(--moss-soft); border-radius: 14px; color: var(--ink) !important; font-weight: 600; }
+.heard .h2 { margin-bottom: 14px; }

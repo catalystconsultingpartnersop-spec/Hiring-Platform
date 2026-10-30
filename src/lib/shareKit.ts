@@ -31,7 +31,7 @@ export function candidateLink(ref?: string | null) {
 }
 
 export function candidateMessage(ref?: string | null) {
-  return `I help people find work that truly fits them. It starts with a real conversation about what you're great at. Your name stays private, and it's always free.\n\nIf you're looking, or know someone who is, here's where to start:\n${candidateLink(ref)}`;
+  return `Looking for work, or know someone who is? Everyone has a talent. We sit down with you, help you discover yours and the role it belongs in, then put you in front of business owners looking for exactly that. It costs you nothing: the business owners cover our fee. And it's completely private.\n\n${candidateLink(ref)}`;
 }
 
 // A new candidate who came through a rep's link: that rep brought them in.

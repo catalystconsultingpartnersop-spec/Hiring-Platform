@@ -11,9 +11,9 @@ export const metadata: Metadata = {
   // Candidates' own link preview, without the employer picture.
   openGraph: {
     type: "website",
-    title: "You're built for something. Let's find it together.",
-    description: "Free for job seekers. Sit down with us, discover what you're naturally great at, and meet employers who need exactly that.",
-    images: [{ url: "/share/og-candidate.png", width: 1200, height: 630, alt: "You're built for something. Let's find it together." }],
+    title: "Looking for work? Feel like no one is listening?",
+    description: "Everyone has talent. Sometimes it just needs someone to bring it out. Let's find yours.",
+    images: [{ url: "/share/og-candidate.png", width: 1200, height: 630, alt: "Looking for work? Feel like no one is listening? Everyone has talent." }],
   },
   twitter: { card: "summary_large_image", images: ["/share/og-candidate.png"] },
 };
@@ -87,6 +87,31 @@ export default function JoinPage() {
             </div>
           </div>
           <YourPagePeek />
+        </div>
+      </section>
+
+      <section className={styles.heard}>
+        <div className={`wrap ${styles.heardInner}`}>
+          <h2 className={styles.h2}>We hear you.</h2>
+          <p>
+            Looking for work can feel lonely. Applications disappear. Nobody calls back. It can feel like the world only has
+            time for people who are already at the top.
+          </p>
+          <h3>Here&rsquo;s what we believe.</h3>
+          <p>
+            Everyone has talent: unique, God-given strengths. The quiet person who notices everything has real value. So
+            does the one who talks a lot and gets everyone moving. The key is knowing your nature, what our tradition calls{" "}
+            <em>techunos hanefesh</em>, the qualities of the soul.
+          </p>
+          <h3>That&rsquo;s what we do.</h3>
+          <p>
+            Using proven methods, we sit with you and help you understand what you&rsquo;re naturally great at, and the kind of
+            role where it fits. Then we guide you and put you in front of business owners who are looking for exactly your
+            kind of talent.
+          </p>
+          <p className={styles.heardNote}>
+            And it never costs you a thing. The business owners who hire cover our fee, so our only job is to help you shine.
+          </p>
         </div>
       </section>
 
