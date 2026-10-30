@@ -175,7 +175,8 @@ export default async function RepGuide() {
             story. Then click <b>List now</b>. The candidate gets a short candidate agreement by email (it doesn&rsquo;t cost them a
             thing, and they&rsquo;ll tell us when they&rsquo;re hired). Their profile goes live the moment they sign. If they
             haven&rsquo;t, give them a call. Once a month, each of your live candidates gets a short &ldquo;still
-            looking?&rdquo; email signed by you; their replies come straight to you.
+            looking?&rdquo; email signed by you; their replies come straight to you. If they don&rsquo;t answer within 5 days,
+            we&rsquo;ll email you. Give them a call, and if they&rsquo;re no longer looking, set their profile to Paused.
           </p>
         </li>
         <li>

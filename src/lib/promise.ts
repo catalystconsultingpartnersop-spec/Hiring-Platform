@@ -1,7 +1,8 @@
 import { db, logActivity } from "./db";
 import { sendEmail } from "./email";
 import { candidate as candMail } from "./emails";
-import { candidateUrl, refCode } from "./format";
+import { candidateUrl, refCode, teamUrl } from "./format";
+import { escapeHtml } from "./email";
 import { repFor } from "./notify";
 import { signedToken } from "./session";
 
@@ -102,6 +103,42 @@ export async function dailyCandidateCheckins() {
       console.error("candidate check-in failed", c.id, e);
     }
   }
-  if (sent.checkin) await logActivity("system", "candidate_checkins", sent);
-  return sent;
+  // No answer 5 days after a check-in: tell their rep, once, so the catalog
+  // only shows people who are really looking.
+  let nudged = 0;
+  for (const c of data as Row[]) {
+    if (!("checkin_sent_at" in c) || !c.checkin_sent_at) continue;
+    const askedAt = Date.parse(c.checkin_sent_at);
+    const answered = c.last_checkin_at && Date.parse(c.last_checkin_at) >= askedAt;
+    if (answered || askedAt > now - 5 * DAY || busy.has(c.id)) continue;
+    try {
+      const { count } = await db()
+        .from("activity_log")
+        .select("id", { count: "exact", head: true })
+        .eq("action", "checkin_no_reply")
+        .eq("details->>candidate", refCode(c.id))
+        .gte("at", c.checkin_sent_at);
+      if (count) continue;
+      const rep = await repFor(c.id);
+      const to = rep?.active ? rep.email : process.env.ADMIN_EMAIL;
+      if (!to) continue;
+      const first = (rep?.full_name ?? "").split(" ")[0] || "there";
+      await sendEmail({
+        to,
+        subject: `${c.full_name} hasn't answered their check-in`,
+        html: `<p>Hi ${escapeHtml(first)},</p>
+<p>We emailed <strong>${escapeHtml(c.full_name)}</strong> ${new Date(askedAt).toLocaleDateString("en-US", { month: "long", day: "numeric" })} to ask if they're still looking for work, and they haven't answered.</p>
+<p>Please give them a quick call. If they're no longer looking, or you can't reach them, set their profile to <strong>Paused</strong> so employers only see people who are ready.</p>
+<p><a href="${teamUrl()}/admin/candidates/${c.id}">Open their profile</a></p>`,
+        replyTo: c.email,
+      });
+      await logActivity("system", "checkin_no_reply", { candidate: refCode(c.id), rep: rep?.email ?? null });
+      nudged++;
+    } catch (e) {
+      console.error("check-in follow-up failed", c.id, e);
+    }
+  }
+
+  if (sent.checkin || nudged) await logActivity("system", "candidate_checkins", { ...sent, repsNudged: nudged });
+  return { ...sent, repsNudged: nudged };
 }
