@@ -41,6 +41,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <Link href="/admin/share">Share kit</Link>
               <Link href="/admin/hours">My hours</Link>
               <Link href="/admin/invite">Invite a rep</Link>
+              <Link href="/admin/assessments">Strengths assessment</Link>
               <Link href="/admin/settings">Fee settings</Link>
               <Link href="/admin/activity">Activity</Link>
               <Link href="/admin/guide">Rep guide</Link>
