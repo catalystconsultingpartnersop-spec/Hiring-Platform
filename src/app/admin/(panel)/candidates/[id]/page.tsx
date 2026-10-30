@@ -5,7 +5,7 @@ import { getTiers } from "@/lib/catalog";
 import { Candidate, db } from "@/lib/db";
 import { dateShort, feeFor, money, refCode } from "@/lib/format";
 
-import { deleteCandidate } from "../../../actions";
+import { deleteCandidate, resendPromise } from "../../../actions";
 import { CandidateForm } from "../CandidateForm";
 import { RepPicker } from "../RepPicker";
 import { effectiveReps, repOptions } from "@/lib/reps";
@@ -56,7 +56,9 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
           <p className={`notice ${sp.saved === "listed" ? "notice-good" : "notice-gold"}`} style={{ marginTop: 14 }}>
             {sp.saved === "listed"
               ? "Saved. They're live in the catalog."
-              : "Saved as a draft. Owners won't see them until you set the status to Listed."}
+              : sp.saved === "promise"
+                ? "Saved. We've emailed them their candidate promise. Their profile goes live the moment they sign."
+                : "Saved as a draft. Owners won't see them until you set the status to Listed."}
           </p>
         )}
         {sp.merged === "1" && (
@@ -70,6 +72,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
             Everything else was saved, but {sp.resume}. Attach it again in section 1 and save.
           </p>
         )}
+        <PromiseRow c={c as Candidate & { promise_signed_at?: string | null; promise_name?: string | null; promise_requested_at?: string | null; list_on_sign?: boolean }} />
         {me.role === "admin" && (
           <RepRow candidateId={c.id} addedBy={(c as unknown as { added_by: string | null }).added_by ?? null} />
         )}
@@ -136,5 +139,31 @@ async function RepRow({ candidateId, addedBy }: { candidateId: string; addedBy: 
       <strong>Rep:</strong>
       <RepPicker candidateId={candidateId} value={r?.id ?? ""} options={options} note={r?.viaCall ? "from their onboarding call" : undefined} />
     </p>
+  );
+}
+
+function PromiseRow({
+  c,
+}: {
+  c: Candidate & { promise_signed_at?: string | null; promise_name?: string | null; promise_requested_at?: string | null; list_on_sign?: boolean };
+}) {
+  if (!("promise_signed_at" in c)) return null;
+  if (c.promise_signed_at)
+    return (
+      <p style={{ marginTop: 10 }}>
+        <strong>Candidate promise:</strong> signed by {c.promise_name} on {dateShort(c.promise_signed_at)}.
+      </p>
+    );
+  if (!c.promise_requested_at) return null;
+  return (
+    <form action={resendPromise.bind(null, c.id)} style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+      <span>
+        <strong>Candidate promise:</strong> sent {dateShort(c.promise_requested_at)}, not signed yet.
+        {c.list_on_sign ? " Their profile goes live the moment they sign." : ""}
+      </span>
+      <button className="btn btn-ghost btn-small" type="submit">
+        Send it again
+      </button>
+    </form>
   );
 }

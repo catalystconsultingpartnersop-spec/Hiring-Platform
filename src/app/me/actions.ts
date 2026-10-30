@@ -10,7 +10,8 @@ import { Candidate, db, logActivity } from "@/lib/db";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
 import { candidateUrl, teamUrl } from "@/lib/format";
 
-import { repFor } from "@/lib/notify";
+import { candidateHired, repFor } from "@/lib/notify";
+import { money, refCode } from "@/lib/format";
 import { Meeting, Reference, RefRequest } from "@/lib/path";
 import { emailBooked, emailCandidateDeclined, emailNeedOtherTimes, emailRefsGiven, emailVerdict } from "@/lib/pathEmails";
 import { currentCandidateId, endCandidateSession, hashToken, isOwnerEmail, newLoginToken, startCandidateSession } from "@/lib/session";
@@ -266,4 +267,84 @@ export async function sendReferences(requestId: string, form: FormData) {
     console.error(e);
   }
   redirect("/me?done=refs#intros");
+}
+
+// ---------- The candidate promise ----------
+
+export async function signPromise(form: FormData) {
+  const c = await me();
+  const name = String(form.get("name") ?? "").trim().slice(0, 120);
+  if (name.length < 2 || form.get("agree") !== "on") redirect("/me/promise?error=1");
+  const now = new Date().toISOString();
+  const goLive = !!(c as Candidate & { list_on_sign?: boolean }).list_on_sign;
+  await db()
+    .from("candidates")
+    .update({
+      promise_signed_at: now,
+      promise_name: name,
+      ...(goLive ? { status: "listed", listed_at: c.listed_at ?? now, list_on_sign: false } : {}),
+    })
+    .eq("id", c.id);
+  if (goLive) clearCatalog();
+  await logActivity(`candidate:${c.email}`, "promise_signed", { name, live: goLive });
+  await tellTeam(
+    c,
+    goLive ? `${c.full_name} signed their promise and is now live` : `${c.full_name} signed their candidate promise`,
+    `<p><strong>${escapeHtml(c.full_name)}</strong> signed their candidate promise as &ldquo;${escapeHtml(name)}&rdquo;.${goLive ? " Their profile is now live for employers." : ""}</p>`,
+  );
+  redirect(`/me?done=${goLive ? "promise-live" : "promise"}`);
+}
+
+// ---------- "I got hired" ----------
+
+// The candidate tells us they were hired. If it was an employer they met
+// through us, it's recorded as a hire, and Heshy is told right away whether
+// that employer has reported it and paid, so no fee slips through.
+export async function reportHired(form: FormData) {
+  const c = await me();
+  const employer = String(form.get("employer") ?? "").trim().slice(0, 200);
+  const start = String(form.get("start") ?? "").trim().slice(0, 100) || null;
+  const unlockId = String(form.get("unlock") ?? "");
+  if (!employer) redirect("/me/hired?error=1");
+
+  type U = { id: string; candidate_id: string; signed_at: string; fee_cents: number | null; owners: { email: string; full_name: string | null; company: string | null; phone: string | null }; hires: { status: string; amount_cents: number }[] };
+  let unlock: U | null = null;
+  if (/^[0-9a-f-]{36}$/i.test(unlockId)) {
+    const { data } = await db().from("unlocks").select("id, candidate_id, signed_at, fee_cents, owners(email, full_name, company, phone), hires(status, amount_cents)").eq("id", unlockId).maybeSingle();
+    if (data && (data as unknown as U).candidate_id === c.id) unlock = data as unknown as U;
+  }
+
+  await db().from("hire_reports").insert({ candidate_id: c.id, employer, unlock_id: unlock?.id ?? null, start_date: start });
+  await db().from("candidates").update({ last_checkin_at: new Date().toISOString() }).eq("id", c.id);
+  await logActivity(`candidate:${c.email}`, "candidate_reported_hire", { employer, through_us: !!unlock });
+
+  if (unlock) {
+    // Hired by an employer they met through us: mark them hired and tell everyone.
+    await candidateHired(c.id, unlock.owners, null, { startDate: start ?? undefined });
+    const paid = unlock.hires.find((h) => h.status === "paid" || h.status === "hired");
+    await emailAdmin(
+      paid ? `Hire confirmed by candidate: ${c.full_name} at ${unlock.owners.company}` : `Money check: ${c.full_name} says they were hired by ${unlock.owners.company}`,
+      `<p><strong>${escapeHtml(c.full_name)}</strong> (${refCode(c.id)}) told us they were hired by <strong>${escapeHtml(unlock.owners.company ?? "")}</strong>${start ? `, starting ${escapeHtml(start)}` : ""}.</p>
+${
+  paid
+    ? `<p>This matches a hire the client already reported and paid (${money(paid.amount_cents)}). Nothing to do.</p>`
+    : `<p style="padding:10px 12px;background:#f8e4e0;border-radius:8px"><strong>The client hasn't reported this hire or paid the fee yet.</strong> They signed for this candidate on ${new Date(unlock.signed_at).toLocaleDateString("en-US")}${unlock.fee_cents ? `, with a fee of ${money(unlock.fee_cents)}` : ""}. Please follow up.</p>`
+}
+<p>Client: ${escapeHtml(unlock.owners.full_name ?? "")}, ${escapeHtml(unlock.owners.email)}${unlock.owners.phone ? `, ${escapeHtml(unlock.owners.phone)}` : ""}</p>
+<p><a href="${teamUrl()}/admin/agreements">Open introductions</a> · <a href="${teamUrl()}/admin/candidates/${c.id}">Open their profile</a></p>`,
+      { replyTo: c.email },
+    );
+  } else {
+    // Hired somewhere else: take the profile down and let the team know.
+    const wasListed = c.status === "listed";
+    if (wasListed) await db().from("candidates").update({ status: "paused", self_paused_at: new Date().toISOString() }).eq("id", c.id);
+    clearCatalog();
+    await tellTeam(
+      c,
+      `${c.full_name} got a job`,
+      `<p><strong>${escapeHtml(c.full_name)}</strong> told us they were hired at <strong>${escapeHtml(employer)}</strong>${start ? `, starting ${escapeHtml(start)}` : ""}. They said it wasn't an employer they met through us.</p>
+<p>${wasListed ? "Their profile is now hidden from employers." : ""} Congratulate them!</p>`,
+    );
+  }
+  redirect("/me?done=job");
 }

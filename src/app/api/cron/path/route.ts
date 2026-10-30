@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db, logActivity } from "@/lib/db";
+import { dailyCandidateCheckins } from "@/lib/promise";
 import { happened, Meeting, RefRequest } from "@/lib/path";
 import { emailAskFeedback, nudgeCandidateRefs, nudgeCandidateToPick, nudgeOwnerFeedback, nudgeOwnerToStart } from "@/lib/pathEmails";
 
@@ -14,6 +15,9 @@ export async function GET(req: NextRequest) {
   if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Not allowed" }, { status: 401 });
   }
+  // Candidate promise requests and "still looking?" check-ins.
+  const checkins = await dailyCandidateCheckins().catch(() => null);
+
   const now = Date.now();
   const iso = (ms: number) => new Date(ms).toISOString();
   const sent = { feedback: 0, ownerStart: 0, pick: 0, ownerFeedback: 0, refs: 0 };
@@ -30,7 +34,7 @@ export async function GET(req: NextRequest) {
     (u) => u.candidates.status !== "hired" && !u.hires.some((h) => h.status === "paid" || h.status === "hired"),
   );
   const ids = active.map((u) => u.id);
-  if (!ids.length) return NextResponse.json({ ok: true, sent });
+  if (!ids.length) return NextResponse.json({ ok: true, sent, checkins });
 
   const [{ data: ms }, { data: rs }] = await Promise.all([
     db().from("meetings").select("*").in("unlock_id", ids),
@@ -78,5 +82,5 @@ export async function GET(req: NextRequest) {
   }
 
   if (Object.values(sent).some(Boolean)) await logActivity("system", "path_nudges", sent);
-  return NextResponse.json({ ok: true, sent });
+  return NextResponse.json({ ok: true, sent, checkins });
 }

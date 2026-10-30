@@ -10,7 +10,7 @@ import { repFor } from "@/lib/notify";
 import { currentCandidateId, signedToken } from "@/lib/session";
 import { formatInZone, nowMs } from "@/lib/time";
 import { loadPath, pathState } from "@/lib/path";
-import { hideMyProfile, showMyProfile, signOutCandidate, tellUsAJob } from "./actions";
+import { hideMyProfile, showMyProfile, signOutCandidate } from "./actions";
 import { Intro, Intros } from "./Intros";
 import styles from "./me.module.css";
 
@@ -24,6 +24,9 @@ const DONE: Record<string, React.ReactNode> = {
   paused: "Your profile is hidden from employers. Turn it back on whenever you're ready.",
   back: "Welcome back! Your profile is visible to employers again.",
   job: "Congratulations! We've let your rep know, and your profile is hidden from employers.",
+  promise: "Thank you for signing your candidate promise.",
+  "promise-live": "Thank you! You've signed your candidate promise, and your profile is now live for employers.",
+  looking: "Thanks for letting us know. We're on it, and your rep is here if you need anything.",
   booked: "You're booked. We've emailed you both a calendar invite.",
   retime: "Got it. We've asked them for other times.",
   yes: "Thanks! We've let them know.",
@@ -150,6 +153,18 @@ export default async function MyPage({ searchParams }: PageProps<"/me">) {
               {DONE[sp.done]}
             </p>
           )}
+          {(c as Candidate & { promise_requested_at?: string | null }).promise_requested_at &&
+            !(c as Candidate & { promise_signed_at?: string | null }).promise_signed_at && (
+              <div className="notice notice-gold" style={{ marginTop: 0, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                <span>
+                  <strong>One quick step:</strong> sign your candidate promise
+                  {(c as Candidate & { list_on_sign?: boolean }).list_on_sign ? " and your profile goes live" : ""}.
+                </span>
+                <Link className="btn btn-gold btn-small" href="/me/promise">
+                  Read and sign
+                </Link>
+              </div>
+            )}
           <section className={`panel ${styles.journey}`} aria-label="Your progress">
             <ol>
               {steps.map((st) => (
@@ -238,15 +253,12 @@ export default async function MyPage({ searchParams }: PageProps<"/me">) {
               <p className={styles.sideLabel}>You&rsquo;re in control</p>
               <details className={styles.ctl}>
                 <summary>Found a job? Tell us</summary>
-                <form action={tellUsAJob}>
-                  <input className="input" name="where" placeholder="Where? (optional)" maxLength={300} />
-                  <button className="btn btn-small" type="submit" style={{ marginTop: 10 }}>
-                    I found a job
-                  </button>
-                  <p className="small muted" style={{ margin: "8px 0 0" }}>
-                    We&rsquo;ll celebrate with you and hide your profile from employers.
-                  </p>
-                </form>
+                <p className="small muted" style={{ margin: "8px 0 10px" }}>
+                  We&rsquo;ll celebrate with you and take your profile down.
+                </p>
+                <Link className="btn btn-small" href="/me/hired">
+                  I got hired
+                </Link>
               </details>
               <details className={styles.ctl}>
                 <summary>Need a break? Hide your profile</summary>

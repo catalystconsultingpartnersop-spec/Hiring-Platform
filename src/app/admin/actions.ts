@@ -1,5 +1,7 @@
 "use server";
 
+import { requestPromise } from "@/lib/promise";
+
 import { clearCatalog } from "@/lib/catalog";
 
 import { allow, SLOW_DOWN } from "@/lib/throttle";
@@ -249,8 +251,12 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
 
   let candidateId = id;
   let merged = false;
+  let wasListed = false;
+  let prevListedAt: string | null = null;
   if (id) {
     const { data: before } = await db().from("candidates").select("status, listed_at").eq("id", id).single();
+    wasListed = before?.status === "listed";
+    prevListedAt = before?.listed_at ?? null;
     if (status === "listed" && !before?.listed_at) record.listed_at = new Date().toISOString();
     const { error } = await db().from("candidates").update(record).eq("id", id);
     if (error) return { error: `Could not save: ${error.message}` };
@@ -303,6 +309,22 @@ ${hireSummaryHtml(notice)}`,
     await logActivity(actor, "candidate_created", { candidate: refCode(data.id) });
   }
 
+  // Before a profile goes live, the candidate signs their candidate promise.
+  // Until they do, it stays a draft; it goes live the moment they sign.
+  let awaitingPromise = false;
+  if (status === "listed" && candidateId && !wasListed) {
+    const { data: row } = await db().from("candidates").select("*").eq("id", candidateId).single();
+    if (row && "promise_signed_at" in row && !row.promise_signed_at && row.status === "listed") {
+      await db()
+        .from("candidates")
+        .update({ status: "draft", list_on_sign: true, ...(prevListedAt ? {} : { listed_at: null }) })
+        .eq("id", candidateId);
+      await requestPromise(candidateId, true);
+      clearCatalog();
+      awaitingPromise = true;
+    }
+  }
+
   const resume = form.get("resume");
   let resumeProblem = "";
   if (resume instanceof File && resume.size > 0) {
@@ -342,10 +364,14 @@ ${hireSummaryHtml(notice)}`,
       else await db().from("candidates").update({ assessment_path: path }).eq("id", candidateId);
     }
   }
-  if (!id) redirect(`/admin/candidates/${candidateId}?saved=${status}${merged ? "&merged=1" : ""}${resumeProblem ? `&resume=${encodeURIComponent(resumeProblem)}` : ""}`);
+  if (!id) redirect(`/admin/candidates/${candidateId}?saved=${awaitingPromise ? "promise" : status}${merged ? "&merged=1" : ""}${resumeProblem ? `&resume=${encodeURIComponent(resumeProblem)}` : ""}`);
   if (resumeProblem) return { error: `Saved, but ${resumeProblem}. Try attaching it again.` };
   return {
-    ok: status === "listed" ? "Saved. They're live in the catalog." : `Saved as ${status}. Owners won't see them until the status is Listed.`,
+    ok: awaitingPromise
+      ? "Saved. We've emailed them their candidate promise. Their profile goes live the moment they sign."
+      : status === "listed"
+        ? "Saved. They're live in the catalog."
+        : `Saved as ${status}. Owners won't see them until the status is Listed.`,
   };
 }
 
@@ -904,4 +930,14 @@ export async function messageAllReps(_prev: FormState, form: FormData): Promise<
   return failed.length
     ? { error: `Sent to ${sent}. Didn't go out to: ${failed.join(", ")}. Check Activity for why.` }
     : { ok: `Sent to all ${sent} rep${sent === 1 ? "" : "s"}.` };
+}
+
+// Sends the candidate promise again (e.g. they lost the email).
+export async function resendPromise(candidateId: string) {
+  const me = await requireStaff();
+  const { data } = await db().from("candidates").select("*").eq("id", candidateId).single();
+  if (!data || data.promise_signed_at) return;
+  await requestPromise(candidateId, !!data.list_on_sign);
+  await logActivity(staffActor(me), "promise_resent", { candidate: refCode(candidateId) });
+  revalidatePath(`/admin/candidates/${candidateId}`);
 }

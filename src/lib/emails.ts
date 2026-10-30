@@ -172,6 +172,28 @@ export const owner = {
 const myPage = (link?: string) => link ?? `${candidateUrl()}/me`;
 
 export const candidate = {
+  promiseRequest: (o: { name: string; rep: string | null; link: string }): Mail => ({
+    audience: "candidate",
+    subject: "One quick step before your profile goes live",
+    html:
+      hi(o.name) +
+      p(`Your profile is ready${o.rep ? `, and ${esc(first(o.rep))} did a lovely job on it` : ""}. Before employers can see it, there's one quick step: your candidate promise. It's short, and it takes about 30 seconds.`) +
+      p("In short: it doesn't cost you a thing, your name stays private until an employer signs to meet you, and you'll let us know when you get hired.") +
+      button(o.link, "Read and sign") +
+      quiet("Your profile goes live the moment you sign."),
+  }),
+
+  checkIn: (o: { name: string; looking: string; hired: string }): Mail => ({
+    audience: "candidate",
+    subject: "Quick check-in: still looking?",
+    html:
+      hi(o.name) +
+      p("Just checking in. Are you still looking, or did you find something? One tap lets us know.") +
+      button(o.looking, "I'm still looking") +
+      p(`<a href="${o.hired}" style="color:#17213a;font-weight:bold">I got hired</a>`) +
+      quiet("If you got a job, congratulations! Tell us where and we'll take your profile down."),
+  }),
+
   pageLink: (o: { name: string; link: string }): Mail => ({
     audience: "candidate",
     subject: "Your candidate page",
