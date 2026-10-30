@@ -154,7 +154,17 @@ function PromiseRow({
         <strong>Candidate agreement:</strong> signed by {c.promise_name} on {dateShort(c.promise_signed_at)}.
       </p>
     );
-  if (!c.promise_requested_at) return null;
+  if (!c.promise_requested_at)
+    return c.status === "listed" ? (
+      <form action={resendPromise.bind(null, c.id)} style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <span>
+          <strong>Candidate agreement:</strong> not sent yet. Mention it to them, then send it.
+        </span>
+        <button className="btn btn-ghost btn-small" type="submit">
+          Send the candidate agreement
+        </button>
+      </form>
+    ) : null;
   return (
     <form action={resendPromise.bind(null, c.id)} style={{ marginTop: 10, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
       <span>

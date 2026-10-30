@@ -183,15 +183,18 @@ export const candidate = {
       quiet("Your profile goes live the moment you sign."),
   }),
 
-  checkIn: (o: { name: string; looking: string; hired: string }): Mail => ({
-    audience: "candidate",
-    subject: "Quick check-in: still looking?",
+  checkIn: (o: { name: string; rep: string | null; looking: string; hired: string }): Mail => ({
+    audience: o.rep ? "personal" : "candidate",
+    subject: o.rep ? `Checking in, ${first(o.name)}` : "Checking in",
     html:
       hi(o.name) +
-      p("Just checking in. Are you still looking, or did you find something? One tap lets us know.") +
-      button(o.looking, "I'm still looking") +
-      p(`<a href="${o.hired}" style="color:#17213a;font-weight:bold">I got hired</a>`) +
-      quiet("If you got a job, congratulations! Tell us where and we'll take your profile down."),
+      p("I wanted to check in and see how things are going. Are you still looking for work?") +
+      `<p style="margin:18px 0 8px">` +
+      `<a href="${o.looking}" style="display:inline-block;background:#f2b300;color:#17213a;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0">Yes, still looking</a>` +
+      `<a href="${o.hired}" style="display:inline-block;background:#17213a;color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 0 8px">No, I got hired</a>` +
+      `</p>` +
+      p("Either way, I'm here if you need anything. Just reply to this email.") +
+      p(o.rep ? `Warmly,<br>${esc(o.rep)}` : "Warmly,<br>Your team at The Candidate Collection"),
   }),
 
   pageLink: (o: { name: string; link: string }): Mail => ({

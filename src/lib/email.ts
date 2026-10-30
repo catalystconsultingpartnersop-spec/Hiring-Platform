@@ -4,9 +4,10 @@ import { Audience, layout } from "./emailKit";
 import { brandName } from "./format";
 
 // The sender always shows our name, whatever display name EMAIL_FROM carries.
-function senderFrom(raw: string) {
+function senderFrom(raw: string, fromName?: string) {
   const address = raw.match(/<([^>]+)>/)?.[1]?.trim() ?? raw.trim();
-  return `${brandName()} <${address}>`;
+  const name = fromName ? `${fromName.replace(/[<>"]/g, "")} via ${brandName()}` : brandName();
+  return `${name} <${address}>`;
 }
 
 export function escapeHtml(s: string) {
@@ -22,6 +23,7 @@ export async function sendEmail(opts: {
   audience?: Audience; // whose letterhead and footer: owner, candidate or team
   replyTo?: string;
   attachments?: { filename: string; content: Buffer }[];
+  fromName?: string; // shows as "Name via The Candidate Collection"
 }) {
   const key = process.env.RESEND_API_KEY?.trim();
   const from = process.env.EMAIL_FROM?.trim();
@@ -38,7 +40,7 @@ export async function sendEmail(opts: {
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
       const { error } = await resend.emails.send({
-        from: senderFrom(from),
+        from: senderFrom(from, opts.fromName),
         to: opts.to,
         subject: opts.subject,
         html: layout(opts.html, opts.audience ?? "team"),

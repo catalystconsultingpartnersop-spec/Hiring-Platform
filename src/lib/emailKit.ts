@@ -4,7 +4,8 @@ import { brandName, candidateUrl, siteUrl, teamUrl } from "./format";
 // One look for every email: the logo letterhead, the same buttons, and a
 // footer that fits who it's for. Bodies use the small helpers below.
 
-export type Audience = "owner" | "candidate" | "team";
+// "personal": a plain note from a person (e.g. a rep), with no letterhead.
+export type Audience = "owner" | "candidate" | "team" | "personal";
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
@@ -12,7 +13,7 @@ const INK = "#17213a";
 const GOLD = "#f2b300";
 const MUTED = "#5b667e";
 
-const LABEL: Record<Audience, string> = { owner: "For employers", candidate: "For candidates", team: "Team" };
+const LABEL: Record<Audience, string> = { owner: "For employers", candidate: "For candidates", team: "Team", personal: "" };
 
 function logo() {
   const name = brandName();
@@ -35,6 +36,10 @@ function footer(a: Audience) {
 }
 
 export function layout(body: string, a: Audience = "team") {
+  if (a === "personal") {
+    return `<div style="max-width:560px;font-family:Arial,Helvetica,sans-serif;font-size:15.5px;line-height:1.6;color:${INK};padding:8px 4px">${body}
+<p style="margin:26px 0 0;font-size:12px;color:${MUTED}">Sent through ${esc(brandName())}</p></div>`;
+  }
   return `<div style="background:#f4f6fa;padding:24px 12px">
 <div style="max-width:580px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e3e7ef">
 <div style="padding:20px 26px 16px;border-bottom:3px solid ${GOLD}">

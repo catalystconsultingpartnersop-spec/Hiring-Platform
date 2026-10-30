@@ -174,7 +174,8 @@ export default async function RepGuide() {
             Employers see the profile before they know who it is, so no names, employers or schools in the headline or
             story. Then click <b>List now</b>. The candidate gets a short candidate agreement by email (it doesn&rsquo;t cost them a
             thing, and they&rsquo;ll tell us when they&rsquo;re hired). Their profile goes live the moment they sign. If they
-            haven&rsquo;t, give them a call.
+            haven&rsquo;t, give them a call. Once a month, each of your live candidates gets a short &ldquo;still
+            looking?&rdquo; email signed by you; their replies come straight to you.
           </p>
         </li>
         <li>

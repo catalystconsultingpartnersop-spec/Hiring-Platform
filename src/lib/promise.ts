@@ -50,36 +50,39 @@ export async function requestPromise(candidateId: string, listOnSign: boolean) {
 
 const DAY = 864e5;
 
-// Run once a day (from the daily cron):
-// 1. Candidates who went live before the promise existed get asked to sign it, once.
-// 2. Listed candidates get a one-tap "still looking?" check-in every 3 weeks.
+// Run once a day (from the daily cron): each listed candidate gets a personal
+// "still looking?" email from their rep about once a month. Replies go to the rep.
+// (Asking already-live candidates to sign the agreement is done by reps, one by
+// one, from the candidate's profile.)
 export async function dailyCandidateCheckins() {
-  const sent = { promise: 0, checkin: 0 };
+  const sent = { checkin: 0 };
   const { data, error } = await db().from("candidates").select("*").eq("status", "listed");
   if (error || !data) return sent;
   const now = Date.now();
-  type Row = { id: string; full_name: string; email: string; listed_at: string | null; promise_signed_at?: string | null; promise_requested_at?: string | null; last_checkin_at?: string | null; checkin_sent_at?: string | null };
+  type Row = { id: string; full_name: string; email: string; listed_at: string | null; last_checkin_at?: string | null; checkin_sent_at?: string | null };
   for (const c of data as Row[]) {
-    if (!("promise_signed_at" in c)) break; // the database hasn't been updated yet
+    if (!("checkin_sent_at" in c)) break; // the database hasn't been updated yet
     try {
-      if (!c.promise_signed_at && !c.promise_requested_at && sent.promise < 40) {
-        await requestPromise(c.id, false);
-        sent.promise++;
-        continue;
-      }
       const last = Math.max(...[c.listed_at, c.last_checkin_at, c.checkin_sent_at].map((d) => (d ? Date.parse(d) : 0)));
-      if (last && last < now - 21 * DAY && sent.checkin < 40) {
-        await sendEmail({
-          to: c.email,
-          ...candMail.checkIn({ name: c.full_name, looking: candidateLinkTo(c.id, "looking"), hired: candidateLinkTo(c.id, "hired") }),
-        });
-        await db().from("candidates").update({ checkin_sent_at: new Date().toISOString() }).eq("id", c.id);
-        sent.checkin++;
-      }
+      if (!last || last > now - 30 * DAY || sent.checkin >= 40) continue;
+      const rep = await repFor(c.id);
+      await sendEmail({
+        to: c.email,
+        ...candMail.checkIn({
+          name: c.full_name,
+          rep: rep?.active ? rep.full_name : null,
+          looking: candidateLinkTo(c.id, "looking"),
+          hired: candidateLinkTo(c.id, "hired"),
+        }),
+        replyTo: rep?.active ? rep.email : undefined,
+        fromName: rep?.active ? rep.full_name ?? undefined : undefined,
+      });
+      await db().from("candidates").update({ checkin_sent_at: new Date().toISOString() }).eq("id", c.id);
+      sent.checkin++;
     } catch (e) {
       console.error("candidate check-in failed", c.id, e);
     }
   }
-  if (sent.promise || sent.checkin) await logActivity("system", "candidate_checkins", sent);
+  if (sent.checkin) await logActivity("system", "candidate_checkins", sent);
   return sent;
 }

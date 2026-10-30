@@ -15,9 +15,8 @@ export async function GET(req: NextRequest) {
   if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Not allowed" }, { status: 401 });
   }
-  // Candidate agreement requests and "still looking?" check-ins: paused until
-  // Heshy decides how reps should handle them.
-  const checkins = process.env.CANDIDATE_CHECKINS === "on" ? await dailyCandidateCheckins().catch(() => null) : null;
+  // Monthly "still looking?" emails to listed candidates, from their rep.
+  const checkins = await dailyCandidateCheckins().catch(() => null);
 
   const now = Date.now();
   const iso = (ms: number) => new Date(ms).toISOString();
