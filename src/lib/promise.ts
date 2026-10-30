@@ -59,11 +59,30 @@ export async function dailyCandidateCheckins() {
   const { data, error } = await db().from("candidates").select("*").eq("status", "listed");
   if (error || !data) return sent;
   const now = Date.now();
-  type Row = { id: string; full_name: string; email: string; listed_at: string | null; last_checkin_at?: string | null; checkin_sent_at?: string | null };
+  const since = new Date(now - 30 * DAY).toISOString();
+
+  // Anyone actively engaged is left alone: an introduction in progress, a
+  // recent or upcoming onboarding call, or a recent message to us.
+  const ids = (data as { id: string }[]).map((c) => c.id);
+  const [{ data: intros }, { data: calls }, { data: notes }] = await Promise.all([
+    db().from("unlocks").select("candidate_id, passed_at, candidate_declined_at, hires(status)").in("candidate_id", ids).not("confirmed_at", "is", null),
+    db().from("onboarding_calls").select("candidate_id").in("candidate_id", ids).neq("status", "cancelled").gte("starts_at", since),
+    db().from("contact_requests").select("candidate_id").in("candidate_id", ids).gte("created_at", since),
+  ]);
+  const busy = new Set<string>();
+  for (const u of (intros ?? []) as { candidate_id: string; passed_at: string | null; candidate_declined_at: string | null; hires: { status: string }[] }[]) {
+    const done = u.passed_at || u.candidate_declined_at || u.hires.some((h) => ["paid", "hired", "refunded"].includes(h.status));
+    if (!done) busy.add(u.candidate_id);
+  }
+  for (const r of [...(calls ?? []), ...(notes ?? [])] as { candidate_id: string | null }[]) if (r.candidate_id) busy.add(r.candidate_id);
+
+  type Row = { id: string; full_name: string; email: string; listed_at: string | null; updated_at?: string | null; last_checkin_at?: string | null; checkin_sent_at?: string | null };
   for (const c of data as Row[]) {
     if (!("checkin_sent_at" in c)) break; // the database hasn't been updated yet
     try {
-      const last = Math.max(...[c.listed_at, c.last_checkin_at, c.checkin_sent_at].map((d) => (d ? Date.parse(d) : 0)));
+      if (busy.has(c.id)) continue;
+      // Quiet for 30 days: no check-in, answer or profile update in that time.
+      const last = Math.max(...[c.listed_at, c.updated_at, c.last_checkin_at, c.checkin_sent_at].map((d) => (d ? Date.parse(d) : 0)));
       if (!last || last > now - 30 * DAY || sent.checkin >= 40) continue;
       const rep = await repFor(c.id);
       await sendEmail({
