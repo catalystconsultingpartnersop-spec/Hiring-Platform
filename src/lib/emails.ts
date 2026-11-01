@@ -255,7 +255,7 @@ export const candidate = {
       p("Thanks for becoming a candidate with us. Someone from our team will reach out within one business day to find a time to talk."),
   }),
 
-  onboardingBooked: (o: { name: string; rep: string; when: string; link: string | null; manage: string; minutes?: number }): Mail => ({
+  onboardingBooked: (o: { name: string; rep: string; when: string; link: string | null; manage: string; minutes?: number; recorded?: boolean }): Mail => ({
     audience: "candidate",
     subject: `You're booked: ${o.when}`,
     html:
@@ -264,6 +264,7 @@ export const candidate = {
       big(esc(o.when)) +
       (o.link ? button(o.link, "Join the video call") : p("We'll email you the video link before the call.")) +
       p("We'll talk about what you're good at, what you enjoy, and the kind of role where you'd shine. No preparation needed.") +
+      (o.recorded ? quiet("We record the call so your rep can focus on you instead of taking notes. The notes help write your profile, and only our team sees them.") : "") +
       box(`<strong>Before we talk:</strong> please take the 6 Working Genius assessment at <a href="https://www.workinggenius.com" style="color:#17213a">workinggenius.com</a>. It takes about 10 minutes and shows the kind of work that gives you energy. Reply to this email with your results, or bring them to the call.`) +
       quiet(`Need a different time? <a href="${o.manage}" style="color:#5b667e">Reschedule or cancel here</a>.`),
   }),

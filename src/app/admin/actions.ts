@@ -1006,3 +1006,11 @@ export async function sendCandidateReminder(candidateId: string, kind: ReminderK
   revalidatePath(`/admin/candidates/${candidateId}`);
   return { ok: `Sent. ${String(c.full_name).split(" ")[0]} will get it in a minute.` };
 }
+
+export async function disconnectGoogleCalls() {
+  const me = await requireAdmin();
+  const { disconnect } = await import("@/lib/googleCalls");
+  await disconnect();
+  await logActivity(me.email, "google_calls_disconnected", {});
+  revalidatePath("/admin/settings");
+}

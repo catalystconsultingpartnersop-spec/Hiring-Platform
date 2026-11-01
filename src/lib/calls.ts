@@ -6,6 +6,7 @@ import { callIcs } from "./ics";
 import { signedToken } from "./session";
 import { callMinutesByRep, lengthFor, repsFreeAt } from "./slots";
 import { COMPANY_TZ, formatInZone, validTimeZone } from "./time";
+import { newRecordedMeeting } from "./googleCalls";
 
 export type BookResult = { ok: true; callId: string; manageToken: string } | { ok: false; error: string };
 
@@ -46,6 +47,15 @@ export async function bookCall(candidateId: string, startIso: string, candidateT
   }
   if (!callId || !repId) return { ok: false, error: "That time was just taken. Pick another one." };
 
+  // Its own Google Meet room that records and takes notes, if Google is connected.
+  try {
+    const meet = await newRecordedMeeting();
+    if (meet) await db().from("onboarding_calls").update({ meet_link: meet.link, meet_space: meet.space }).eq("id", callId);
+  } catch (e) {
+    console.error("could not make a Meet room", e);
+    await logActivity("system", "meet_room_failed", { call_id: callId, error: (e as Error).message.slice(0, 300) });
+  }
+
   await sendBookingEmails(callId, false);
   await logActivity("system", "onboarding_call_booked", { call_id: callId, candidate_id: candidateId, staff_id: repId });
   return { ok: true, callId, manageToken: signedToken(`call_${callId}`, 60) };
@@ -57,6 +67,7 @@ type CallRow = {
   ends_at: string;
   status: string;
   candidate_time_zone: string | null;
+  meet_link?: string | null;
   candidates: { id: string; full_name: string; email: string; phone: string | null; application: Record<string, string> };
   staff: { full_name: string | null; email: string; meeting_link: string | null; time_zone: string | null };
 };
@@ -65,7 +76,7 @@ export async function getCall(callId: string): Promise<CallRow | null> {
   const { data } = await db()
     .from("onboarding_calls")
     .select(
-      "id, starts_at, ends_at, status, candidate_time_zone, candidates(id, full_name, email, phone, application), staff(full_name, email, meeting_link, time_zone)",
+      "*, candidates(id, full_name, email, phone, application), staff(full_name, email, meeting_link, time_zone)",
     )
     .eq("id", callId)
     .maybeSingle();
@@ -78,7 +89,9 @@ export async function sendBookingEmails(callId: string, cancelled: boolean) {
   const c = call.candidates;
   const rep = call.staff;
   const repFirst = (rep.full_name || "our team").split(" ")[0];
-  const link = rep.meeting_link;
+  // The call's own recorded Meet room, if there is one; otherwise the rep's own link.
+  const recorded = !!call.meet_link;
+  const link = call.meet_link || rep.meeting_link;
   const whenCandidate = formatInZone(call.starts_at, call.candidate_time_zone ?? COMPANY_TZ);
   const whenRep = formatInZone(call.starts_at, rep.time_zone ?? COMPANY_TZ);
   const manage = manageLink(call.id);
@@ -117,7 +130,7 @@ export async function sendBookingEmails(callId: string, cancelled: boolean) {
 
   await sendEmail({
     to: c.email,
-    ...candMail.onboardingBooked({ name: c.full_name, rep: rep.full_name || "our team", when: whenCandidate, link, manage, minutes: Math.round((Date.parse(call.ends_at) - Date.parse(call.starts_at)) / 60e3) || 45 }),
+    ...candMail.onboardingBooked({ name: c.full_name, rep: rep.full_name || "our team", when: whenCandidate, link, manage, recorded, minutes: Math.round((Date.parse(call.ends_at) - Date.parse(call.starts_at)) / 60e3) || 45 }),
     attachments: [{ filename: "career-call.ics", content: ics(false) }],
     // Replies (like their assessment results) go straight to their rep.
     replyTo: rep.email,
@@ -130,7 +143,7 @@ export async function sendBookingEmails(callId: string, cancelled: boolean) {
     html: `<p><strong>${escapeHtml(c.full_name)}</strong> booked a call with you for <strong>${escapeHtml(whenRep)}</strong>.</p>
 <p>${escapeHtml(c.email)}${c.phone ? `, ${escapeHtml(c.phone)}` : ""}</p>
 ${app.looking_for ? `<p>Looking for: ${escapeHtml(app.looking_for)}</p>` : ""}
-${link ? `<p>Your video link: <a href="${escapeHtml(link)}">${escapeHtml(link)}</a></p>` : `<p><strong>You don't have a video link saved.</strong> Add one on your My hours page, or email the candidate a link.</p>`}
+${link ? `<p>Video link: <a href="${escapeHtml(link)}">${escapeHtml(link)}</a>${recorded ? "<br><small>This room records and takes notes on its own, so you can focus on the candidate.</small>" : ""}</p>` : `<p><strong>You don't have a video link saved.</strong> Add one on your My hours page, or email the candidate a link.</p>`}
 <p style="padding:10px 12px;background:#fff8e1;border-radius:8px">We asked them to take the <strong>6 Working Genius assessment</strong> at workinggenius.com before the call. Their replies come straight to you. If you don't have their results a day before, send them a friendly reminder.</p>
 <p><a href="${teamUrl()}/admin/candidates/${c.id}">Open their profile</a> · <a href="${teamUrl()}/admin/calls">All your calls</a></p>`,
     attachments: [{ filename: "onboarding-call.ics", content: ics(true) }],

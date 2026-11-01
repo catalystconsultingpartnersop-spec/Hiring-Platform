@@ -11,6 +11,7 @@ type Row = {
   starts_at: string;
   status: string;
   staff_id: string;
+  meet_link?: string | null;
   candidates: { id: string; full_name: string; email: string; phone: string | null; application: Record<string, string> };
   staff: { full_name: string | null; email: string; meeting_link: string | null; time_zone: string | null };
 };
@@ -26,7 +27,7 @@ async function load(staffId: string | null, upcoming: boolean) {
   const cutoff = new Date(Date.now() - (upcoming ? 3600e3 : 14 * 864e5)).toISOString();
   let q = db()
     .from("onboarding_calls")
-    .select("id, starts_at, status, staff_id, candidates(id, full_name, email, phone, application), staff(full_name, email, meeting_link, time_zone)")
+    .select("*, candidates(id, full_name, email, phone, application), staff(full_name, email, meeting_link, time_zone)")
     .gte("starts_at", cutoff)
     .order("starts_at", { ascending: upcoming });
   if (staffId) q = q.eq("staff_id", staffId);
@@ -80,8 +81,8 @@ export default async function CallsPage() {
                 </td>
                 <td>
                   <div className={styles.inline}>
-                    {showActions && r.staff.meeting_link && (
-                      <a className="btn btn-small btn-gold" href={r.staff.meeting_link} target="_blank" rel="noopener noreferrer">
+                    {showActions && (r.meet_link || r.staff.meeting_link) && (
+                      <a className="btn btn-small btn-gold" href={(r.meet_link || r.staff.meeting_link)!} target="_blank" rel="noopener noreferrer">
                         Join
                       </a>
                     )}
