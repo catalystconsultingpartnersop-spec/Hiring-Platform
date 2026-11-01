@@ -9,6 +9,7 @@ import { ShortlistLink, ShortlistSync } from "@/components/Shortlist";
 import { Logo } from "@/components/Logo";
 import { legalEntity } from "@/lib/agreement";
 import { siteUrl } from "@/lib/format";
+import { candidateOnly } from "@/lib/candidateMode";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
@@ -29,7 +30,9 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   let signedIn = false;
   let candidate = false;
+  let onlyCandidate = false;
   try {
+    onlyCandidate = await candidateOnly();
     signedIn = !!(await currentOwner());
     candidate = !signedIn && !!(await currentCandidateId());
   } catch {
@@ -40,9 +43,20 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body>
         <header className="site-header">
           <div className="wrap">
-            <Link href="/" className="brand" aria-label={`${brandName()} home`}>
+            <Link href={onlyCandidate ? "/join" : "/"} className="brand" aria-label={`${brandName()} home`}>
               <Logo tagline />
             </Link>
+            {onlyCandidate ? (
+              <nav className="nav" aria-label="Main">
+                <Link href="/join" className="hide-sm">
+                  Looking for work?
+                </Link>
+                <Link href="/mission" className="hide-sm">
+                  Our mission
+                </Link>
+                <Link href="/me">Your page</Link>
+              </nav>
+            ) : (
             <nav className="nav" aria-label="Main">
               <Link href="/candidates">
                 <span className="hide-sm">Browse candidates</span>
@@ -67,6 +81,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 <Link href="/login">Sign in</Link>
               )}
             </nav>
+            )}
           </div>
         </header>
         <main>{children}</main>
@@ -79,6 +94,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 ready for work that truly fits them.
               </p>
             </div>
+            {!onlyCandidate && (
             <nav aria-label="For businesses">
               <h3>For businesses</h3>
               <Link href="/candidates">Browse candidates</Link>
@@ -86,6 +102,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/why">Why we started</Link>
               <Link href={signedIn ? "/account" : "/login"}>{signedIn ? "Your account" : "Sign in"}</Link>
             </nav>
+            )}
             <nav aria-label="For candidates">
               <h3>For candidates</h3>
               <Link href="/join">Looking for work?</Link>

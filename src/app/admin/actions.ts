@@ -943,3 +943,11 @@ export async function resendPromise(candidateId: string) {
   await logActivity(staffActor(me), "promise_resent", { candidate: refCode(candidateId) });
   revalidatePath(`/admin/candidates/${candidateId}`);
 }
+
+// While the catalog fills up, candidates see only the candidate side of the site.
+export async function setCandidatesSeeBusiness(on: boolean) {
+  const me = await requireAdmin();
+  await setSetting("candidates_see_business", on);
+  await logActivity(me.email, "candidates_see_business", { on });
+  revalidatePath("/", "layout");
+}

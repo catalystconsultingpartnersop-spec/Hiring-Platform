@@ -1,3 +1,4 @@
+import { keepCandidatesOut } from "@/lib/candidateMode";
 import Link from "next/link";
 import { CandidateCard, isNew } from "@/components/CandidateCard";
 import { getTiers, listListed, rolesOf } from "@/lib/catalog";
@@ -72,6 +73,7 @@ const SHOWCASE: PublicCandidate[] = [
 ];
 
 export default async function Home() {
+  await keepCandidatesOut();
   let all: PublicCandidate[] = [];
   let tiers: FeeTier[] = [];
   try {

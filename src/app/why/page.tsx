@@ -1,3 +1,4 @@
+import { keepCandidatesOut } from "@/lib/candidateMode";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { brandName } from "@/lib/format";
@@ -10,7 +11,8 @@ export const metadata: Metadata = {
 
 // The landing page for the owner teaser: our story, what's different, and
 // what we won't do, told from the business owner's side.
-export default function WhyPage() {
+export default async function WhyPage() {
+  await keepCandidatesOut();
   return (
     <>
       <section className={styles.hero}>

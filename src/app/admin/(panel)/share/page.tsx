@@ -5,6 +5,8 @@ import { siteUrl } from "@/lib/format";
 import { requireStaff } from "@/lib/session";
 import { candidateLink, candidateMessage, ownerMessage, refSlug, shareLink } from "@/lib/shareKit";
 import { NetworkerLink } from "./NetworkerLink";
+import { CandidateSide } from "./CandidateSide";
+import { candidatesSeeBusiness } from "@/lib/candidateMode";
 
 export const metadata: Metadata = { title: "Share kit" };
 
@@ -25,6 +27,8 @@ export default async function ShareKit() {
           {ref && " Your links carry your name, so the people who join through them are credited to you."}
         </p>
       </div>
+
+      {admin && <CandidateSide on={await candidatesSeeBusiness()} />}
 
       <h2 id="candidates" style={{ fontSize: 24, margin: "16px 0 6px", scrollMarginTop: 16 }}>
         For people looking for work

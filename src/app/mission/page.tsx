@@ -1,3 +1,4 @@
+import { candidateOnly } from "@/lib/candidateMode";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { brandName } from "@/lib/format";
@@ -9,7 +10,8 @@ export const metadata: Metadata = {
   description: "We help people discover their natural strengths and character, so they can find work that truly fits them.",
 };
 
-export default function MissionPage() {
+export default async function MissionPage() {
+  const onlyCandidate = await candidateOnly();
   return (
     <>
       <section className={styles.hero}>
@@ -100,11 +102,13 @@ export default function MissionPage() {
 
       <section className={styles.closing}>
         <div className="wrap">
-          <h2>Meet people who know what they&rsquo;re built for.</h2>
+          <h2>{onlyCandidate ? "Let\u2019s find what you\u2019re built for." : "Meet people who know what they\u2019re built for."}</h2>
           <div className={styles.actions}>
-            <Link className="btn btn-gold" href="/candidates">
-              Browse candidates
-            </Link>
+            {!onlyCandidate && (
+              <Link className="btn btn-gold" href="/candidates">
+                Browse candidates
+              </Link>
+            )}
             <Link className={`btn btn-ghost ${styles.light}`} href="/join">
               I&rsquo;m looking for work
             </Link>

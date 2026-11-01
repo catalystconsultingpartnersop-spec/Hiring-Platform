@@ -22,9 +22,18 @@ export function proxy(req: NextRequest) {
       ? NextResponse.rewrite(new URL("/join", req.url))
       : NextResponse.next();
   // A share link (?r=name) remembers who sent this visitor, for 90 days.
+  // Someone who lands on the candidate page from outside (a shared link, the
+  // flyer, a typed address) is treated as a candidate: while the catalog fills
+  // up they see only the candidate side. ?for=business switches that off.
+  if (path === "/join" && !host.startsWith("team.")) {
+    const referer = hostOf(req.headers.get("referer") ?? undefined);
+    const ours = referer && (referer === host || referer === candidateHost || referer === hostOf(process.env.SITE_URL));
+    if (!ours && !req.cookies.get("tcc_side")) res.cookies.set("tcc_side", "candidate", { maxAge: 90 * 86400, path: "/", sameSite: "lax", httpOnly: true });
+  }
+  if (req.nextUrl.searchParams.get("for") === "business") res.cookies.delete("tcc_side");
   const ref = (req.nextUrl.searchParams.get("r") ?? "").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30);
   if (ref && !host.startsWith("team.")) res.cookies.set("tcc_ref", ref, { maxAge: 90 * 86400, path: "/", sameSite: "lax", httpOnly: true });
   return res;
 }
 
-export const config = { matcher: ["/", "/why", "/candidates", "/join"] };
+export const config = { matcher: ["/", "/why", "/candidates", "/join", "/hiring-help"] };
