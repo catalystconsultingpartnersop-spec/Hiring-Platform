@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { readSignedToken } from "@/lib/session";
 import { availableTimes } from "../actions";
 import { ApplyFlow } from "../ApplyFlow";
+import { HOW_IT_WORKS, YOUR_PART } from "@/lib/promise";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ export default async function BookPage({ searchParams }: PageProps<"/apply/book"
           times={times}
           assessmentUrl={process.env.ASSESSMENT_URL || "https://www.workinggenius.com"}
           startToken={token}
+          agreement={{ how: HOW_IT_WORKS, ask: YOUR_PART }}
           startFirst={first || "again"}
         />
       ) : (

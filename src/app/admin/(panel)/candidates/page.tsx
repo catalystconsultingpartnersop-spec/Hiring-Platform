@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { dateShort, refCode } from "@/lib/format";
 
 import { requireStaff } from "@/lib/session";
+import { releaseWaitingProfiles } from "@/lib/promise";
 import { effectiveReps, repOptions } from "@/lib/reps";
 import { RepPicker } from "./RepPicker";
 import styles from "../admin.module.css";
@@ -35,6 +36,7 @@ type CandRow = {
 export default async function CandidatesList({ searchParams }: PageProps<"/admin/candidates">) {
   const sp = await searchParams;
   const me = await requireStaff();
+  await releaseWaitingProfiles();
   const admin = me.role === "admin";
   const view = typeof sp.view === "string" && VIEWS.some(([v]) => v === sp.view) ? sp.view : "applied";
   const q = typeof sp.q === "string" ? sp.q.trim().toLowerCase() : "";

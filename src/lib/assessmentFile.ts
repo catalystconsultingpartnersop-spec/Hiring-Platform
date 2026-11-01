@@ -1,0 +1,23 @@
+import { db } from "./db";
+
+// A candidate's Working Genius results (PDF or photo), kept with their resume.
+// Only our team ever sees it.
+export async function saveAssessmentFile(candidateId: string, file: File): Promise<string | null> {
+  const n = file.name.toLowerCase();
+  const ext =
+    file.type === "application/pdf" || n.endsWith(".pdf")
+      ? "pdf"
+      : file.type === "image/png" || n.endsWith(".png")
+        ? "png"
+        : file.type.startsWith("image/") || /\.(jpe?g|heic)$/.test(n)
+          ? "jpg"
+          : null;
+  if (!ext) return "Your results need to be a PDF or a photo.";
+  if (file.size > 6 * 1024 * 1024) return "That file is over 6 MB. Try a smaller one.";
+  const path = `${candidateId}/assessment.${ext}`;
+  const type = ext === "pdf" ? "application/pdf" : ext === "png" ? "image/png" : "image/jpeg";
+  const { error } = await db().storage.from("resumes").upload(path, Buffer.from(await file.arrayBuffer()), { contentType: type, upsert: true });
+  if (error) return "The upload didn't go through. Try again.";
+  await db().from("candidates").update({ assessment_path: path }).eq("id", candidateId);
+  return null;
+}

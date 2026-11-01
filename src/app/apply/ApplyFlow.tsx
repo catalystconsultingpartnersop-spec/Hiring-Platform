@@ -9,9 +9,11 @@ export function ApplyFlow({
   assessmentUrl,
   startToken = null,
   startFirst = "",
+  agreement,
 }: {
   times: string[];
   assessmentUrl: string;
+  agreement: { how: string[]; ask: string[] };
   startToken?: string | null;
   startFirst?: string;
 }) {
@@ -34,15 +36,16 @@ export function ApplyFlow({
           <a href={booked.manage}>Reschedule or cancel here</a>.
         </p>
         <div className="assess-nudge" style={{ marginTop: 22 }}>
-          <p className="assess-nudge-title">One thing that makes the call better</p>
+          <p className="assess-nudge-title">Before your call: take your strengths assessment</p>
           <p>
-            If you have 10 minutes before we talk, take the Working Genius assessment. It shows the kind of work that
-            energizes you and the kind that drains you, and it&rsquo;s helped a lot of people we&rsquo;ve worked with
-            find the right fit. Totally optional.
+            It takes about 10 minutes and shows the kind of work that gives you energy and the kind that drains you.
+            Taking it before we talk makes our call much more useful, because we can spend the time on you and where
+            you&rsquo;d shine.
           </p>
-          <a className="btn btn-small" href={assessmentUrl} target="_blank" rel="noopener noreferrer">
+          <a className="btn btn-gold btn-small" href={assessmentUrl} target="_blank" rel="noopener noreferrer">
             Take the assessment
           </a>
+          {state.token && <UploadResults token={state.token} />}
         </div>
         {state.token && <Extras token={state.token} />}
         <p className="notice" style={{ marginTop: 18 }}>
@@ -163,12 +166,21 @@ export function ApplyFlow({
         <input className="input" type="file" name="resume" accept=".pdf,.doc,.docx" />
       </label>
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: "-9999px" }} />
-      <label className="check" style={{ marginTop: 18 }}>
-        <input type="checkbox" name="consent" required />
-        <span>
-          It&rsquo;s OK to list me anonymously and share my details with employers who sign an agreement with you.
-        </span>
-      </label>
+      <div className="apply-agreement" style={{ marginTop: 20, padding: "14px 16px", background: "var(--wash)", borderRadius: 12 }}>
+        <p style={{ margin: "0 0 6px", fontWeight: 700 }}>Your candidate agreement</p>
+        <ul style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 4, fontSize: 15 }}>
+          {[...agreement.how, ...agreement.ask].map((x) => (
+            <li key={x}>{x}</li>
+          ))}
+        </ul>
+        <label className="check" style={{ marginTop: 12 }}>
+          <input type="checkbox" name="consent" required />
+          <span>
+            I agree to my candidate agreement. It&rsquo;s OK to list me anonymously and share my details with employers who
+            sign to meet me.
+          </span>
+        </label>
+      </div>
       {state.error && (
         <p className="notice notice-bad" role="alert" style={{ marginTop: 16 }}>
           {state.error}
@@ -182,8 +194,36 @@ export function ApplyFlow({
   );
 }
 
+// Already took the assessment? Upload the results so the rep has them before the call.
+function UploadResults({ token }: { token: string }) {
+  const [state, action, pending] = useActionState<{ ok?: boolean; error?: string }, FormData>(saveExtras.bind(null, token), {});
+  if (state.ok) {
+    return (
+      <p className="notice notice-good" role="status" style={{ marginTop: 14 }}>
+        Got it, thank you! Your rep will have your results before the call.
+      </p>
+    );
+  }
+  return (
+    <form action={action} style={{ marginTop: 16, borderTop: "1px solid var(--line)", paddingTop: 14 }}>
+      <label className="field">
+        <span>Done already? Upload your results (PDF or photo)</span>
+        <input className="input" type="file" name="assessment" accept=".pdf,image/*" required />
+      </label>
+      {state.error && (
+        <p className="notice notice-bad" role="alert" style={{ marginTop: 10 }}>
+          {state.error}
+        </p>
+      )}
+      <button className="btn btn-small" type="submit" disabled={pending} style={{ marginTop: 10 }}>
+        {pending ? "Uploading…" : "Upload my results"}
+      </button>
+    </form>
+  );
+}
+
 function Extras({ token }: { token: string }) {
-  const [state, action, pending] = useActionState<{ ok?: boolean }, FormData>(saveExtras.bind(null, token), {});
+  const [state, action, pending] = useActionState<{ ok?: boolean; error?: string }, FormData>(saveExtras.bind(null, token), {});
   if (state.ok) {
     return (
       <p className="notice notice-good" role="status" style={{ marginTop: 18 }}>
@@ -196,7 +236,7 @@ function Extras({ token }: { token: string }) {
       <summary>Optional: two quick things that help us prepare</summary>
       <form action={action}>
         <label className="field" style={{ marginTop: 14 }}>
-          <span>Your Working Genius result, if you have it</span>
+          <span>Your Working Genius letters, if you have them</span>
           <input className="input" name="working_genius" placeholder="e.g. WDGEIT, or your top two like Wonder and Discernment" />
         </label>
         <label className="field">

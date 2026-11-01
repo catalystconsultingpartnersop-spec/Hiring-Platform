@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db, logActivity } from "@/lib/db";
-import { dailyCandidateCheckins } from "@/lib/promise";
+import { dailyCandidateCheckins, releaseWaitingProfiles } from "@/lib/promise";
+import { beforeCallNudges } from "@/lib/beforeCall";
 import { happened, Meeting, RefRequest } from "@/lib/path";
 import { emailAskFeedback, nudgeCandidateRefs, nudgeCandidateToPick, nudgeOwnerFeedback, nudgeOwnerToStart } from "@/lib/pathEmails";
 
@@ -16,7 +17,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Not allowed" }, { status: 401 });
   }
   // Monthly "still looking?" emails to listed candidates, from their rep.
+  await releaseWaitingProfiles();
   const checkins = await dailyCandidateCheckins().catch(() => null);
+  // The day before an onboarding call: remind the candidate about their assessment, give the rep a heads-up.
+  const beforeCall = await beforeCallNudges().catch(() => null);
 
   const now = Date.now();
   const iso = (ms: number) => new Date(ms).toISOString();
@@ -34,7 +38,7 @@ export async function GET(req: NextRequest) {
     (u) => u.candidates.status !== "hired" && !u.hires.some((h) => h.status === "paid" || h.status === "hired"),
   );
   const ids = active.map((u) => u.id);
-  if (!ids.length) return NextResponse.json({ ok: true, sent, checkins });
+  if (!ids.length) return NextResponse.json({ ok: true, sent, checkins, beforeCall });
 
   const [{ data: ms }, { data: rs }] = await Promise.all([
     db().from("meetings").select("*").in("unlock_id", ids),
@@ -82,5 +86,5 @@ export async function GET(req: NextRequest) {
   }
 
   if (Object.values(sent).some(Boolean)) await logActivity("system", "path_nudges", sent);
-  return NextResponse.json({ ok: true, sent, checkins });
+  return NextResponse.json({ ok: true, sent, checkins, beforeCall });
 }

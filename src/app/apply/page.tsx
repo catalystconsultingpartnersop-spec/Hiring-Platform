@@ -1,5 +1,6 @@
 import { availableTimes } from "./actions";
 import { ApplyFlow } from "./ApplyFlow";
+import { HOW_IT_WORKS, YOUR_PART } from "@/lib/promise";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default async function ApplyPage() {
       <ApplyFlow
         times={times}
         assessmentUrl={process.env.ASSESSMENT_URL || "https://www.workinggenius.com"}
+        agreement={{ how: HOW_IT_WORKS, ask: YOUR_PART }}
       />
     </div>
   );

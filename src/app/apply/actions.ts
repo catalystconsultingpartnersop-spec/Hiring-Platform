@@ -12,6 +12,7 @@ import { readSignedToken, signedToken, startCandidateSession } from "@/lib/sessi
 import { openSlots } from "@/lib/slots";
 import { formatInZone } from "@/lib/time";
 import { RESUME_CONTENT_TYPE, resumeKind } from "@/lib/resume";
+import { saveAssessmentFile } from "@/lib/assessmentFile";
 
 const MAX_RESUME = 4 * 1024 * 1024;
 
@@ -38,7 +39,7 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail("That email doesn't look quite right.");
   if (phone.replace(/\D/g, "").length < 7) return fail("Add a phone number in case we need to reach you.");
   if (!looking_for) return fail("Tell us a little about the work you're hoping for. A sentence is plenty.");
-  if (form.get("consent") !== "on") return fail("Tick the box at the bottom so we can list you.");
+  if (form.get("consent") !== "on") return fail("Tick the box at the bottom to agree to your candidate agreement.");
   if (!(await allow("apply", 5, 60))) return fail(SLOW_DOWN);
 
   const resume = form.get("resume");
@@ -62,6 +63,9 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
         phone,
         application: { looking_for },
         consent_at: new Date().toISOString(),
+        // They sign their candidate agreement right here, so nothing is left to do after their call.
+        promise_signed_at: new Date().toISOString(),
+        promise_name: full_name,
         added_by: await referringRep(),
       })
       .select("id")
@@ -82,7 +86,7 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
       console.error("resume upload failed", e);
     }
   }
-  if (candidateId) await logActivity(`candidate:${email}`, "applied", { candidate_id: candidateId });
+  if (candidateId) await logActivity(`candidate:${email}`, "applied", { candidate_id: candidateId, agreement_signed: true });
 
   // Heshy always gets the application by email, so nothing is ever lost.
   const adminMail = await emailAdmin(
@@ -120,14 +124,20 @@ export async function bookTime(token: string, startIso: string, timeZone: string
 }
 
 // After booking: a couple of optional extras that help the call.
-export async function saveExtras(token: string, _prev: { ok?: boolean }, form: FormData) {
+export async function saveExtras(token: string, _prev: { ok?: boolean; error?: string }, form: FormData): Promise<{ ok?: boolean; error?: string }> {
   const candidateId = readSignedToken(token, "cand_");
-  if (!candidateId) return { ok: false };
+  if (!candidateId) return { ok: false, error: "This page has expired. Upload it from your page instead." };
+  const file = form.get("assessment");
+  if (file instanceof File && file.size > 0) {
+    const problem = await saveAssessmentFile(candidateId, file);
+    if (problem) return { error: problem };
+    await logActivity("candidate", "assessment_uploaded", { candidate_id: candidateId });
+  }
   const get = (k: string) => String(form.get(k) ?? "").trim().slice(0, 2000);
   const { data: cur } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
-  const update: Record<string, unknown> = {
-    application: { ...(cur?.application ?? {}), working_genius: get("working_genius"), never_show_to: get("never_show_to") },
-  };
+  const app: Record<string, string> = { ...(cur?.application ?? {}) };
+  for (const k of ["working_genius", "never_show_to"]) if (form.has(k)) app[k] = get(k);
+  const update: Record<string, unknown> = { application: app };
   if (get("working_genius")) update.working_genius = get("working_genius");
   if (get("never_show_to")) update.never_show_to = get("never_show_to");
   await db().from("candidates").update(update).eq("id", candidateId);

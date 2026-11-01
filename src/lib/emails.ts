@@ -172,30 +172,33 @@ export const owner = {
 const myPage = (link?: string) => link ?? `${candidateUrl()}/me`;
 
 export const candidate = {
-  promiseRequest: (o: { name: string; rep: string | null; link: string }): Mail => ({
+  promiseRequest: (o: { name: string; rep: string | null; link: string; waiting?: boolean }): Mail => ({
     audience: "candidate",
-    subject: "One quick step before your profile goes live",
+    subject: o.waiting ? "One quick step before your profile goes live" : "Your candidate agreement",
     html:
       hi(o.name) +
-      p(`Your profile is ready${o.rep ? `, and ${esc(first(o.rep))} did a lovely job on it` : ""}. Before employers can see it, there's one quick step: your candidate agreement. It's short, and it takes about 30 seconds.`) +
+      (o.waiting
+        ? p(`Your profile is ready${o.rep ? `, and ${esc(first(o.rep))} did a lovely job on it` : ""}. Before employers can see it, there's one quick step: your candidate agreement. It's short, and it takes about 30 seconds.`)
+        : p(`Your profile is live${o.rep ? `, and ${esc(first(o.rep))} did a lovely job on it` : ""}. One quick thing: please read and sign your candidate agreement. It's short, and it takes about 30 seconds.`)) +
       p("In short: it doesn't cost you a thing, your name and contact details are shared only with employers who sign to meet you, and you let us know when you get hired.") +
       button(o.link, "Read and sign") +
-      quiet("Your profile goes live the moment you sign."),
+      (o.waiting ? quiet("Your profile goes live the moment you sign.") : ""),
   }),
 
   // Friendly reminders a rep sends from the candidate's profile with one click.
-  reminder: (o: { kind: "assessment" | "book" | "resume"; name: string; rep: string | null; link?: string }): Mail => {
+  reminder: (o: { kind: "assessment" | "book" | "resume"; name: string; rep: string | null; link?: string; callSoon?: string }): Mail => {
     const sign = p(o.rep ? `Warmly,<br>${esc(o.rep)}` : "Warmly,<br>Your team at The Candidate Collection");
     const audience = o.rep ? "personal" : "candidate";
     if (o.kind === "assessment")
       return {
         audience,
-        subject: `A quick reminder about your strengths assessment, ${first(o.name)}`,
+        subject: o.callSoon ? `Looking forward to our call, ${first(o.name)}` : `A quick reminder about your strengths assessment, ${first(o.name)}`,
         html:
           hi(o.name) +
-          p("Just a friendly reminder: when you get a chance, please take the 6 Working Genius assessment. It takes about 10 minutes and shows the kind of work that gives you energy. It helps me describe your strengths to employers the right way.") +
+          (o.callSoon ? p(`I'm looking forward to our call, ${esc(o.callSoon)}.`) : "") +
+          p((o.callSoon ? "If you haven't yet, please take" : "Just a friendly reminder: when you get a chance, please take") + " the 6 Working Genius assessment. It takes about 10 minutes and shows the kind of work that gives you energy. It helps me describe your strengths to employers the right way.") +
           button("https://www.workinggenius.com", "Take the assessment") +
-          p("When you're done, just reply to this email with your results.") +
+          p(`When you're done, just reply to this email with your results, or upload them on <a href="${candidateUrl()}/me" style="color:#17213a">your page</a>.`) +
           sign,
       };
     if (o.kind === "book")

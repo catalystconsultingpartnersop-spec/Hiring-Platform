@@ -147,9 +147,11 @@ export default async function RepGuide() {
         <li>
           <h3>Get them assessed, then take the call (30 or 45 minutes, you choose on My hours)</h3>
           <p>
-            As soon as a candidate books, ask them to take the <b>6 Working Genius assessment</b> at{" "}
-            <a href="https://www.workinggenius.com" target="_blank" rel="noreferrer">workinggenius.com</a> before your call.
-            They buy it themselves. Ask them to send you their results.
+            Candidates are asked to take the <b>6 Working Genius assessment</b> at{" "}
+            <a href="https://www.workinggenius.com" target="_blank" rel="noreferrer">workinggenius.com</a> as soon as they
+            book, and they can upload their results on their own page. They buy it themselves. The day before your call, if
+            their results aren&rsquo;t in, the site sends them a friendly reminder from you, and you get a heads-up email
+            saying whether the results are in.
           </p>
           <p className={styles.tip}>
             Need to nudge someone? Open their profile and use <b>Send a reminder</b>. One tap sends a friendly email from
@@ -178,9 +180,9 @@ export default async function RepGuide() {
           </p>
           <p className={styles.tip}>
             Employers see the profile before they know who it is, so no names, employers or schools in the headline or
-            story. Then click <b>List now</b>. The candidate gets a short candidate agreement by email (it doesn&rsquo;t cost them a
-            thing, and they&rsquo;ll tell us when they&rsquo;re hired). Their profile goes live the moment they sign. If they
-            haven&rsquo;t, give them a call. Once a month, each of your live candidates gets a short &ldquo;still
+            story. Then click <b>List now</b> and they&rsquo;re live right away. Candidates who applied on the site already signed
+            their candidate agreement when they applied. Anyone you add yourself gets it by email to sign; it doesn&rsquo;t
+            hold their profile back. Once a month, each of your live candidates gets a short &ldquo;still
             looking?&rdquo; email signed by you; their replies come straight to you. If they don&rsquo;t answer within 5 days,
             we&rsquo;ll email you. Give them a call, and if they&rsquo;re no longer looking, set their profile to Paused.
           </p>

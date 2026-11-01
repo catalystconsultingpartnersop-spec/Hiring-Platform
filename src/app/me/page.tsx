@@ -10,7 +10,7 @@ import { repFor } from "@/lib/notify";
 import { currentCandidateId, signedToken } from "@/lib/session";
 import { formatInZone, nowMs } from "@/lib/time";
 import { loadPath, pathState } from "@/lib/path";
-import { hideMyProfile, showMyProfile, signOutCandidate } from "./actions";
+import { hideMyProfile, showMyProfile, signOutCandidate, uploadMyResults } from "./actions";
 import { Intro, Intros } from "./Intros";
 import styles from "./me.module.css";
 
@@ -34,6 +34,8 @@ const DONE: Record<string, React.ReactNode> = {
   refs: "Sent. They'll have your references right away.",
   "pick-error": "That time is no longer available. Pick another one.",
   "refs-error": "Add at least one reference with a phone or email.",
+  results: "Got it, thank you! Your rep will have your results before your call.",
+  "results-error": "That didn't upload. Try a PDF or a photo under 6 MB.",
 };
 
 export default async function MyPage({ searchParams }: PageProps<"/me">) {
@@ -165,6 +167,26 @@ export default async function MyPage({ searchParams }: PageProps<"/me">) {
                 </Link>
               </div>
             )}
+          {upcoming && !c.assessment_path && !c.working_genius && (
+            <section className="panel" style={{ marginTop: 0, marginBottom: 18, borderColor: "var(--marigold)" }}>
+              <h2 className={styles.h2} style={{ margin: 0 }}>Before your call: take your strengths assessment</h2>
+              <p className="small" style={{ margin: "6px 0 12px" }}>
+                It takes about 10 minutes and shows the kind of work that gives you energy. Taking it before your call makes it much more useful, because we can spend the time on you.
+              </p>
+              <a className="btn btn-gold btn-small" href="https://www.workinggenius.com" target="_blank" rel="noopener noreferrer">
+                Take the assessment
+              </a>
+              <form action={uploadMyResults} style={{ marginTop: 14, display: "flex", gap: 10, alignItems: "end", flexWrap: "wrap" }}>
+                <label className="field" style={{ flex: "1 1 240px", margin: 0 }}>
+                  <span>Done already? Upload your results</span>
+                  <input className="input" type="file" name="assessment" accept=".pdf,image/*" required />
+                </label>
+                <button className="btn btn-small" type="submit">
+                  Upload
+                </button>
+              </form>
+            </section>
+          )}
           <section className={`panel ${styles.journey}`} aria-label="Your progress">
             <ol>
               {steps.map((st) => (

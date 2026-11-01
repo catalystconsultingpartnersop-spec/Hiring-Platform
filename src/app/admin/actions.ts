@@ -311,23 +311,18 @@ ${hireSummaryHtml(notice)}`,
     await logActivity(actor, "candidate_created", { candidate: refCode(data.id) });
   }
 
-  // Before a profile goes live, the candidate signs their candidate agreement.
-  // Until they do, it stays a draft; it goes live the moment they sign.
-  let awaitingPromise = false;
+  // Candidates who applied on the site signed their agreement when they applied.
+  // Anyone else goes live right away, and we email them their agreement to sign
+  // (it never holds the profile back).
+  let agreementSent = false;
   if (status === "listed" && candidateId && !wasListed) {
     const { data: row } = await db().from("candidates").select("*").eq("id", candidateId).single();
-    if (row && "promise_signed_at" in row && !row.promise_signed_at && row.status === "listed") {
-      await db()
-        .from("candidates")
-        .update({ status: "draft", list_on_sign: true, ...(prevListedAt ? {} : { listed_at: null }) })
-        .eq("id", candidateId);
-      // Send the agreement only the first time; saving again shouldn't email them again.
-      // ("Send it again" on their profile is there for reminders.)
-      if (!row.promise_requested_at) await requestPromise(candidateId, true);
-      clearCatalog();
-      awaitingPromise = true;
+    if (row && "promise_signed_at" in row && !row.promise_signed_at && !row.promise_requested_at) {
+      await requestPromise(candidateId, false);
+      agreementSent = true;
     }
   }
+  const awaitingPromise = false;
 
   const resume = form.get("resume");
   let resumeProblem = "";
@@ -372,9 +367,11 @@ ${hireSummaryHtml(notice)}`,
   if (resumeProblem) return { error: `Saved, but ${resumeProblem}. Try attaching it again.` };
   return {
     ok: awaitingPromise
-      ? "Saved. They go live the moment they sign their candidate agreement (we've emailed it to them). Until then, owners can't see them."
+      ? ""
       : status === "listed"
-        ? "Saved. They're live in the catalog."
+        ? agreementSent
+          ? "Saved. They're live in the catalog, and we've emailed them their candidate agreement to sign."
+          : "Saved. They're live in the catalog."
         : `Saved as ${status}. Owners won't see them until the status is Listed.`,
   };
 }

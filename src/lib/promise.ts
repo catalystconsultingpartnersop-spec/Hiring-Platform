@@ -42,7 +42,7 @@ export async function requestPromise(candidateId: string, listOnSign: boolean) {
     .eq("id", candidateId);
   const r = await sendEmail({
     to: c.email,
-    ...candMail.promiseRequest({ name: c.full_name, rep: rep?.full_name ?? null, link: candidateLinkTo(candidateId, "promise") }),
+    ...candMail.promiseRequest({ name: c.full_name, rep: rep?.full_name ?? null, link: candidateLinkTo(candidateId, "promise"), waiting: listOnSign }),
     replyTo: rep?.email,
   });
   await logActivity("system", "promise_requested", { candidate: refCode(candidateId), sent: r.ok });
@@ -50,6 +50,24 @@ export async function requestPromise(candidateId: string, listOnSign: boolean) {
 }
 
 const DAY = 864e5;
+
+// Profiles used to wait for the candidate's signature before going live. They
+// don't anymore, so anyone still waiting goes live now.
+export async function releaseWaitingProfiles() {
+  try {
+    const { data } = await db().from("candidates").select("id, listed_at").eq("status", "draft").eq("list_on_sign", true);
+    if (!data?.length) return 0;
+    const now = new Date().toISOString();
+    for (const c of data as { id: string; listed_at: string | null }[])
+      await db().from("candidates").update({ status: "listed", listed_at: c.listed_at ?? now, list_on_sign: false }).eq("id", c.id);
+    const { clearCatalog } = await import("./catalog");
+    clearCatalog();
+    await logActivity("system", "profiles_released", { count: data.length });
+    return data.length;
+  } catch {
+    return 0;
+  }
+}
 
 // Run once a day (from the daily cron): each listed candidate gets a personal
 // "still looking?" email from their rep about once a month. Replies go to the rep.

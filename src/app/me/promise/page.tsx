@@ -22,7 +22,7 @@ export default async function PromisePage({ searchParams }: PageProps<"/me/promi
   return (
     <div className="wrap narrow" style={{ paddingBlock: "40px 64px" }}>
       <p className={styles.sideLabel}>Your candidate agreement</p>
-      <h1 style={{ fontSize: "clamp(32px, 5vw, 46px)", margin: "6px 0 10px" }}>One quick step before you go live.</h1>
+      <h1 style={{ fontSize: "clamp(32px, 5vw, 46px)", margin: "6px 0 10px" }}>Your candidate agreement.</h1>
       <p className="muted" style={{ fontSize: 18, margin: "0 0 26px" }}>
         {signed ? "You've already signed this. Thank you." : "Here's how it works, and the little we ask of you in return."}
       </p>
