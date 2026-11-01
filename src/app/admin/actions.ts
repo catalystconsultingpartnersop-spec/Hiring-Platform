@@ -31,6 +31,7 @@ import {
   startStaffSession,
 } from "@/lib/session";
 import { stripe } from "@/lib/stripe";
+import { callMinutesByRep } from "@/lib/slots";
 import { cancelCall } from "@/lib/calls";
 import { chargeCardOnFile } from "@/lib/cards";
 import { commissionPercent, setSetting } from "@/lib/settings";
@@ -642,14 +643,25 @@ export async function saveMyHours(_prev: FormState, form: FormData): Promise<For
   const me = await requireStaff();
   if (!me.id) return { error: "Sign in with your email link (not the admin password) to set your own hours." };
 
+  const len = form.get("call_minutes") === "30" ? 30 : 45;
   const rows: { staff_id: string; weekday: number; start_minute: number; end_minute: number }[] = [];
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   for (let d = 0; d < 7; d++) {
     if (form.get(`on_${d}`) !== "on") continue;
-    const start = Number(form.get(`start_${d}`));
-    const end = Number(form.get(`end_${d}`));
-    if (!(end > start)) return { error: "Each day's end time needs to be after its start time." };
-    if (end - start < 45) return { error: "Each day needs at least 45 minutes for one call." };
-    rows.push({ staff_id: me.id, weekday: d, start_minute: start, end_minute: end });
+    const count = Math.min(8, Number(form.get(`n_${d}`)) || 0);
+    const mine: [number, number][] = [];
+    for (let i = 0; i < count; i++) {
+      const start = Number(form.get(`start_${d}_${i}`));
+      const end = Number(form.get(`end_${d}_${i}`));
+      if (!Number.isFinite(start) || !Number.isFinite(end)) continue;
+      if (!(end > start)) return { error: `${dayNames[d]}: each end time needs to be after its start time.` };
+      if (end - start < len) return { error: `${dayNames[d]}: each time block needs at least ${len} minutes for one call.` };
+      mine.push([start, end]);
+    }
+    mine.sort((a, b) => a[0] - b[0]);
+    for (let i = 1; i < mine.length; i++)
+      if (mine[i][0] < mine[i - 1][1]) return { error: `${dayNames[d]}: two of your time blocks overlap.` };
+    for (const [start, end] of mine) rows.push({ staff_id: me.id, weekday: d, start_minute: start, end_minute: end });
   }
 
   const link = String(form.get("meeting_link") ?? "").trim();
@@ -664,11 +676,14 @@ export async function saveMyHours(_prev: FormState, form: FormData): Promise<For
     const { error: e3 } = await db().from("staff_availability").insert(rows);
     if (e3) return { error: `Could not save: ${e3.message}` };
   }
-  await logActivity(staffActor(me), "hours_saved", { days: rows.length });
+  const lengths = await callMinutesByRep();
+  await setSetting("call_minutes", { ...lengths, [me.id]: len });
+  const days = new Set(rows.map((r) => r.weekday)).size;
+  await logActivity(staffActor(me), "hours_saved", { days, blocks: rows.length, call_minutes: len });
   revalidatePath("/admin/hours");
   return {
     ok: rows.length
-      ? `Saved. Candidates can now book you on ${rows.length} ${rows.length === 1 ? "day" : "days"} a week.`
+      ? `Saved. Candidates can now book ${len}-minute calls with you on ${days} ${days === 1 ? "day" : "days"} a week.`
       : "Saved. You have no hours set, so candidates can't book you right now.",
   };
 }

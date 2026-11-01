@@ -4,7 +4,7 @@ import { brandName, candidateUrl, teamUrl } from "./format";
 import { candidate as candMail } from "./emails";
 import { callIcs } from "./ics";
 import { signedToken } from "./session";
-import { CALL_MINUTES, repsFreeAt } from "./slots";
+import { callMinutesByRep, lengthFor, repsFreeAt } from "./slots";
 import { COMPANY_TZ, formatInZone, validTimeZone } from "./time";
 
 export type BookResult = { ok: true; callId: string; manageToken: string } | { ok: false; error: string };
@@ -17,7 +17,7 @@ export async function bookCall(candidateId: string, startIso: string, candidateT
   const tz = validTimeZone(candidateTz);
   const start = new Date(startIso);
   if (Number.isNaN(start.getTime())) return { ok: false, error: "Pick a time from the list." };
-  const end = new Date(start.getTime() + CALL_MINUTES * 60e3);
+  const lengths = await callMinutesByRep();
 
   const reps = await repsFreeAt(start.toISOString());
   if (!reps.length) return { ok: false, error: "That time was just taken. Pick another one." };
@@ -26,6 +26,7 @@ export async function bookCall(candidateId: string, startIso: string, candidateT
   let callId: string | null = null;
   let repId: string | null = null;
   for (const r of reps) {
+    const end = new Date(start.getTime() + lengthFor(lengths, r) * 60e3);
     const { data, error } = await db()
       .from("onboarding_calls")
       .insert({
@@ -90,7 +91,7 @@ export async function sendBookingEmails(callId: string, cancelled: boolean) {
       title: forRep ? `Onboarding call: ${c.full_name}` : `Career call with ${repFirst} (${brandName()})`,
       description: forRep
         ? `${c.full_name}, ${c.email}${c.phone ? `, ${c.phone}` : ""}\nLooking for: ${c.application?.looking_for || "not said"}`
-        : `Your 45-minute career call. Join here: ${link ?? "we'll send the link"}\nNeed to change it? ${manage}\nQuestions? Reply to the confirmation email.`,
+        : `Your ${Math.round((Date.parse(call.ends_at) - Date.parse(call.starts_at)) / 60e3) || 45}-minute career call. Join here: ${link ?? "we'll send the link"}\nNeed to change it? ${manage}\nQuestions? Reply to the confirmation email.`,
       location: link,
       cancelled,
     });
@@ -116,7 +117,7 @@ export async function sendBookingEmails(callId: string, cancelled: boolean) {
 
   await sendEmail({
     to: c.email,
-    ...candMail.onboardingBooked({ name: c.full_name, rep: rep.full_name || "our team", when: whenCandidate, link, manage }),
+    ...candMail.onboardingBooked({ name: c.full_name, rep: rep.full_name || "our team", when: whenCandidate, link, manage, minutes: Math.round((Date.parse(call.ends_at) - Date.parse(call.starts_at)) / 60e3) || 45 }),
     attachments: [{ filename: "career-call.ics", content: ics(false) }],
     // Replies (like their assessment results) go straight to their rep.
     replyTo: rep.email,

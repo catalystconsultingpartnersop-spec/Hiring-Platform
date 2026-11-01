@@ -11,6 +11,7 @@ export function ManageCall({
   token,
   status,
   start,
+  minutes,
   first,
   rep,
   link,
@@ -20,6 +21,7 @@ export function ManageCall({
   token: string;
   status: string;
   start: string;
+  minutes: number;
   first: string;
   rep: string;
   link: string | null;
@@ -91,7 +93,7 @@ export function ManageCall({
       <p className="apply-step">{status === "done" ? "Done" : past ? "This call has passed" : "Your career call"}</p>
       <h2>{when}</h2>
       <p>
-        45 minutes by video with {rep}. {past ? "" : "We're looking forward to it."}
+        {minutes} minutes by video with {rep}. {past ? "" : "We're looking forward to it."}
       </p>
       {!past && status === "booked" && (
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>

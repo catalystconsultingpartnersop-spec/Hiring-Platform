@@ -145,7 +145,7 @@ export default async function RepGuide() {
           </p>
         </li>
         <li>
-          <h3>Get them assessed, then take the call (45 minutes)</h3>
+          <h3>Get them assessed, then take the call (30 or 45 minutes, you choose on My hours)</h3>
           <p>
             As soon as a candidate books, ask them to take the <b>6 Working Genius assessment</b> at{" "}
             <a href="https://www.workinggenius.com" target="_blank" rel="noreferrer">workinggenius.com</a> before your call.

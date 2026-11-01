@@ -25,7 +25,7 @@ const STEPS = [
   },
   {
     t: "Sit down with us",
-    d: "A relaxed 45-minute video call. We get to know you, what you enjoy and what you're naturally great at.",
+    d: "A relaxed video call, 30 to 45 minutes. We get to know you, what you enjoy and what you're naturally great at.",
   },
   {
     t: "We write your profile",

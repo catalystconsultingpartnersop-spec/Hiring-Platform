@@ -61,7 +61,7 @@ export function ApplyFlow({
         <p className="apply-step">Step 2 of 2</p>
         <h2>Thanks, {state.first}! Now pick a time to talk.</h2>
         <p>
-          A friendly 45-minute video call with one of our team. We&rsquo;ll get to know you, talk through what you&rsquo;re
+          A friendly 30- to 45-minute video call with one of our team. We&rsquo;ll get to know you, talk through what you&rsquo;re
           great at and what you enjoy, and figure out the kind of role where you&rsquo;d really do well. No preparation
           needed.
         </p>

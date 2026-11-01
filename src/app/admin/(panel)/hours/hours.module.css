@@ -28,6 +28,18 @@
 .range { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .range :global(.select) { width: auto; padding: 7px 10px; }
 
+.blocks { display: grid; gap: 8px; }
+.blockFoot { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.add { font: inherit; font-size: 14px; font-weight: 700; color: var(--ink); background: none; border: 1.5px dashed var(--ink-3); border-radius: 99px; padding: 5px 12px; cursor: pointer; }
+.add:hover { border-color: var(--ink); }
+.remove { font: inherit; font-size: 13px; color: var(--ink-3); background: none; border: 0; text-decoration: underline; cursor: pointer; padding: 4px; }
+.lengths { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.lengths label { display: flex; align-items: center; gap: 8px; font-weight: 700; padding: 10px 16px; border: 1.5px solid var(--line); border-radius: 12px; cursor: pointer; }
+.lengths input { accent-color: var(--ink); width: 18px; height: 18px; }
+.lengths .lenOn { border-color: var(--ink); background: var(--wash); }
+.day { align-items: start; }
+.day .toggle { min-height: 40px; }
+
 .save {
   position: sticky;
   bottom: 0;

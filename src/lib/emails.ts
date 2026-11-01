@@ -215,12 +215,12 @@ export const candidate = {
       p("Thanks for becoming a candidate with us. Someone from our team will reach out within one business day to find a time to talk."),
   }),
 
-  onboardingBooked: (o: { name: string; rep: string; when: string; link: string | null; manage: string }): Mail => ({
+  onboardingBooked: (o: { name: string; rep: string; when: string; link: string | null; manage: string; minutes?: number }): Mail => ({
     audience: "candidate",
     subject: `You're booked: ${o.when}`,
     html:
       hi(o.name) +
-      p(`Welcome, and thank you for becoming a candidate with us. You're all set for a relaxed 45-minute video call with <strong>${esc(o.rep)}</strong>:`) +
+      p(`Welcome, and thank you for becoming a candidate with us. You're all set for a relaxed ${o.minutes ?? 45}-minute video call with <strong>${esc(o.rep)}</strong>:`) +
       big(esc(o.when)) +
       (o.link ? button(o.link, "Join the video call") : p("We'll email you the video link before the call.")) +
       p("We'll talk about what you're good at, what you enjoy, and the kind of role where you'd shine. No preparation needed.") +

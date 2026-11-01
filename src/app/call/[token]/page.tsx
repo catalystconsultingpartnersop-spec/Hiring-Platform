@@ -32,6 +32,7 @@ export default async function CallPage({ params }: PageProps<"/call/[token]">) {
         token={token}
         status={call.status}
         start={call.starts_at}
+        minutes={Math.round((Date.parse(call.ends_at) - Date.parse(call.starts_at)) / 60e3) || 45}
         first={call.candidates.full_name.split(" ")[0]}
         rep={call.staff.full_name || "our team"}
         link={call.staff.meeting_link}

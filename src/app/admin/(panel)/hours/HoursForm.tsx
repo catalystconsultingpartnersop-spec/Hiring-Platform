@@ -14,25 +14,47 @@ const DAYS: [number, string][] = [
   [6, "Saturday"],
   [0, "Sunday"],
 ];
-const OPTIONS = Array.from({ length: (22 - 6) * 2 + 1 }, (_, i) => 6 * 60 + i * 30);
+const OPTIONS = Array.from({ length: (24 - 6) * 2 + 1 }, (_, i) => 6 * 60 + i * 30); // 6am to midnight
+
+type Block = { start: number; end: number };
+type Day = { on: boolean; blocks: Block[] };
 
 export function HoursForm({
   windows,
   meetingLink,
   timeZone,
+  callMinutes,
 }: {
   windows: { weekday: number; start_minute: number; end_minute: number }[];
   meetingLink: string;
   timeZone: string;
+  callMinutes: number;
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveMyHours, {});
   const initial = Object.fromEntries(
     DAYS.map(([d]) => {
-      const w = windows.find((x) => x.weekday === d);
-      return [d, { on: !!w, start: w?.start_minute ?? 9 * 60, end: w?.end_minute ?? 17 * 60 }];
+      const mine = windows
+        .filter((x) => x.weekday === d)
+        .sort((a, b) => a.start_minute - b.start_minute)
+        .map((w) => ({ start: w.start_minute, end: w.end_minute }));
+      return [d, { on: mine.length > 0, blocks: mine.length ? mine : [{ start: 9 * 60, end: 17 * 60 }] }];
     }),
-  ) as Record<number, { on: boolean; start: number; end: number }>;
+  ) as Record<number, Day>;
   const [days, setDays] = useState(initial);
+  const [len, setLen] = useState(callMinutes === 30 ? 30 : 45);
+  const step = len === 30 ? 30 : 60;
+  const callsIn = (b: Block) => (b.end - b.start >= len ? Math.floor((b.end - b.start - len) / step) + 1 : 0);
+  const setDay = (d: number, next: Partial<Day>) => setDays((all) => ({ ...all, [d]: { ...all[d], ...next } }));
+  const setBlock = (d: number, i: number, next: Partial<Block>) =>
+    setDays((all) => ({ ...all, [d]: { ...all[d], blocks: all[d].blocks.map((b, j) => (j === i ? { ...b, ...next } : b)) } }));
+  const addBlock = (d: number) =>
+    setDays((all) => {
+      const last = all[d].blocks[all[d].blocks.length - 1];
+      const start = Math.min(last ? last.end + 60 : 9 * 60, 23 * 60);
+      return { ...all, [d]: { ...all[d], blocks: [...all[d].blocks, { start, end: Math.min(start + 60, 24 * 60) }] } };
+    });
+  const removeBlock = (d: number, i: number) =>
+    setDays((all) => ({ ...all, [d]: { ...all[d], blocks: all[d].blocks.filter((_, j) => j !== i) } }));
 
   return (
     <form
@@ -58,6 +80,19 @@ export function HoursForm({
       </section>
 
       <section className={styles.block}>
+        <h2>How long are your calls?</h2>
+        <p className="small muted">Candidates see the length when they book.</p>
+        <div className={styles.lengths} role="radiogroup" aria-label="Call length">
+          {[30, 45].map((m) => (
+            <label key={m} className={len === m ? styles.lenOn : ""}>
+              <input type="radio" name="call_minutes" value={m} checked={len === m} onChange={() => setLen(m)} />
+              {m} minutes
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.block}>
         <h2>Your weekly hours</h2>
         <label className={styles.tz}>
           <span>Your time zone</span>
@@ -72,49 +107,62 @@ export function HoursForm({
         <div className={styles.days}>
           {DAYS.map(([d, name]) => {
             const row = days[d];
+            const total = row.blocks.reduce((n, b) => n + callsIn(b), 0);
             return (
               <div key={d} className={`${styles.day} ${row.on ? "" : styles.off}`}>
                 <label className={styles.toggle}>
-                  <input
-                    type="checkbox"
-                    name={`on_${d}`}
-                    checked={row.on}
-                    onChange={(e) => setDays({ ...days, [d]: { ...row, on: e.target.checked } })}
-                  />
+                  <input type="checkbox" name={`on_${d}`} checked={row.on} onChange={(e) => setDay(d, { on: e.target.checked })} />
                   <span>{name}</span>
                 </label>
                 {row.on ? (
-                  <div className={styles.range}>
-                    <select
-                      className="select"
-                      name={`start_${d}`}
-                      value={row.start}
-                      onChange={(e) => setDays({ ...days, [d]: { ...row, start: Number(e.target.value) } })}
-                      aria-label={`${name} start`}
-                    >
-                      {OPTIONS.map((m) => (
-                        <option key={m} value={m}>
-                          {minutesLabel(m)}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="muted">to</span>
-                    <select
-                      className="select"
-                      name={`end_${d}`}
-                      value={row.end}
-                      onChange={(e) => setDays({ ...days, [d]: { ...row, end: Number(e.target.value) } })}
-                      aria-label={`${name} end`}
-                    >
-                      {OPTIONS.map((m) => (
-                        <option key={m} value={m}>
-                          {minutesLabel(m)}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="small muted">
-                      {Math.max(0, Math.floor((row.end - row.start - 45) / 60) + 1)} calls
-                    </span>
+                  <div className={styles.blocks}>
+                    <input type="hidden" name={`n_${d}`} value={row.blocks.length} />
+                    {row.blocks.map((b, i) => (
+                      <div key={i} className={styles.range}>
+                        <select
+                          className="select"
+                          name={`start_${d}_${i}`}
+                          value={b.start}
+                          onChange={(e) => setBlock(d, i, { start: Number(e.target.value) })}
+                          aria-label={`${name} block ${i + 1} start`}
+                        >
+                          {OPTIONS.slice(0, -1).map((m) => (
+                            <option key={m} value={m}>
+                              {minutesLabel(m)}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="muted">to</span>
+                        <select
+                          className="select"
+                          name={`end_${d}_${i}`}
+                          value={b.end}
+                          onChange={(e) => setBlock(d, i, { end: Number(e.target.value) })}
+                          aria-label={`${name} block ${i + 1} end`}
+                        >
+                          {OPTIONS.slice(1).map((m) => (
+                            <option key={m} value={m}>
+                              {m === 24 * 60 ? "midnight" : minutesLabel(m)}
+                            </option>
+                          ))}
+                        </select>
+                        {row.blocks.length > 1 && (
+                          <button type="button" className={styles.remove} onClick={() => removeBlock(d, i)} aria-label={`Remove ${name} block ${i + 1}`}>
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <div className={styles.blockFoot}>
+                      {row.blocks.length < 8 && (
+                        <button type="button" className={styles.add} onClick={() => addBlock(d)}>
+                          + Add another time
+                        </button>
+                      )}
+                      <span className="small muted">
+                        {total} {total === 1 ? "call" : "calls"}
+                      </span>
+                    </div>
                   </div>
                 ) : (
                   <span className="small muted">Not available</span>

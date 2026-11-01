@@ -78,7 +78,7 @@ export function TimePicker({
         ))}
       </div>
       <p className="small muted" style={{ marginTop: 10 }}>
-        Times are in your time zone ({zoneName}). Each call is 45 minutes.
+        Times are in your time zone ({zoneName}). Each call is 30 to 45 minutes.
       </p>
       {error && (
         <p className="notice notice-bad" role="alert" style={{ marginTop: 12 }}>
