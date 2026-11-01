@@ -11,10 +11,10 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db, logActivity } from "@/lib/db";
 import { emailAdmin, escapeHtml, sendEmail } from "@/lib/email";
-import { candidateHired, hireSummaryHtml } from "@/lib/notify";
+import { candidateHired, hireSummaryHtml, repFor } from "@/lib/notify";
 import { tellShortlisters } from "@/lib/shortlist";
 import { commissionOf, commissionTerms, HireRow, StaffLite } from "@/lib/adminData";
-import { brandName, money, refCode, teamUrl, workEmailDomain } from "@/lib/format";
+import { brandName, candidateUrl, money, refCode, teamUrl, workEmailDomain } from "@/lib/format";
 
 import {
   checkAdminPassword,
@@ -29,6 +29,7 @@ import {
   requireStaff,
   staffActor,
   startStaffSession,
+  signedToken,
 } from "@/lib/session";
 import { stripe } from "@/lib/stripe";
 import { callMinutesByRep } from "@/lib/slots";
@@ -36,7 +37,7 @@ import { cancelCall } from "@/lib/calls";
 import { chargeCardOnFile } from "@/lib/cards";
 import { commissionPercent, setSetting } from "@/lib/settings";
 import { receiptNumber } from "@/lib/receipt";
-import { owner as ownerMail, team as teamMail, teamExtra } from "@/lib/emails";
+import { candidate as candMail, owner as ownerMail, team as teamMail, teamExtra } from "@/lib/emails";
 import { REP_AGREEMENT_VERSION, repAgreementText, repTerms } from "@/lib/repAgreement";
 import { describe, suggestedHeadline } from "@/lib/strengths";
 import { RESUME_CONTENT_TYPE, resumeKind } from "@/lib/resume";
@@ -965,4 +966,46 @@ export async function setCandidatesSeeBusiness(on: boolean) {
   await setSetting("candidates_see_business", on);
   await logActivity(me.email, "candidates_see_business", { on });
   revalidatePath("/", "layout");
+}
+
+// ---------- One-click reminders to a candidate ----------
+
+export type ReminderKind = "assessment" | "agreement" | "book" | "resume";
+const REMINDER_GAP_HOURS = 48;
+
+export async function sendCandidateReminder(candidateId: string, kind: ReminderKind): Promise<FormState> {
+  const me = await requireStaff();
+  const { data: c } = await db().from("candidates").select("*").eq("id", candidateId).maybeSingle();
+  if (!c) return { error: "Couldn't find this candidate." };
+  if (!(await allow(`remind:${candidateId}`, 6, 60))) return { error: SLOW_DOWN };
+
+  // Don't send the same reminder twice in two days.
+  const since = new Date(Date.now() - REMINDER_GAP_HOURS * 3600e3).toISOString();
+  const { count } = await db()
+    .from("activity_log")
+    .select("id", { count: "exact", head: true })
+    .eq("action", "candidate_reminder")
+    .eq("details->>candidate", refCode(candidateId))
+    .eq("details->>kind", kind)
+    .gte("at", since);
+  if (count) return { error: "That reminder already went out in the last two days. Give them a little time." };
+
+  if (kind === "agreement") {
+    if (c.promise_signed_at) return { error: "They've already signed their candidate agreement." };
+    await requestPromise(candidateId, !!c.list_on_sign);
+  } else {
+    // Signed by whoever clicked (if they're a named rep), otherwise the candidate's rep.
+    const rep = me.id ? { full_name: me.name, email: me.email } : await repFor(candidateId);
+    const link = kind === "book" ? `${candidateUrl()}/apply/book?c=${signedToken(`cand_${candidateId}`, 30)}` : undefined;
+    const r = await sendEmail({
+      to: c.email,
+      ...candMail.reminder({ kind, name: c.full_name, rep: rep?.full_name ?? null, link }),
+      replyTo: rep?.email,
+      fromName: rep?.full_name ?? undefined,
+    });
+    if (!r.ok) return { error: `The email didn't send: ${r.error}` };
+  }
+  await logActivity(staffActor(me), "candidate_reminder", { candidate: refCode(candidateId), kind });
+  revalidatePath(`/admin/candidates/${candidateId}`);
+  return { ok: `Sent. ${String(c.full_name).split(" ")[0]} will get it in a minute.` };
 }

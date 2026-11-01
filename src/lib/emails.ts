@@ -183,6 +183,43 @@ export const candidate = {
       quiet("Your profile goes live the moment you sign."),
   }),
 
+  // Friendly reminders a rep sends from the candidate's profile with one click.
+  reminder: (o: { kind: "assessment" | "book" | "resume"; name: string; rep: string | null; link?: string }): Mail => {
+    const sign = p(o.rep ? `Warmly,<br>${esc(o.rep)}` : "Warmly,<br>Your team at The Candidate Collection");
+    const audience = o.rep ? "personal" : "candidate";
+    if (o.kind === "assessment")
+      return {
+        audience,
+        subject: `A quick reminder about your strengths assessment, ${first(o.name)}`,
+        html:
+          hi(o.name) +
+          p("Just a friendly reminder: when you get a chance, please take the 6 Working Genius assessment. It takes about 10 minutes and shows the kind of work that gives you energy. It helps me describe your strengths to employers the right way.") +
+          button("https://www.workinggenius.com", "Take the assessment") +
+          p("When you're done, just reply to this email with your results.") +
+          sign,
+      };
+    if (o.kind === "book")
+      return {
+        audience,
+        subject: `Let's find a time to talk, ${first(o.name)}`,
+        html:
+          hi(o.name) +
+          p("I'd love to sit down with you for a relaxed video call, to get to know you and what you're naturally great at. Pick any time that works for you:") +
+          button(o.link ?? `${candidateUrl()}/me`, "Choose a time") +
+          p("If none of the times work, just reply and we'll figure it out.") +
+          sign,
+      };
+    return {
+      audience,
+      subject: `Could you send me your latest resume, ${first(o.name)}?`,
+      html:
+        hi(o.name) +
+        p("When you have a moment, please reply to this email with your most up-to-date resume. A PDF or Word file is perfect. It helps me put your best foot forward with employers.") +
+        p("Thank you!") +
+        sign,
+    };
+  },
+
   checkIn: (o: { name: string; rep: string | null; looking: string; hired: string }): Mail => ({
     audience: o.rep ? "personal" : "candidate",
     subject: o.rep ? `Checking in, ${first(o.name)}` : "Checking in",

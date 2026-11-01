@@ -8,6 +8,7 @@ import { dateShort, feeFor, money, refCode } from "@/lib/format";
 import { deleteCandidate, resendPromise } from "../../../actions";
 import { CandidateForm } from "../CandidateForm";
 import { RepPicker } from "../RepPicker";
+import { ReminderOption, Reminders } from "../Reminders";
 import { effectiveReps, repOptions } from "@/lib/reps";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 
@@ -96,6 +97,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
           </p>
         )}
       </div>
+      <ReminderPanel c={c} hasCall={callRows.some((k) => k.status !== "cancelled")} />
       <CandidateForm c={c} tierFeeLabel={tierFee != null ? money(tierFee) : "set by hand"} isAdmin={me.role === "admin"} />
       {me.role === "admin" && (
         <details className="panel" style={{ marginTop: 32, borderColor: "var(--rust-soft)" }} open={typeof sp.delete_error === "string"}>
@@ -176,4 +178,28 @@ function PromiseRow({
       </button>
     </form>
   );
+}
+
+async function ReminderPanel({ c, hasCall }: { c: Candidate; hasCall: boolean }) {
+  const x = c as Candidate & { promise_signed_at?: string | null; working_genius?: string | null; resume_path?: string | null };
+  const { data: sent } = await db()
+    .from("activity_log")
+    .select("at, details")
+    .eq("action", "candidate_reminder")
+    .eq("details->>candidate", refCode(c.id))
+    .order("at", { ascending: false })
+    .limit(30);
+  const last = (kind: string) => {
+    const row = (sent ?? []).find((r) => (r.details as { kind?: string })?.kind === kind);
+    return row ? dateShort(row.at) : null;
+  };
+  const options: ReminderOption[] = [];
+  if (!x.working_genius)
+    options.push({ kind: "assessment", label: "Take the Working Genius assessment", hint: "Links to the assessment and asks them to reply with their results.", lastSent: last("assessment") });
+  if (!hasCall)
+    options.push({ kind: "book", label: "Book their call", hint: "A link to pick a time for their call with you.", lastSent: last("book") });
+  if (x.promise_signed_at === null)
+    options.push({ kind: "agreement", label: "Sign their candidate agreement", hint: "Sends their agreement to sign. It takes about 30 seconds.", lastSent: last("agreement") });
+  options.push({ kind: "resume", label: "Send their latest resume", hint: x.resume_path ? "Asks them to reply with an updated resume." : "Asks them to reply with their resume. We don't have one yet.", lastSent: last("resume") });
+  return <Reminders candidateId={c.id} first={c.full_name.split(" ")[0]} options={options} />;
 }
