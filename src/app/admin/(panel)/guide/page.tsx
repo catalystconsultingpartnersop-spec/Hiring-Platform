@@ -151,6 +151,12 @@ export default async function RepGuide() {
             <a href="https://www.workinggenius.com" target="_blank" rel="noreferrer">workinggenius.com</a> before your call.
             They buy it themselves. Ask them to send you their results.
           </p>
+          <p className={styles.tip}>
+            Need to nudge someone? Open their profile and use <b>Send a reminder</b>. One tap sends a friendly email from
+            you: take the Working Genius assessment, book their call, sign their agreement, or send their resume. Replies
+            come straight to your inbox, and the same reminder can&rsquo;t go out twice in two days, so you never have to
+            chase anyone yourself.
+          </p>
           <p>
             You get an email and calendar invite for every booking. On the call, get to know them: what gives them
             energy, what drains them, what they&rsquo;ve done, what they want next. Walk through their Working Genius
