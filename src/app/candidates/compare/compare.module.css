@@ -1,0 +1,13 @@
+.page { padding-top: 24px; padding-bottom: 64px; }
+.h1 { font-size: clamp(26px, 3.4vw, 34px); margin: 8px 0 18px; }
+.scroll { overflow-x: auto; }
+.table { width: 100%; min-width: calc(160px + var(--n) * 220px); border-collapse: separate; border-spacing: 0; }
+.table th, .table td { text-align: left; vertical-align: top; padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 14.5px; line-height: 1.45; }
+.table thead th { border-bottom: 0; padding-bottom: 6px; }
+.table thead th :global(.cover) { border-radius: var(--radius); margin-bottom: 10px; }
+.table tbody th { width: 160px; color: var(--ink-2); font-weight: 600; font-size: 13.5px; }
+.table td ul { margin: 0; padding-left: 18px; }
+.name { display: block; font-family: var(--display); font-size: 17px; font-weight: 700; line-height: 1.25; text-decoration: none; color: var(--ink); }
+.name:hover { text-decoration: underline; }
+.feeRow td strong { font-family: var(--display); font-size: 24px; }
+.actions { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }

@@ -116,3 +116,9 @@
 .pass summary { cursor: pointer; color: #4a5570; text-decoration: underline; text-underline-offset: 3px; }
 .pass textarea { margin-top: 8px; width: 100%; font-size: 14px; }
 .passReason { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; font-size: 14px; cursor: pointer; }
+
+.glance { margin: 14px 0 18px; padding: 14px 18px; background: var(--wash); border-radius: var(--radius); }
+.glance h2 { font-size: 15px; font-family: var(--text); font-weight: 800; margin: 0 0 8px; }
+.glance ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.glance li { position: relative; padding-left: 24px; font-size: 15.5px; line-height: 1.4; }
+.glance li::before { content: "✓"; position: absolute; left: 0; top: 0; color: var(--moss); font-weight: 800; }

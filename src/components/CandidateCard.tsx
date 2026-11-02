@@ -4,6 +4,9 @@ import { describe, profileOf, TRAITS } from "@/lib/strengths";
 import { LEVEL_LABEL, WORK_MODE_LABEL, money, salaryRange } from "@/lib/format";
 
 import { ShortlistButton } from "./Shortlist";
+import { RoleCover } from "./RoleCover";
+import { QuickLook, QuickData } from "./QuickLook";
+import { CompareToggle } from "./Compare";
 
 export function Strengths({ items, strong = false }: { items: string[]; strong?: boolean }) {
   if (!items.length) return null;
@@ -58,18 +61,56 @@ export function isNew(c: PublicCandidate) {
   return !!c.listed_at && Date.now() - Date.parse(c.listed_at) < 7 * 864e5;
 }
 
+// "Best at sound judgment and finishing the job." as plain text.
+export function bestAtText(c: PublicCandidate) {
+  const p = profileOf(c.working_genius);
+  if (!p.primary.length) return null;
+  return `Best at ${joinAnd(p.primary.map((l) => lower(TRAITS[l].label)))}.`;
+}
+
+export function roleLine(c: PublicCandidate) {
+  return [[c.role_category, ...(c.also_roles ?? [])].filter(Boolean).slice(0, 2).join(" / "), c.industry && c.industry !== "Any" ? c.industry : null]
+    .filter(Boolean)
+    .join(" in ");
+}
+
+export function quickData(c: PublicCandidate, fee: number | null): QuickData {
+  const salary = salaryRange(c.salary_min, c.salary_max);
+  const facts: [string, string | null][] = [
+    ["Experience", c.level ? LEVEL_LABEL[c.level] : null],
+    ["Location", c.location_region],
+    ["Work setting", c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null],
+    ["Salary", salary],
+  ];
+  return {
+    id: c.id,
+    role: c.role_category,
+    label: roleLine(c) || null,
+    headline: c.headline,
+    best: bestAtText(c),
+    summary: c.summary,
+    highlights: c.highlights ?? [],
+    facts: facts.filter((x): x is [string, string] => !!x[1]),
+    fee: fee != null ? money(fee) : "Ask",
+  };
+}
+
 export function CandidateCard({
   c,
   fee,
   href,
   example = false,
   hideFee = false,
+  store = false,
+  interviewing = false,
 }: {
   c: PublicCandidate;
   fee: number | null;
   href?: string;
   example?: boolean;
   hideFee?: boolean; // the candidate looking at their own card
+  store?: boolean; // catalog extras: quick look and compare
+  interviewing?: boolean; // in an introduction with an employer right now
 }) {
   const salary = salaryRange(c.salary_min, c.salary_max);
   const meta = [
@@ -78,40 +119,54 @@ export function CandidateCard({
     c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null,
     salary,
   ].filter(Boolean) as string[];
+  const label = roleLine(c);
 
   return (
-    <div className="card">
-      <div className="card-top">
-        <span>
-          {[[c.role_category, ...(c.also_roles ?? [])].filter(Boolean).slice(0, 2).join(" / "), c.industry && c.industry !== "Any" ? c.industry : null]
-            .filter(Boolean)
-            .join(" in ")}
+    <div className="card card-store">
+      <RoleCover role={c.role_category} label={label || null}>
+        <span className="cover-badges">
+          {example ? (
+            <span className="badge">Example</span>
+          ) : (
+            <>
+              {isNew(c) && <span className="badge badge-new">New this week</span>}
+              {interviewing && <span className="badge badge-busy">Interviewing now</span>}
+            </>
+          )}
         </span>
-        {example ? <span className="card-ref">Example</span> : isNew(c) ? <span className="tag tag-gold">New</span> : null}
-      </div>
-      <h3>
-        {href ? (
-          <Link href={href} className="card-link">
-            {c.headline}
-          </Link>
-        ) : (
-          c.headline
+        {store && href && <QuickLook d={quickData(c, fee)} />}
+      </RoleCover>
+      <div className="card-body">
+        <h3>
+          {href ? (
+            <Link href={href} className="card-link">
+              {c.headline}
+            </Link>
+          ) : (
+            c.headline
+          )}
+        </h3>
+        <WorksBest c={c} compact />
+        {meta.length > 0 && (
+          <div className="card-meta">
+            {meta.map((m) => (
+              <span key={m}>{m}</span>
+            ))}
+          </div>
         )}
-      </h3>
-      <WorksBest c={c} compact />
-      {meta.length > 0 && (
-        <div className="card-meta">
-          {meta.map((m) => (
-            <span key={m}>{m}</span>
-          ))}
-        </div>
-      )}
-      {!hideFee && (
-        <div className="card-foot">
-          <span className="card-fee-label">Flat fee if you hire</span>
-          <strong>{fee != null ? money(fee) : "Ask"}</strong>
-        </div>
-      )}
+        {!example && (
+          <p className="card-vetted">
+            <span aria-hidden="true">✓</span> Vetted one-on-one by our team
+          </p>
+        )}
+        {!hideFee && (
+          <div className="card-foot">
+            <span className="card-fee-label">Flat fee if you hire</span>
+            <strong>{fee != null ? money(fee) : "Ask"}</strong>
+          </div>
+        )}
+        {store && href && <CompareToggle id={c.id} />}
+      </div>
       {href && <ShortlistButton id={c.id} />}
     </div>
   );

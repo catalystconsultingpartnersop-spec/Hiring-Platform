@@ -147,13 +147,33 @@
 }
 .chip:hover { background: var(--marigold-soft); }
 
-.toggle { display: none; }
+.mobileBar, .sheetHead, .sheetFoot, .sheetBackdrop { display: none; }
+.wideOnly { display: contents; }
 
 @media (max-width: 860px) {
-  .layout { grid-template-columns: 1fr; gap: 16px; padding-top: 18px; }
-  .filterWrap { position: static; }
-  .toggle { display: inline-flex; }
-  .filtersClosed { display: none; }
-  .filtersOpen { margin-top: 14px; padding: 18px; border-radius: var(--radius-lg); background: var(--wash); }
+  .layout { grid-template-columns: 1fr; gap: 12px; padding-top: 0; }
+  .filterWrap { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px))); }
+  .mobileBar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px max(16px, env(safe-area-inset-left, 0px));
+    background: var(--paper); border-bottom: 1px solid var(--line);
+  }
+  .mobileBar :global(.sort-select) { margin: 0; }
+  .wideOnly { display: none; }
+  .sheetClosed { display: none; }
+  .sheetBackdrop { display: block; position: fixed; inset: 0; background: rgba(23, 33, 58, 0.45); z-index: 60; }
+  .sheetOpen {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 61;
+    max-height: 85vh; display: flex; flex-direction: column;
+    background: var(--paper); border-radius: 18px 18px 0 0;
+    box-shadow: 0 -10px 30px rgba(23, 33, 58, 0.2);
+    animation: sheetUp 0.22s ease-out;
+  }
+  .sheetHead { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .sheetX { width: 34px; height: 34px; border: 0; background: var(--wash); border-radius: 50%; font-size: 22px; line-height: 1; cursor: pointer; }
+  .sheetBody { overflow: auto; padding: 16px 18px; }
+  .sheetFoot { display: block; padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); }
   .search :global(.btn) { padding: 0 18px; }
 }
+@keyframes sheetUp { from { transform: translateY(40px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sheetOpen { animation: none; } }

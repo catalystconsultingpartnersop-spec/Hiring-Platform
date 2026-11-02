@@ -8,9 +8,11 @@ import {
   facetCounts,
   getTiers,
   industriesOf,
-  PAY_BANDS,
+  interviewingIds,
   rolesOf,
 } from "@/lib/catalog";
+import { CompareTray } from "@/components/Compare";
+import { BudgetSlider } from "./BudgetSlider";
 import { feeFor, LEVEL_LABEL, WORK_MODE_LABEL } from "@/lib/format";
 import { TRAIT_LIST, TRAITS } from "@/lib/strengths";
 import styles from "./catalog.module.css";
@@ -19,7 +21,7 @@ import { ParamSelect } from "./SortSelect";
 
 export const dynamic = "force-dynamic";
 
-const KEYS = ["q", "role", "level", "mode", "region", "strength", "pay", "industry", "saved", "sort"] as const;
+const KEYS = ["q", "role", "level", "mode", "region", "strength", "pay", "maxpay", "industry", "saved", "sort"] as const;
 
 function href(f: CatalogFilters, change: Partial<CatalogFilters>) {
   const next = { ...f, ...change };
@@ -35,7 +37,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
   const f: CatalogFilters = {};
   for (const k of KEYS) if (typeof sp[k] === "string" && sp[k]) f[k] = sp[k] as string;
 
-  const [{ rows: all }, tiers] = await Promise.all([allListed(), getTiers()]);
+  const [{ rows: all }, tiers, busy] = await Promise.all([allListed(), getTiers(), interviewingIds()]);
   const feeOf = (c: (typeof all)[number]) => feeFor(c, tiers);
   const rows = applyFilters(all, f, feeOf);
 
@@ -53,7 +55,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
   const active: [keyof CatalogFilters, string][] = [];
   if (f.strength && f.strength in TRAITS) active.push(["strength", `Best at: ${TRAITS[f.strength as keyof typeof TRAITS].label}`]);
   if (f.level) active.push(["level", LEVEL_LABEL[f.level] ?? f.level]);
-  if (f.pay) active.push(["pay", PAY_BANDS.find((b) => b[0] === f.pay)?.[1] ?? f.pay]);
+  if (Number(f.maxpay) > 0) active.push(["maxpay", `Up to $${Math.round(Number(f.maxpay) / 1000)}k`]);
   if (f.mode) active.push(["mode", WORK_MODE_LABEL[f.mode] ?? f.mode]);
   if (f.region) active.push(["region", f.region]);
   if (f.industry) active.push(["industry", f.industry]);
@@ -94,7 +96,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
       </div>
 
       <div className={`wrap ${styles.layout}`}>
-        <FiltersToggle active={active.length}>
+        <FiltersToggle active={active.length} count={rows.length} sort={<SortBy value={f.sort ?? ""} />}>
           <aside className={styles.rail} aria-label="Filters">
             <Facet title="Best at">
               {TRAIT_LIST.map((t) => (
@@ -134,17 +136,10 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
                 ))}
               </Facet>
             )}
-            <Facet title="Salary they want">
-              {PAY_BANDS.map(([v, label]) => (
-                <FacetLink
-                  key={v}
-                  on={f.pay === v}
-                  n={facetCounts(all, f, "pay").get(v) ?? 0}
-                  href={href(f, { pay: f.pay === v ? undefined : v })}
-                >
-                  {label}
-                </FacetLink>
-              ))}
+            <Facet title="Your budget">
+              <li style={{ listStyle: "none" }}>
+                <BudgetSlider value={Number(f.maxpay) > 0 ? Number(f.maxpay) : null} />
+              </li>
             </Facet>
             <Facet title="Work setting">
               {Object.entries(WORK_MODE_LABEL).map(([v, label]) => (
@@ -190,29 +185,8 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
                 {rows.length} {rows.length === 1 ? "candidate" : "candidates"}
               </span>
             </h1>
-            <div className={styles.tools}>
-              {/* On phones only; on larger screens the filter panel has industry. */}
-              {allIndustries.length > 0 && (
-                <span className={styles.narrowOnly}>
-                  <ParamSelect
-                    param="industry"
-                    label="Industry"
-                    value={f.industry ?? ""}
-                    options={[["", "All industries"], ...allIndustries.map((i): [string, string] => [i, i])]}
-                  />
-                </span>
-              )}
-              <ParamSelect
-                param="sort"
-                label="Sort by"
-                value={f.sort ?? ""}
-                options={[
-                  ["", "Newest"],
-                  ["fee", "Fee: low to high"],
-                  ["pay", "Salary: low to high"],
-                  ["experience", "Most experienced"],
-                ]}
-              />
+            <div className={`${styles.tools} ${styles.wideOnly}`}>
+              <SortBy value={f.sort ?? ""} />
             </div>
           </div>
           {active.length > 0 && (
@@ -230,7 +204,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
           {rows.length > 0 ? (
             <div className="cards">
               {rows.map((c) => (
-                <CandidateCard key={c.id} c={c} fee={feeOf(c)} href={`/candidates/${c.id}`} />
+                <CandidateCard key={c.id} c={c} fee={feeOf(c)} href={`/candidates/${c.id}`} store interviewing={busy.has(c.id)} />
               ))}
             </div>
           ) : (
@@ -251,7 +225,25 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
           )}
         </section>
       </div>
+      <CompareTray />
     </>
+  );
+}
+
+function SortBy({ value }: { value: string }) {
+  return (
+    <ParamSelect
+      param="sort"
+      label="Sort by"
+      value={value}
+      options={[
+        ["", "Newest"],
+        ["pay", "Salary: low to high"],
+        ["pay-desc", "Salary: high to low"],
+        ["experience", "Most experienced"],
+        ["fee", "Fee: low to high"],
+      ]}
+    />
   );
 }
 

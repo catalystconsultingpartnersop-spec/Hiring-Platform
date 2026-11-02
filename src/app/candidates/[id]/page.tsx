@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CandidateCard, HowTheyWork, WorksBest } from "@/components/CandidateCard";
+import { bestAtText, CandidateCard, HowTheyWork, roleLine, WorksBest } from "@/components/CandidateCard";
+import { RoleCover } from "@/components/RoleCover";
 import { MobileBar } from "@/components/MobileBar";
 import { ShortlistButton } from "@/components/Shortlist";
 import { allListed, getListed, getTiers, industriesOf, similarTo } from "@/lib/catalog";
@@ -115,14 +116,38 @@ function Facts({ c }: { c: PublicCandidate }) {
   );
 }
 
+// Like a store's "About this item": the few facts an owner scans first.
+function AtAGlance({ c }: { c: PublicCandidate }) {
+  const salary = salaryRange(c.salary_min, c.salary_max);
+  const items = [
+    [c.level ? LEVEL_LABEL[c.level] : null, c.role_category?.toLowerCase()].filter(Boolean).join(" ") || null,
+    [c.location_region, c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null].filter(Boolean).join(" · ") || null,
+    salary ? `Looking for ${salary}` : null,
+    bestAtText(c),
+    "Vetted in a one-on-one conversation with our team",
+  ].filter((x): x is string => !!x);
+  return (
+    <section className={styles.glance} aria-labelledby="glance">
+      <h2 id="glance">At a glance</h2>
+      <ul>
+        {items.map((x) => (
+          <li key={x}>{x.charAt(0).toUpperCase() + x.slice(1)}</li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function Profile({ c }: { c: PublicCandidate }) {
   return (
     <>
-      <p className={styles.ref}>
+      <RoleCover role={c.role_category} label={roleLine(c) || null} size="hero" />
+      <p className={styles.ref} style={{ marginTop: 16 }}>
         {refCode(c.id)}
         {c.listed_at ? ` · listed ${dateShort(c.listed_at)}` : ""}
       </p>
       <h1 className={styles.headline}>{c.headline}</h1>
+      <AtAGlance c={c} />
       {wiredFor(c).length > 0 && (
         <div className={styles.wired}>
           <p className={styles.wiredLabel}>Wired for</p>
@@ -194,7 +219,7 @@ function Teaser({
       </div>
       {similar.length > 0 && (
         <section className={styles.similar}>
-          <h2>Similar candidates</h2>
+          <h2>More candidates like this</h2>
           <div className="shelf">
             {similar.map((s) => (
               <CandidateCard key={s.c.id} c={s.c} fee={s.fee} href={`/candidates/${s.c.id}`} />

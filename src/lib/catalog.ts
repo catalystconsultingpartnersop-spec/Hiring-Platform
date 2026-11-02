@@ -104,6 +104,7 @@ export type CatalogFilters = {
   strength?: string;
   industry?: string;
   pay?: string;
+  maxpay?: string; // the most the owner can pay, from the salary slider
   saved?: string;
   sort?: string;
 };
@@ -144,6 +145,11 @@ function matches(c: PublicCandidate, f: CatalogFilters, skip?: FilterKey) {
   for (const k of FILTER_KEYS) {
     if (k === skip || !f[k]) continue;
     if (!valueOf(c, k).includes(f[k]!)) return false;
+  }
+  const budget = Number(f.maxpay);
+  if (budget > 0) {
+    const asks = c.salary_min ?? c.salary_max;
+    if (asks != null && asks > budget) return false;
   }
   if (f.saved) {
     const ids = f.saved.split(",");
@@ -186,6 +192,9 @@ export function applyFilters(rows: PublicCandidate[], f: CatalogFilters, feeOf: 
       break;
     case "pay":
       out.sort((a, b) => pay(a) - pay(b));
+      break;
+    case "pay-desc":
+      out.sort((a, b) => (b.salary_max ?? b.salary_min ?? -1) - (a.salary_max ?? a.salary_min ?? -1));
       break;
     case "experience":
       out.sort((a, b) => (levelRank[b.level ?? ""] ?? -1) - (levelRank[a.level ?? ""] ?? -1));
@@ -278,4 +287,21 @@ function searchStems(q: string): string[][] {
       const stem = w.length > 5 ? w.slice(0, Math.max(5, w.length - 3)) : w.replace(/s$/, "");
       return [stem, ...(SYNONYMS[w] ?? [])];
     });
+}
+
+// Candidates in an introduction with an employer right now (signed for, not
+// passed on, not hired yet). Shown honestly as "Interviewing now".
+export async function interviewingIds(): Promise<Set<string>> {
+  try {
+    const { data } = await db()
+      .from("unlocks")
+      .select("candidate_id, passed_at, candidate_declined_at, hires(status)")
+      .not("confirmed_at", "is", null)
+      .is("passed_at", null)
+      .is("candidate_declined_at", null);
+    const rows = (data ?? []) as unknown as { candidate_id: string; hires: { status: string }[] }[];
+    return new Set(rows.filter((r) => !(r.hires ?? []).some((h) => h.status === "paid" || h.status === "hired")).map((r) => r.candidate_id));
+  } catch {
+    return new Set();
+  }
 }
