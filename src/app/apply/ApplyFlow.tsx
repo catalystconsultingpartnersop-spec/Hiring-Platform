@@ -29,6 +29,7 @@ export function ApplyFlow({
   const [booked, setBooked] = useState<{ when: string; manage: string } | null>(null);
   const [reachOut, setReachOut] = useState(false);
   const [noResume, setNoResume] = useState(false);
+  const [showNoResume, setShowNoResume] = useState(false);
   const v = (k: string) => state.fields?.[k] ?? "";
 
   // ---------- Step 3: booked ----------
@@ -195,16 +196,22 @@ export function ApplyFlow({
         </label>
       )}
       <label className="field">
-        <span>
-          Your resume
-        </span>
+        <span>Upload your resume</span>
         <input className="input" type="file" name="resume" accept=".pdf,.doc,.docx" required={!noResume} disabled={noResume} />
-        <small>A PDF or Word file. It doesn&rsquo;t need to be perfect; we&rsquo;ll help you polish it after your call.</small>
+        <small>A PDF or Word file. Needed to book your call. It doesn&rsquo;t need to be perfect; we&rsquo;ll help you polish it.</small>
       </label>
-      <label className="check" style={{ marginTop: 6, marginBottom: 16 }}>
-        <input type="checkbox" name="no_resume" checked={noResume} onChange={(e) => setNoResume(e.target.checked)} />
-        <span>I don&rsquo;t have a resume yet. We&rsquo;ll build one together on your call.</span>
-      </label>
+      <div style={{ margin: "-6px 0 16px", fontSize: 13, color: "var(--ink-3)" }}>
+        {!showNoResume ? (
+          <button type="button" onClick={() => setShowNoResume(true)} style={{ font: "inherit", fontSize: 13, color: "var(--ink-3)", background: "none", border: 0, padding: 0, textDecoration: "underline", cursor: "pointer" }}>
+            No resume at all?
+          </button>
+        ) : (
+          <label style={{ display: "inline-flex", gap: 6, alignItems: "center", fontWeight: 400 }}>
+            <input type="checkbox" name="no_resume" checked={noResume} onChange={(e) => setNoResume(e.target.checked)} style={{ width: 14, height: 14, margin: 0 }} />
+            I truly don&rsquo;t have one. I&rsquo;ll go over my work history on the call.
+          </label>
+        )}
+      </div>
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: "-9999px" }} />
       <div className="apply-agreement" style={{ marginTop: 20, padding: "14px 16px", background: "var(--wash)", borderRadius: 12 }}>
         <p style={{ margin: "0 0 6px", fontWeight: 700 }}>Your candidate agreement</p>
