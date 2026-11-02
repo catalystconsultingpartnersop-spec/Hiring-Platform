@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
   }
   // Monthly "still looking?" emails to listed candidates, from their rep.
   await releaseWaitingProfiles();
+  await (await import("@/lib/mixupFix")).fixNov2Mixup();
   await logKnownExpenses(); // monthly subscriptions land in Finance on their own
   const checkins = await dailyCandidateCheckins().catch(() => null);
   // The day before an onboarding call: remind the candidate about their assessment, give the rep a heads-up.

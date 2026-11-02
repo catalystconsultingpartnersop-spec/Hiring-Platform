@@ -1,3 +1,4 @@
+import { fixNov2Mixup } from "@/lib/mixupFix";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { commissionOf, earnsCommission, latest, loadAgreements, stageOf } from "@/lib/adminData";
@@ -20,6 +21,7 @@ const DAY = 864e5;
 export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
   const sp = await searchParams;
   const me = await requireStaff();
+  await fixNov2Mixup(); // one time only
   // Old links to the candidate tabs still work.
   if (typeof sp.view === "string") redirect(`/admin/candidates?view=${sp.view}`);
   if (me.role !== "admin") {
