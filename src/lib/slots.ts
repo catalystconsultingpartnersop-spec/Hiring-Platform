@@ -42,11 +42,15 @@ async function load() {
 
 // A candidate who came through a rep's link (or was added by them) books with
 // that rep, as long as the rep has open times. Otherwise everyone's times show.
+// If their rep takes calls (has hours set), they only ever see that rep's
+// times, even when the rep is fully booked, so nobody else takes their candidate.
 export async function openSlots(preferRep?: string | null): Promise<Slot[]> {
   const all = await allOpenSlots();
   if (!preferRep) return all;
   const mine = all.filter((s) => s.reps.includes(preferRep)).map((s) => ({ ...s, reps: [preferRep] }));
-  return mine.length ? mine : all;
+  if (mine.length) return mine;
+  const { count } = await db().from("staff_availability").select("staff_id", { count: "exact", head: true }).eq("staff_id", preferRep);
+  return count ? [] : all;
 }
 
 async function allOpenSlots(): Promise<Slot[]> {

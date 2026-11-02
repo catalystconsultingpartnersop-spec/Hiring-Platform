@@ -3,7 +3,7 @@ import { ConfirmButton } from "@/components/ConfirmButton";
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
-import { cancelCallByStaff, markCall } from "../../actions";
+import { cancelCallByStaff, handCallToOwner, markCall } from "../../actions";
 import styles from "../admin.module.css";
 
 type Row = {
@@ -12,7 +12,7 @@ type Row = {
   status: string;
   staff_id: string;
   meet_link?: string | null;
-  candidates: { id: string; full_name: string; email: string; phone: string | null; application: Record<string, string> };
+  candidates: { id: string; full_name: string; email: string; phone: string | null; application: Record<string, string>; added_by: string | null };
   staff: { full_name: string | null; email: string; meeting_link: string | null; time_zone: string | null };
 };
 
@@ -27,18 +27,26 @@ async function load(staffId: string | null, upcoming: boolean) {
   const cutoff = new Date(Date.now() - (upcoming ? 3600e3 : 14 * 864e5)).toISOString();
   let q = db()
     .from("onboarding_calls")
-    .select("*, candidates(id, full_name, email, phone, application), staff(full_name, email, meeting_link, time_zone)")
+    .select("*, candidates(id, full_name, email, phone, application, added_by), staff(full_name, email, meeting_link, time_zone)")
     .gte("starts_at", cutoff)
     .order("starts_at", { ascending: upcoming });
-  if (staffId) q = q.eq("staff_id", staffId);
+  if (staffId) {
+    // Their own calls, plus calls their candidates booked with someone else.
+    const { data: mineC } = await db().from("candidates").select("id").eq("added_by", staffId);
+    const ids = (mineC ?? []).map((c) => c.id as string);
+    q = ids.length ? q.or(`staff_id.eq.${staffId},candidate_id.in.(${ids.join(",")})`) : q.eq("staff_id", staffId);
+  }
   if (upcoming) q = q.eq("status", "booked");
   else q = q.lt("starts_at", new Date().toISOString());
   const { data } = await q.limit(200);
   return (data ?? []) as unknown as Row[];
 }
 
-export default async function CallsPage() {
+export default async function CallsPage({ searchParams }: PageProps<"/admin/calls">) {
+  const sp = await searchParams;
   const me = await requireStaff();
+  const { data: staffRows } = await db().from("staff").select("id, full_name, email");
+  const nameOf = new Map(((staffRows ?? []) as { id: string; full_name: string | null; email: string }[]).map((s) => [s.id, (s.full_name || s.email).split(" ")[0]]));
   const admin = me.role === "admin";
   const mine = admin ? null : me.id;
   const [upcoming, recent] = await Promise.all([load(mine, true), load(mine, false)]);
@@ -69,6 +77,18 @@ export default async function CallsPage() {
                     {r.candidates.email}
                     {r.candidates.phone ? `, ${r.candidates.phone}` : ""}
                   </div>
+                  {r.candidates.added_by && r.candidates.added_by !== r.staff_id && (
+                    <div className="small" style={{ marginTop: 4, color: "var(--rust)", fontWeight: 600 }}>
+                      {nameOf.get(r.candidates.added_by) ?? "Another rep"}&rsquo;s candidate, booked with {nameOf.get(r.staff_id) ?? "someone else"}
+                      {r.status === "booked" && (
+                        <form action={handCallToOwner.bind(null, r.id)} style={{ display: "inline", marginLeft: 8 }}>
+                          <button className="btn btn-small btn-ghost" type="submit">
+                            Hand to {nameOf.get(r.candidates.added_by) ?? "their rep"}
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  )}
                   {r.candidates.application?.looking_for && (
                     <div className="small" style={{ marginTop: 4, maxWidth: "48ch" }}>
                       {r.candidates.application.looking_for}
@@ -129,6 +149,8 @@ export default async function CallsPage() {
           <Link href="/admin/hours">My hours</Link>.
         </p>
       </div>
+      {sp.hand === "done" && <p className="notice notice-good">Done. The call is now with the candidate&rsquo;s own rep, and everyone got fresh emails.</p>}
+      {sp.hand === "busy" && <p className="notice notice-bad">Their rep already has a call at that time. Ask them to free it up, or keep it as is.</p>}
       <h2 className={styles.h2}>Coming up</h2>
       {upcoming.length ? table(upcoming, true) : <p className="panel panel-wash">No calls booked yet.</p>}
       <h2 className={styles.h2}>Last two weeks</h2>

@@ -10,10 +10,14 @@ export function ApplyFlow({
   startToken = null,
   startFirst = "",
   agreement,
+  reps = [],
+  referred = null,
 }: {
   times: string[];
   assessmentUrl: string;
   agreement: { how: string[]; ask: string[] };
+  reps?: [string, string][];
+  referred?: string | null;
   startToken?: string | null;
   startFirst?: string;
 }) {
@@ -72,10 +76,10 @@ export function ApplyFlow({
           <p className="notice notice-good" role="status" style={{ marginTop: 18 }}>
             Got it. We&rsquo;ll reach out within one business day to find a time.
           </p>
-        ) : state.token && times.length > 0 ? (
+        ) : state.token && (state.times ?? times).length > 0 ? (
           <>
             <TimePicker
-              times={times}
+              times={state.times ?? times}
               onBook={async (iso, tz) => {
                 const r = await bookTime(state.token!, iso, tz);
                 if (r.ok) setBooked({ when: r.when!, manage: r.manage! });
@@ -159,6 +163,22 @@ export function ApplyFlow({
           placeholder="A sentence is plenty. It's fine if you're not sure yet; that's what the call is for."
         />
       </label>
+      {reps.length > 0 && (
+        <label className="field">
+          <span>
+            Who told you about us? <span className="opt">(optional)</span>
+          </span>
+          <select className="select" name="rep" defaultValue={v("rep") || referred || ""}>
+            <option value="">Someone else, or not sure</option>
+            {reps.map(([id, name]) => (
+              <option key={id} value={id}>
+                {name}
+              </option>
+            ))}
+          </select>
+          <small>If one of our team sent you, you&rsquo;ll have your call with them.</small>
+        </label>
+      )}
       <label className="field">
         <span>
           Resume <span className="opt">(optional, you can send it later)</span>

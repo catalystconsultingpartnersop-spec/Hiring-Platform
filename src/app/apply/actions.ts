@@ -18,6 +18,7 @@ const MAX_RESUME = 4 * 1024 * 1024;
 
 export type ApplyState = {
   ok?: boolean;
+  times?: string[]; // open times with their rep
   error?: string;
   token?: string | null; // lets them book a call without signing in
   first?: string;
@@ -31,7 +32,7 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
   const email = get("email").toLowerCase();
   const phone = get("phone");
   const looking_for = get("looking_for");
-  const fields = { full_name, email, phone, looking_for };
+  const fields = { full_name, email, phone, looking_for, rep: get("rep") };
   const fail = (error: string): ApplyState => ({ error, fields });
 
   if (form.get("website")) return { ok: true, token: null, first: "there" }; // spam trap
@@ -66,7 +67,7 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
         // They sign their candidate agreement right here, so nothing is left to do after their call.
         promise_signed_at: new Date().toISOString(),
         promise_name: full_name,
-        added_by: await referringRep(),
+        added_by: await chosenRep(String(form.get("rep") ?? "")),
       })
       .select("id")
       .single();
@@ -105,7 +106,27 @@ ${candidateId ? `<p><a href="${teamUrl()}/admin/candidates/${candidateId}">Open 
 
   // They're signed in to their own page (/me) right away; no email round-trip.
   if (candidateId) await startCandidateSession(candidateId);
-  return { ok: true, first, token: candidateId ? signedToken(`cand_${candidateId}`, 30) : null };
+  const token = candidateId ? signedToken(`cand_${candidateId}`, 30) : null;
+  return { ok: true, first, token, times: token ? await availableTimes(token) : undefined };
+}
+
+// Who sent them: the rep they picked on the form, or the rep whose link they used.
+async function chosenRep(picked: string): Promise<string | null> {
+  if (/^[0-9a-f-]{36}$/i.test(picked)) {
+    const { data } = await db().from("staff").select("id").eq("id", picked).eq("active", true).maybeSingle();
+    if (data) return data.id;
+  }
+  return referringRep();
+}
+
+// The team members a candidate can say sent them.
+export async function repChoices(): Promise<{ list: [string, string][]; referred: string | null }> {
+  const { data } = await db().from("staff").select("id, full_name, email").eq("active", true);
+  const list = ((data ?? []) as { id: string; full_name: string | null; email: string }[])
+    .filter((s) => s.full_name)
+    .map((s): [string, string] => [s.id, s.full_name!])
+    .sort((a, b) => a[1].localeCompare(b[1]));
+  return { list, referred: await referringRep() };
 }
 
 // Step 2: pick a time.
@@ -157,6 +178,17 @@ export async function askUsToReachOut(token: string) {
   if (!candidateId) return { ok: false };
   const { data: c } = await db().from("candidates").select("full_name, email, phone").eq("id", candidateId).maybeSingle();
   if (c) {
+    const { data: who } = await db().from("candidates").select("added_by").eq("id", candidateId).maybeSingle();
+    if (who?.added_by) {
+      const { data: rep } = await db().from("staff").select("email, full_name, active").eq("id", who.added_by).maybeSingle();
+      if (rep?.active)
+        await sendEmail({
+          to: rep.email,
+          subject: `Please schedule: ${c.full_name}`,
+          html: `<p>${escapeHtml(c.full_name)} (${escapeHtml(c.email)}, ${escapeHtml(c.phone ?? "")}) signed up through you and asked us to reach out to set up their call. None of your open times worked for them, or you have none open right now. Please reach out, or add a few times on My hours.</p>`,
+          replyTo: c.email,
+        });
+    }
     await emailAdmin(
       `Please schedule: ${c.full_name}`,
       `<p>${escapeHtml(c.full_name)} (${escapeHtml(c.email)}, ${escapeHtml(c.phone ?? "")}) applied and asked us to reach out to set up their onboarding call.</p>`,

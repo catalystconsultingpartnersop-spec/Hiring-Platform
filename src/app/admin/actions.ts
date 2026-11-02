@@ -1144,3 +1144,34 @@ export async function testCandidateFromCall(): Promise<{ id?: string; error?: st
   await logActivity(me.email, "test_candidate_from_call", { candidate: refCode(cand.id) });
   return { id: cand.id };
 }
+
+// A call that landed with the wrong rep: hand it to the candidate's own rep,
+// if they're free then. Everyone gets fresh booking emails.
+export async function handCallToOwner(callId: string) {
+  const me = await requireStaff();
+  const { data: k } = await db().from("onboarding_calls").select("*, candidates(added_by)").eq("id", callId).maybeSingle();
+  const owner = (k?.candidates as { added_by: string | null } | null)?.added_by;
+  if (!k || !owner || k.status !== "booked" || owner === k.staff_id) return;
+  if (me.role !== "admin" && me.id !== k.staff_id && me.id !== owner) return;
+  const { count } = await db()
+    .from("onboarding_calls")
+    .select("id", { count: "exact", head: true })
+    .eq("staff_id", owner)
+    .eq("status", "booked")
+    .lt("starts_at", k.ends_at)
+    .gt("ends_at", k.starts_at);
+  if (count) redirect("/admin/calls?hand=busy");
+  const { data: was } = await db().from("staff").select("email, full_name").eq("id", k.staff_id).maybeSingle();
+  await db().from("onboarding_calls").update({ staff_id: owner }).eq("id", callId);
+  const { sendBookingEmails } = await import("@/lib/calls");
+  await sendBookingEmails(callId, false);
+  if (was?.email)
+    await sendEmail({
+      to: was.email,
+      subject: "A call was handed back to the candidate's own rep",
+      html: `<p>Thanks! The onboarding call on your calendar for ${new Date(k.starts_at).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" })} now belongs to the candidate's own rep. You can remove it from your calendar.</p>`,
+    });
+  await logActivity(staffActor(me), "call_handed_to_owner", { call_id: callId, to: owner });
+  revalidatePath("/admin/calls");
+  redirect("/admin/calls?hand=done");
+}
