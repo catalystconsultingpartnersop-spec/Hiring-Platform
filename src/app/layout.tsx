@@ -25,6 +25,8 @@ export const metadata: Metadata = {
     images: [{ url: "/share/og.png", width: 1200, height: 630, alt: "Dear business owner, unimpressed with your hiring options?" }],
   },
   twitter: { card: "summary_large_image", images: ["/share/og.png"] },
+  // Proves to Google Search Console that we own the site.
+  ...(process.env.GOOGLE_SITE_VERIFICATION ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } } : {}),
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -41,6 +43,19 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en">
       <body>
+        {/* Tells Google the site's name, so searching "The Candidate Collection" finds it. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: brandName(),
+              alternateName: ["Candidate Collection", "thecandidatecollection.com"],
+              url: siteUrl(),
+            }),
+          }}
+        />
         <header className="site-header">
           <div className="wrap">
             <Link href={onlyCandidate ? "/join" : "/"} className="brand" aria-label={`${brandName()} home`}>
