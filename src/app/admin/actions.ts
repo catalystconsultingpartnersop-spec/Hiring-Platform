@@ -896,7 +896,15 @@ export async function setPartner(staffId: string, on: boolean) {
 // Heshy picks which rep a candidate belongs to (credit and commission follow).
 // The rep gets a short email unless they assigned themselves.
 export async function assignRep(candidateId: string, _prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requireAdmin();
+  const me = await requireStaff();
+  // Reps can pass along a candidate who is theirs (for example, one who was
+  // really sent by another rep). Heshy can reassign anyone.
+  if (me.role !== "admin") {
+    const { data: cur } = await db().from("candidates").select("added_by").eq("id", candidateId).maybeSingle();
+    const { effectiveReps } = await import("@/lib/reps");
+    const who = (await effectiveReps([{ id: candidateId, added_by: cur?.added_by ?? null }])).get(candidateId);
+    if (!me.id || who?.id !== me.id) return { error: "Only this candidate's rep can change this." };
+  }
   const staffId = String(form.get("rep") ?? "");
   let rep: { id: string; email: string; full_name: string | null } | null = null;
   if (staffId) {

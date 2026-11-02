@@ -75,9 +75,12 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
           </p>
         )}
         <PromiseRow c={c as Candidate & { promise_signed_at?: string | null; promise_name?: string | null; promise_requested_at?: string | null; list_on_sign?: boolean }} />
-        {me.role === "admin" && (
-          <RepRow candidateId={c.id} addedBy={(c as unknown as { added_by: string | null }).added_by ?? null} />
-        )}
+        <RepRow
+          candidateId={c.id}
+          addedBy={(c as unknown as { added_by: string | null }).added_by ?? null}
+          admin={me.role === "admin"}
+          meId={me.id}
+        />
         {callRows.length > 0 && (
           <p style={{ marginTop: 10 }}>
             Onboarding call:{" "}
@@ -141,13 +144,15 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
   );
 }
 
-async function RepRow({ candidateId, addedBy }: { candidateId: string; addedBy: string | null }) {
+async function RepRow({ candidateId, addedBy, admin, meId }: { candidateId: string; addedBy: string | null; admin: boolean; meId: string | null }) {
   const [options, reps] = await Promise.all([repOptions(), effectiveReps([{ id: candidateId, added_by: addedBy }])]);
   const r = reps.get(candidateId);
+  // Reps see this only for their own candidates, to pass one to the rep who really sent them.
+  if (!admin && (!meId || r?.id !== meId)) return null;
   return (
     <p style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
       <strong>Rep:</strong>
-      <RepPicker candidateId={candidateId} value={r?.id ?? ""} options={options} note={r?.viaCall ? "from their onboarding call" : undefined} />
+      <RepPicker candidateId={candidateId} value={r?.id ?? ""} options={options} note={!admin ? "Did another rep send them? Pick that rep here." : r?.viaCall ? "from their onboarding call" : undefined} />
     </p>
   );
 }
