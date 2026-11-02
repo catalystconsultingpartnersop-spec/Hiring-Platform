@@ -9,30 +9,27 @@ export function WGChips({ result, uploaded, tried }: { result: string | null; up
     if (!uploaded) return <span className="small muted">Not uploaded</span>;
     return <span className="small muted">{tried ? "Uploaded, couldn't read it. Open to add" : "Uploaded, reading…"}</span>;
   }
-  const chip = (x: string, good: boolean) => (
+  const chip = (xs: string[], good: boolean) => (
     <span
-      key={x}
-      title={NAME[x]}
+      title={`${good ? "Geniuses" : "Frustrations"}: ${xs.map((x) => NAME[x]).join(", ")}`}
       style={{
         display: "inline-block",
-        padding: "2px 8px",
+        padding: "2px 9px",
         borderRadius: 99,
-        fontSize: 12.5,
-        fontWeight: 700,
+        fontSize: 13,
+        fontWeight: 800,
+        letterSpacing: "0.06em",
         background: good ? "var(--moss-soft)" : "var(--rust-soft)",
         color: good ? "#1f4a31" : "#7d2a1e",
-        whiteSpace: "nowrap",
       }}
     >
-      {NAME[x]}
+      {xs.join("")}
     </span>
   );
   return (
-    <div style={{ display: "grid", gap: 4 }}>
-      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>{l.slice(0, 2).map((x) => chip(x, true))}</div>
-      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }} aria-label="Frustrations">
-        {l.slice(4).map((x) => chip(x, false))}
-      </div>
+    <div style={{ display: "flex", gap: 6, whiteSpace: "nowrap" }}>
+      {chip(l.slice(0, 2), true)}
+      {chip(l.slice(4), false)}
     </div>
   );
 }
