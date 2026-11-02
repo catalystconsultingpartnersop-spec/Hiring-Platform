@@ -116,3 +116,10 @@ export function teamUrl() {
 
 // "Any", "Open" and the like mean open to every industry, which isn't a filter.
 export const isAnyIndustry = (r: string | null | undefined) => !r || /^(any|open|all|any industry|open to any|n\/?a|none)$/i.test(r.trim());
+
+// Lowercase a role for use mid-sentence ("for bookkeeping roles"), keeping
+// abbreviations like HR, IT and ABA in capitals.
+const KEEP_CAPS = /\b(hr|it|aba|ot|pt|cpa|qa|ap|ar|cna|rn|lpn|lmsw|lcsw|bcba|rbt|seo|crm|erp|ceo|cfo|coo|cto|pr|hvac|ux|ui|nyc|ny|nj|us)\b/g;
+export function lowerRole(role: string): string {
+  return role.toLowerCase().replace(KEEP_CAPS, (m) => m.toUpperCase());
+}

@@ -1,3 +1,4 @@
+import { lowerRole } from "./format";
 import { describe, profileOf } from "./strengths";
 
 // Words and ideas that help reps write strong, warm, anonymous profiles.
@@ -142,7 +143,7 @@ const PERSON: Record<string, string> = {
 };
 export function personOf(role: string) {
   const r = role.trim();
-  return PERSON[r] ?? (r ? `${r.toLowerCase()} professional` : "professional");
+  return PERSON[r] ?? (r ? `${lowerRole(r)} professional` : "professional");
 }
 
 const LEVEL_WORD: Record<string, string> = { beginner: "Up-and-coming", experienced: "Experienced", senior: "Seasoned" };
@@ -155,7 +156,7 @@ export function headlineIdeas(role: string, code: string, level: string) {
   const who = personOf(r);
   const lvl = LEVEL_WORD[level];
   const ideas = [
-    d ? `${d.name} for ${r.toLowerCase()} roles` : null,
+    d ? `${d.name} for ${lowerRole(r)} roles` : null,
     d ? `${lvl ? `${lvl} ${who}` : who} known for ${d.wiredFor[0]}` : null,
     d ? `${who} who brings ${d.wiredFor[1]}` : null,
     ROLE_HOOKS[r] ?? null,

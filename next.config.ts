@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/admin/invite-pdf": ["./src/assets/fonts/**"],
     "/api/resume/[id]": ["./src/assets/fonts/**"],
+    "/api/clean-resume/[id]": ["./src/assets/fonts/**"],
   },
   experimental: {
     serverActions: {

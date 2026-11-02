@@ -1,5 +1,6 @@
 import { languagesText } from "@/lib/languages";
 import Link from "next/link";
+import { lowerRole } from "@/lib/format";
 import { PendingButton } from "@/components/PendingButton";
 import { notFound } from "next/navigation";
 import { bestAtText, CandidateCard, HowTheyWork, roleLine, WorksBest } from "@/components/CandidateCard";
@@ -123,7 +124,7 @@ function Facts({ c }: { c: PublicCandidate }) {
 function AtAGlance({ c }: { c: PublicCandidate }) {
   const salary = salaryRange(c.salary_min, c.salary_max);
   const items = [
-    [c.level ? LEVEL_LABEL[c.level] : null, c.role_category?.toLowerCase()].filter(Boolean).join(" ") || null,
+    [c.level ? LEVEL_LABEL[c.level] : null, c.role_category ? lowerRole(c.role_category) : null].filter(Boolean).join(" ") || null,
     [c.location_region, c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null].filter(Boolean).join(" · ") || null,
     salary ? `Looking for ${salary}` : null,
     languagesText(c.languages) ? `Fluent in ${languagesText(c.languages)}` : null,

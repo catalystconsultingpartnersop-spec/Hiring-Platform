@@ -134,7 +134,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <span>
               &copy; {new Date().getFullYear()} {legalEntity()}. {brandName()} is a service of {legalEntity()}.
             </span>
-            <Link href="/privacy">Privacy</Link>
+            <span style={{ display: "inline-flex", gap: 16 }}>
+              {/* Someone hiring who arrived through a candidate link can always get to the business side. */}
+              {onlyCandidate && <Link href="/candidates?for=business">Hiring? Browse candidates</Link>}
+              <Link href="/privacy">Privacy</Link>
+            </span>
           </div>
         </footer>
       </body>

@@ -1,3 +1,4 @@
+import { lowerRole } from "./format";
 // How a candidate works best, in plain business language, generated from their
 // Working Genius result.
 //
@@ -223,7 +224,7 @@ export const TRAIT_LIST = ORDER.map((k) => ({ key: k, ...TRAITS[k] }));
 // estimating roles".
 export function suggestedHeadline(role: string, raw: string | null | undefined) {
   const d = describe(raw);
-  const r = role.trim().toLowerCase();
+  const r = lowerRole(role.trim());
   return d ? `${d.name} for ${r} roles` : `${cap(role.trim())} candidate`;
 }
 
@@ -253,5 +254,5 @@ export function freshHeadline(h: string | null): string | null {
     }
   }
   // "…for account Manager roles" → "…for account manager roles"
-  return out.replace(/ for (.+) roles$/i, (_m, r: string) => ` for ${r.toLowerCase()} roles`);
+  return out.replace(/ for (.+) roles$/i, (_m, r: string) => ` for ${lowerRole(r)} roles`);
 }
