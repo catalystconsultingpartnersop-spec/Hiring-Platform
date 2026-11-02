@@ -226,3 +226,32 @@ export function suggestedHeadline(role: string, raw: string | null | undefined) 
   const r = role.trim().toLowerCase();
   return d ? `${d.name} for ${r} roles` : `${cap(role.trim())} candidate`;
 }
+
+// Earlier names for the work types. Headlines saved with an old name are shown
+// with the new one, so nothing on the site is out of date.
+const RENAMED: [string, string][] = [
+  ["Visionary", "Innovator"],
+  ["Thoughtful advisor", "Strategic thinker"],
+  ["Inspiring big thinker", "Inspiring leader"],
+  ["Considerate supporter", "Caring team player"],
+  ["Careful, steady doer", "Thorough executor"],
+  ["Practical problem-solver", "Problem solver"],
+  ["Idea champion", "Creative spark"],
+  ["Flexible creator", "Solutions builder"],
+  ["Sharp finisher", "Gets it done right"],
+  ["Team energizer", "Team motivator"],
+  ["Dependable finisher", "Reliable go-to person"],
+  ["Driver", "Driver / go-getter"],
+];
+export function freshHeadline(h: string | null): string | null {
+  if (!h) return h;
+  let out = h;
+  for (const [was, now] of RENAMED) {
+    if (out.toLowerCase().startsWith(`${was.toLowerCase()} for `)) {
+      out = now + out.slice(was.length);
+      break;
+    }
+  }
+  // "…for account Manager roles" → "…for account manager roles"
+  return out.replace(/ for (.+) roles$/i, (_m, r: string) => ` for ${r.toLowerCase()} roles`);
+}

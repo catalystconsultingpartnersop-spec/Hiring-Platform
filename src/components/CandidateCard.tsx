@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { PublicCandidate } from "@/lib/db";
 import { describe, profileOf, TRAITS } from "@/lib/strengths";
-import { LEVEL_LABEL, WORK_MODE_LABEL, money, salaryRange } from "@/lib/format";
+import { isAnyIndustry, LEVEL_LABEL, WORK_MODE_LABEL, money, salaryRange } from "@/lib/format";
 
 import { ShortlistButton } from "./Shortlist";
 import { RoleCover } from "./RoleCover";
@@ -69,7 +69,7 @@ export function bestAtText(c: PublicCandidate) {
 }
 
 export function roleLine(c: PublicCandidate) {
-  return [[c.role_category, ...(c.also_roles ?? [])].filter(Boolean).slice(0, 2).join(" / "), c.industry && c.industry !== "Any" ? c.industry : null]
+  return [[c.role_category, ...(c.also_roles ?? [])].filter(Boolean).slice(0, 2).join(" / "), isAnyIndustry(c.industry) ? null : c.industry]
     .filter(Boolean)
     .join(" in ");
 }

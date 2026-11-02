@@ -162,8 +162,27 @@ const ROLE_FAMILY: Record<string, string> = {
   Driver: "ops",
 };
 
+// Typed-in roles ("Account Manager", "bookkeeper") still get the right picture.
+const KEYWORDS: [RegExp, string][] = [
+  [/book|account(ing|ant)|payroll|estimat|purchas|financ|billing/i, "numbers"],
+  [/sales|account manag|business develop/i, "sales"],
+  [/assistant|admin|office|reception|secretar/i, "admin"],
+  [/customer|support|service/i, "service"],
+  [/nurs|medical|health|care|clinic|therap(y|ist) (speech|occupational|physical)|speech|ot\b|pt\b/i, "care"],
+  [/teach|school|educat|aide|para|tutor|special ed/i, "school"],
+  [/counsel|therap|mental|aba|behavior|psych/i, "mind"],
+  [/social work|case manag|hr\b|human resources|recruit/i, "people"],
+  [/market|social media|design|content|brand/i, "creative"],
+  [/operat|project|dispatch|logistic|warehouse|driver|deliver/i, "ops"],
+  [/it\b|tech|software|developer|computer/i, "tech"],
+  [/maint|trade|electric|plumb|hvac|carpent|mechanic/i, "tools"],
+  [/property|site|construct|real estate/i, "building"],
+];
 export function familyOf(role: string | null | undefined): Family {
-  return FAMILIES[ROLE_FAMILY[role ?? ""] ?? "other"];
+  const r = (role ?? "").trim();
+  const exact = ROLE_FAMILY[r] ?? Object.entries(ROLE_FAMILY).find(([k]) => k.toLowerCase() === r.toLowerCase())?.[1];
+  const fuzzy = exact ?? KEYWORDS.find(([re]) => re.test(r))?.[1];
+  return FAMILIES[fuzzy ?? "other"];
 }
 
 // size "card" sits on top of a catalog card; "hero" opens a candidate's page.

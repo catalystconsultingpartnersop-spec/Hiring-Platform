@@ -146,7 +146,6 @@ export function personOf(role: string) {
 }
 
 const LEVEL_WORD: Record<string, string> = { beginner: "Up-and-coming", experienced: "Experienced", senior: "Seasoned" };
-const lc = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 // Headline ideas: short, warm and specific, never identifying.
 export function headlineIdeas(role: string, code: string, level: string) {
@@ -156,7 +155,7 @@ export function headlineIdeas(role: string, code: string, level: string) {
   const who = personOf(r);
   const lvl = LEVEL_WORD[level];
   const ideas = [
-    d ? `${d.name} for ${lc(r)} roles` : null,
+    d ? `${d.name} for ${r.toLowerCase()} roles` : null,
     d ? `${lvl ? `${lvl} ${who}` : who} known for ${d.wiredFor[0]}` : null,
     d ? `${who} who brings ${d.wiredFor[1]}` : null,
     ROLE_HOOKS[r] ?? null,

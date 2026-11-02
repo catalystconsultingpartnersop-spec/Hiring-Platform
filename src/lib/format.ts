@@ -113,3 +113,6 @@ export function teamUrl() {
     return site;
   }
 }
+
+// "Any", "Open" and the like mean open to every industry, which isn't a filter.
+export const isAnyIndustry = (r: string | null | undefined) => !r || /^(any|open|all|any industry|open to any|n\/?a|none)$/i.test(r.trim());
