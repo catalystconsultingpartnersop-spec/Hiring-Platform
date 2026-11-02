@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   };
   if (!p.get("code") || p.get("state") !== req.cookies.get("g_calls_state")?.value) return back("google=failed");
   try {
-    const email = await finishConnect(p.get("code")!);
+    const email = await finishConnect(p.get("code")!, req.nextUrl.origin);
     await logActivity(me.email, "google_calls_connected", { email });
     return back("google=connected");
   } catch (e) {

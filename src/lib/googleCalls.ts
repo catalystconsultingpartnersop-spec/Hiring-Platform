@@ -19,7 +19,8 @@ type Saved = { refresh_token: string; email: string; connected_at: string };
 
 const clientId = () => process.env.GOOGLE_CALLS_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || "";
 const clientSecret = () => process.env.GOOGLE_CALLS_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET || "";
-export const callsRedirectUri = () => `${siteUrl()}/api/google/calls/callback`;
+// Google sends people back to the same address they started from (main site or team.).
+export const callsRedirectUri = (origin?: string) => `${origin || siteUrl()}/api/google/calls/callback`;
 export const googleCallsConfigured = () => !!(clientId() && clientSecret());
 
 export async function callsAccount(): Promise<Saved | null> {
@@ -27,12 +28,12 @@ export async function callsAccount(): Promise<Saved | null> {
   return v?.refresh_token ? v : null;
 }
 
-export function connectUrl() {
+export function connectUrl(origin: string) {
   const state = randomBytes(24).toString("base64url");
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   url.search = new URLSearchParams({
     client_id: clientId(),
-    redirect_uri: callsRedirectUri(),
+    redirect_uri: callsRedirectUri(origin),
     response_type: "code",
     scope: SCOPES.join(" "),
     access_type: "offline",
@@ -43,11 +44,11 @@ export function connectUrl() {
   return { url: url.toString(), state };
 }
 
-export async function finishConnect(code: string) {
+export async function finishConnect(code: string, origin: string) {
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ code, client_id: clientId(), client_secret: clientSecret(), redirect_uri: callsRedirectUri(), grant_type: "authorization_code" }),
+    body: new URLSearchParams({ code, client_id: clientId(), client_secret: clientSecret(), redirect_uri: callsRedirectUri(origin), grant_type: "authorization_code" }),
   });
   if (!res.ok) throw new Error(`Google said no (${res.status}): ${await res.text()}`);
   const tok = (await res.json()) as { access_token: string; refresh_token?: string; scope?: string };
