@@ -40,7 +40,16 @@ async function load() {
   return { reps: (reps ?? []) as Rep[], windows: (windows ?? []) as Window[], booked: (booked ?? []) as Booked[], lengths };
 }
 
-export async function openSlots(): Promise<Slot[]> {
+// A candidate who came through a rep's link (or was added by them) books with
+// that rep, as long as the rep has open times. Otherwise everyone's times show.
+export async function openSlots(preferRep?: string | null): Promise<Slot[]> {
+  const all = await allOpenSlots();
+  if (!preferRep) return all;
+  const mine = all.filter((s) => s.reps.includes(preferRep)).map((s) => ({ ...s, reps: [preferRep] }));
+  return mine.length ? mine : all;
+}
+
+async function allOpenSlots(): Promise<Slot[]> {
   try {
     const { reps, windows, booked, lengths } = await load();
     const earliest = Date.now() + MIN_NOTICE_HOURS * 3600e3;
@@ -81,8 +90,8 @@ export async function openSlots(): Promise<Slot[]> {
 
 // Reps free at a given start (with how long their call there is), least busy
 // first, so calls spread evenly.
-export async function repsFreeAt(startIso: string): Promise<{ id: string; minutes: number }[]> {
-  const slots = await openSlots();
+export async function repsFreeAt(startIso: string, preferRep?: string | null): Promise<{ id: string; minutes: number }[]> {
+  const slots = await openSlots(preferRep);
   const slot = slots.find((s) => s.start === new Date(startIso).toISOString());
   if (!slot) return [];
   const { data } = await db()

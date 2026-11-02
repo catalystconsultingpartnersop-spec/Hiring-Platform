@@ -109,8 +109,15 @@ ${candidateId ? `<p><a href="${teamUrl()}/admin/candidates/${candidateId}">Open 
 }
 
 // Step 2: pick a time.
-export async function availableTimes(): Promise<string[]> {
-  return (await openSlots()).map((s) => s.start);
+// Their rep's times if they came through a rep's link (or a rep added them); otherwise everyone's.
+export async function availableTimes(token?: string): Promise<string[]> {
+  let rep: string | null = null;
+  const candidateId = token ? readSignedToken(token, "cand_") : null;
+  if (candidateId) {
+    const { data } = await db().from("candidates").select("added_by").eq("id", candidateId).maybeSingle();
+    rep = data?.added_by ?? null;
+  } else rep = await referringRep();
+  return (await openSlots(rep)).map((s) => s.start);
 }
 
 export type BookState = { ok?: boolean; error?: string; when?: string; manage?: string };

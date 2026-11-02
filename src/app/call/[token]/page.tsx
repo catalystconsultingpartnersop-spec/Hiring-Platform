@@ -1,3 +1,4 @@
+import { db } from "@/lib/db";
 import { getCall } from "@/lib/calls";
 import { readSignedToken } from "@/lib/session";
 import { openSlots } from "@/lib/slots";
@@ -25,7 +26,7 @@ export default async function CallPage({ params }: PageProps<"/call/[token]">) {
     );
   }
 
-  const times = call.status === "booked" || call.status === "cancelled" ? (await openSlots()).map((s) => s.start) : [];
+  const times = call.status === "booked" || call.status === "cancelled" ? (await openSlots((await db().from("candidates").select("added_by").eq("id", call.candidates.id).maybeSingle()).data?.added_by ?? null)).map((s) => s.start) : [];
   return (
     <div className="wrap narrow apply-page">
       <ManageCall

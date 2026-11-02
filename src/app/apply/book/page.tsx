@@ -16,7 +16,7 @@ export default async function BookPage({ searchParams }: PageProps<"/apply/book"
     const { data } = await db().from("candidates").select("full_name").eq("id", candidateId).maybeSingle();
     first = data?.full_name?.split(" ")[0] ?? "";
   }
-  const times = await availableTimes();
+  const times = await availableTimes(token);
   return (
     <div className="wrap narrow apply-page">
       <div className="page-head">

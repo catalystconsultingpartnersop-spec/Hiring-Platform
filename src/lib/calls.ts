@@ -18,7 +18,8 @@ export async function bookCall(candidateId: string, startIso: string, candidateT
   const tz = validTimeZone(candidateTz);
   const start = new Date(startIso);
   if (Number.isNaN(start.getTime())) return { ok: false, error: "Pick a time from the list." };
-  const reps = await repsFreeAt(start.toISOString());
+  const { data: cand } = await db().from("candidates").select("added_by").eq("id", candidateId).maybeSingle();
+  const reps = await repsFreeAt(start.toISOString(), cand?.added_by ?? null);
   if (!reps.length) return { ok: false, error: "That time was just taken. Pick another one." };
 
   // Try the least-busy rep first; the database refuses a double booking.
