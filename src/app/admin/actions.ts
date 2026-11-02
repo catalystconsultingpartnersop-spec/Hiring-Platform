@@ -1076,3 +1076,37 @@ export async function draftProfileFromCall(candidateId: string): Promise<{ ok?: 
   revalidatePath(`/admin/candidates/${candidateId}`);
   return { ok: true };
 }
+
+async function lastTestSpace(): Promise<string | null> {
+  const { getSetting } = await import("@/lib/settings");
+  let space = (await getSetting<{ space?: string } | null>("last_test_room", null))?.space ?? null;
+  if (!space) {
+    const { data } = await db().from("activity_log").select("details").eq("action", "test_meet_room").order("at", { ascending: false }).limit(1);
+    const code = (data?.[0]?.details as { link?: string } | undefined)?.link?.split("/").pop();
+    if (code) space = `spaces/${code}`;
+  }
+  return space;
+}
+
+export async function testDraft(): Promise<{ lines?: string[]; error?: string }> {
+  await requireAdmin();
+  try {
+    const space = await lastTestSpace();
+    if (!space) return { error: "Make a test room and use it first." };
+    const { roomTranscript } = await import("@/lib/googleCalls");
+    const transcript = await roomTranscript(space);
+    if (!transcript) return { error: "Google is still working on the transcript. Try again in a few minutes." };
+    const { draftText } = await import("@/lib/callDraft");
+    const d = await draftText("the candidate", "", transcript);
+    return {
+      lines: [
+        `Headline: ${d.headline || "(nothing)"}`,
+        `Summary: ${d.summary || "(nothing)"}`,
+        ...d.highlights.map((h) => `• ${h}`),
+        `Private notes: ${d.private_notes || "(nothing)"}`,
+      ],
+    };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}

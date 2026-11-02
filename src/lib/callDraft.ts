@@ -63,6 +63,20 @@ Transcript:
 ${transcript.slice(0, 120000)}`;
 }
 
+export async function draftText(name: string, lookingFor: string, transcript: string): Promise<CallDraft> {
+  const raw = await askAI(promptFor(name, lookingFor, transcript));
+  const j = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1));
+  return {
+    headline: String(j.headline ?? "").slice(0, 140),
+    summary: String(j.summary ?? ""),
+    highlights: Array.isArray(j.highlights) ? j.highlights.map(String).slice(0, 6) : [],
+    full_profile: String(j.full_profile ?? ""),
+    roles: Array.isArray(j.roles) ? j.roles.map(String).filter((r: string) => ROLE_LIST.includes(r)).slice(0, 3) : [],
+    private_notes: String(j.private_notes ?? ""),
+    made_at: new Date().toISOString(),
+  };
+}
+
 export async function draftFromCall(candidateId: string, opts: { notifyRep?: boolean } = {}): Promise<{ ok: true; draft: CallDraft } | { ok: false; error: string }> {
   const { data: c } = await db().from("candidates").select("*").eq("id", candidateId).maybeSingle();
   if (!c) return { ok: false, error: "Couldn't find this candidate." };
@@ -85,17 +99,7 @@ export async function draftFromCall(candidateId: string, opts: { notifyRep?: boo
 
   let draft: CallDraft;
   try {
-    const raw = await askAI(promptFor(c.full_name, c.application?.looking_for ?? "", transcript));
-    const j = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1));
-    draft = {
-      headline: String(j.headline ?? "").slice(0, 140),
-      summary: String(j.summary ?? ""),
-      highlights: Array.isArray(j.highlights) ? j.highlights.map(String).slice(0, 6) : [],
-      full_profile: String(j.full_profile ?? ""),
-      roles: Array.isArray(j.roles) ? j.roles.map(String).filter((r: string) => ROLE_LIST.includes(r)).slice(0, 3) : [],
-      private_notes: String(j.private_notes ?? ""),
-      made_at: new Date().toISOString(),
-    };
+    draft = await draftText(c.full_name, c.application?.looking_for ?? "", transcript);
   } catch (e) {
     return { ok: false, error: (e as Error).message.startsWith("The AI") ? (e as Error).message : "The AI's answer didn't come through right. Try again." };
   }

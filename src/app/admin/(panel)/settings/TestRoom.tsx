@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { checkTestRoom, makeTestRoom } from "../../actions";
+import { checkTestRoom, makeTestRoom, testDraft } from "../../actions";
 
 // Makes one recorded Meet room, without booking anything, to check recording works.
 export function TestRoom() {
@@ -37,6 +37,17 @@ export function TestRoom() {
         </div>
       )}
       {check.error && <p className="notice notice-bad" style={{ marginTop: 10 }}>{check.error}</p>}
+      <div>
+        <button
+          className="btn btn-ghost btn-small"
+          type="button"
+          style={{ marginTop: 10 }}
+          disabled={checking}
+          onClick={() => startCheck(async () => setCheck(await testDraft()))}
+        >
+          {checking ? "Working…" : "Draft a sample profile from the test call"}
+        </button>
+      </div>
     </div>
   );
 }
