@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { db, logActivity } from "@/lib/db";
 import { dailyCandidateCheckins, releaseWaitingProfiles } from "@/lib/promise";
 import { beforeCallNudges } from "@/lib/beforeCall";
+import { draftFinishedCalls } from "@/lib/callDraft";
 import { happened, Meeting, RefRequest } from "@/lib/path";
 import { emailAskFeedback, nudgeCandidateRefs, nudgeCandidateToPick, nudgeOwnerFeedback, nudgeOwnerToStart } from "@/lib/pathEmails";
 
@@ -21,6 +22,8 @@ export async function GET(req: NextRequest) {
   const checkins = await dailyCandidateCheckins().catch(() => null);
   // The day before an onboarding call: remind the candidate about their assessment, give the rep a heads-up.
   const beforeCall = await beforeCallNudges().catch(() => null);
+  // Recorded calls that ended: draft the candidate's profile from the transcript.
+  const drafts = await draftFinishedCalls().catch(() => null);
 
   const now = Date.now();
   const iso = (ms: number) => new Date(ms).toISOString();
@@ -38,7 +41,7 @@ export async function GET(req: NextRequest) {
     (u) => u.candidates.status !== "hired" && !u.hires.some((h) => h.status === "paid" || h.status === "hired"),
   );
   const ids = active.map((u) => u.id);
-  if (!ids.length) return NextResponse.json({ ok: true, sent, checkins, beforeCall });
+  if (!ids.length) return NextResponse.json({ ok: true, sent, checkins, beforeCall, drafts });
 
   const [{ data: ms }, { data: rs }] = await Promise.all([
     db().from("meetings").select("*").in("unlock_id", ids),
@@ -86,5 +89,5 @@ export async function GET(req: NextRequest) {
   }
 
   if (Object.values(sent).some(Boolean)) await logActivity("system", "path_nudges", sent);
-  return NextResponse.json({ ok: true, sent, checkins, beforeCall });
+  return NextResponse.json({ ok: true, sent, checkins, beforeCall, drafts });
 }

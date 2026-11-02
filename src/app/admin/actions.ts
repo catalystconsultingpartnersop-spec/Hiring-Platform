@@ -701,6 +701,14 @@ export async function markCall(callId: string, status: "done" | "no_show") {
   if (!found) return;
   await db().from("onboarding_calls").update({ status, updated_at: new Date().toISOString() }).eq("id", callId);
   await logActivity(staffActor(found.me), `onboarding_call_${status}`, { call_id: callId });
+  // Marked done: if Google already has the transcript, draft their profile right away.
+  if (status === "done") {
+    const { data: k } = await db().from("onboarding_calls").select("*").eq("id", callId).maybeSingle();
+    if (k?.meet_space) {
+      const { draftFromCall } = await import("@/lib/callDraft");
+      await draftFromCall(k.candidate_id).catch(() => null);
+    }
+  }
   revalidatePath("/admin/calls");
 }
 
@@ -1056,4 +1064,15 @@ export async function checkTestRoom(): Promise<{ lines?: string[]; error?: strin
   } catch (e) {
     return { error: (e as Error).message };
   }
+}
+
+export async function draftProfileFromCall(candidateId: string): Promise<{ ok?: boolean; error?: string }> {
+  const me = await requireStaff();
+  if (!(await allow(`draft:${candidateId}`, 5, 60))) return { error: SLOW_DOWN };
+  const { draftFromCall } = await import("@/lib/callDraft");
+  const r = await draftFromCall(candidateId);
+  if (!r.ok) return { error: r.error };
+  await logActivity(staffActor(me), "call_draft_requested", { candidate: refCode(candidateId) });
+  revalidatePath(`/admin/candidates/${candidateId}`);
+  return { ok: true };
 }

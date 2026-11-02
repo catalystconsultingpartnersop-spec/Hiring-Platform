@@ -133,3 +133,41 @@ export async function roomArtifacts(space: string) {
   }
   return out;
 }
+
+// The full transcript of every call held in a Meet room, as "Name: words" lines.
+// Returns null while Google is still working on it.
+export async function roomTranscript(space: string): Promise<string | null> {
+  const token = await accessToken();
+  if (!token) throw new Error("Google isn't connected. Connect it in Settings.");
+  const get = async (url: string) => {
+    const r = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
+    if (!r.ok) throw new Error(`Google Meet said no (${r.status}): ${(await r.text()).slice(0, 200)}`);
+    return r.json();
+  };
+  const recs = (await get(`https://meet.googleapis.com/v2/conferenceRecords?filter=${encodeURIComponent(`space.name="${space}"`)}`)) as {
+    conferenceRecords?: { name: string }[];
+  };
+  const lines: string[] = [];
+  for (const c of recs.conferenceRecords ?? []) {
+    const names = new Map<string, string>();
+    const ps = (await get(`https://meet.googleapis.com/v2/${c.name}/participants?pageSize=100`)) as {
+      participants?: { name: string; signedinUser?: { displayName?: string }; anonymousUser?: { displayName?: string }; phoneUser?: { displayName?: string } }[];
+    };
+    for (const p of ps.participants ?? [])
+      names.set(p.name, p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName || "Someone");
+    const ts = (await get(`https://meet.googleapis.com/v2/${c.name}/transcripts`)) as { transcripts?: { name: string; state: string }[] };
+    for (const tr of ts.transcripts ?? []) {
+      if (tr.state !== "FILE_GENERATED" && tr.state !== "ENDED") return null;
+      let page = "";
+      do {
+        const e = (await get(`https://meet.googleapis.com/v2/${tr.name}/entries?pageSize=100${page ? `&pageToken=${page}` : ""}`)) as {
+          transcriptEntries?: { participant: string; text: string }[];
+          nextPageToken?: string;
+        };
+        for (const x of e.transcriptEntries ?? []) lines.push(`${names.get(x.participant) ?? "Someone"}: ${x.text}`);
+        page = e.nextPageToken ?? "";
+      } while (page);
+    }
+  }
+  return lines.length ? lines.join("\n") : null;
+}

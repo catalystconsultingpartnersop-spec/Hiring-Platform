@@ -9,6 +9,7 @@ import { deleteCandidate, resendPromise } from "../../../actions";
 import { CandidateForm } from "../CandidateForm";
 import { RepPicker } from "../RepPicker";
 import { ReminderOption, Reminders } from "../Reminders";
+import { CallDraftPanel } from "../CallDraftPanel";
 import { effectiveReps, repOptions } from "@/lib/reps";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 
@@ -24,7 +25,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
 
   const { data: calls } = await db()
     .from("onboarding_calls")
-    .select("id, starts_at, status, staff(full_name, email, time_zone)")
+    .select("*, staff(full_name, email, time_zone)")
     .eq("candidate_id", id)
     .order("starts_at", { ascending: false });
   const callRows = (calls ?? []) as unknown as {
@@ -97,6 +98,13 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
           </p>
         )}
       </div>
+      {callRows.some((k) => (k as { meet_space?: string | null }).meet_space && k.status !== "cancelled") && (() => {
+        let d: { made_at?: string; private_notes?: string } | null = null;
+        try {
+          d = c.application?.call_draft ? JSON.parse(c.application.call_draft) : null;
+        } catch {}
+        return <CallDraftPanel candidateId={c.id} madeAt={d?.made_at ?? null} notes={d?.private_notes ?? null} />;
+      })()}
       <ReminderPanel c={c} hasCall={callRows.some((k) => k.status !== "cancelled")} />
       <CandidateForm c={c} tierFeeLabel={tierFee != null ? money(tierFee) : "set by hand"} isAdmin={me.role === "admin"} />
       {me.role === "admin" && (
