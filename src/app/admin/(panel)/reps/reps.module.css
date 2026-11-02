@@ -49,3 +49,9 @@
   .actions { justify-content: flex-start; }
   .money { grid-template-columns: 1fr 1fr; }
 }
+.floaters { background: var(--rust-soft); border-radius: var(--radius-lg); padding: 16px 18px; margin: 8px 0 18px; }
+.floaters h2 { font-size: 17px; margin-bottom: 8px; color: #7d2a1e; }
+.floaters ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.floaters li { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 14px; }
+.floaters li a { font-weight: 700; }
+.floaters li span { color: var(--ink-2); }

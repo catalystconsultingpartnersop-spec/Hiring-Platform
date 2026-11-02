@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
+import { findFloaters, type Floater } from "@/lib/floaters";
 import { loadTeam } from "@/lib/teamView";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 import styles from "./reps.module.css";
@@ -13,7 +14,8 @@ export const dynamic = "force-dynamic";
 export default async function Team() {
   const me = await requireStaff();
   if (!me.manager) redirect("/admin");
-  const team = await loadTeam();
+  const [team, floaters] = await Promise.all([loadTeam(), findFloaters()]);
+  const loose: Floater[] = [...floaters.noRep, ...floaters.noCall.filter((f) => f.rep)];
   const totals = {
     today: team.reduce((n, r) => n + r.today.length, 0),
     week: team.reduce((n, r) => n + r.week.length, 0),
@@ -28,6 +30,23 @@ export default async function Team() {
           {totals.attention ? `${totals.attention} ${totals.attention === 1 ? "thing needs" : "things need"} attention` : "nothing needs attention"}
         </p>
       </div>
+      {loose.length > 0 && (
+        <section className={styles.floaters}>
+          <h2>No floaters: {loose.length} {loose.length === 1 ? "candidate needs" : "candidates need"} a rep or a call</h2>
+          <ul>
+            {loose.map((f) => (
+              <li key={f.id + f.why}>
+                <Link href={`/admin/candidates/${f.id}`}>{f.name}</Link>
+                <span>
+                  {f.why}
+                  {f.rep ? ` · rep: ${f.rep}` : ""}
+                  {f.callWith ? ` · call with ${f.callWith}, ${f.callAt}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <div className={styles.grid}>
         {team.map((r) => {
           const alerts: [string, string][] = [];
