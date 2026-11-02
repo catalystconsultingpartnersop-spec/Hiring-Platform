@@ -106,7 +106,7 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
               <tr>
                 <th>Name</th>
                 <th>Profile</th>
-                <th title="Green: their two geniuses. Red: their two frustrations.">Working Genius</th>
+                <th title="Green: geniuses. Yellow: competencies. Red: frustrations.">Working Genius</th>
                 {q && <th>Status</th>}
                 <th>Rep</th>
                 <th>{view === "listed" && !q ? "Listed" : view === "hired" && !q ? "Hired" : "Added"}</th>
