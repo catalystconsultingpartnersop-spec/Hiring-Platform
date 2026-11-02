@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { checkTestRoom, makeTestRoom, testDraft } from "../../actions";
+import { checkTestRoom, makeTestRoom, testCandidateFromCall, testDraft } from "../../actions";
 
 // Makes one recorded Meet room, without booking anything, to check recording works.
 export function TestRoom() {
@@ -46,6 +46,23 @@ export function TestRoom() {
           onClick={() => startCheck(async () => setCheck(await testDraft()))}
         >
           {checking ? "Working…" : "Draft a sample profile from the test call"}
+        </button>
+      </div>
+      <div>
+        <button
+          className="btn btn-gold btn-small"
+          type="button"
+          style={{ marginTop: 10 }}
+          disabled={checking}
+          onClick={() =>
+            startCheck(async () => {
+              const r = await testCandidateFromCall();
+              if (r.id && !r.error) window.location.href = `/admin/candidates/${r.id}`;
+              else setCheck({ error: r.error ?? "Something went wrong." });
+            })
+          }
+        >
+          {checking ? "Working… (about 30 seconds)" : "Full test: make a test candidate from the test call"}
         </button>
       </div>
     </div>

@@ -1110,3 +1110,37 @@ export async function testDraft(): Promise<{ lines?: string[]; error?: string }>
     return { error: (e as Error).message };
   }
 }
+
+// Full test of the call-to-profile chain: turns the test room's call into a
+// test candidate with a finished call, then drafts their profile from it.
+export async function testCandidateFromCall(): Promise<{ id?: string; error?: string }> {
+  const me = await requireAdmin();
+  const space = await lastTestSpace();
+  if (!space) return { error: "Make a test room and use it first." };
+  let staffId = me.id;
+  if (!staffId) {
+    const { data } = await db().from("staff").select("id").eq("email", me.email).maybeSingle();
+    staffId = data?.id ?? null;
+  }
+  if (!staffId) return { error: "Sign in with your email link (not the admin password) to run this test." };
+  const { data: cand, error } = await db()
+    .from("candidates")
+    .insert({ status: "draft", full_name: "Test Candidate", email: `test+${Date.now()}@example.com`, application: { looking_for: "Test from the recorded call (delete me)" }, added_by: staffId })
+    .select("id")
+    .single();
+  if (error || !cand) return { error: `Couldn't make the test candidate: ${error?.message}` };
+  const end = new Date(Date.now() - 5 * 60e3);
+  await db().from("onboarding_calls").insert({
+    candidate_id: cand.id,
+    staff_id: staffId,
+    starts_at: new Date(end.getTime() - 30 * 60e3).toISOString(),
+    ends_at: end.toISOString(),
+    status: "done",
+    meet_space: space,
+  });
+  const { draftFromCall } = await import("@/lib/callDraft");
+  const r = await draftFromCall(cand.id);
+  if (!r.ok) return { error: r.error, id: cand.id };
+  await logActivity(me.email, "test_candidate_from_call", { candidate: refCode(cand.id) });
+  return { id: cand.id };
+}
