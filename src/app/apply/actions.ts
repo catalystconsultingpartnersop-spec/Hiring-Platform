@@ -46,10 +46,9 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
 
   const resume = form.get("resume");
   const hasResume = resume instanceof File && resume.size > 0;
-  if (hasResume) {
-    if (resume.size > MAX_RESUME) return fail("That resume is over 4 MB. Try a smaller PDF, or skip it for now.");
-    if (!resumeKind(resume)) return fail("Resumes need to be a PDF or Word file. You can also skip it for now.");
-  }
+  if (!hasResume) return fail("Please attach your resume. It doesn't need to be perfect; we'll help you polish it.");
+  if (resume.size > MAX_RESUME) return fail("That resume is over 4 MB. Try a smaller PDF.");
+  if (!resumeKind(resume)) return fail("Resumes need to be a PDF or Word file.");
   const resumeBuf = hasResume ? Buffer.from(await resume.arrayBuffer()) : null;
   const resumeExt = hasResume ? resumeKind(resume) : null;
   const first = full_name.split(" ")[0];

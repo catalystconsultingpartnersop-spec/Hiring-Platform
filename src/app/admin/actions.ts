@@ -334,6 +334,7 @@ ${hireSummaryHtml(notice)}`,
     else if (resume.size > 4 * 1024 * 1024) resumeProblem = "the resume is over 4 MB";
     else {
       const path = `${candidateId}/resume.${kind}`;
+      await keepOriginalResume(candidateId!);
       const { error } = await db()
         .storage.from("resumes")
         .upload(path, Buffer.from(await resume.arrayBuffer()), { contentType: RESUME_CONTENT_TYPE[kind], upsert: true });
@@ -1225,4 +1226,33 @@ export async function moveCall(callId: string, form: FormData) {
   await logActivity(staffActor(me), "call_moved", { call_id: callId, to, told_candidate: tell });
   revalidatePath("/admin/calls");
   redirect(`/admin/calls?move=${inHours ? "done" : "outside"}${tell ? "&told=1" : ""}`);
+}
+
+// Before a resume is replaced, keep a copy of the very first one, so we always know what they sent us.
+async function keepOriginalResume(candidateId: string) {
+  const { data: c } = await db().from("candidates").select("resume_path, application").eq("id", candidateId).maybeSingle();
+  const app = (c?.application ?? {}) as Record<string, string>;
+  if (!c?.resume_path || app.original_resume_path) return;
+  const ext = c.resume_path.split(".").pop();
+  const to = `${candidateId}/resume-original.${ext}`;
+  const { error } = await db().storage.from("resumes").copy(c.resume_path, to);
+  if (!error) await db().from("candidates").update({ application: { ...app, original_resume_path: to, original_resume_at: new Date().toISOString() } }).eq("id", candidateId);
+}
+
+export async function makeCleanResumeAction(candidateId: string): Promise<{ error?: string }> {
+  const me = await requireStaff();
+  const { makeCleanResume } = await import("@/lib/cleanResume");
+  const r = await makeCleanResume(candidateId, me.name);
+  if (!r.ok) return { error: r.error };
+  revalidatePath(`/admin/candidates/${candidateId}`);
+  return {};
+}
+
+export async function saveCleanResumeAction(candidateId: string, text: string): Promise<{ error?: string }> {
+  const me = await requireStaff();
+  if (!String(text ?? "").trim().startsWith("#")) return { error: "Start with the name line, like: # Full Name" };
+  const { saveCleanResumeText } = await import("@/lib/cleanResume");
+  await saveCleanResumeText(candidateId, String(text), me.name);
+  revalidatePath(`/admin/candidates/${candidateId}`);
+  return {};
 }

@@ -7,7 +7,7 @@ import { currentOwner, currentStaff } from "@/lib/session";
 // Resumes live in private storage. This hands out the resume, as a PDF named
 // after the candidate, only to the team or an owner who has signed for them.
 // Word resumes are turned into a PDF on the way out.
-export async function GET(_req: Request, ctx: RouteContext<"/api/resume/[id]">) {
+export async function GET(req: Request, ctx: RouteContext<"/api/resume/[id]">) {
   const { id } = await ctx.params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return new NextResponse("Not found", { status: 404 });
 
@@ -21,7 +21,11 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/resume/[id]">) 
   }
   if (!allowed) return new NextResponse("Not allowed", { status: 403 });
 
-  const { data: c } = await db().from("candidates").select("resume_path, full_name").eq("id", id).maybeSingle();
+  const { data: row } = await db().from("candidates").select("resume_path, full_name, application").eq("id", id).maybeSingle();
+  // ?original=1 (team only): the very first resume they sent, if it has since been replaced.
+  const wantOriginal = new URL(req.url).searchParams.has("original") && !!(await currentStaff());
+  const orig = (row?.application as Record<string, string> | null)?.original_resume_path;
+  const c = row ? { ...row, resume_path: wantOriginal && orig ? orig : row.resume_path } : null;
   if (!c?.resume_path) return new NextResponse("No resume on file", { status: 404 });
   const who = (c.full_name ?? "").replace(/[^\p{L}\p{N} .'-]/gu, "").trim() || "Candidate";
   const filename = `${who} - Resume.pdf`;

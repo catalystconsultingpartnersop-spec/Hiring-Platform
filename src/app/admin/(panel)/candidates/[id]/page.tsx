@@ -10,6 +10,8 @@ import { CandidateForm } from "../CandidateForm";
 import { RepPicker } from "../RepPicker";
 import { ReminderOption, Reminders } from "../Reminders";
 import { CallDraftPanel } from "../CallDraftPanel";
+import { ResumePanel } from "../ResumePanel";
+import { cleanResumeOf } from "@/lib/cleanResume";
 import { effectiveReps, repOptions } from "@/lib/reps";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 
@@ -108,6 +110,13 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         } catch {}
         return <CallDraftPanel candidateId={c.id} madeAt={d?.made_at ?? null} notes={d?.private_notes ?? null} />;
       })()}
+      <ResumePanel
+        candidateId={c.id}
+        hasResume={!!(c as { resume_path?: string | null }).resume_path}
+        replaced={!!c.application?.original_resume_path}
+        originalAt={c.application?.original_resume_at ?? null}
+        clean={cleanResumeOf(c.application)}
+      />
       <ReminderPanel c={c} hasCall={callRows.some((k) => k.status !== "cancelled")} />
       <CandidateForm c={c} tierFeeLabel={tierFee != null ? money(tierFee) : "set by hand"} isAdmin={me.role === "admin"} />
       {me.role === "admin" && (

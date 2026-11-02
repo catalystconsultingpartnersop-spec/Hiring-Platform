@@ -195,9 +195,10 @@ export function ApplyFlow({
       )}
       <label className="field">
         <span>
-          Resume <span className="opt">(optional, you can send it later)</span>
+          Your resume
         </span>
-        <input className="input" type="file" name="resume" accept=".pdf,.doc,.docx" />
+        <input className="input" type="file" name="resume" accept=".pdf,.doc,.docx" required />
+        <small>A PDF or Word file. It doesn&rsquo;t need to be perfect; we&rsquo;ll help you polish it after your call.</small>
       </label>
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: "-9999px" }} />
       <div className="apply-agreement" style={{ marginTop: 20, padding: "14px 16px", background: "var(--wash)", borderRadius: 12 }}>
