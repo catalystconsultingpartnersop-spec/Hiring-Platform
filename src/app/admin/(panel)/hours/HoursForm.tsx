@@ -66,9 +66,10 @@ export function HoursForm({
       }}
     >
       <section className={styles.block}>
-        <h2>Your video link</h2>
+        <h2>Your video link (backup)</h2>
         <p className="small muted">
-          Your personal Google Meet or Zoom link. Candidates get it in their booking email.
+          Booked calls get their own recorded Google Meet room automatically. This link is only used if that&rsquo;s ever
+          unavailable. Optional.
         </p>
         <input
           className="input"

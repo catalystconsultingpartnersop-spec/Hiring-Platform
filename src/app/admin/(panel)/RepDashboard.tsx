@@ -55,6 +55,17 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
           )}
         </p>
       </div>
+      {self && (
+        <p className="notice notice-gold" style={{ marginTop: 14, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <span>
+            <strong>New:</strong> your calls now record and take notes for you, the site drafts profiles from the call, one-click
+            reminders, and more flexible hours.
+          </span>
+          <Link className="btn btn-small" href="/admin/guide#new">
+            See what&rsquo;s new
+          </Link>
+        </p>
+      )}
 
       <div className={styles.stats}>
         <div className={styles.stat}>

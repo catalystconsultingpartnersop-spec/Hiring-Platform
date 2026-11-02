@@ -128,24 +128,64 @@ export default async function RepGuide() {
         </div>
       </div>
 
+      <section id="new" className={styles.mission} style={{ scrollMarginTop: 16 }}>
+        <p className={styles.missionLabel}>New this week</p>
+        <h2>Less busywork, more time with candidates.</h2>
+        <ul style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 8 }}>
+          <li>
+            <b>Your calls record and take notes for you.</b> Every call booked through the site gets its own Google Meet room.
+            Afterwards the site drafts the candidate&rsquo;s profile from the conversation and emails you.{" "}
+            <a href="#call">How it works</a>
+          </li>
+          <li>
+            <b>One-click reminders.</b> On any candidate&rsquo;s profile, tap <b>Send a reminder</b> to nudge them about the
+            assessment, booking, their agreement or their resume. <a href="#call">More</a>
+          </li>
+          <li>
+            <b>More flexible hours.</b> Add several time blocks a day, in 15-minute steps. A block with room for one call is
+            one call that fills it, so 1:00 to 1:30 is a 30-minute call and 5:30 to 6:15 is a 45-minute call.{" "}
+            <a href="#hours">Set your hours</a>
+          </li>
+          <li>
+            <b>Nothing to sign after the call.</b> Candidates sign their agreement when they apply, so <b>List now</b> puts
+            them live right away. <a href="#profile">More</a>
+          </li>
+          <li>
+            <b>Assessment before the call.</b> Candidates are asked right after booking, can upload their results, and get a
+            reminder the day before if they haven&rsquo;t. You get a heads-up saying whether the results are in.
+          </li>
+          <li>
+            <b>Your candidate link shows only the candidate side.</b> People who come in through it or the flyer don&rsquo;t
+            see Browse candidates or the business pages for now.
+          </li>
+        </ul>
+      </section>
+
       <h2>The five things you do</h2>
       <ol className={styles.steps}>
-        <li>
+        <li id="hours" style={{ scrollMarginTop: 16 }}>
           <h3>Set your hours (once)</h3>
           <p>
-            Go to <Link href="/admin/hours">My hours</Link>. Paste your Google Meet or Zoom link, pick your time zone, and
-            tick the days and times you&rsquo;re free. Candidates can only book you once this is done.
+            Go to <Link href="/admin/hours">My hours</Link>. Pick your time zone, tick the days you&rsquo;re free, and add your
+            time blocks. Tap <b>+ Add another time</b> for more than one block a day. Times go in 15-minute steps, from 6am
+            to midnight. Candidates can only book you once this is done.
           </p>
           <p className={styles.tip}>
-            Google Meet link: meet.google.com → New meeting → Create a meeting for later. Reuse the same link every time.
+            How blocks become calls: a block with room for just one call is one call that fills it (30 to 45 minutes). In a
+            longer block, calls are the length you choose at the top of My hours (30 or 45 minutes). The page shows how many
+            calls each block holds.
+          </p>
+          <p className={styles.tip}>
+            You don&rsquo;t need your own video link: each booked call gets its own recorded Google Meet room. Your own link is
+            only a backup.
           </p>
           <p className={styles.tip}>
             To find candidates, open <Link href="/admin/share#candidates">Share kit</Link> and send the &ldquo;looking for
             work&rdquo; picture to your network. Anyone who signs up through your link is added as yours.
           </p>
         </li>
-        <li>
-          <h3>Get them assessed, then take the call (30 or 45 minutes, you choose on My hours)</h3>
+        <li id="call" style={{ scrollMarginTop: 16 }}>
+          <h3>Get them assessed, then take the call</h3>
           <p>
             Candidates are asked to take the <b>6 Working Genius assessment</b> at{" "}
             <a href="https://www.workinggenius.com" target="_blank" rel="noreferrer">workinggenius.com</a> as soon as they
@@ -170,16 +210,19 @@ export default async function RepGuide() {
             Afterwards, mark it <b>Done</b> (or <b>No-show</b>) on <Link href="/admin/calls">My calls</Link>.
           </p>
           <p className={styles.tip}>
-            Calls booked through the site get their own Google Meet room that records and takes notes on its own, so you can
-            just talk. After the call, the site drafts their profile from the conversation (headline, summary, highlights,
+            <b>Recorded calls:</b> calls booked through the site get their own Google Meet room that records and takes notes
+            on its own, so you can just talk. Open the link from your booking email (or <b>Join</b> on My calls); nobody needs
+            to admit anyone. After the call, the site drafts their profile from the conversation (headline, summary, highlights,
             full profile, plus private notes for the team) and emails you. It only fills in what you haven&rsquo;t written.
             Read it, make it yours, and list them. You can also click <b>Draft the profile from the call</b> on their profile.
           </p>
         </li>
-        <li>
+        <li id="profile" style={{ scrollMarginTop: 16 }}>
           <h3>Write their profile</h3>
           <p>
-            Click <Link href="/admin/candidates/new">+ Add candidate</Link> (or open them from Candidates). Add their
+            If their call was recorded, most of this is already drafted for you: open them from Candidates and start at the
+            &ldquo;From the call&rdquo; box. Otherwise, click <Link href="/admin/candidates/new">+ Add candidate</Link> (or
+            open them from Candidates). Add their
             resume, which fills in their details. Tap their Working Genius letters, strongest first, and upload their results
             report (only our team ever sees it). The site then suggests roles and words for the headline. Fill in role,
             location and salary, then a headline and a short story.
