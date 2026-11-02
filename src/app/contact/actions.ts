@@ -3,7 +3,7 @@
 import { allow, SLOW_DOWN } from "@/lib/throttle";
 
 import { db, logActivity } from "@/lib/db";
-import { teamFor } from "@/lib/contact";
+import { partners, teamFor } from "@/lib/contact";
 import { emailAdmin, escapeHtml as e, sendEmail } from "@/lib/email";
 import { refCode, teamUrl } from "@/lib/format";
 
@@ -35,7 +35,9 @@ export async function sendContact(_prev: ContactState, form: FormData): Promise<
     candidateId = data?.id ?? null;
     candidateName = data?.full_name ?? null;
   }
-  const team = await teamFor(candidateId);
+  // Business requests always reach the partners too (Shloimy), not just the candidate's rep.
+  const direct = await teamFor(candidateId);
+  const team = kind === "hiring" ? [...direct, ...(await partners()).filter((p) => !direct.some((d) => d.id === p.id))] : direct;
 
   const { data: saved } = await db()
     .from("contact_requests")
