@@ -148,6 +148,8 @@ export async function roomTranscript(space: string): Promise<string | null> {
     conferenceRecords?: { name: string }[];
   };
   const lines: string[] = [];
+  const seen: string[] = [];
+  let entryPages = 0;
   for (const c of recs.conferenceRecords ?? []) {
     const names = new Map<string, string>();
     const ps = (await get(`https://meet.googleapis.com/v2/${c.name}/participants?pageSize=100`)) as {
@@ -156,18 +158,24 @@ export async function roomTranscript(space: string): Promise<string | null> {
     for (const p of ps.participants ?? [])
       names.set(p.name, p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName || "Someone");
     const ts = (await get(`https://meet.googleapis.com/v2/${c.name}/transcripts`)) as { transcripts?: { name: string; state: string }[] };
-    for (const tr of ts.transcripts ?? []) {
-      if (tr.state !== "FILE_GENERATED" && tr.state !== "ENDED") return null;
+    const found = ts.transcripts ?? [];
+    seen.push(...found.map((x) => x.state));
+    for (const tr of found) {
+      if (tr.state !== "FILE_GENERATED" && tr.state !== "ENDED") continue;
       let page = "";
       do {
         const e = (await get(`https://meet.googleapis.com/v2/${tr.name}/entries?pageSize=100${page ? `&pageToken=${page}` : ""}`)) as {
           transcriptEntries?: { participant: string; text: string }[];
           nextPageToken?: string;
         };
+        entryPages++;
         for (const x of e.transcriptEntries ?? []) lines.push(`${names.get(x.participant) ?? "Someone"}: ${x.text}`);
         page = e.nextPageToken ?? "";
       } while (page);
     }
   }
-  return lines.length ? lines.join("\n") : null;
+  if (lines.length) return lines.join("\n");
+  // Nothing ready yet, or nothing in it: say which, so it's never a mystery.
+  if (!seen.length || !seen.some((s) => s === "FILE_GENERATED" || s === "ENDED")) return null;
+  throw new Error(`Google's transcript came back empty (calls: ${(recs.conferenceRecords ?? []).length}, transcripts: ${seen.join(", ")}, pages read: ${entryPages}).`);
 }
