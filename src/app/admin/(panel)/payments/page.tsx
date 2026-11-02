@@ -1,3 +1,4 @@
+import { logKnownExpenses } from "@/lib/knownExpenses";
 import Link from "next/link";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { commissionOf, commissionTerms, earnsCommission, HireRow, loadAgreements, repName, StaffLite, stageOf } from "@/lib/adminData";
@@ -35,6 +36,7 @@ const VIEWS = [
 export default async function PaymentsPage({ searchParams }: PageProps<"/admin/payments">) {
   const sp = await searchParams;
   await requireAdmin();
+  await logKnownExpenses();
   const [{ rows: agreements, error, people }, pct, { data: expRows, error: expErr }] = await Promise.all([
     loadAgreements(),
     commissionPercent(),

@@ -3,6 +3,7 @@ import { db, logActivity } from "@/lib/db";
 import { dailyCandidateCheckins, releaseWaitingProfiles } from "@/lib/promise";
 import { beforeCallNudges } from "@/lib/beforeCall";
 import { draftFinishedCalls } from "@/lib/callDraft";
+import { logKnownExpenses } from "@/lib/knownExpenses";
 import { happened, Meeting, RefRequest } from "@/lib/path";
 import { emailAskFeedback, nudgeCandidateRefs, nudgeCandidateToPick, nudgeOwnerFeedback, nudgeOwnerToStart } from "@/lib/pathEmails";
 
@@ -19,6 +20,7 @@ export async function GET(req: NextRequest) {
   }
   // Monthly "still looking?" emails to listed candidates, from their rep.
   await releaseWaitingProfiles();
+  await logKnownExpenses(); // monthly subscriptions land in Finance on their own
   const checkins = await dailyCandidateCheckins().catch(() => null);
   // The day before an onboarding call: remind the candidate about their assessment, give the rep a heads-up.
   const beforeCall = await beforeCallNudges().catch(() => null);
