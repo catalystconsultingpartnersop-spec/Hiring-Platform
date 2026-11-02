@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AGREEMENT_VERSION, agreementText } from "@/lib/agreement";
@@ -202,6 +203,9 @@ export async function passOnCandidate(candidateId: string, form: FormData) {
   const { owner, unlock } = await ownUnlock(candidateId);
   const hire = await latestHire(unlock.id);
   if (hire && (hire.status === "paid" || hire.status === "hired")) redirect(`/candidates/${candidateId}`);
+  const first = unlock.candidates.full_name.split(" ")[0];
+  // Already removed (a double tap): just take them to their list.
+  if (unlock.passed_at) redirect(`/account?passed=${encodeURIComponent(first)}`);
   const pick = String(form.get("reason") ?? "");
   const note = String(form.get("note") ?? "").trim().slice(0, 500);
   const reason = [(PASS_REASONS as readonly string[]).includes(pick) ? pick : "", note].filter(Boolean).join(". ") || null;
@@ -210,19 +214,18 @@ export async function passOnCandidate(candidateId: string, form: FormData) {
   const ref = refCode(candidateId);
   await logActivity(`owner:${owner.email}`, "candidate_passed", { candidate: ref, reason });
   await db().from("meetings").update({ status: "cancelled" }).eq("unlock_id", unlock.id).in("status", ["proposed", "declined"]);
-  try {
-    await emailOwnerPassed(unlock.id, reason);
-  } catch (e) {
-    console.error(e);
-  }
-  await emailAdmin(
+  // Emails go out after the owner is on their way, so the button answers right away.
+  after(async () => {
+    await emailOwnerPassed(unlock.id, reason).catch((e) => console.error(e));
+    await emailAdmin(
     `Passed: ${owner.company ?? owner.email} passed on ${name} (${ref})`,
     `<p><strong>${escapeHtml(owner.company ?? "")}</strong> (${escapeHtml(owner.full_name ?? "")}, ${escapeHtml(owner.email)}) took <strong>${escapeHtml(name)}</strong> (${ref}) off their list.</p>
 <p><strong>Why:</strong> ${reason ? escapeHtml(reason) : "No reason given."}</p>
 <p>${escapeHtml(name.split(" ")[0])} stays listed for other clients. The signed agreement stays on file, so if this client hires them later, the fee still applies.</p>
 <p><a href="${teamUrl()}/admin/candidates/${candidateId}">Open the candidate</a></p>`,
-  );
-  redirect(`/account?passed=${encodeURIComponent(name.split(" ")[0])}`);
+    ).catch(() => null);
+  });
+  redirect(`/account?passed=${encodeURIComponent(first)}`);
 }
 
 export async function reconsiderCandidate(candidateId: string) {

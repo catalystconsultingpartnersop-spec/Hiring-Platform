@@ -1,5 +1,6 @@
 import { languagesText } from "@/lib/languages";
 import Link from "next/link";
+import { PendingButton } from "@/components/PendingButton";
 import { notFound } from "next/navigation";
 import { bestAtText, CandidateCard, HowTheyWork, roleLine, WorksBest } from "@/components/CandidateCard";
 import { RoleCover } from "@/components/RoleCover";
@@ -405,9 +406,9 @@ function Unlocked({
                       </label>
                     ))}
                     <textarea className="input" name="note" rows={2} maxLength={500} placeholder="Anything else? (optional)" />
-                    <button className="btn btn-ghost btn-small" type="submit" style={{ marginTop: 10, width: "100%" }}>
+                    <PendingButton className="btn btn-ghost btn-small" pendingText="Removing…" style={{ marginTop: 10, width: "100%" }}>
                       Remove from my list
-                    </button>
+                    </PendingButton>
                     <p className="small muted" style={{ margin: "10px 0 0" }}>
                       Nothing is charged. Your agreement stays on file, so if you ever do hire {first}, the usual fee
                       applies. You can put {first} back anytime.
@@ -438,7 +439,7 @@ function Unlocked({
             )}
             <p className={`small muted ${styles.sideNote}`}>
               <Link href={`/account/agreements/${unlock.id}`}>Agreement</Link> signed {dateShort(unlock.signed_at)}.
-              {unlock.card_label ? ` ${unlock.card_label} on file.` : ""}
+              {unlock.card_label ? ` ${unlock.card_label.charAt(0).toUpperCase()}${unlock.card_label.slice(1)}${/on file/i.test(unlock.card_label) ? "" : " on file"}.` : ""}
             </p>
           </div>
         </aside>

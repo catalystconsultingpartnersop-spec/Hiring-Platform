@@ -1,3 +1,4 @@
+import { PendingButton } from "@/components/PendingButton";
 import Link from "next/link";
 import type { Candidate } from "@/lib/db";
 import { BIG_STEPS, bigStepIndex, MODE_LABEL, PathState } from "@/lib/path";
@@ -237,9 +238,9 @@ function PassForm({ candidateId, first, asOption = false }: { candidateId: strin
       <form action={passOnCandidate.bind(null, candidateId)}>
         <input type="hidden" name="reason" value="We met, and it wasn't the right fit" />
         <input className="input" name="note" maxLength={500} placeholder="Anything we should know? (optional)" />
-        <button className="btn btn-small btn-ghost" type="submit" style={{ marginTop: 8 }}>
+        <PendingButton className="btn btn-small btn-ghost" pendingText="Removing…" style={{ marginTop: 8 }}>
           Take {first} off my list
-        </button>
+        </PendingButton>
       </form>
     </details>
   );
