@@ -4,7 +4,7 @@ import { brandName, candidateUrl, teamUrl } from "./format";
 import { candidate as candMail } from "./emails";
 import { callIcs } from "./ics";
 import { signedToken } from "./session";
-import { callMinutesByRep, lengthFor, repsFreeAt } from "./slots";
+import { repsFreeAt } from "./slots";
 import { COMPANY_TZ, formatInZone, validTimeZone } from "./time";
 import { newRecordedMeeting } from "./googleCalls";
 
@@ -18,16 +18,14 @@ export async function bookCall(candidateId: string, startIso: string, candidateT
   const tz = validTimeZone(candidateTz);
   const start = new Date(startIso);
   if (Number.isNaN(start.getTime())) return { ok: false, error: "Pick a time from the list." };
-  const lengths = await callMinutesByRep();
-
   const reps = await repsFreeAt(start.toISOString());
   if (!reps.length) return { ok: false, error: "That time was just taken. Pick another one." };
 
   // Try the least-busy rep first; the database refuses a double booking.
   let callId: string | null = null;
   let repId: string | null = null;
-  for (const r of reps) {
-    const end = new Date(start.getTime() + lengthFor(lengths, r) * 60e3);
+  for (const { id: r, minutes } of reps) {
+    const end = new Date(start.getTime() + minutes * 60e3);
     const { data, error } = await db()
       .from("onboarding_calls")
       .insert({

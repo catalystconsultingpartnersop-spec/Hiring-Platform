@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { getSetting } from "./settings";
+import { callsInBlock } from "./blocks";
 import { nextDates, validTimeZone, zonedToUtc } from "./time";
 
 // Open onboarding-call times, built from every active rep's weekly hours minus
@@ -16,8 +17,6 @@ export async function callMinutesByRep(): Promise<Record<string, number>> {
 export function lengthFor(map: Record<string, number>, staffId: string) {
   return map[staffId] === 30 ? 30 : CALL_MINUTES;
 }
-// 30-minute calls can run back to back; 45-minute calls start on the hour with a breather.
-const stepFor = (len: number) => (len === 30 ? 30 : 60);
 const MIN_NOTICE_HOURS = 12;
 const DAYS_AHEAD = 14;
 
@@ -25,7 +24,7 @@ type Rep = { id: string; time_zone: string | null };
 type Window = { staff_id: string; weekday: number; start_minute: number; end_minute: number };
 type Booked = { staff_id: string; starts_at: string; ends_at: string };
 
-export type Slot = { start: string; reps: string[] };
+export type Slot = { start: string; reps: string[]; minutes: Record<string, number> };
 
 async function load() {
   const [{ data: reps }, { data: windows }, { data: booked }, lengths] = await Promise.all([
@@ -45,7 +44,7 @@ export async function openSlots(): Promise<Slot[]> {
   try {
     const { reps, windows, booked, lengths } = await load();
     const earliest = Date.now() + MIN_NOTICE_HOURS * 3600e3;
-    const byStart = new Map<number, string[]>();
+    const byStart = new Map<number, { reps: string[]; minutes: Record<string, number> }>();
 
     for (const rep of reps) {
       const tz = validTimeZone(rep.time_zone);
@@ -58,29 +57,31 @@ export async function openSlots(): Promise<Slot[]> {
 
       for (const day of nextDates(DAYS_AHEAD, tz)) {
         for (const w of mine.filter((x) => x.weekday === day.weekday)) {
-          for (let min = w.start_minute; min + len <= w.end_minute; min += stepFor(len)) {
-            const start = zonedToUtc(day.y, day.m, day.d, min, tz);
-            const end = start + len * 60e3;
+          for (const { at, minutes } of callsInBlock(w.start_minute, w.end_minute, len)) {
+            const start = zonedToUtc(day.y, day.m, day.d, at, tz);
+            const end = start + minutes * 60e3;
             if (start < earliest) continue;
             if (busy.some(([bs, be]) => bs < end && be > start)) continue;
-            const list = byStart.get(start) ?? [];
-            list.push(rep.id);
-            byStart.set(start, list);
+            const entry = byStart.get(start) ?? { reps: [], minutes: {} };
+            entry.reps.push(rep.id);
+            entry.minutes[rep.id] = minutes;
+            byStart.set(start, entry);
           }
         }
       }
     }
     return [...byStart.entries()]
       .sort((a, b) => a[0] - b[0])
-      .map(([t, ids]) => ({ start: new Date(t).toISOString(), reps: ids }));
+      .map(([t, e]) => ({ start: new Date(t).toISOString(), reps: e.reps, minutes: e.minutes }));
   } catch (e) {
     console.error("could not build open slots", e);
     return [];
   }
 }
 
-// Reps free at a given start, least busy first, so calls spread evenly.
-export async function repsFreeAt(startIso: string) {
+// Reps free at a given start (with how long their call there is), least busy
+// first, so calls spread evenly.
+export async function repsFreeAt(startIso: string): Promise<{ id: string; minutes: number }[]> {
   const slots = await openSlots();
   const slot = slots.find((s) => s.start === new Date(startIso).toISOString());
   if (!slot) return [];
@@ -92,5 +93,7 @@ export async function repsFreeAt(startIso: string) {
     .in("staff_id", slot.reps);
   const load = new Map<string, number>();
   for (const r of data ?? []) load.set(r.staff_id, (load.get(r.staff_id) ?? 0) + 1);
-  return [...slot.reps].sort((a, b) => (load.get(a) ?? 0) - (load.get(b) ?? 0));
+  return [...slot.reps]
+    .sort((a, b) => (load.get(a) ?? 0) - (load.get(b) ?? 0))
+    .map((id) => ({ id, minutes: slot.minutes[id] ?? CALL_MINUTES }));
 }

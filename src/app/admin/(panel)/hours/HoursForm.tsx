@@ -2,6 +2,7 @@
 
 import { startTransition, useActionState, useState } from "react";
 import { minutesLabel, TIME_ZONES } from "@/lib/time";
+import { callsInBlock } from "@/lib/blocks";
 import { FormState, saveMyHours } from "../../actions";
 import styles from "./hours.module.css";
 
@@ -14,7 +15,7 @@ const DAYS: [number, string][] = [
   [6, "Saturday"],
   [0, "Sunday"],
 ];
-const OPTIONS = Array.from({ length: (24 - 6) * 2 + 1 }, (_, i) => 6 * 60 + i * 30); // 6am to midnight
+const OPTIONS = Array.from({ length: (24 - 6) * 4 + 1 }, (_, i) => 6 * 60 + i * 15); // 6am to midnight, every 15 minutes
 
 type Block = { start: number; end: number };
 type Day = { on: boolean; blocks: Block[] };
@@ -42,8 +43,7 @@ export function HoursForm({
   ) as Record<number, Day>;
   const [days, setDays] = useState(initial);
   const [len, setLen] = useState(callMinutes === 30 ? 30 : 45);
-  const step = len === 30 ? 30 : 60;
-  const callsIn = (b: Block) => (b.end - b.start >= len ? Math.floor((b.end - b.start - len) / step) + 1 : 0);
+  const callsIn = (b: Block) => callsInBlock(b.start, b.end, len).length;
   const setDay = (d: number, next: Partial<Day>) => setDays((all) => ({ ...all, [d]: { ...all[d], ...next } }));
   const setBlock = (d: number, i: number, next: Partial<Block>) =>
     setDays((all) => ({ ...all, [d]: { ...all[d], blocks: all[d].blocks.map((b, j) => (j === i ? { ...b, ...next } : b)) } }));
@@ -81,7 +81,10 @@ export function HoursForm({
 
       <section className={styles.block}>
         <h2>How long are your calls?</h2>
-        <p className="small muted">Candidates see the length when they book.</p>
+        <p className="small muted">
+          A block with room for one call is one call that fills it (for example 5:30 to 6:15 is a 45-minute call, 1:00 to
+          1:30 is a 30-minute call). In longer blocks, calls are this long:
+        </p>
         <div className={styles.lengths} role="radiogroup" aria-label="Call length">
           {[30, 45].map((m) => (
             <label key={m} className={len === m ? styles.lenOn : ""}>

@@ -653,7 +653,7 @@ export async function saveMyHours(_prev: FormState, form: FormData): Promise<For
       const end = Number(form.get(`end_${d}_${i}`));
       if (!Number.isFinite(start) || !Number.isFinite(end)) continue;
       if (!(end > start)) return { error: `${dayNames[d]}: each end time needs to be after its start time.` };
-      if (end - start < len) return { error: `${dayNames[d]}: each time block needs at least ${len} minutes for one call.` };
+      if (end - start < 30) return { error: `${dayNames[d]}: each time block needs at least 30 minutes.` };
       mine.push([start, end]);
     }
     mine.sort((a, b) => a[0] - b[0]);
@@ -681,7 +681,7 @@ export async function saveMyHours(_prev: FormState, form: FormData): Promise<For
   revalidatePath("/admin/hours");
   return {
     ok: rows.length
-      ? `Saved. Candidates can now book ${len}-minute calls with you on ${days} ${days === 1 ? "day" : "days"} a week.`
+      ? `Saved. Candidates can now book calls with you on ${days} ${days === 1 ? "day" : "days"} a week.`
       : "Saved. You have no hours set, so candidates can't book you right now.",
   };
 }
