@@ -3,7 +3,7 @@ import { ConfirmButton } from "@/components/ConfirmButton";
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
-import { cancelCallByStaff, handCallToOwner, markCall } from "../../actions";
+import { cancelCallByStaff, handCallToOwner, markCall, moveCall } from "../../actions";
 import styles from "../admin.module.css";
 
 type Row = {
@@ -45,9 +45,10 @@ async function load(staffId: string | null, upcoming: boolean) {
 export default async function CallsPage({ searchParams }: PageProps<"/admin/calls">) {
   const sp = await searchParams;
   const me = await requireStaff();
-  const { data: staffRows } = await db().from("staff").select("id, full_name, email");
+  const { data: staffRows } = await db().from("staff").select("id, full_name, email, active");
+  const activeReps = ((staffRows ?? []) as { id: string; full_name: string | null; email: string; active: boolean }[]).filter((s) => s.active);
   const nameOf = new Map(((staffRows ?? []) as { id: string; full_name: string | null; email: string }[]).map((s) => [s.id, (s.full_name || s.email).split(" ")[0]]));
-  const admin = me.role === "admin";
+  const admin = me.manager;
   const mine = admin ? null : me.id;
   const [upcoming, recent] = await Promise.all([load(mine, true), load(mine, false)]);
 
@@ -118,6 +119,28 @@ export default async function CallsPage({ searchParams }: PageProps<"/admin/call
                             No-show
                           </button>
                         </form>
+                        {showActions && admin && (
+                          <form action={moveCall.bind(null, r.id)} className={styles.inline} style={{ gap: 6, flexWrap: "wrap" }}>
+                            <select className="select" name="to" defaultValue="" aria-label="Move to rep" style={{ width: "auto", minHeight: 32, padding: "2px 28px 2px 8px", fontSize: 13 }}>
+                              <option value="" disabled>
+                                Move to…
+                              </option>
+                              {activeReps
+                                .filter((s) => s.id !== r.staff_id)
+                                .map((s) => (
+                                  <option key={s.id} value={s.id}>
+                                    {s.full_name || s.email}
+                                  </option>
+                                ))}
+                            </select>
+                            <label className="small" style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
+                              <input type="checkbox" name="notify" /> email candidate
+                            </label>
+                            <button className="btn btn-small btn-ghost" type="submit">
+                              Move
+                            </button>
+                          </form>
+                        )}
                         {showActions && (
                           <form action={cancelCallByStaff.bind(null, r.id)}>
                             <ConfirmButton
@@ -149,6 +172,17 @@ export default async function CallsPage({ searchParams }: PageProps<"/admin/call
           <Link href="/admin/hours">My hours</Link>.
         </p>
       </div>
+      {sp.move === "done" && (
+        <p className="notice notice-good">
+          Moved. The reps were emailed{sp.told ? ", and so was the candidate" : "; the candidate wasn't told"}.
+        </p>
+      )}
+      {sp.move === "outside" && (
+        <p className="notice notice-gold">
+          Moved{sp.told ? " and the candidate was told" : " quietly"}, but that time isn&rsquo;t in the new rep&rsquo;s hours. Make sure they can take it.
+        </p>
+      )}
+      {sp.move === "busy" && <p className="notice notice-bad">That rep already has a call at that time. Nothing was moved.</p>}
       {sp.hand === "done" && <p className="notice notice-good">Done. The call is now with the candidate&rsquo;s own rep, and everyone got fresh emails.</p>}
       {sp.hand === "busy" && <p className="notice notice-bad">That time isn&rsquo;t open in their rep&rsquo;s hours (or they already have a call then). Keep it as is, or have the candidate pick a new time with their rep.</p>}
       <h2 className={styles.h2}>Coming up</h2>

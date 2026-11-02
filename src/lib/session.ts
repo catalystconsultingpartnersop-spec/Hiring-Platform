@@ -54,7 +54,9 @@ const cookieOptions = (days: number) => ({
 
 // owner: Heshy (the ADMIN_EMAIL). Always an admin, can't be switched off or
 // demoted by anyone, and the only one who can make or remove other admins.
-export type Staff = { id: string | null; email: string; name: string; role: "admin" | "rep"; owner: boolean };
+// manager: Heshy, admins and partners (like Shloimy). They see every rep's calls
+// and candidates and can move them between reps.
+export type Staff = { id: string | null; email: string; name: string; role: "admin" | "rep"; owner: boolean; manager: boolean };
 
 export function isOwnerEmail(email: string | null | undefined) {
   const owner = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase();
@@ -82,14 +84,15 @@ export async function currentStaff(): Promise<Staff | null> {
   const subject = readToken((await cookies()).get(ADMIN_COOKIE)?.value);
   if (!subject) return null;
   if (subject === "admin") {
-    return { id: null, email: process.env.ADMIN_EMAIL ?? "", name: "Admin", role: "admin", owner: true };
+    return { id: null, email: process.env.ADMIN_EMAIL ?? "", name: "Admin", role: "admin", owner: true, manager: true };
   }
   try {
-    const { data } = await db().from("staff").select("id, email, full_name, role, active").eq("id", subject).maybeSingle();
+    const { data } = await db().from("staff").select("*").eq("id", subject).maybeSingle();
     if (!data) return null;
     const owner = isOwnerEmail(data.email);
     if (!data.active && !owner) return null;
-    return { id: data.id, email: data.email, name: data.full_name || data.email, role: owner ? "admin" : data.role, owner };
+    const role = owner ? "admin" : data.role;
+    return { id: data.id, email: data.email, name: data.full_name || data.email, role, owner, manager: role === "admin" || !!data.is_partner };
   } catch {
     return null;
   }

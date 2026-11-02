@@ -72,3 +72,61 @@ ${stuck.length ? `<p><strong>Needs a look:</strong></p>${list(stuck)}` : ""}
     console.error("mix-up fix failed", e);
   }
 }
+
+// Nov 2, part two: the cleanup above moved four calls to Shloimy at times
+// that aren't in his hours. Put them back with Mechel exactly as they were,
+// quietly: the candidates aren't emailed. Shloimy and Mechel get a team note
+// (and Shloimy a calendar cancellation) so they can sort it out together.
+const REVERT_FLAG = "mixup_revert_2026_11_02";
+const REVERT_NAMES = ["Menachem Heilbrun", "Moddi", "Shlomo Mendlowitz", "Yitzchok Lovi"];
+
+export async function revertNov2Moves() {
+  try {
+    if (await getSetting<boolean>(REVERT_FLAG, false)) return;
+    await setSetting(REVERT_FLAG, true);
+    const { data: staff } = await db().from("staff").select("id, full_name, email, active");
+    const find = (n: string) => (staff ?? []).find((s) => (s.full_name ?? "").toLowerCase().startsWith(n));
+    const shloimy = find("shloimy");
+    const mechel = find("mechel");
+    if (!shloimy || !mechel) return;
+    const { data: calls } = await db()
+      .from("onboarding_calls")
+      .select("id, starts_at, ends_at, candidate_id, candidates(full_name)")
+      .eq("staff_id", shloimy.id)
+      .eq("status", "booked")
+      .gte("starts_at", "2026-11-03T04:00:00Z")
+      .lt("starts_at", "2026-11-04T05:00:00Z");
+    type Row = { id: string; starts_at: string; ends_at: string; candidate_id: string; candidates: { full_name: string } };
+    const back = ((calls ?? []) as unknown as Row[]).filter((k) => REVERT_NAMES.includes(k.candidates.full_name.trim()));
+    const lines: string[] = [];
+    const { callIcs } = await import("./ics");
+    for (const k of back) {
+      await db().from("onboarding_calls").update({ staff_id: mechel.id }).eq("id", k.id);
+      await db().from("candidates").update({ added_by: null }).eq("id", k.candidate_id);
+      const when = new Date(k.starts_at).toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+      lines.push(`${k.candidates.full_name} (${when})`);
+      if (shloimy.active)
+        await sendEmail({
+          to: shloimy.email,
+          subject: `Removed from your calendar: call with ${k.candidates.full_name}`,
+          html: `<p>This call is back with Mechel (${escapeHtml(when)}). It's been taken off your calendar.</p>`,
+          attachments: [
+            {
+              filename: "cancelled.ics",
+              content: callIcs({ uid: `${k.id}@hiring-platform`, start: k.starts_at, end: k.ends_at, title: `Onboarding call: ${k.candidates.full_name}`, description: "Back with Mechel.", cancelled: true }),
+            },
+          ],
+        });
+    }
+    await logActivity("system", "nov2_moves_reverted", { count: back.length });
+    if (!lines.length) return;
+    const html = `<p>These calls are back with Mechel, at the same times the candidates originally booked. The candidates were <strong>not</strong> emailed. Their video links haven't changed, so on the day they'll click the same link and Mechel will be there.</p>
+<ul>${lines.map((l) => `<li>${escapeHtml(l)}</li>`).join("")}</ul>
+<p>None of these four has a rep on file right now. Shloimy and Mechel: please talk it through and decide who keeps each one. Shloimy can now move calls and candidates between reps himself, with or without emailing the candidate.</p>
+<p><a href="${teamUrl()}/admin/calls">Open calls</a></p>`;
+    await emailAdmin("Calls put back with Mechel (quietly)", html);
+    for (const r of [shloimy, mechel]) if (r.active) await sendEmail({ to: r.email, subject: "Calls put back with Mechel (quietly)", html });
+  } catch (e) {
+    console.error("revert failed", e);
+  }
+}

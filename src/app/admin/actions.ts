@@ -692,7 +692,7 @@ async function myCallOrNull(callId: string) {
   const me = await requireStaff();
   const { data } = await db().from("onboarding_calls").select("id, staff_id, status").eq("id", callId).maybeSingle();
   if (!data) return null;
-  if (me.role !== "admin" && data.staff_id !== me.id) return null; // reps only touch their own calls
+  if (!me.manager && data.staff_id !== me.id) return null; // reps only touch their own calls
   return { me, call: data };
 }
 
@@ -899,7 +899,7 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
   const me = await requireStaff();
   // Reps can pass along a candidate who is theirs (for example, one who was
   // really sent by another rep). Heshy can reassign anyone.
-  if (me.role !== "admin") {
+  if (!me.manager) {
     const { data: cur } = await db().from("candidates").select("added_by").eq("id", candidateId).maybeSingle();
     const { effectiveReps } = await import("@/lib/reps");
     const who = (await effectiveReps([{ id: candidateId, added_by: cur?.added_by ?? null }])).get(candidateId);
@@ -934,9 +934,13 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
       }),
     });
   }
+  const tell = form.get("notify") === "on";
+  if (rep && tell) {
+    await sendEmail({ to: c.email, ...candMail.newRep({ name: c.full_name, rep: rep.full_name || "our team" }), replyTo: rep.email, fromName: rep.full_name ?? undefined });
+  }
   revalidatePath("/admin/candidates");
   revalidatePath(`/admin/candidates/${candidateId}`);
-  return { ok: rep ? `Assigned to ${rep.full_name || rep.email}.` : "Unassigned." };
+  return { ok: rep ? `Assigned to ${rep.full_name || rep.email}${tell ? ", and the candidate was told" : ". The candidate wasn't emailed"}.` : "Unassigned." };
 }
 
 // ---------- Message all reps ----------
@@ -1160,7 +1164,7 @@ export async function handCallToOwner(callId: string) {
   const { data: k } = await db().from("onboarding_calls").select("*, candidates(added_by)").eq("id", callId).maybeSingle();
   const owner = (k?.candidates as { added_by: string | null } | null)?.added_by;
   if (!k || !owner || k.status !== "booked" || owner === k.staff_id) return;
-  if (me.role !== "admin" && me.id !== k.staff_id && me.id !== owner) return;
+  if (!me.manager && me.id !== k.staff_id && me.id !== owner) return;
   const { count } = await db()
     .from("onboarding_calls")
     .select("id", { count: "exact", head: true })
@@ -1173,7 +1177,7 @@ export async function handCallToOwner(callId: string) {
   const { data: was } = await db().from("staff").select("email, full_name").eq("id", k.staff_id).maybeSingle();
   await db().from("onboarding_calls").update({ staff_id: owner }).eq("id", callId);
   const { sendBookingEmails } = await import("@/lib/calls");
-  await sendBookingEmails(callId, false, true);
+  await sendBookingEmails(callId, false, true, true);
   if (was?.email)
     await sendEmail({
       to: was.email,
@@ -1183,4 +1187,40 @@ export async function handCallToOwner(callId: string) {
   await logActivity(staffActor(me), "call_handed_to_owner", { call_id: callId, to: owner });
   revalidatePath("/admin/calls");
   redirect("/admin/calls?hand=done");
+}
+
+// Managers (Heshy, partners) move a booked call to another rep, telling the
+// candidate or not. The reps involved are always emailed.
+export async function moveCall(callId: string, form: FormData) {
+  const me = await requireStaff();
+  if (!me.manager) return;
+  const to = String(form.get("to") ?? "");
+  const tell = form.get("notify") === "on";
+  const { data: k } = await db().from("onboarding_calls").select("*").eq("id", callId).maybeSingle();
+  if (!k || k.status !== "booked" || !to || to === k.staff_id) redirect("/admin/calls");
+  const { data: rep } = await db().from("staff").select("id, active").eq("id", to).maybeSingle();
+  if (!rep?.active) redirect("/admin/calls?move=inactive");
+  const { count } = await db()
+    .from("onboarding_calls")
+    .select("id", { count: "exact", head: true })
+    .eq("staff_id", to)
+    .eq("status", "booked")
+    .lt("starts_at", k.ends_at)
+    .gt("ends_at", k.starts_at);
+  if (count) redirect("/admin/calls?move=busy");
+  const { withinHours } = await import("@/lib/slots");
+  const inHours = await withinHours(to, k.starts_at, k.ends_at);
+  const { data: was } = await db().from("staff").select("email").eq("id", k.staff_id).maybeSingle();
+  await db().from("onboarding_calls").update({ staff_id: to }).eq("id", callId);
+  const { sendBookingEmails } = await import("@/lib/calls");
+  await sendBookingEmails(callId, false, true, tell);
+  if (was?.email)
+    await sendEmail({
+      to: was.email,
+      subject: "A call was moved to another rep",
+      html: `<p>The onboarding call on your calendar for ${new Date(k.starts_at).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" })} was moved to another rep. You can remove it from your calendar.</p>`,
+    });
+  await logActivity(staffActor(me), "call_moved", { call_id: callId, to, told_candidate: tell });
+  revalidatePath("/admin/calls");
+  redirect(`/admin/calls?move=${inHours ? "done" : "outside"}${tell ? "&told=1" : ""}`);
 }

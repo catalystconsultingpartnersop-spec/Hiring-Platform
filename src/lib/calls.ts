@@ -83,7 +83,8 @@ export async function getCall(callId: string): Promise<CallRow | null> {
 }
 
 // handedOver: the same call, same time, now with a different rep.
-export async function sendBookingEmails(callId: string, cancelled: boolean, handedOver = false) {
+// tellCandidate: false moves it quietly; only the team is emailed.
+export async function sendBookingEmails(callId: string, cancelled: boolean, handedOver = false, tellCandidate = true) {
   const call = await getCall(callId);
   if (!call) return;
   const c = call.candidates;
@@ -128,7 +129,7 @@ export async function sendBookingEmails(callId: string, cancelled: boolean, hand
     return;
   }
 
-  await sendEmail({
+  if (tellCandidate) await sendEmail({
     to: c.email,
     ...(handedOver
       ? candMail.callNewHost({ name: c.full_name, rep: rep.full_name || "our team", when: whenCandidate, link, manage })

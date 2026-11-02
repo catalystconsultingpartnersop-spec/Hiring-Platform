@@ -269,6 +269,17 @@ export const candidate = {
       quiet(`Need a different time? <a href="${o.manage}" style="color:#5b667e">Reschedule or cancel here</a>.`),
   }),
 
+  // A manager moved them to a different rep.
+  newRep: (o: { name: string; rep: string }): Mail => ({
+    audience: "candidate",
+    subject: `${first(o.rep)} is your contact on our team`,
+    html:
+      hi(o.name) +
+      p(`A quick note: <strong>${esc(o.rep)}</strong> from our team will be looking after you from here, and is the person to reach with any questions.`) +
+      p("Nothing changes on your end. Just reply to this email anytime.") +
+      p("Warmly,<br>The Candidate Collection"),
+  }),
+
   // Their call is the same; the person they'll talk to changed.
   callNewHost: (o: { name: string; rep: string; when: string; link: string | null; manage: string }): Mail => ({
     audience: "candidate",

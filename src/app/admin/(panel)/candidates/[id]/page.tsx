@@ -78,7 +78,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         <RepRow
           candidateId={c.id}
           addedBy={(c as unknown as { added_by: string | null }).added_by ?? null}
-          admin={me.role === "admin"}
+          admin={me.manager}
           meId={me.id}
         />
         {callRows.length > 0 && (
