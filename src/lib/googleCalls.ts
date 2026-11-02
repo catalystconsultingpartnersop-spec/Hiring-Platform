@@ -101,3 +101,33 @@ export async function newRecordedMeeting(): Promise<{ link: string; space: strin
   const s = (await res.json()) as { name: string; meetingUri: string };
   return { link: s.meetingUri, space: s.name };
 }
+
+// What Google saved for a Meet room: recordings, transcripts and notes.
+export async function roomArtifacts(space: string) {
+  const token = await accessToken();
+  if (!token) return null;
+  const get = async (url: string) => {
+    const r = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
+    if (!r.ok) throw new Error(`Google Meet said no (${r.status}): ${(await r.text()).slice(0, 200)}`);
+    return r.json();
+  };
+  const recs = (await get(`https://meet.googleapis.com/v2/conferenceRecords?filter=${encodeURIComponent(`space.name="${space}"`)}`)) as {
+    conferenceRecords?: { name: string; startTime?: string; endTime?: string }[];
+  };
+  const out: { started?: string; ended?: string; recordings: string[]; transcripts: string[]; notes: string[] }[] = [];
+  for (const c of recs.conferenceRecords ?? []) {
+    const [r, t, n] = await Promise.all([
+      get(`https://meet.googleapis.com/v2/${c.name}/recordings`).catch(() => ({})),
+      get(`https://meet.googleapis.com/v2/${c.name}/transcripts`).catch(() => ({})),
+      get(`https://meet.googleapis.com/v2/${c.name}/smartNotes`).catch(() => ({})),
+    ]);
+    out.push({
+      started: c.startTime,
+      ended: c.endTime,
+      recordings: ((r as { recordings?: { state: string }[] }).recordings ?? []).map((x) => x.state),
+      transcripts: ((t as { transcripts?: { state: string }[] }).transcripts ?? []).map((x) => x.state),
+      notes: ((n as { smartNotes?: { state: string }[] }).smartNotes ?? []).map((x) => x.state),
+    });
+  }
+  return out;
+}

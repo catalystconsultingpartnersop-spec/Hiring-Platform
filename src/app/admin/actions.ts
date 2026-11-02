@@ -1022,7 +1022,30 @@ export async function makeTestRoom(): Promise<{ link?: string; error?: string }>
     const room = await newRecordedMeeting();
     if (!room) return { error: "Google isn't connected yet." };
     await logActivity(me.email, "test_meet_room", { link: room.link });
+    await setSetting("last_test_room", room);
     return { link: room.link };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+export async function checkTestRoom(): Promise<{ lines?: string[]; error?: string }> {
+  await requireAdmin();
+  try {
+    const { roomArtifacts } = await import("@/lib/googleCalls");
+    const { getSetting } = await import("@/lib/settings");
+    const room = await getSetting<{ space?: string } | null>("last_test_room", null);
+    if (!room?.space) return { error: "Make a test room and use it first." };
+    const calls = await roomArtifacts(room.space);
+    if (!calls?.length) return { lines: ["Google hasn't recorded a call in the test room yet. If you just hung up, wait a few minutes and check again."] };
+    const word = (states: string[]) =>
+      !states.length ? "not there" : states.includes("FILE_GENERATED") ? "ready" : states.includes("ENDED") ? "being processed" : "in progress";
+    return {
+      lines: calls.map(
+        (c, i) =>
+          `Call ${i + 1}${c.ended ? "" : " (still going)"}: recording ${word(c.recordings)}, transcript ${word(c.transcripts)}, notes ${word(c.notes)}.`,
+      ),
+    };
   } catch (e) {
     return { error: (e as Error).message };
   }
