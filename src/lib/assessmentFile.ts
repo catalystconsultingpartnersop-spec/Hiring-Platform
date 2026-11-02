@@ -1,4 +1,6 @@
+import { after } from "next/server";
 import { db } from "./db";
+import { fillWorkingGenius } from "./readAssessment";
 
 // A candidate's Working Genius results (PDF or photo), kept with their resume.
 // Only our team ever sees it.
@@ -19,5 +21,7 @@ export async function saveAssessmentFile(candidateId: string, file: File): Promi
   const { error } = await db().storage.from("resumes").upload(path, Buffer.from(await file.arrayBuffer()), { contentType: type, upsert: true });
   if (error) return "The upload didn't go through. Try again.";
   await db().from("candidates").update({ assessment_path: path }).eq("id", candidateId);
+  // Read their result from the report once the page has answered, so they aren't kept waiting.
+  after(() => fillWorkingGenius(candidateId).catch(() => null));
   return null;
 }

@@ -5,7 +5,10 @@ import { dateShort, refCode } from "@/lib/format";
 import { requireStaff } from "@/lib/session";
 import { releaseWaitingProfiles } from "@/lib/promise";
 import { effectiveReps, repOptions } from "@/lib/reps";
+import { after } from "next/server";
+import { backfillWorkingGenius } from "@/lib/readAssessment";
 import { RepPicker } from "./RepPicker";
+import { WGChips } from "./WGChips";
 import styles from "../admin.module.css";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +33,9 @@ type CandRow = {
   listed_at: string | null;
   updated_at: string;
   added_by: string | null;
+  working_genius: string | null;
+  assessment_path: string | null;
+  application: Record<string, string> | null;
   staff: { full_name: string | null; email: string } | null;
 };
 
@@ -43,7 +49,7 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
 
   const { data, error } = await db()
     .from("candidates")
-    .select("id, status, full_name, email, headline, role_category, created_at, listed_at, updated_at, added_by, staff(full_name, email)")
+    .select("id, status, full_name, email, headline, role_category, created_at, listed_at, updated_at, added_by, working_genius, assessment_path, application, staff(full_name, email)")
     .order("created_at", { ascending: false });
   const cands = (data ?? []) as unknown as CandRow[];
   const count = (s: string) => cands.filter((c) => c.status === s).length;
@@ -52,6 +58,8 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
   );
   const [options, reps] = admin ? await Promise.all([repOptions(), effectiveReps(shown)]) : [[], new Map()];
   const nameOf = new Map(options);
+  // Reports uploaded before results were read automatically: catch up a few at a time.
+  after(() => backfillWorkingGenius(3).catch(() => null));
 
   return (
     <>
@@ -98,6 +106,7 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
               <tr>
                 <th>Name</th>
                 <th>Profile</th>
+                <th title="Green: their two geniuses. Red: their two frustrations.">Working Genius</th>
                 {q && <th>Status</th>}
                 <th>Rep</th>
                 <th>{view === "listed" && !q ? "Listed" : view === "hired" && !q ? "Hired" : "Added"}</th>
@@ -116,6 +125,9 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
                       {refCode(c.id)}
                       {c.role_category ? `, ${c.role_category}` : ""}
                     </div>
+                  </td>
+                  <td>
+                    <WGChips result={c.working_genius} uploaded={!!c.assessment_path} tried={!!c.application?.wg_read_at} />
                   </td>
                   {q && (
                     <td>
