@@ -52,6 +52,7 @@ Rules:
 - "highlights": 3 to 5 short lines, concrete accomplishments or strengths from the call.
 - "full_profile": a fuller paragraph or two, shown only after an employer signs; may mention specifics.
 - "roles": up to 3 that fit, chosen from this list: ${ROLE_LIST.join(", ")}.
+- If the call doesn't give enough to write an employer-facing field honestly, leave that field as an empty string (or an empty list) rather than writing filler like "details to come". Say what's missing in "private_notes".
 - "private_notes": for the team only, short bullet lines starting with "- ": what gives them energy, what drains them, what they want next, pay and schedule hopes, availability, anything to follow up on.
 
 What they said they're looking for when they applied: ${lookingFor || "not given"}

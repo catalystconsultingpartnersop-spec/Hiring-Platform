@@ -169,6 +169,12 @@ export default async function RepGuide() {
           <p className={styles.tip}>
             Afterwards, mark it <b>Done</b> (or <b>No-show</b>) on <Link href="/admin/calls">My calls</Link>.
           </p>
+          <p className={styles.tip}>
+            Calls booked through the site get their own Google Meet room that records and takes notes on its own, so you can
+            just talk. After the call, the site drafts their profile from the conversation (headline, summary, highlights,
+            full profile, plus private notes for the team) and emails you. It only fills in what you haven&rsquo;t written.
+            Read it, make it yours, and list them. You can also click <b>Draft the profile from the call</b> on their profile.
+          </p>
         </li>
         <li>
           <h3>Write their profile</h3>
