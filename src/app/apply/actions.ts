@@ -46,9 +46,12 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
 
   const resume = form.get("resume");
   const hasResume = resume instanceof File && resume.size > 0;
-  if (!hasResume) return fail("Please attach your resume. It doesn't need to be perfect; we'll help you polish it.");
-  if (resume.size > MAX_RESUME) return fail("That resume is over 4 MB. Try a smaller PDF.");
-  if (!resumeKind(resume)) return fail("Resumes need to be a PDF or Word file.");
+  const noResume = form.get("no_resume") === "on";
+  if (!hasResume && !noResume) return fail("Please attach your resume, or tick that you don't have one yet.");
+  if (hasResume) {
+    if (resume.size > MAX_RESUME) return fail("That resume is over 4 MB. Try a smaller PDF.");
+    if (!resumeKind(resume)) return fail("Resumes need to be a PDF or Word file.");
+  }
   const resumeBuf = hasResume ? Buffer.from(await resume.arrayBuffer()) : null;
   const resumeExt = hasResume ? resumeKind(resume) : null;
   const first = full_name.split(" ")[0];
@@ -62,7 +65,7 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
         full_name,
         email,
         phone,
-        application: { looking_for },
+        application: hasResume ? { looking_for } : { looking_for, no_resume: "yes" },
         languages: cleanLanguages(form.getAll("languages")),
         consent_at: new Date().toISOString(),
         // They sign their candidate agreement right here, so nothing is left to do after their call.
@@ -95,6 +98,7 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
     `New candidate: ${full_name}${candidateId ? "" : " (not saved on the site; details below)"}`,
     `<p><strong>${escapeHtml(full_name)}</strong>, ${escapeHtml(email)}, ${escapeHtml(phone)}</p>
 <p>Looking for: ${escapeHtml(looking_for)}</p>
+${hasResume ? "" : "<p><strong>No resume yet.</strong> They said they don't have one; the rep will build it with them on the call.</p>"}
 ${candidateId ? `<p><a href="${teamUrl()}/admin/candidates/${candidateId}">Open in admin</a></p>` : "<p><strong>This application couldn't be saved to the site, so this email is the only copy.</strong> The resume, if they sent one, is attached.</p>"}`,
     {
       replyTo: email,

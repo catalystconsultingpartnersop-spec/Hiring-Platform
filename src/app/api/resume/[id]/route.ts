@@ -11,7 +11,8 @@ export async function GET(req: Request, ctx: RouteContext<"/api/resume/[id]">) {
   const { id } = await ctx.params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return new NextResponse("Not found", { status: 404 });
 
-  let allowed = !!(await currentStaff());
+  const staff = !!(await currentStaff());
+  let allowed = staff;
   if (!allowed) {
     const owner = await currentOwner();
     if (owner) {
@@ -23,8 +24,23 @@ export async function GET(req: Request, ctx: RouteContext<"/api/resume/[id]">) {
 
   const { data: row } = await db().from("candidates").select("resume_path, full_name, application").eq("id", id).maybeSingle();
   // ?original=1 (team only): the very first resume they sent, if it has since been replaced.
-  const wantOriginal = new URL(req.url).searchParams.has("original") && !!(await currentStaff());
+  const wantOriginal = new URL(req.url).searchParams.has("original") && staff;
   const orig = (row?.application as Record<string, string> | null)?.original_resume_path;
+  const app = (row?.application ?? {}) as Record<string, string>;
+  // Owners see our clean version once the team has chosen it (the team can preview with ?as=owner).
+  if (row && app.owner_resume === "clean" && app.clean_resume && (!staff || new URL(req.url).searchParams.get("as") === "owner")) {
+    const { cleanResumePdf } = await import("@/lib/cleanResumePdf");
+    const pdf = await cleanResumePdf(app.clean_resume);
+    const who = (row.full_name ?? "").replace(/[^\p{L}\p{N} .'-]/gu, "").trim() || "Candidate";
+    const filename = `${who} - Resume.pdf`;
+    return new NextResponse(new Uint8Array(pdf), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+        "Cache-Control": "private, no-store",
+      },
+    });
+  }
   const c = row ? { ...row, resume_path: wantOriginal && orig ? orig : row.resume_path } : null;
   if (!c?.resume_path) return new NextResponse("No resume on file", { status: 404 });
   const who = (c.full_name ?? "").replace(/[^\p{L}\p{N} .'-]/gu, "").trim() || "Candidate";

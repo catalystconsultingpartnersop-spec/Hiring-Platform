@@ -326,7 +326,7 @@ function Unlocked({
                   </a>
                 </li>
               )}
-              {c.resume_path && (
+              {(c.resume_path || ((c as { application?: Record<string, string> }).application?.owner_resume === "clean" && (c as { application?: Record<string, string> }).application?.clean_resume)) && (
                 <li>
                   <a href={`/api/resume/${c.id}`}>Download resume</a>
                 </li>

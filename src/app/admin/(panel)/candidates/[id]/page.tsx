@@ -116,6 +116,8 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         replaced={!!c.application?.original_resume_path}
         originalAt={c.application?.original_resume_at ?? null}
         clean={cleanResumeOf(c.application)}
+        ownerSees={c.application?.owner_resume === "clean" && c.application?.clean_resume ? "clean" : "original"}
+        noResume={c.application?.no_resume === "yes"}
       />
       <ReminderPanel c={c} hasCall={callRows.some((k) => k.status !== "cancelled")} />
       <CandidateForm c={c} tierFeeLabel={tierFee != null ? money(tierFee) : "set by hand"} isAdmin={me.role === "admin"} />

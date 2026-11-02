@@ -1256,3 +1256,15 @@ export async function saveCleanResumeAction(candidateId: string, text: string): 
   revalidatePath(`/admin/candidates/${candidateId}`);
   return {};
 }
+
+// Which resume business owners get: the file they sent, or our clean version.
+export async function setOwnerResumeAction(candidateId: string, which: "clean" | "original"): Promise<{ error?: string }> {
+  const me = await requireStaff();
+  const { data: c } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
+  const app = (c?.application ?? {}) as Record<string, string>;
+  if (which === "clean" && !app.clean_resume) return { error: "Make the clean version first." };
+  await db().from("candidates").update({ application: { ...app, owner_resume: which } }).eq("id", candidateId);
+  await logActivity(me.name, "owner_resume_set", { candidate_id: candidateId, which });
+  revalidatePath(`/admin/candidates/${candidateId}`);
+  return {};
+}

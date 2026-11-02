@@ -28,6 +28,7 @@ export function ApplyFlow({
   );
   const [booked, setBooked] = useState<{ when: string; manage: string } | null>(null);
   const [reachOut, setReachOut] = useState(false);
+  const [noResume, setNoResume] = useState(false);
   const v = (k: string) => state.fields?.[k] ?? "";
 
   // ---------- Step 3: booked ----------
@@ -197,8 +198,12 @@ export function ApplyFlow({
         <span>
           Your resume
         </span>
-        <input className="input" type="file" name="resume" accept=".pdf,.doc,.docx" required />
+        <input className="input" type="file" name="resume" accept=".pdf,.doc,.docx" required={!noResume} disabled={noResume} />
         <small>A PDF or Word file. It doesn&rsquo;t need to be perfect; we&rsquo;ll help you polish it after your call.</small>
+      </label>
+      <label className="check" style={{ marginTop: 6, marginBottom: 16 }}>
+        <input type="checkbox" name="no_resume" checked={noResume} onChange={(e) => setNoResume(e.target.checked)} />
+        <span>I don&rsquo;t have a resume yet. We&rsquo;ll build one together on your call.</span>
       </label>
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: "-9999px" }} />
       <div className="apply-agreement" style={{ marginTop: 20, padding: "14px 16px", background: "var(--wash)", borderRadius: 12 }}>
