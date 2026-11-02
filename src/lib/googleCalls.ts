@@ -111,6 +111,8 @@ export async function roomArtifacts(space: string) {
     if (!r.ok) throw new Error(`Google Meet said no (${r.status}): ${(await r.text()).slice(0, 200)}`);
     return r.json();
   };
+  // A meeting code (abc-defg-hij) works as an alias; look up the room's real name.
+  if (/^spaces\/[a-z]{3}-[a-z]{4}-[a-z]{3}$/.test(space)) space = ((await get(`https://meet.googleapis.com/v2/${space}`)) as { name: string }).name;
   const recs = (await get(`https://meet.googleapis.com/v2/conferenceRecords?filter=${encodeURIComponent(`space.name="${space}"`)}`)) as {
     conferenceRecords?: { name: string; startTime?: string; endTime?: string }[];
   };
