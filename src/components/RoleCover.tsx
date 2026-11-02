@@ -68,6 +68,35 @@ const ICONS = {
       <path d="M9.5 21v-5h5v5M9 11h.01M15 11h.01" strokeWidth="1.8" />
     </g>
   ),
+  care: (
+    <g {...S}>
+      <path d="M12 20.5s-7.5-4.4-7.5-10A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.9c0 5.6-7.5 10-7.5 10z" />
+      <path d="M12 10.5v5M9.5 13h5" />
+    </g>
+  ),
+  school: (
+    <g {...S}>
+      <path d="M2.5 9L12 4.5 21.5 9 12 13.5z" />
+      <path d="M6.5 11v4.5c1.5 1.5 3.5 2.2 5.5 2.2s4-.7 5.5-2.2V11M21.5 9v5" />
+    </g>
+  ),
+  mind: (
+    <g {...S}>
+      <path d="M20 12a7.5 7.5 0 0 1-11 6.6L4 20l1.4-4.4A7.5 7.5 0 1 1 20 12z" />
+      <path d="M12 15.5s-3.2-1.9-3.2-4.2a1.8 1.8 0 0 1 3.2-1.1 1.8 1.8 0 0 1 3.2 1.1c0 2.3-3.2 4.2-3.2 4.2z" />
+    </g>
+  ),
+  tech: (
+    <g {...S}>
+      <rect x="3" y="4.5" width="18" height="12" rx="1.8" />
+      <path d="M8.5 20h7M12 16.5V20M9 9.5l-2 1.5 2 1.5M15 9.5l2 1.5-2 1.5" />
+    </g>
+  ),
+  tools: (
+    <g {...S}>
+      <path d="M14.5 6.5a4 4 0 0 0-5.3 5.1L3.5 17.3a1.7 1.7 0 0 0 2.4 2.4l5.7-5.7a4 4 0 0 0 5.1-5.3l-2.4 2.4-2.1-.5-.5-2.1z" />
+    </g>
+  ),
   star: (
     <g {...S}>
       <path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z" />
@@ -84,6 +113,11 @@ const FAMILIES: Record<string, Family> = {
   creative: { key: "creative", bg: "#fbe5d9", fg: "#a8431a", icon: ICONS.creative },
   people: { key: "people", bg: "#f8e1e8", fg: "#9b2f55", icon: ICONS.people },
   building: { key: "building", bg: "#efe7dc", fg: "#6e4d2a", icon: ICONS.building },
+  care: { key: "care", bg: "#ddf1f0", fg: "#1f6b68", icon: ICONS.care },
+  school: { key: "school", bg: "#e4eaf8", fg: "#2f4f9a", icon: ICONS.school },
+  mind: { key: "mind", bg: "#ece4f7", fg: "#5e3d96", icon: ICONS.mind },
+  tech: { key: "tech", bg: "#e6edf2", fg: "#2d4a63", icon: ICONS.tech },
+  tools: { key: "tools", bg: "#efe7dc", fg: "#6e4d2a", icon: ICONS.tools },
   other: { key: "other", bg: "#eef1f6", fg: "#17213a", icon: ICONS.star },
 };
 
@@ -108,6 +142,24 @@ const ROLE_FAMILY: Record<string, string> = {
   "HR and recruiting": "people",
   "Property management": "building",
   "Site supervision": "building",
+  Payroll: "numbers",
+  "Medical office and billing": "care",
+  "Medical assistant": "care",
+  Nursing: "care",
+  "Home health and caregiving": "care",
+  "Special education teacher": "school",
+  "Classroom aide / paraprofessional": "school",
+  "ABA / behavior therapy": "mind",
+  "Speech, OT and PT": "care",
+  "Therapist and counseling": "mind",
+  "Social work": "people",
+  "Case management": "people",
+  Teaching: "school",
+  "School administration": "school",
+  "IT and tech support": "tech",
+  "Maintenance and trades": "tools",
+  Warehouse: "ops",
+  Driver: "ops",
 };
 
 export function familyOf(role: string | null | undefined): Family {
