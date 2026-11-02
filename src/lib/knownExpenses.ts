@@ -5,16 +5,29 @@ import { db, logActivity } from "./db";
 // date; one-time ones once on their date. To log a new cost, add a line here.
 type Known =
   | { what: string; category: string; dollars: number; monthlyFrom: string; until?: string; note?: string }
+  | { what: string; category: string; dollars: number; yearlyFrom: string; note?: string }
   | { what: string; category: string; dollars: number; on: string; note?: string };
 
 export const KNOWN_EXPENSES: Known[] = [
   { what: "Resend Pro (email)", category: "Software", dollars: 20, monthlyFrom: "2026-11-02", note: "50,000 emails a month, no daily limit" },
+  { what: "Google Workspace seat (calls@, recorded calls)", category: "Software", dollars: 26, monthlyFrom: "2026-11-01", note: "Business Plus seat that runs the recorded onboarding calls" },
+  { what: "Domain: thecandidatecollection.com", category: "Software", dollars: 12, yearlyFrom: "2026-10-28", note: "Yearly renewal, through Vercel" },
 ];
 
 const ymd = (d: Date) => d.toISOString().slice(0, 10);
 
 function dates(k: Known): string[] {
   if ("on" in k) return [k.on];
+  if ("yearlyFrom" in k) {
+    const [y, m, day] = k.yearlyFrom.split("-").map(Number);
+    const out: string[] = [];
+    for (let i = 0; ; i++) {
+      const d = new Date(Date.UTC(y + i, m - 1, day));
+      if (d > new Date()) break;
+      out.push(ymd(d));
+    }
+    return out;
+  }
   const out: string[] = [];
   const [y, m, day] = k.monthlyFrom.split("-").map(Number);
   const end = k.until ? new Date(k.until) : new Date();
