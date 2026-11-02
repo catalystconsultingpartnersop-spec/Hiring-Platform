@@ -24,6 +24,8 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
   await revertNov2Moves(); // one time only
   // Old links to the candidate tabs still work.
   if (typeof sp.view === "string") redirect(`/admin/candidates?view=${sp.view}`);
+  // Partners (like Shloimy) land on the Team page; "My work" shows their own dashboard.
+  if (me.role !== "admin" && me.manager && sp.mine !== "1") redirect("/admin/reps");
   if (me.role !== "admin") {
     if (!me.id) redirect("/admin/candidates");
     return (

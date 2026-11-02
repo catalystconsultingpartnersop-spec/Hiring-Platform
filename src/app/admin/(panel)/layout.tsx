@@ -21,7 +21,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="wrap">
       <nav className={styles.bar} aria-label="Admin">
-        <Link href="/admin">{admin ? "Dashboard" : "My dashboard"}</Link>
+        {!admin && me.manager && <Link href="/admin/reps">Team</Link>}
+        <Link href={!admin && me.manager ? "/admin?mine=1" : "/admin"}>{admin ? "Dashboard" : "My dashboard"}</Link>
         <Link href="/admin/candidates">Candidates</Link>
         {admin && <Link href="/admin/agreements">Introductions</Link>}
         {admin && <Link href="/admin/clients">Clients</Link>}
@@ -29,7 +30,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <Link href="/admin/requests">
           Requests{openRequests ? <span className={styles.badge}>{openRequests}</span> : null}
         </Link>
-        <Link href="/admin/calls">{admin ? "Calls" : "My calls"}</Link>
+        {admin && <Link href="/admin/reps">Reps</Link>}
+        <Link href="/admin/calls">{me.manager ? "Calls" : "My calls"}</Link>
         {admin && <Link href="/admin/team">Team</Link>}
         <Link href="/admin/candidates/new" className={styles.addLink}>
           + Add candidate

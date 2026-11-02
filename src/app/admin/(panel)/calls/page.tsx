@@ -3,7 +3,8 @@ import { ConfirmButton } from "@/components/ConfirmButton";
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
-import { cancelCallByStaff, handCallToOwner, markCall, moveCall } from "../../actions";
+import { cancelCallByStaff, handCallToOwner, markCall } from "../../actions";
+import { MoveCallForm } from "./MoveCallForm";
 import styles from "../admin.module.css";
 
 type Row = {
@@ -120,26 +121,7 @@ export default async function CallsPage({ searchParams }: PageProps<"/admin/call
                           </button>
                         </form>
                         {showActions && admin && (
-                          <form action={moveCall.bind(null, r.id)} className={styles.inline} style={{ gap: 6, flexWrap: "wrap" }}>
-                            <select className="select" name="to" defaultValue="" aria-label="Move to rep" style={{ width: "auto", minHeight: 32, padding: "2px 28px 2px 8px", fontSize: 13 }}>
-                              <option value="" disabled>
-                                Move to…
-                              </option>
-                              {activeReps
-                                .filter((s) => s.id !== r.staff_id)
-                                .map((s) => (
-                                  <option key={s.id} value={s.id}>
-                                    {s.full_name || s.email}
-                                  </option>
-                                ))}
-                            </select>
-                            <label className="small" style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
-                              <input type="checkbox" name="notify" /> email candidate
-                            </label>
-                            <button className="btn btn-small btn-ghost" type="submit">
-                              Move
-                            </button>
-                          </form>
+                          <MoveCallForm callId={r.id} currentRep={r.staff_id} reps={activeReps.map((s) => ({ id: s.id, name: s.full_name || s.email }))} />
                         )}
                         {showActions && (
                           <form action={cancelCallByStaff.bind(null, r.id)}>
