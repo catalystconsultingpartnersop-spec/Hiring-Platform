@@ -25,6 +25,7 @@ export type RepSummary = {
   today: CallRow[];
   week: CallRow[];
   next: CallRow | null;
+  upcoming: CallRow[]; // booked and not over yet
   needsMark: CallRow[];
   talkedNotListed: CandRow[];
   stages: { fresh: CandRow[]; booked: CandRow[]; drafting: CandRow[]; listed: CandRow[]; hired: CandRow[] };
@@ -34,7 +35,7 @@ export type RepSummary = {
 
 const DAY = 864e5;
 
-export async function loadTeam(): Promise<RepSummary[]> {
+export async function loadTeam(keepAll = false): Promise<RepSummary[]> {
   const now = Date.now();
   const [{ data: staff }, { data: wins }, { data: calls }, { data: cands }, slots] = await Promise.all([
     db().from("staff").select("*").eq("active", true),
@@ -73,6 +74,7 @@ export async function loadTeam(): Promise<RepSummary[]> {
         today: upcoming.filter((k) => nyDay(Date.parse(k.starts_at)) === todayNY),
         week: upcoming.filter((k) => Date.parse(k.starts_at) < weekEnd),
         next: upcoming[0] ?? null,
+        upcoming: mineCalls.filter((k) => k.status === "booked" && Date.parse(k.ends_at) >= now),
         needsMark: mineCalls.filter((k) => k.status === "booked" && Date.parse(k.ends_at) < now),
         talkedNotListed: mineCands.filter((c) => early(c) && doneCall.has(c.id)),
         stages: {
@@ -86,6 +88,27 @@ export async function loadTeam(): Promise<RepSummary[]> {
         candidates: mineCands,
       };
     })
-    .filter((r) => r.hasHours || r.calls.length || r.candidates.length)
+    .filter((r) => keepAll || r.hasHours || r.calls.length || r.candidates.length)
     .sort((a, b) => b.week.length - a.week.length || a.name.localeCompare(b.name));
+}
+
+export async function loadRep(id: string): Promise<RepSummary | null> {
+  return (await loadTeam(true)).find((r) => r.id === id) ?? null;
+}
+
+// What needs attention, worded for the rep themselves ("you") or for a manager.
+export type Alert = { tone: "bad" | "warn" | "ok"; text: string; href?: string };
+export function alertsFor(r: RepSummary, self = false): Alert[] {
+  const a: Alert[] = [];
+  const n = (k: number, one: string, many: string) => `${k} ${k === 1 ? one : many}`;
+  if (!r.hasHours)
+    a.push({ tone: "bad", text: self ? "You have no hours set, so candidates can't book a call with you" : "No hours set, so candidates can't book them", href: self ? "/admin/hours" : undefined });
+  else if (r.openThisWeek === 0)
+    a.push({ tone: "bad", text: self ? "You're fully booked this week. Add hours so people can still book" : "Fully booked this week: no open times left", href: self ? "/admin/hours" : undefined });
+  else if (r.openThisWeek <= 2)
+    a.push({ tone: "warn", text: `Only ${n(r.openThisWeek, "open time", "open times")} left this week`, href: self ? "/admin/hours" : undefined });
+  if (r.needsMark.length) a.push({ tone: "warn", text: `${n(r.needsMark.length, "past call", "past calls")} to mark Done or No-show`, href: "#mark" });
+  if (r.talkedNotListed.length) a.push({ tone: "warn", text: `${n(r.talkedNotListed.length, "person", "people")} spoken to but not listed yet`, href: "#stages" });
+  if (!a.length) a.push({ tone: "ok", text: "All good" });
+  return a;
 }
