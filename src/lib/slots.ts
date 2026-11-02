@@ -110,3 +110,23 @@ export async function repsFreeAt(startIso: string, preferRep?: string | null): P
     .sort((a, b) => (load.get(a) ?? 0) - (load.get(b) ?? 0))
     .map((id) => ({ id, minutes: slot.minutes[id] ?? CALL_MINUTES }));
 }
+
+// Is a rep free at this time by their own weekly hours (not just "no other call")?
+export async function withinHours(staffId: string, startIso: string, endIso: string): Promise<boolean> {
+  const [{ data: rep }, { data: wins }] = await Promise.all([
+    db().from("staff").select("time_zone").eq("id", staffId).maybeSingle(),
+    db().from("staff_availability").select("weekday, start_minute, end_minute").eq("staff_id", staffId),
+  ]);
+  const tz = validTimeZone(rep?.time_zone ?? null);
+  const parts = (iso: string) => {
+    const f = new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short", hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(new Date(iso));
+    const get = (t: string) => f.find((x) => x.type === t)?.value ?? "";
+    return { day: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(get("weekday")), min: Number(get("hour")) * 60 + Number(get("minute")) };
+  };
+  const s = parts(startIso);
+  const e = parts(endIso);
+  const endMin = e.day === s.day ? e.min : 24 * 60;
+  return ((wins ?? []) as { weekday: number; start_minute: number; end_minute: number }[]).some(
+    (w) => w.weekday === s.day && w.start_minute <= s.min && w.end_minute >= endMin,
+  );
+}

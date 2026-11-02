@@ -150,7 +150,7 @@ export default async function CallsPage({ searchParams }: PageProps<"/admin/call
         </p>
       </div>
       {sp.hand === "done" && <p className="notice notice-good">Done. The call is now with the candidate&rsquo;s own rep, and everyone got fresh emails.</p>}
-      {sp.hand === "busy" && <p className="notice notice-bad">Their rep already has a call at that time. Ask them to free it up, or keep it as is.</p>}
+      {sp.hand === "busy" && <p className="notice notice-bad">That time isn&rsquo;t open in their rep&rsquo;s hours (or they already have a call then). Keep it as is, or have the candidate pick a new time with their rep.</p>}
       <h2 className={styles.h2}>Coming up</h2>
       {upcoming.length ? table(upcoming, true) : <p className="panel panel-wash">No calls booked yet.</p>}
       <h2 className={styles.h2}>Last two weeks</h2>

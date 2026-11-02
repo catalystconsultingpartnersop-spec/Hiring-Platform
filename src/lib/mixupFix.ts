@@ -3,6 +3,7 @@ import { emailAdmin, escapeHtml, sendEmail } from "./email";
 import { getSetting, setSetting } from "./settings";
 import { sendBookingEmails } from "./calls";
 import { teamUrl } from "./format";
+import { withinHours } from "./slots";
 
 // One-time cleanup of the Nov 2 mix-up, when some of Shloimy's candidates
 // booked calls with Mechel. Runs once, then never again:
@@ -48,8 +49,8 @@ export async function fixNov2Mixup() {
         .lt("starts_at", k.ends_at)
         .gt("ends_at", k.starts_at);
       const when = new Date(k.starts_at).toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-      if (count) {
-        stuck.push(`${c.full_name} (${when}): now Shloimy's candidate, but Shloimy already has a call then, so the call stays with Mechel for now`);
+      if (count || !(await withinHours(shloimy.id, k.starts_at, k.ends_at))) {
+        stuck.push(`${c.full_name} (${when}): now Shloimy's candidate, but that time isn't in Shloimy's hours, so the call stays with Mechel for now`);
         continue;
       }
       await db().from("onboarding_calls").update({ staff_id: shloimy.id }).eq("id", k.id);

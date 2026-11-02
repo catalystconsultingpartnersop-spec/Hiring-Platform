@@ -1168,7 +1168,8 @@ export async function handCallToOwner(callId: string) {
     .eq("status", "booked")
     .lt("starts_at", k.ends_at)
     .gt("ends_at", k.starts_at);
-  if (count) redirect("/admin/calls?hand=busy");
+  const { withinHours } = await import("@/lib/slots");
+  if (count || !(await withinHours(owner, k.starts_at, k.ends_at))) redirect("/admin/calls?hand=busy");
   const { data: was } = await db().from("staff").select("email, full_name").eq("id", k.staff_id).maybeSingle();
   await db().from("onboarding_calls").update({ staff_id: owner }).eq("id", callId);
   const { sendBookingEmails } = await import("@/lib/calls");
