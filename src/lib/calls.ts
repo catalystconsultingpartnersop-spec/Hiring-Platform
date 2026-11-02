@@ -55,6 +55,9 @@ export async function bookCall(candidateId: string, startIso: string, candidateT
     await logActivity("system", "meet_room_failed", { call_id: callId, error: (e as Error).message.slice(0, 300) });
   }
 
+  // No rep chosen yet? Whoever hosts their call becomes their rep, so nobody floats.
+  if (!cand?.added_by) await db().from("candidates").update({ added_by: repId }).eq("id", candidateId).is("added_by", null);
+
   await sendBookingEmails(callId, false);
   await logActivity("system", "onboarding_call_booked", { call_id: callId, candidate_id: candidateId, staff_id: repId });
   return { ok: true, callId, manageToken: signedToken(`call_${callId}`, 60) };

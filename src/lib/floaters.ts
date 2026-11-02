@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db, logActivity } from "./db";
 
 // "No floaters": every candidate should have a rep on file, and everyone who
 // hasn't been spoken to yet should have a call on the calendar.
@@ -54,4 +54,36 @@ export function floaterReportHtml(f: Awaited<ReturnType<typeof findFloaters>>): 
           .join("")}</ul>`
       : "<p>None.</p>");
   return `<p>Checked ${f.total} candidates.</p>${list("No rep on file", f.noRep)}${list("Not spoken to yet and no call booked", f.noCall)}${list("Call booked with someone other than their rep", f.otherRep)}`;
+}
+
+// One-time cleanup (Nov 2): give everyone with a booked call and no rep the rep who hosts
+// their call, and archive the test sign-ups. Nobody is emailed. Runs once.
+const FIX_FLAG = "floater_fix_2026_11_02";
+const TEST_EMAILS = ["shlomo.scrubmatch@gmail.com", "shloimiem@gmail.com"];
+export async function fixFloatersOnce(): Promise<string | null> {
+  const { getSetting, setSetting } = await import("./settings");
+  if (await getSetting<boolean>(FIX_FLAG, false)) return null;
+  await setSetting(FIX_FLAG, true);
+  const now = Date.now();
+  const [{ data: cands }, { data: calls }, { data: staff }] = await Promise.all([
+    db().from("candidates").select("id, full_name, email, status, added_by").neq("status", "archived"),
+    db().from("onboarding_calls").select("candidate_id, staff_id, starts_at, ends_at, status").eq("status", "booked").order("starts_at", { ascending: true }),
+    db().from("staff").select("id, full_name, email"),
+  ]);
+  const name = new Map(((staff ?? []) as { id: string; full_name: string | null; email: string }[]).map((s) => [s.id, s.full_name || s.email]));
+  const lines: string[] = [];
+  for (const c of (cands ?? []) as Cand[]) {
+    if (TEST_EMAILS.includes(c.email.toLowerCase()) && c.status === "applied") {
+      await db().from("candidates").update({ status: "archived" }).eq("id", c.id);
+      lines.push(`Archived test sign-up: ${c.full_name} (${c.email})`);
+      continue;
+    }
+    if (c.added_by) continue;
+    const next = ((calls ?? []) as Call[]).find((k) => k.candidate_id === c.id && Date.parse(k.ends_at) >= now);
+    if (!next) continue;
+    await db().from("candidates").update({ added_by: next.staff_id }).eq("id", c.id).is("added_by", null);
+    lines.push(`${c.full_name} → ${name.get(next.staff_id) ?? "their call host"}`);
+  }
+  await logActivity("system", "floater_fix", { lines });
+  return lines.join("\n");
 }
