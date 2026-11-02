@@ -4,6 +4,7 @@ import { callsAccount, callsRedirectUri, googleCallsConfigured } from "@/lib/goo
 import { dateShort } from "@/lib/format";
 import { addTier, removeTier, disconnectGoogleCalls } from "../../actions";
 import { TiersForm } from "./TiersForm";
+import { TestRoom } from "./TestRoom";
 
 export default async function SettingsPage({ searchParams }: PageProps<"/admin/settings">) {
   await requireAdmin();
@@ -37,6 +38,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
           <p className="notice notice-bad">That didn&rsquo;t connect{typeof sp.why === "string" ? `: ${sp.why}` : "."} Try again.</p>
         )}
         {acct ? (
+          <>
           <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <span>
               Connected as <strong>{acct.email}</strong> since {dateShort(acct.connected_at)}.
@@ -47,6 +49,8 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
               </button>
             </form>
           </div>
+          <TestRoom />
+          </>
         ) : configured ? (
           <a className="btn btn-gold btn-small" href="/api/google/calls/start">
             Connect Google

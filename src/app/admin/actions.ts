@@ -1014,3 +1014,16 @@ export async function disconnectGoogleCalls() {
   await logActivity(me.email, "google_calls_disconnected", {});
   revalidatePath("/admin/settings");
 }
+
+export async function makeTestRoom(): Promise<{ link?: string; error?: string }> {
+  const me = await requireAdmin();
+  try {
+    const { newRecordedMeeting } = await import("@/lib/googleCalls");
+    const room = await newRecordedMeeting();
+    if (!room) return { error: "Google isn't connected yet." };
+    await logActivity(me.email, "test_meet_room", { link: room.link });
+    return { link: room.link };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
