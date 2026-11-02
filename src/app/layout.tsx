@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image", images: ["/share/og.png"] },
   // Proves to Google Search Console that we own the site.
-  ...(process.env.GOOGLE_SITE_VERIFICATION ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } } : {}),
+  verification: { google: process.env.GOOGLE_SITE_VERIFICATION || "cS6fXQteFm1gS0ZYCfRLie7X_aR71QiR9RelnatPtIo" },
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
