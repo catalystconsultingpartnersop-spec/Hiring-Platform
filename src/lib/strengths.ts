@@ -113,7 +113,7 @@ const PAIRS: Record<string, PairText> = {
     thrives: "building and improving processes, like operations, systems, setting up the books or engineering",
   },
   DE: {
-    name: "Right-hand person",
+    name: "Trusted right hand",
     line: "Reads people and situations well and gives exactly the help that's needed.",
     wiredFor: ["reading people", "the right help at the right time", "being a trusted sounding board"],
     thrives: "right-hand roles like executive assistant, office manager, HR and client relationships",
@@ -137,7 +137,7 @@ const PAIRS: Record<string, PairText> = {
     thrives: "people-centered roles like account management, customer success and leading a team",
   },
   GT: {
-    name: "Go-getter",
+    name: "Driver / go-getter",
     line: "Pushes the team, pitches in personally, and makes sure deadlines are met.",
     wiredFor: ["driving deadlines", "holding people accountable", "rolling up their sleeves"],
     thrives: "roles that need someone to push, like sales, project management and production supervision",
