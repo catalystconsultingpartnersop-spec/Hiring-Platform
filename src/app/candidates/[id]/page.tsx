@@ -1,3 +1,4 @@
+import { languagesText } from "@/lib/languages";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { bestAtText, CandidateCard, HowTheyWork, roleLine, WorksBest } from "@/components/CandidateCard";
@@ -100,6 +101,7 @@ function Facts({ c }: { c: PublicCandidate }) {
     ["Experience", c.level ? LEVEL_LABEL[c.level] : null],
     ["Location", c.location_region],
     ["Work setting", c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null],
+    ["Languages", languagesText(c.languages)],
     ["Salary expectation", salaryRange(c.salary_min, c.salary_max)],
   ];
   return (
@@ -123,6 +125,7 @@ function AtAGlance({ c }: { c: PublicCandidate }) {
     [c.level ? LEVEL_LABEL[c.level] : null, c.role_category?.toLowerCase()].filter(Boolean).join(" ") || null,
     [c.location_region, c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null].filter(Boolean).join(" · ") || null,
     salary ? `Looking for ${salary}` : null,
+    languagesText(c.languages) ? `Fluent in ${languagesText(c.languages)}` : null,
     bestAtText(c),
     "Vetted in a one-on-one conversation with our team",
   ].filter((x): x is string => !!x);

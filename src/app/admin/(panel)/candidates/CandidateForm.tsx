@@ -1,5 +1,6 @@
 "use client";
 
+import { cleanLanguages, LANGUAGES } from "@/lib/languages";
 import { startTransition, useActionState, useState } from "react";
 import type { Candidate } from "@/lib/db";
 import { describe, parseResult, suggestedHeadline, type Letter } from "@/lib/strengths";
@@ -76,6 +77,8 @@ export function CandidateForm({
   const [role, setRole] = useState(v("role_category"));
   const [level, setLevel] = useState(v("level"));
   const [mode, setMode] = useState(v("work_mode"));
+  const [langs, setLangs] = useState<string[]>(c?.languages ?? []);
+  const [otherLang, setOtherLang] = useState("");
   const [industry, setIndustry] = useState(v("industry"));
   const [alsoRoles, setAlsoRoles] = useState<string[]>(c?.also_roles ?? []);
   const [alsoIndustries, setAlsoIndustries] = useState<string[]>(c?.also_industries ?? []);
@@ -377,6 +380,46 @@ export function CandidateForm({
                 {label}
               </button>
             ))}
+          </div>
+        </div>
+        <div className={styles.chipField} style={{ marginTop: 18 }}>
+          <span>Languages they speak fluently</span>
+          {langs.map((l) => (
+            <input key={l} type="hidden" name="languages" value={l} />
+          ))}
+          <div className={styles.chips}>
+            {[...new Set([...LANGUAGES, ...langs])].map((l) => (
+              <button
+                key={l}
+                type="button"
+                className={langs.includes(l) ? styles.chipOn : styles.chip}
+                aria-pressed={langs.includes(l)}
+                onClick={() => setLangs(langs.includes(l) ? langs.filter((x) => x !== l) : [...langs, l])}
+              >
+                {l}
+              </button>
+            ))}
+            <input
+              className="input"
+              value={otherLang}
+              onChange={(e) => setOtherLang(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const t = cleanLanguages([otherLang]);
+                  if (t.length) setLangs([...new Set([...langs, ...t])]);
+                  setOtherLang("");
+                }
+              }}
+              onBlur={() => {
+                const t = cleanLanguages([otherLang]);
+                if (t.length) setLangs([...new Set([...langs, ...t])]);
+                setOtherLang("");
+              }}
+              placeholder="Another one? Type it"
+              aria-label="Another language"
+              style={{ width: 190, minHeight: 36, padding: "4px 10px", fontSize: 14 }}
+            />
           </div>
         </div>
         <div className="grid-2" style={{ marginTop: 18 }}>

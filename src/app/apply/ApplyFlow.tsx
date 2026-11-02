@@ -1,5 +1,6 @@
 "use client";
 
+import { LANGUAGES } from "@/lib/languages";
 import { startTransition, useActionState, useState } from "react";
 import { TimePicker } from "@/components/TimePicker";
 import { ApplyState, askUsToReachOut, bookTime, saveExtras, submitApplication } from "./actions";
@@ -163,6 +164,19 @@ export function ApplyFlow({
           placeholder="A sentence is plenty. It's fine if you're not sure yet; that's what the call is for."
         />
       </label>
+      <fieldset className="field" style={{ border: 0, padding: 0, margin: "0 0 18px" }}>
+        <legend style={{ fontWeight: 700, marginBottom: 8, padding: 0 }}>
+          Languages you speak fluently <span className="opt">(optional)</span>
+        </legend>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 18px" }}>
+          {LANGUAGES.map((l) => (
+            <label key={l} style={{ display: "inline-flex", gap: 6, alignItems: "center", fontWeight: 500 }}>
+              <input type="checkbox" name="languages" value={l} style={{ width: 18, height: 18, margin: 0 }} /> {l}
+            </label>
+          ))}
+        </div>
+        <input className="input" name="languages" placeholder="Any others? e.g. Polish, Arabic" style={{ marginTop: 10 }} />
+      </fieldset>
       {reps.length > 0 && (
         <label className="field">
           <span>

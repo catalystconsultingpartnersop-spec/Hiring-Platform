@@ -1,5 +1,6 @@
 "use server";
 
+import { cleanLanguages } from "@/lib/languages";
 import { requestPromise } from "@/lib/promise";
 
 import { clearCatalog } from "@/lib/catalog";
@@ -222,6 +223,7 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
     level: get("level") || null,
     location_region: get("location_region") || null,
     work_mode: get("work_mode") || null,
+    languages: cleanLanguages(form.getAll("languages")),
     salary_min: toInt(get("salary_min")),
     salary_max: toInt(get("salary_max")),
     strengths: listFrom(get("strengths"), /[,\n]/),

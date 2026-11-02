@@ -1,5 +1,6 @@
 "use server";
 
+import { cleanLanguages } from "@/lib/languages";
 import { allow, SLOW_DOWN } from "@/lib/throttle";
 import { referringRep } from "@/lib/shareKit";
 
@@ -63,6 +64,7 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
         email,
         phone,
         application: { looking_for },
+        languages: cleanLanguages(form.getAll("languages")),
         consent_at: new Date().toISOString(),
         // They sign their candidate agreement right here, so nothing is left to do after their call.
         promise_signed_at: new Date().toISOString(),
