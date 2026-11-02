@@ -1034,9 +1034,16 @@ export async function checkTestRoom(): Promise<{ lines?: string[]; error?: strin
   try {
     const { roomArtifacts } = await import("@/lib/googleCalls");
     const { getSetting } = await import("@/lib/settings");
-    const room = await getSetting<{ space?: string } | null>("last_test_room", null);
-    if (!room?.space) return { error: "Make a test room and use it first." };
-    const calls = await roomArtifacts(room.space);
+    let space = (await getSetting<{ space?: string } | null>("last_test_room", null))?.space;
+    if (!space) {
+      // Rooms made before this button existed: find the last one from the activity log.
+      const { data } = await db().from("activity_log").select("details").eq("action", "test_meet_room").order("at", { ascending: false }).limit(1);
+      const link = (data?.[0]?.details as { link?: string } | undefined)?.link;
+      const code = link?.split("/").pop();
+      if (code) space = `spaces/${code}`;
+    }
+    if (!space) return { error: "Make a test room and use it first." };
+    const calls = await roomArtifacts(space);
     if (!calls?.length) return { lines: ["Google hasn't recorded a call in the test room yet. If you just hung up, wait a few minutes and check again."] };
     const word = (states: string[]) =>
       !states.length ? "not there" : states.includes("FILE_GENERATED") ? "ready" : states.includes("ENDED") ? "being processed" : "in progress";
