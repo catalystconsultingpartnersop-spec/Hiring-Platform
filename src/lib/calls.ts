@@ -82,7 +82,8 @@ export async function getCall(callId: string): Promise<CallRow | null> {
   return (data as unknown as CallRow) ?? null;
 }
 
-export async function sendBookingEmails(callId: string, cancelled: boolean) {
+// handedOver: the same call, same time, now with a different rep.
+export async function sendBookingEmails(callId: string, cancelled: boolean, handedOver = false) {
   const call = await getCall(callId);
   if (!call) return;
   const c = call.candidates;
@@ -129,7 +130,9 @@ export async function sendBookingEmails(callId: string, cancelled: boolean) {
 
   await sendEmail({
     to: c.email,
-    ...candMail.onboardingBooked({ name: c.full_name, rep: rep.full_name || "our team", when: whenCandidate, link, manage, recorded, minutes: Math.round((Date.parse(call.ends_at) - Date.parse(call.starts_at)) / 60e3) || 45 }),
+    ...(handedOver
+      ? candMail.callNewHost({ name: c.full_name, rep: rep.full_name || "our team", when: whenCandidate, link, manage })
+      : candMail.onboardingBooked({ name: c.full_name, rep: rep.full_name || "our team", when: whenCandidate, link, manage, recorded, minutes: Math.round((Date.parse(call.ends_at) - Date.parse(call.starts_at)) / 60e3) || 45 })),
     attachments: [{ filename: "career-call.ics", content: ics(false) }],
     // Replies (like their assessment results) go straight to their rep.
     replyTo: rep.email,

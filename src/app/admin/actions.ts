@@ -1172,7 +1172,7 @@ export async function handCallToOwner(callId: string) {
   const { data: was } = await db().from("staff").select("email, full_name").eq("id", k.staff_id).maybeSingle();
   await db().from("onboarding_calls").update({ staff_id: owner }).eq("id", callId);
   const { sendBookingEmails } = await import("@/lib/calls");
-  await sendBookingEmails(callId, false);
+  await sendBookingEmails(callId, false, true);
   if (was?.email)
     await sendEmail({
       to: was.email,

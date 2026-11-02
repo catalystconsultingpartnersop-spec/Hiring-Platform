@@ -269,6 +269,19 @@ export const candidate = {
       quiet(`Need a different time? <a href="${o.manage}" style="color:#5b667e">Reschedule or cancel here</a>.`),
   }),
 
+  // Their call is the same; the person they'll talk to changed.
+  callNewHost: (o: { name: string; rep: string; when: string; link: string | null; manage: string }): Mail => ({
+    audience: "candidate",
+    subject: `Same time, small change: your call is with ${first(o.rep)}`,
+    html:
+      hi(o.name) +
+      p(`Quick update: your career call is still on, at the same time. You'll be talking with <strong>${esc(o.rep)}</strong>, the member of our team who invited you.`) +
+      big(esc(o.when)) +
+      (o.link ? button(o.link, "Join the video call") : p("We'll email you the video link before the call.")) +
+      p("There's nothing you need to do. Your calendar invite is updated. Sorry for any confusion, and we're looking forward to talking with you.") +
+      quiet(`Need a different time? <a href="${o.manage}" style="color:#5b667e">Reschedule or cancel here</a>.`),
+  }),
+
   onboardingCancelled: (o: { name: string; when: string; rebook: string }): Mail => ({
     audience: "candidate",
     subject: "Your call is cancelled",

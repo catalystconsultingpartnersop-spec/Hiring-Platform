@@ -53,7 +53,7 @@ export async function fixNov2Mixup() {
         continue;
       }
       await db().from("onboarding_calls").update({ staff_id: shloimy.id }).eq("id", k.id);
-      await sendBookingEmails(k.id, false);
+      await sendBookingEmails(k.id, false, true);
       moved.push(`${c.full_name} (${when})${lostLink ? ", signed up today without a rep on file" : ""}`);
     }
     await logActivity("system", "nov2_mixup_fixed", { moved: moved.length, stuck: stuck.length });
