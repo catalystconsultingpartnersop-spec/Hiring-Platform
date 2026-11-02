@@ -135,7 +135,6 @@ export default async function TeamPage() {
                     </td>
                     <td className="small">
                       {mine.length ? hoursSummary(mine) : <span className="muted">Not set</span>}
-                      {mine.length > 0 && !m.meeting_link && <div style={{ color: "#b3261e" }}>No video link yet</div>}
                     </td>
                     <td>{added.get(m.id) ?? 0}</td>
                     <td>{upcoming.get(m.id) ?? 0}</td>

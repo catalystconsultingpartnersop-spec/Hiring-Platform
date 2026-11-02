@@ -398,9 +398,9 @@ export const team = {
       ) +
       `<p style="margin:0 0 8px;font-weight:700">How to start (about 20 minutes)</p>` +
       `<ol style="margin:0 0 16px;padding-left:20px">
-<li style="margin:6px 0"><strong>Set your password</strong> with the button below.</li>
+<li style="margin:6px 0"><strong>Press Get started</strong> below and choose a password. You&rsquo;re signed in right away.</li>
 ${o.isAdmin ? "" : '<li style="margin:6px 0"><strong>Sign your rep agreement.</strong> It opens when you first sign in, one page, about three minutes.</li>'}
-<li style="margin:6px 0"><strong>Set your hours</strong> and paste your Google Meet or Zoom link on <a href="${teamUrl()}/admin/hours" style="color:#17213a">My hours</a>. Candidates can then book calls with you.</li>
+<li style="margin:6px 0"><strong>Set your hours</strong> on <a href="${teamUrl()}/admin/hours" style="color:#17213a">My hours</a>. Candidates can then book calls with you. Every call gets its own Google Meet link automatically, so there&rsquo;s nothing else to set up.</li>
 <li style="margin:6px 0"><strong>Read the <a href="${teamUrl()}/admin/guide" style="color:#17213a">rep guide</a></strong>. A few minutes: what each part of your dashboard does, how to add a candidate, and how to run the call.</li>
 <li style="margin:6px 0"><strong>Find your first candidates.</strong> Send the &ldquo;looking for work&rdquo; picture from your <a href="${teamUrl()}/admin/share" style="color:#17213a">Share kit</a> to your network. Anyone who signs up through your link is added as yours. You can also add someone yourself with <a href="${teamUrl()}/admin/candidates/new" style="color:#17213a">+ Add candidate</a>.</li>
 </ol>` +
@@ -408,8 +408,8 @@ ${o.isAdmin ? "" : '<li style="margin:6px 0"><strong>Sign your rep agreement.</s
       (o.workEmail
         ? box(`<strong>Your work email is on its way:</strong> ${esc(o.workEmail)}. Google will email you a link to sign in and choose a password. Until then, everything works with this email, so you can start today.`)
         : "") +
-      button(o.setPasswordLink, "Set your password") +
-      quiet(`The button works once, for 7 days. After that, sign in at ${esc(teamUrl().replace(/^https?:\/\//, ""))} with your email and password. Questions? Text Heshy at ${esc(contactPhone())}.`),
+      button(o.setPasswordLink, "Get started") +
+      quiet(`The button works for 7 days. After that, sign in at ${esc(teamUrl().replace(/^https?:\/\//, ""))} with your email and password. Questions? Text Heshy at ${esc(contactPhone())}.`),
   }),
 };
 

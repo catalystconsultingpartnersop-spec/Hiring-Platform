@@ -1268,3 +1268,26 @@ export async function setOwnerResumeAction(candidateId: string, which: "clean" |
   revalidatePath(`/admin/candidates/${candidateId}`);
   return {};
 }
+
+// First sign-in from the welcome email: choose a password and you're in, in one step.
+export async function welcomeStaff(token: string, _prev: FormState, form: FormData): Promise<FormState> {
+  const pw = String(form.get("password") ?? "");
+  if (pw.length < 8) return { error: "Use at least 8 characters." };
+  const now = new Date().toISOString();
+  const { data } = await db()
+    .from("login_tokens")
+    .update({ used_at: now })
+    .eq("token_hash", hashToken(token))
+    .eq("kind", "staff")
+    .is("used_at", null)
+    .gt("expires_at", now)
+    .select("email")
+    .maybeSingle();
+  if (!data) return { error: "This link has expired. Ask Heshy for a new one, or use \"Email me a link\" on the sign-in page." };
+  const { data: member } = await db().from("staff").select("id, active").eq("email", data.email).maybeSingle();
+  if (!member || !member.active) return { error: "Your team access isn't active. Ask Heshy." };
+  await db().from("staff").update({ password_hash: hashPassword(pw), last_login_at: now }).eq("id", member.id);
+  await startStaffSession(member.id);
+  await logActivity(`staff:${data.email}`, "staff_welcomed");
+  redirect("/admin?welcome=1");
+}
