@@ -1,25 +1,26 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Answers, ITEMS, Key, PAIRS, Result, SCALE, STRENGTHS, STYLES } from "@/lib/assessment";
+import { Answers, ITEMS, MAX_EXTRA, nextExtra, PAIRS, Result, SCALE, SNIPPETS, TRAITS } from "@/lib/assessment";
+import { describe, type Letter } from "@/lib/strengths";
 import { submitAssessment } from "./actions";
 import s from "./strengths.module.css";
 
-const SAVE = "tcc-strengths-v1";
+const SAVE = "tcc-strengths-v2";
 const PAGES = [
-  { part: 1, items: ITEMS.slice(0, 9) },
-  { part: 1, items: ITEMS.slice(9, 18) },
-  { part: 1, items: ITEMS.slice(18, 27) },
-  { part: 2, pairs: PAIRS.slice(0, 7) },
-  { part: 2, pairs: PAIRS.slice(7) },
+  { part: 1, items: ITEMS.slice(0, 8) },
+  { part: 1, items: ITEMS.slice(8, 16) },
+  { part: 1, items: ITEMS.slice(16, 24) },
+  { part: 2 },
   { part: 3 },
 ] as const;
+const TOTAL = ITEMS.length + PAIRS.length + MAX_EXTRA;
 
 type Saved = { step: number; name: string; email: string; a: Answers };
-const empty: Answers = { items: {}, pairs: {}, styles: {} };
+const empty: Answers = { items: {}, pairs: {}, extra: [] };
 
 export function Assessment() {
-  const [step, setStep] = useState(-1); // -1 intro, 0..5 pages
+  const [step, setStep] = useState(-1); // -1 intro, 0..4 pages
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [a, setA] = useState<Answers>(empty);
@@ -55,11 +56,13 @@ export function Assessment() {
   };
 
   const page = step >= 0 ? PAGES[step] : null;
+  const next = page?.part === 3 ? nextExtra(a) : null;
   const pageDone =
     !page ||
     ("items" in page && page.items.every((q) => a.items[q.id])) ||
-    ("pairs" in page && page.pairs.every((p) => a.pairs[p.id])) ||
-    (page.part === 3 && STYLES.every((x) => a.styles[x.id]));
+    (page.part === 2 && PAIRS.every((p) => a.pairs[p.id])) ||
+    (page.part === 3 && !next);
+  const answered = Object.keys(a.items).length + Object.keys(a.pairs).length + a.extra.length;
 
   function finish() {
     start(async () => {
@@ -81,8 +84,8 @@ export function Assessment() {
       <div className={s.card}>
         <h2>Before you start</h2>
         <p className={s.muted}>
-          About 7 minutes. There are no right or wrong answers. Go with your gut, and answer for what gives you energy,
-          not what you&rsquo;re able to do.
+          About 8 minutes. There are no right or wrong answers. Go with your gut, and answer for what gives you energy and
+          joy, not just what you&rsquo;re able to do.
         </p>
         <label className="field">
           <span>Your name</span>
@@ -98,20 +101,27 @@ export function Assessment() {
       </div>
     );
 
-  const total = PAGES.length;
+  // Back from the follow-ups undoes the last one, since each depends on the ones before.
+  const back = () => {
+    if (page?.part === 3 && a.extra.length) setA((x) => ({ ...x, extra: x.extra.slice(0, -1) }));
+    else go(step - 1);
+  };
+
   return (
     <div>
-      <div className={s.progress} aria-label={`Page ${step + 1} of ${total}`}>
-        <div style={{ width: `${((step + (pageDone ? 1 : 0.5)) / total) * 100}%` }} />
+      <div className={s.progress} aria-label={`${answered} of ${TOTAL} answered`}>
+        <div style={{ width: `${Math.max(3, (answered / TOTAL) * 100)}%` }} />
       </div>
       <p className={s.partLabel}>
-        Part {page!.part} of 3 · Page {step + 1} of {total}
+        Part {page!.part} of 3 · {answered} of {TOTAL} answered
       </p>
-      <p className={s.change}>Changed your mind? Tap a different answer. Use Back to fix an earlier page.</p>
+      <p className={s.change}>
+        {page!.part === 3 ? "Changed your mind? Tap Back." : "Changed your mind? Tap a different answer. Use Back to fix an earlier page."}
+      </p>
 
       {page && "items" in page && (
         <>
-          <h2 className={s.ask}>How do you feel about this kind of work?</h2>
+          <h2 className={s.ask}>How much energy does this give you?</h2>
           {page.items.map((q) => (
             <div key={q.id} className={s.q}>
               <p>{q.text}</p>
@@ -134,16 +144,16 @@ export function Assessment() {
         </>
       )}
 
-      {page && "pairs" in page && (
+      {page?.part === 2 && (
         <>
           <h2 className={s.ask}>Which would you rather spend your day doing?</h2>
           <p className={s.muted}>Even if you like both, pick one.</p>
-          {page.pairs.map((p) => (
+          {PAIRS.map((p) => (
             <div key={p.id} className={s.pair} role="radiogroup">
               {([
                 [p.a, p.at],
                 [p.b, p.bt],
-              ] as [Key, string][]).map(([k, t]) => (
+              ] as [Letter, string][]).map(([k, t]) => (
                 <button
                   key={k}
                   type="button"
@@ -160,49 +170,50 @@ export function Assessment() {
         </>
       )}
 
-      {page && page.part === 3 && (
-        <>
-          <h2 className={s.ask}>What kind of workday suits you?</h2>
-          <p className={s.muted}>Pick the spot that fits you best between the two.</p>
-          {STYLES.map((x) => (
-            <div key={x.id} className={s.q}>
-              <div className={s.ends}>
-                <span>{x.left}</span>
-                <span>{x.right}</span>
-              </div>
-              <div className={s.dots} role="radiogroup" aria-label={`${x.left} or ${x.right}`}>
-                {[1, 2, 3, 4, 5].map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    role="radio"
-                    aria-checked={a.styles[x.id] === v}
-                    aria-label={v === 1 ? x.left : v === 5 ? x.right : v === 3 ? "In between" : v < 3 ? `Leaning: ${x.left}` : `Leaning: ${x.right}`}
-                    className={a.styles[x.id] === v ? s.on : ""}
-                    onClick={() => setA((y) => ({ ...y, styles: { ...y.styles, [x.id]: v } }))}
-                  />
-                ))}
-              </div>
+      {page?.part === 3 &&
+        (next ? (
+          <>
+            <h2 className={s.ask}>A few last ones to sharpen your result</h2>
+            <p className={s.muted}>
+              Which gives you more energy? Question {a.extra.length + 1} of {MAX_EXTRA}.
+            </p>
+            <div className={s.pair} role="radiogroup">
+              {([
+                [next.a, SNIPPETS[next.a][next.ai]],
+                [next.b, SNIPPETS[next.b][next.bi]],
+              ] as [Letter, string][]).map(([k, t]) => (
+                <button key={k} type="button" role="radio" aria-checked={false} onClick={() => setA((x) => ({ ...x, extra: [...x.extra, { ...next, pick: k }] }))}>
+                  {t}
+                </button>
+              ))}
             </div>
-          ))}
-        </>
-      )}
+          </>
+        ) : (
+          <div className={s.card}>
+            <h2>That&rsquo;s everything</h2>
+            <p className={s.muted} style={{ margin: 0 }}>
+              Tap below to see how you&rsquo;re wired. Once you do, your answers are final.
+            </p>
+          </div>
+        ))}
 
       <div className={s.nav}>
-        <button className="btn btn-ghost" onClick={() => go(step - 1)} disabled={pending}>
+        <button className="btn btn-ghost" onClick={back} disabled={pending}>
           Back
         </button>
-        {step < total - 1 ? (
+        {step < PAGES.length - 1 ? (
           <button className="btn btn-gold" disabled={!pageDone} onClick={() => go(step + 1)}>
             Next
           </button>
         ) : (
-          <button className="btn btn-gold" disabled={!pageDone || pending} onClick={finish}>
-            {pending ? "Working it out…" : "See my results"}
-          </button>
+          !next && (
+            <button className="btn btn-gold" disabled={pending} onClick={finish}>
+              {pending ? "Working it out…" : "See my results"}
+            </button>
+          )
         )}
       </div>
-      {!pageDone && <p className={s.hint}>Answer each one to continue.</p>}
+      {!pageDone && page?.part !== 3 && <p className={s.hint}>Answer each one to continue.</p>}
       {error && <p className="notice notice-bad">{error}</p>}
     </div>
   );
@@ -210,71 +221,44 @@ export function Assessment() {
 
 function Results({ name, r }: { name: string; r: Result }) {
   const first = name.trim().split(/\s+/)[0];
-  const [a, b] = r.top.map((k) => STRENGTHS[k]);
+  const top = r.order.slice(0, 2);
+  const d = describe(r.letters);
+  const tiers: [string, string, Letter[], string][] = [
+    ["Your natural strengths", "This is the work that gives you energy. Look for a job built around it.", top, s.t1],
+    ["You can do these well", "You're good at these, in doses. They don't drain you, and they don't fuel you either.", r.order.slice(2, 4), s.t2],
+    ["These wear you down", "You can do some of it. Just don't build your whole day around it.", r.order.slice(4, 6), s.t3],
+  ];
   return (
     <div className={s.results}>
       <p className={s.partLabel}>{first}, here&rsquo;s how you&rsquo;re wired</p>
       <h2 className={s.big}>
-        {a.name} <span>+</span> {b.name}
+        {TRAITS[top[0]].label} <span>+</span> {TRAITS[top[1]].label}
       </h2>
-      <div className={s.topGrid}>
-        {[a, b].map((t) => (
-          <div key={t.name} className={s.topCard}>
-            <h3>{t.name}</h3>
-            <p className={s.tag}>{t.short}</p>
-            <p>{t.about}</p>
-          </div>
-        ))}
-      </div>
-
-      <section className={s.block}>
-        <h3>Where you could shine</h3>
-        <ul className={s.chips}>
-          {r.roles.map((x) => (
-            <li key={x}>{x}</li>
-          ))}
-        </ul>
-      </section>
-
-      <section className={s.block}>
-        <h3>Also strong</h3>
-        <p>
-          {r.next.map((k) => STRENGTHS[k].name).join(" and ")}. You can lean on these and enjoy them, even if they&rsquo;re
-          not the center of who you are.
+      {d && (
+        <p className={s.typeLine}>
+          <b>{d.name}.</b> {d.line}
         </p>
-      </section>
-
-      <section className={s.block}>
-        <h3>What wears you down</h3>
-        <p>
-          A job full of {STRENGTHS[r.low[0]].drain}, or {STRENGTHS[r.low[1]].drain}. You can do some of it. Just don&rsquo;t
-          build your whole day around it.
-        </p>
-      </section>
-
-      <section className={s.block}>
-        <h3>How you like to work</h3>
-        <ul className={s.plain}>
-          {r.style.map((x) => (
-            <li key={x.dim}>{x.text[0].toUpperCase() + x.text.slice(1)}</li>
-          ))}
-        </ul>
-      </section>
-
-      <section className={s.block}>
-        <h3>All nine, side by side</h3>
-        <div className={s.bars}>
-          {r.ranked.map((x) => (
-            <div key={x.key} className={s.bar}>
-              <span>{STRENGTHS[x.key].name}</span>
-              <div>
-                <i style={{ width: `${Math.max(4, x.score)}%` }} className={r.top.includes(x.key) ? s.hi : r.low.includes(x.key) ? s.lo : ""} />
+      )}
+      {tiers.map(([h, p, ks, cls]) => (
+        <section key={h} className={`${s.tier} ${cls}`}>
+          <h3>{h}</h3>
+          <div className={s.tierGrid}>
+            {ks.map((k) => (
+              <div key={k}>
+                <b>{TRAITS[k].label}</b>
+                <span>{TRAITS[k].short}</span>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
+            ))}
+          </div>
+          <p>{p}</p>
+        </section>
+      ))}
+      {d && (
+        <section className={s.block}>
+          <h3>Where you could shine</h3>
+          <p>{d.thrives}</p>
+        </section>
+      )}
       <p className={s.pilot}>
         This is a new assessment we&rsquo;re testing. If something here doesn&rsquo;t sound like you, that&rsquo;s exactly what
         we want to hear.

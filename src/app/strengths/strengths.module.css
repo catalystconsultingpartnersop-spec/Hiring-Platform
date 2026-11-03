@@ -65,3 +65,17 @@
 }
 
 .change { font-size: 14px; color: var(--ink-3); margin: -4px 0 14px; }
+.typeLine { font-size: 18px; color: var(--ink-2); line-height: 1.55; margin: -10px 0 8px; }
+.typeLine b { color: var(--ink); }
+.tier { border-radius: var(--radius-lg); padding: 20px 22px; margin-top: 14px; }
+.tier h3 { font-size: 19px; margin: 0 0 10px; }
+.tier p { margin: 10px 0 0; color: var(--ink-2); line-height: 1.55; }
+.tierGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tierGrid div { display: grid; gap: 2px; background: #fff; border-radius: var(--radius); padding: 12px 14px; }
+.tierGrid b { font-size: 17px; }
+.tierGrid span { font-size: 14.5px; color: var(--ink-2); line-height: 1.4; }
+.t1 { background: #fff6d6; border: 2px solid var(--marigold); }
+.t2 { background: var(--wash); }
+.t3 { background: #fff; border: 1.5px dashed var(--line); }
+.t3 .tierGrid div { background: var(--wash); }
+@media (max-width: 600px) { .tierGrid { grid-template-columns: 1fr; } }

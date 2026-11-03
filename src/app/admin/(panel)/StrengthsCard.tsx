@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { STRENGTHS, type Result } from "@/lib/assessment";
+import { summarize } from "@/lib/assessment";
 import { candidateUrl } from "@/lib/format";
 import { effectiveReps } from "@/lib/reps";
 import { CopyLink } from "./CopyLink";
@@ -19,7 +19,7 @@ export async function StrengthsCard({ staffId }: { staffId: string }) {
       .map((c) => [c.email.toLowerCase(), c] as const),
   );
   const seen = new Set<string>();
-  const results = ((taken ?? []) as { details: { email?: string; result: Result } }[])
+  const results = ((taken ?? []) as { details: { email?: string; result: unknown } }[])
     .map((r) => ({ c: mine.get((r.details.email ?? "").toLowerCase()), result: r.details.result }))
     .filter((x) => x.c && !seen.has(x.c.id) && seen.add(x.c.id))
     .slice(0, 12);
@@ -47,7 +47,7 @@ export async function StrengthsCard({ staffId }: { staffId: string }) {
               <a href={`/admin/candidates/${c!.id}`}>
                 <b>{c!.full_name}</b>
               </a>
-              <span className="small muted">{result.top.map((k) => STRENGTHS[k].name).join(" + ")}</span>
+              <span className="small muted">{summarize(result)?.top.join(" + ")}</span>
             </li>
           ))}
         </ul>

@@ -1,9 +1,9 @@
 import { requireAdmin } from "@/lib/session";
 import { db } from "@/lib/db";
-import { Result, STRENGTHS } from "@/lib/assessment";
+import { summarize } from "@/lib/assessment";
 import { candidateUrl } from "@/lib/format";
 
-type Row = { id: number; at: string; details: { name: string; email?: string; result: Result } };
+type Row = { id: number; at: string; details: { name: string; email?: string; result: unknown } };
 
 export default async function AssessmentsPage() {
   await requireAdmin();
@@ -33,16 +33,16 @@ export default async function AssessmentsPage() {
               <tr>
                 <th>When</th>
                 <th>Who</th>
+                <th>Result</th>
                 <th>Natural strengths</th>
-                <th>Also strong</th>
-                <th>Drains them</th>
-                <th>Could shine in</th>
-                <th>Work style</th>
+                <th>Can do well</th>
+                <th>Wears them down</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => {
-                const x = r.details.result;
+                const x = summarize(r.details.result);
+                if (!x) return null;
                 return (
                   <tr key={r.id}>
                     <td style={{ whiteSpace: "nowrap" }}>
@@ -52,11 +52,12 @@ export default async function AssessmentsPage() {
                       <strong>{r.details.name}</strong>
                       {r.details.email ? <div className="small muted">{r.details.email}</div> : null}
                     </td>
-                    <td><strong>{x.top.map((k) => STRENGTHS[k].name).join(" + ")}</strong></td>
-                    <td>{x.next.map((k) => STRENGTHS[k].name).join(", ")}</td>
-                    <td>{x.low.map((k) => STRENGTHS[k].name).join(", ")}</td>
-                    <td>{x.roles.join(", ")}</td>
-                    <td className="small">{x.style.map((s) => s.text).join("; ")}</td>
+                    <td style={{ whiteSpace: "nowrap", fontWeight: 700 }}>
+                      {x.letters ? `${x.letters.slice(0, 2)} / ${x.letters.slice(2, 4)} / ${x.letters.slice(4)}` : <span className="small muted">Earlier version</span>}
+                    </td>
+                    <td><strong>{x.top.join(" + ")}</strong></td>
+                    <td>{x.mid.join(", ")}</td>
+                    <td>{x.low.join(", ")}</td>
                   </tr>
                 );
               })}
