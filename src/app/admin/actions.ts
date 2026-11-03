@@ -1076,18 +1076,62 @@ export async function disconnectGoogleCalls() {
   revalidatePath("/admin/settings");
 }
 
-export async function makeTestRoom(): Promise<{ link?: string; error?: string }> {
+export async function makeTestRoom(cohost?: string): Promise<{ link?: string; error?: string; note?: string }> {
   const me = await requireAdmin();
   try {
     const { newRecordedMeeting } = await import("@/lib/googleCalls");
-    const room = await newRecordedMeeting();
+    const email = (cohost ?? "").trim();
+    const room = await newRecordedMeeting(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null);
     if (!room) return { error: "Google isn't connected yet." };
-    await logActivity(me.email, "test_meet_room", { link: room.link });
-    await setSetting("last_test_room", room);
-    return { link: room.link };
+    await logActivity(me.email, "test_meet_room", { link: room.link, cohost: email || null, cohost_result: room.cohost ?? null });
+    await setSetting("last_test_room", { link: room.link, space: room.space });
+    return {
+      link: room.link,
+      note: room.cohost ? (room.cohost.ok ? `${email} is a co-host of this room.` : `Couldn't make ${email} a co-host: ${room.cohost.error}`) : undefined,
+    };
   } catch (e) {
     return { error: (e as Error).message };
   }
+}
+
+// What Google actually saved for some calls (for the Calls page and the candidate page).
+export type RecStatus = "recorded" | "processing" | "not_recorded" | "no_call_yet" | "unknown" | "upcoming";
+export async function recordingStatuses(callIds: string[]): Promise<Record<string, RecStatus>> {
+  const me = await requireStaff();
+  const ids = callIds.filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 30);
+  if (!ids.length) return {};
+  const { data } = await db().from("onboarding_calls").select("id, meet_space, starts_at, staff_id, candidate_id, status").in("id", ids);
+  const { recordingStatus } = await import("@/lib/googleCalls");
+  const out: Record<string, RecStatus> = {};
+  await Promise.all(
+    ((data ?? []) as { id: string; meet_space: string | null; starts_at: string; staff_id: string; candidate_id: string; status: string }[]).map(async (k) => {
+      if (!k.meet_space || k.status === "cancelled") return;
+      if (!me.manager && k.staff_id !== me.id && !(await canSeeCandidate(me, k.candidate_id))) return;
+      out[k.id] = Date.parse(k.starts_at) > Date.now() ? "upcoming" : await recordingStatus(k.meet_space);
+    }),
+  );
+  return out;
+}
+
+// One-time and safe to repeat: make each rep a co-host of their upcoming calls' rooms.
+export async function cohostUpcomingCalls(): Promise<{ lines?: string[]; error?: string }> {
+  const me = await requireAdmin();
+  const { data } = await db()
+    .from("onboarding_calls")
+    .select("id")
+    .eq("status", "booked")
+    .not("meet_space", "is", null)
+    .gte("starts_at", new Date(Date.now() - 3600e3).toISOString());
+  const { cohostForCall } = await import("@/lib/calls");
+  let ok = 0;
+  const failed: string[] = [];
+  for (const k of data ?? []) {
+    const r = await cohostForCall(k.id as string);
+    if (r?.ok) ok++;
+    else if (r) failed.push(r.error ?? "unknown");
+  }
+  await logActivity(me.email, "meet_cohosts_added", { ok, failed: failed.length });
+  return { lines: [`Reps added as co-hosts on ${ok} upcoming call${ok === 1 ? "" : "s"}.`, ...(failed.length ? [`${failed.length} didn't work: ${[...new Set(failed)].join("; ")}`] : [])] };
 }
 
 export async function checkTestRoom(): Promise<{ lines?: string[]; error?: string }> {
@@ -1241,6 +1285,7 @@ export async function handCallToOwner(callId: string) {
   if (count || !(await withinHours(owner, k.starts_at, k.ends_at))) redirect("/admin/calls?hand=busy");
   const { data: was } = await db().from("staff").select("email, full_name").eq("id", k.staff_id).maybeSingle();
   await db().from("onboarding_calls").update({ staff_id: owner }).eq("id", callId);
+  await (await import("@/lib/calls")).cohostForCall(callId);
   const { sendBookingEmails } = await import("@/lib/calls");
   await sendBookingEmails(callId, false, true, true);
   if (was?.email)
@@ -1277,6 +1322,7 @@ export async function moveCall(callId: string, form: FormData) {
   const inHours = await withinHours(to, k.starts_at, k.ends_at);
   const { data: was } = await db().from("staff").select("email").eq("id", k.staff_id).maybeSingle();
   await db().from("onboarding_calls").update({ staff_id: to }).eq("id", callId);
+  await (await import("@/lib/calls")).cohostForCall(callId);
   const { sendBookingEmails } = await import("@/lib/calls");
   await sendBookingEmails(callId, false, true, tell);
   if (was?.email)

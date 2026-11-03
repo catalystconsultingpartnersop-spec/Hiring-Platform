@@ -48,8 +48,10 @@ export async function bookCall(candidateId: string, startIso: string, candidateT
 
   // Its own Google Meet room that records and takes notes, if Google is connected.
   try {
-    const meet = await newRecordedMeeting();
+    const { data: rep } = await db().from("staff").select("email").eq("id", repId).maybeSingle();
+    const meet = await newRecordedMeeting(rep?.email);
     if (meet) await db().from("onboarding_calls").update({ meet_link: meet.link, meet_space: meet.space }).eq("id", callId);
+    if (meet?.cohost && !meet.cohost.ok) await logActivity("system", "meet_cohost_failed", { call_id: callId, error: meet.cohost.error });
   } catch (e) {
     console.error("could not make a Meet room", e);
     await logActivity("system", "meet_room_failed", { call_id: callId, error: (e as Error).message.slice(0, 300) });
@@ -150,7 +152,7 @@ export async function sendBookingEmails(callId: string, cancelled: boolean, hand
 <p>${escapeHtml(c.email)}${c.phone ? `, ${escapeHtml(c.phone)}` : ""}</p>
 ${app.looking_for ? `<p>Looking for: ${escapeHtml(app.looking_for)}</p>` : ""}
 ${app.no_resume ? `<p style="padding:10px 12px;background:#fde8e2;border-radius:8px"><strong>No resume yet.</strong> They told us they don't have one. Use the call to go through their work history; afterwards, click <strong>Make a clean version</strong> in the Resume box on their profile to build one from the call.</p>` : ""}
-${link ? `<p>Video link: <a href="${escapeHtml(link)}">${escapeHtml(link)}</a>${recorded ? "<br><small>This room records and takes notes on its own, so you can focus on the candidate.</small>" : ""}</p>` : `<p><strong>You don't have a video link saved.</strong> Add one on your My hours page, or email the candidate a link.</p>`}
+${link ? `<p>Video link: <a href="${escapeHtml(link)}">${escapeHtml(link)}</a>${recorded ? `<br><small>This room records and takes notes on its own, so you can focus on the candidate. <strong>Join from a computer, signed in to Google as ${escapeHtml(rep.email)}</strong>: the recording only starts once you're in.</small>` : ""}</p>` : `<p><strong>You don't have a video link saved.</strong> Add one on your My hours page, or email the candidate a link.</p>`}
 <p style="padding:10px 12px;background:#fff8e1;border-radius:8px">We asked them to take the <strong>6 Working Genius assessment</strong> at workinggenius.com before the call. Their replies come straight to you. If you don't have their results a day before, send them a friendly reminder.</p>
 <p><a href="${teamUrl()}/admin/candidates/${c.id}">Open their profile</a> · <a href="${teamUrl()}/admin/calls">All your calls</a></p>`,
     attachments: [{ filename: "onboarding-call.ics", content: ics(true) }],
@@ -173,4 +175,15 @@ export async function cancelCall(callId: string, actor: string) {
   await sendBookingEmails(callId, true);
   await logActivity(actor, "onboarding_call_cancelled", { call_id: callId });
   return true;
+}
+
+// Make the call's rep a co-host of its Meet room, so the recording starts when they join.
+export async function cohostForCall(callId: string): Promise<{ ok: boolean; error?: string } | null> {
+  const { data: k } = await db().from("onboarding_calls").select("id, meet_space, staff(email)").eq("id", callId).maybeSingle();
+  const email = (k?.staff as { email?: string } | null)?.email;
+  if (!k?.meet_space || !email) return null;
+  const { addCohost } = await import("./googleCalls");
+  const r = await addCohost(k.meet_space, email).catch((e) => ({ ok: false, error: (e as Error).message }));
+  if (!r.ok) await logActivity("system", "meet_cohost_failed", { call_id: callId, error: r.error });
+  return r;
 }

@@ -109,7 +109,10 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         try {
           d = c.application?.call_draft ? JSON.parse(c.application.call_draft) : null;
         } catch {}
-        return <CallDraftPanel candidateId={c.id} madeAt={d?.made_at ?? null} notes={d?.private_notes ?? null} />;
+        const k = [...callRows]
+          .filter((x) => (x as { meet_space?: string | null }).meet_space && x.status !== "cancelled")
+          .sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at))[0];
+        return <CallDraftPanel candidateId={c.id} callId={k?.id ?? null} madeAt={d?.made_at ?? null} notes={d?.private_notes ?? null} />;
       })()}
       <ResumePanel
         candidateId={c.id}

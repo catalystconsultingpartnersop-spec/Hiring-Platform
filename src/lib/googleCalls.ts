@@ -79,7 +79,21 @@ async function accessToken(): Promise<string | null> {
 
 // A fresh Meet room: anyone with the link joins without waiting, and it
 // records, transcribes and takes notes on its own.
-export async function newRecordedMeeting(): Promise<{ link: string; space: string } | null> {
+// Google only starts the automatic recording once a host or co-host joins (on the
+// web). The host is our company account, so each call's rep is made a co-host.
+export async function addCohost(space: string, email: string): Promise<{ ok: boolean; error?: string }> {
+  const token = await accessToken();
+  if (!token) return { ok: false, error: "Google isn't connected." };
+  const res = await fetch(`https://meet.googleapis.com/v2/${space}/members`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify({ email: email.trim().toLowerCase(), role: "COHOST" }),
+  });
+  if (res.ok || res.status === 409) return { ok: true };
+  return { ok: false, error: `${res.status}: ${(await res.text()).slice(0, 200)}` };
+}
+
+export async function newRecordedMeeting(cohost?: string | null): Promise<{ link: string; space: string; cohost?: { ok: boolean; error?: string } } | null> {
   const token = await accessToken();
   if (!token) return null;
   const res = await fetch("https://meet.googleapis.com/v2/spaces", {
@@ -99,7 +113,8 @@ export async function newRecordedMeeting(): Promise<{ link: string; space: strin
   });
   if (!res.ok) throw new Error(`Google Meet said no (${res.status}): ${(await res.text()).slice(0, 300)}`);
   const s = (await res.json()) as { name: string; meetingUri: string };
-  return { link: s.meetingUri, space: s.name };
+  const added = cohost ? await addCohost(s.name, cohost).catch((e) => ({ ok: false, error: (e as Error).message })) : undefined;
+  return { link: s.meetingUri, space: s.name, cohost: added };
 }
 
 // What Google saved for a Meet room: recordings, transcripts and notes.
@@ -178,4 +193,19 @@ export async function roomTranscript(space: string): Promise<string | null> {
   // Nothing ready yet, or nothing in it: say which, so it's never a mystery.
   if (!seen.length || !seen.some((s) => s === "FILE_GENERATED" || s === "ENDED")) return null;
   throw new Error(`Google's transcript came back empty (calls: ${(recs.conferenceRecords ?? []).length}, transcripts: ${seen.join(", ")}, pages read: ${entryPages}).`);
+}
+
+// "recorded" | "processing" | "not_recorded" | "no_call_yet" for a room, from what Google saved.
+export async function recordingStatus(space: string): Promise<"recorded" | "processing" | "not_recorded" | "no_call_yet" | "unknown"> {
+  try {
+    const calls = await roomArtifacts(space);
+    if (!calls) return "unknown";
+    if (!calls.length) return "no_call_yet";
+    const all = calls.flatMap((c) => [...c.recordings, ...c.transcripts]);
+    if (all.includes("FILE_GENERATED")) return "recorded";
+    if (all.length) return "processing";
+    return calls.some((c) => !c.ended) ? "processing" : "not_recorded";
+  } catch {
+    return "unknown";
+  }
 }

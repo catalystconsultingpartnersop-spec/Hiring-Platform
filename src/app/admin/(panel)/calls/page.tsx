@@ -7,6 +7,7 @@ import { requireStaff } from "@/lib/session";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 import { cancelCallByStaff, handCallToOwner, markCall } from "../../actions";
 import { MoveCallForm } from "./MoveCallForm";
+import { RecBadge, RecProvider } from "./RecBadge";
 import styles from "../admin.module.css";
 
 type Row = {
@@ -15,6 +16,7 @@ type Row = {
   status: string;
   staff_id: string;
   meet_link?: string | null;
+  meet_space?: string | null;
   candidates: { id: string; full_name: string; email: string; phone: string | null; application: Record<string, string>; added_by: string | null };
   staff: { full_name: string | null; email: string; meeting_link: string | null; time_zone: string | null };
 };
@@ -105,11 +107,18 @@ export default async function CallsPage({ searchParams }: PageProps<"/admin/call
                 {admin && <td>{r.staff.full_name || r.staff.email}</td>}
                 <td>
                   <span className={`tag ${cls}`}>{label}</span>
+                  {!showActions && <RecBadge id={r.id} />}
                 </td>
                 <td>
                   <div className={styles.inline}>
                     {showActions && (r.meet_link || r.staff.meeting_link) && (
-                      <a className="btn btn-small btn-gold" href={(r.meet_link || r.staff.meeting_link)!} target="_blank" rel="noopener noreferrer">
+                      <a
+                        className="btn btn-small btn-gold"
+                        href={(r.meet_link || r.staff.meeting_link)!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={r.meet_link ? `Join from a computer, signed in to Google as ${r.staff.email}, so the call records.` : undefined}
+                      >
                         Join
                       </a>
                     )}
@@ -175,7 +184,11 @@ export default async function CallsPage({ searchParams }: PageProps<"/admin/call
       <h2 className={styles.h2}>Coming up</h2>
       {upcoming.length ? table(upcoming, true) : <p className="panel panel-wash">No calls booked yet.</p>}
       <h2 className={styles.h2}>Last two weeks</h2>
-      {recent.length ? table(recent, false) : <p className="panel panel-wash">Nothing yet.</p>}
+      {recent.length ? (
+        <RecProvider ids={recent.filter((r) => r.meet_space && r.status !== "cancelled").slice(0, 30).map((r) => r.id)}>{table(recent, false)}</RecProvider>
+      ) : (
+        <p className="panel panel-wash">Nothing yet.</p>
+      )}
     </>
   );
 }
