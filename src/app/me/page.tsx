@@ -1,4 +1,4 @@
-import { UploadHelper } from "@/components/UploadHelper";
+import { strengthsLink } from "@/lib/strengthsLink";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -11,7 +11,7 @@ import { repFor } from "@/lib/notify";
 import { currentCandidateId, signedToken } from "@/lib/session";
 import { formatInZone, nowMs } from "@/lib/time";
 import { loadPath, pathState } from "@/lib/path";
-import { hideMyProfile, showMyProfile, signOutCandidate, uploadMyResults } from "./actions";
+import { hideMyProfile, showMyProfile, signOutCandidate } from "./actions";
 import { Intro, Intros } from "./Intros";
 import styles from "./me.module.css";
 
@@ -170,23 +170,13 @@ export default async function MyPage({ searchParams }: PageProps<"/me">) {
             )}
           {upcoming && !c.assessment_path && !c.working_genius && (
             <section className="panel" style={{ marginTop: 0, marginBottom: 18, borderColor: "var(--marigold)" }}>
-              <h2 className={styles.h2} style={{ margin: 0 }}>Before your call: take your strengths assessment</h2>
+              <h2 className={styles.h2} style={{ margin: 0 }}>Before your call: take our Strengths Assessment</h2>
               <p className="small" style={{ margin: "6px 0 12px" }}>
-                It takes about 10 minutes and shows the kind of work that gives you energy. Taking it before your call makes it much more useful, because we can spend the time on you.
+                It&rsquo;s free, takes about 8 minutes, and shows the kind of work that gives you energy. Taking it before your call makes it much more useful, because we can spend the time on you.
               </p>
-              <a className="btn btn-gold btn-small" href="https://www.workinggenius.com" target="_blank" rel="noopener noreferrer">
+              <a className="btn btn-gold btn-small" href={strengthsLink(c.id)} target="_blank" rel="noopener noreferrer">
                 Take the assessment
               </a>
-              <form action={uploadMyResults} style={{ marginTop: 14, display: "flex", gap: 10, alignItems: "end", flexWrap: "wrap" }}>
-                <UploadHelper />
-                <label className="field" style={{ flex: "1 1 240px", margin: 0 }}>
-                  <span>Done already? Upload your results</span>
-                  <input className="input" type="file" name="assessment" accept=".pdf,image/*" required />
-                </label>
-                <button className="btn btn-small" type="submit">
-                  Upload
-                </button>
-              </form>
             </section>
           )}
           <section className={`panel ${styles.journey}`} aria-label="Your progress">

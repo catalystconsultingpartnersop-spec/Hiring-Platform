@@ -73,7 +73,7 @@ export async function draftOwnerPage(candidateId: string): Promise<{ page: Owner
     c.work_mode && `Work setting: ${WORK_MODE_LABEL[c.work_mode as keyof typeof WORK_MODE_LABEL] ?? c.work_mode}`,
     salaryRange(c.salary_min, c.salary_max) && `Salary they're looking for: ${salaryRange(c.salary_min, c.salary_max)}`,
     languagesText(c.languages) && `Languages: ${languagesText(c.languages)}`,
-    p.primary.length && `Natural strengths (from their Working Genius): ${p.primary.map((l) => TRAITS[l].label.toLowerCase()).join(", ")}`,
+    p.primary.length && `Natural strengths (from their Strengths Assessment): ${p.primary.map((l) => TRAITS[l].label.toLowerCase()).join(", ")}`,
     p.secondary.length && `Also good at: ${p.secondary.map((l) => TRAITS[l].label.toLowerCase()).join(", ")}`,
     d && `How they work: ${d.thrives} ${d.alsoBrings ?? ""}`,
     c.headline && `Current headline: ${c.headline}`,
@@ -103,7 +103,7 @@ Voice: warm and positive, but clear, precise and practical. No hype, no jokes, n
 Strict rules:
 - Anonymous: never use their name, employers, clients, schools or exact job titles that would identify them. Say "they".
 - Only use facts from the material above. Never invent numbers, tools, results or experience. If the material is thin, write less.
-- Never mention weaknesses, things they find draining, Working Genius letters or jargon.
+- Never mention weaknesses, things they find draining, assessment letters or jargon.
 
 Return only JSON:
 {

@@ -225,7 +225,7 @@ async function ReminderPanel({ c, hasCall }: { c: Candidate; hasCall: boolean })
   };
   const options: ReminderOption[] = [];
   if (!x.working_genius)
-    options.push({ kind: "assessment", label: "Take the Working Genius assessment", hint: "Links to the assessment and asks them to reply with their results.", lastSent: last("assessment") });
+    options.push({ kind: "assessment", label: "Take our Strengths Assessment", hint: "A link to our free assessment. Their result lands on their profile by itself.", lastSent: last("assessment") });
   if (!hasCall)
     options.push({ kind: "book", label: "Book their call", hint: "A link to pick a time for their call with you.", lastSent: last("book") });
   if (x.promise_signed_at === null)

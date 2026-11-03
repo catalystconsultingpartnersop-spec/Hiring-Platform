@@ -1,4 +1,5 @@
 import { db, logActivity } from "./db";
+import { strengthsLink } from "./strengthsLink";
 import { escapeHtml, sendEmail } from "./email";
 import { candidate as candMail } from "./emails";
 import { teamUrl } from "./format";
@@ -44,7 +45,7 @@ export async function beforeCallNudges() {
         const when = formatInZone(call.starts_at, call.candidate_time_zone ?? COMPANY_TZ);
         await sendEmail({
           to: c.email,
-          ...candMail.reminder({ kind: "assessment", name: c.full_name, rep: repName, callSoon: when }),
+          ...candMail.reminder({ kind: "assessment", name: c.full_name, rep: repName, callSoon: when, link: strengthsLink(c.id) }),
           replyTo: rep.active ? rep.email : undefined,
           fromName: repName ?? undefined,
         });
@@ -57,7 +58,7 @@ export async function beforeCallNudges() {
           subject: `Coming up: your call with ${c.full_name}, ${whenRep}`,
           html: `<p>Hi ${escapeHtml((rep.full_name ?? "").split(" ")[0] || "there")},</p>
 <p>You have an onboarding call with <strong>${escapeHtml(c.full_name)}</strong> ${escapeHtml(whenRep)}.</p>
-<p>${hasResults ? "Their Working Genius results are in. Take a look before you talk." : "Their Working Genius results aren't in yet. We've sent them a friendly reminder from you."}</p>
+<p>${hasResults ? "Their Strengths Assessment result is in. Take a look before you talk." : "Their Strengths Assessment result isn't in yet. We've sent them a friendly reminder from you."}</p>
 <p><a href="${teamUrl()}/admin/candidates/${c.id}">Open their profile</a></p>`,
           replyTo: c.email,
         });

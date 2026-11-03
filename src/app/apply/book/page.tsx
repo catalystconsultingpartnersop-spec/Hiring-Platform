@@ -25,7 +25,6 @@ export default async function BookPage({ searchParams }: PageProps<"/apply/book"
       {candidateId ? (
         <ApplyFlow
           times={times}
-          assessmentUrl={process.env.ASSESSMENT_URL || "https://www.workinggenius.com"}
           startToken={token}
           agreement={{ how: HOW_IT_WORKS, ask: YOUR_PART }}
           startFirst={first || "again"}

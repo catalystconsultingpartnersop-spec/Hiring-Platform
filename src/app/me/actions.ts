@@ -12,7 +12,6 @@ import { candidateUrl, teamUrl } from "@/lib/format";
 
 import { candidateHired, repFor } from "@/lib/notify";
 import { money, refCode } from "@/lib/format";
-import { saveAssessmentFile } from "@/lib/assessmentFile";
 import { Meeting, Reference, RefRequest } from "@/lib/path";
 import { emailBooked, emailCandidateDeclined, emailNeedOtherTimes, emailRefsGiven, emailVerdict } from "@/lib/pathEmails";
 import { currentCandidateId, endCandidateSession, hashToken, isOwnerEmail, newLoginToken, startCandidateSession } from "@/lib/session";
@@ -294,19 +293,6 @@ export async function signPromise(form: FormData) {
     `<p><strong>${escapeHtml(c.full_name)}</strong> signed their candidate agreement as &ldquo;${escapeHtml(name)}&rdquo;.${goLive ? " Their profile is now live for employers." : ""}</p>`,
   );
   redirect(`/me?done=${goLive ? "promise-live" : "promise"}`);
-}
-
-// ---------- Their Working Genius results ----------
-
-export async function uploadMyResults(form: FormData) {
-  const c = await me();
-  const file = form.get("assessment");
-  if (!(file instanceof File) || file.size === 0) redirect("/me?done=results-error");
-  const problem = await saveAssessmentFile(c.id, file);
-  if (problem) redirect("/me?done=results-error");
-  await logActivity(`candidate:${c.email}`, "assessment_uploaded", { candidate: refCode(c.id) });
-  await tellTeam(c, `${c.full_name} uploaded their assessment results`, `<p><strong>${escapeHtml(c.full_name)}</strong> uploaded their Working Genius results. They're on their profile.</p>`);
-  redirect("/me?done=results");
 }
 
 // ---------- "I got hired" ----------

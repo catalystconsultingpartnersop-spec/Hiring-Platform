@@ -1,17 +1,15 @@
-import { parseResult } from "@/lib/strengths";
+import { parseResult, TRAITS, type Letter } from "@/lib/strengths";
 
-const NAME: Record<string, string> = { W: "Wonder", I: "Invention", D: "Discernment", G: "Galvanizing", E: "Enablement", T: "Tenacity" };
-
-// A candidate's Working Genius at a glance (team only): geniuses (green), competencies (yellow), frustrations (red).
+// A candidate's Strengths Assessment at a glance (team only): natural strengths (green), can do well (yellow), wear them down (red).
 export function WGChips({ result, uploaded, tried }: { result: string | null; uploaded: boolean; tried: boolean }) {
   const l = parseResult(result);
   if (l.length < 6) {
-    if (!uploaded) return <span className="small muted">Not uploaded</span>;
+    if (!uploaded) return <span className="small muted">Not taken yet</span>;
     return <span className="small muted">{tried ? "Uploaded, couldn't read it. Open to add" : "Uploaded, reading…"}</span>;
   }
   const chip = (xs: string[], tone: "good" | "mid" | "bad") => (
     <span
-      title={`${tone === "good" ? "Geniuses" : tone === "mid" ? "Competencies" : "Frustrations"}: ${xs.map((x) => NAME[x]).join(", ")}`}
+      title={`${tone === "good" ? "Natural strengths" : tone === "mid" ? "Can do well" : "Wears them down"}: ${xs.map((x) => TRAITS[x as Letter].label).join(", ")}`}
       style={{
         display: "inline-block",
         padding: "2px 9px",

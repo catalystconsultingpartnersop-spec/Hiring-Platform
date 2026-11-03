@@ -19,7 +19,7 @@ const TOTAL = ITEMS.length + PAIRS.length + MAX_EXTRA;
 type Saved = { step: number; name: string; email: string; a: Answers };
 const empty: Answers = { items: {}, pairs: {}, extra: [] };
 
-export function Assessment() {
+export function Assessment({ token }: { token: string | null }) {
   const [step, setStep] = useState(-1); // -1 intro, 0..4 pages
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -66,7 +66,7 @@ export function Assessment() {
 
   function finish() {
     start(async () => {
-      const r = await submitAssessment(name, email, a).catch(() => ({ error: "Something went wrong. Try again." }) as { error: string });
+      const r = await submitAssessment(name, email, a, token).catch(() => ({ error: "Something went wrong. Try again." }) as { error: string });
       if ("result" in r && r.result) {
         setResult(r.result);
         try {

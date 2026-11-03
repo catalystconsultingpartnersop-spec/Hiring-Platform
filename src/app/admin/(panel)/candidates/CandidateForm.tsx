@@ -4,7 +4,7 @@ import { cleanLanguages, LANGUAGES } from "@/lib/languages";
 import { UploadHelper } from "@/components/UploadHelper";
 import { startTransition, useActionState, useState } from "react";
 import type { Candidate } from "@/lib/db";
-import { describe, parseResult, suggestedHeadline, type Letter } from "@/lib/strengths";
+import { describe, parseResult, suggestedHeadline, TRAIT_LIST, type Letter } from "@/lib/strengths";
 import {
   headlineIdeas,
   HIGHLIGHT_IDEAS,
@@ -23,15 +23,8 @@ import { OwnerPageFields } from "./OwnerPageFields";
 import { findBlanks, tidyHeadline, tidyHighlight, tidyParagraphs } from "@/lib/tidyText";
 
 
-// Staff-facing names for the six letters (owners never see these).
-const LETTERS: { key: Letter; name: string }[] = [
-  { key: "W", name: "Wonder" },
-  { key: "I", name: "Invention" },
-  { key: "D", name: "Discernment" },
-  { key: "G", name: "Galvanizing" },
-  { key: "E", name: "Enablement" },
-  { key: "T", name: "Tenacity" },
-];
+// The six kinds of work, in our own words.
+const LETTERS: { key: Letter; name: string }[] = TRAIT_LIST.map((t) => ({ key: t.key, name: t.label }));
 
 const APPLICATION_LABELS: Record<string, string> = {
   looking_for: "What kind of work they want",
@@ -101,6 +94,7 @@ export function CandidateForm({
   const addLine = (line: string) => setHighlights((h) => (h.trim() ? `${h.trimEnd()}\n${line}` : line));
   const addToSummary = (bit: string) => setSummary((cur) => (cur.trim() ? `${cur.trimEnd()} ${bit}` : bit));
   const app = c?.application ?? {};
+  const ours = (app as { strengths?: { letters: string; at: string } }).strengths ?? null;
   const hasApp = Object.values(app).some(Boolean);
 
   async function readResume(file: File | undefined) {
@@ -243,28 +237,35 @@ export function CandidateForm({
       {/* 2. Assessment */}
       <section className={styles.step}>
         <h2>
-          <span className={styles.num}>2</span> Their Working Genius result
+          <span className={styles.num}>2</span> Their Strengths Assessment result
           <Req />
         </h2>
-        <p className="small muted">Tap the six in order, strongest first. Tap one again to undo from there.</p>
-        <label className={styles.reportUpload}>
-          <span>
-            {c?.assessment_path ? "Replace their Working Genius report" : "Attach their Working Genius report (optional)"}
-          </span>
-          <input type="file" name="assessment" accept=".pdf,image/*" />
-          <small>
-            PDF or a photo. For the team only; clients never see it.
-            {c?.assessment_path && (
+        <p className="small muted">
+          Fills in by itself when they take our Strengths Assessment. To change it, tap the six in order, strongest first. Tap one
+          again to undo from there.
+        </p>
+        {ours && (
+          <p className="small" style={{ margin: "0 0 10px" }}>
+            From our Strengths Assessment, {new Date(ours.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}:{" "}
+            <b>{`${ours.letters.slice(0, 2)} ${ours.letters.slice(2, 4)} ${ours.letters.slice(4)}`}</b>
+            {code !== ours.letters && (
               <>
                 {" "}
-                <a href={`/api/assessment/${c.id}`} target="_blank" rel="noopener noreferrer">
-                  Open the current one
-                </a>
+                <button type="button" className="btn btn-ghost btn-small" onClick={() => setOrder(parseResult(ours.letters))}>
+                  Use this
+                </button>
               </>
             )}
-          </small>
-        </label>
-        <div className={styles.letters} role="group" aria-label="Working Genius order">
+          </p>
+        )}
+        {c?.assessment_path && (
+          <p className="small muted" style={{ margin: "0 0 10px" }}>
+            <a href={`/api/assessment/${c.id}`} target="_blank" rel="noopener noreferrer">
+              Open the report they sent earlier
+            </a>
+          </p>
+        )}
+        <div className={styles.letters} role="group" aria-label="Strengths order">
           {LETTERS.map((l) => {
             const pos = order.indexOf(l.key);
             return (

@@ -196,9 +196,9 @@ export const candidate = {
         html:
           hi(o.name) +
           (o.callSoon ? p(`I'm looking forward to our call, ${esc(o.callSoon)}.`) : "") +
-          p((o.callSoon ? "If you haven't yet, please take" : "Just a friendly reminder: when you get a chance, please take") + " the 6 Working Genius assessment. It takes about 10 minutes and shows the kind of work that gives you energy. It helps me describe your strengths to employers the right way.") +
-          button("https://www.workinggenius.com", "Take the assessment") +
-          p(`When you're done, just reply to this email with your results, or upload them on <a href="${candidateUrl()}/me" style="color:#17213a">your page</a>.`) +
+          p((o.callSoon ? "If you haven't yet, please take" : "Just a friendly reminder: when you get a chance, please take") + " our free Strengths Assessment. It takes about 8 minutes and shows the kind of work that gives you energy. It helps me describe your strengths to employers the right way.") +
+          button(o.link ?? `${candidateUrl()}/strengths`, "Take the assessment") +
+          p("Your results come straight to me when you finish. Nothing else to send.") +
           sign,
       };
     if (o.kind === "book")
@@ -255,7 +255,7 @@ export const candidate = {
       p("Thanks for becoming a candidate with us. Someone from our team will reach out within one business day to find a time to talk."),
   }),
 
-  onboardingBooked: (o: { name: string; rep: string; when: string; link: string | null; manage: string; minutes?: number; recorded?: boolean }): Mail => ({
+  onboardingBooked: (o: { name: string; rep: string; when: string; link: string | null; manage: string; minutes?: number; recorded?: boolean; assess: string }): Mail => ({
     audience: "candidate",
     subject: `You're booked: ${o.when}`,
     html:
@@ -265,7 +265,7 @@ export const candidate = {
       (o.link ? button(o.link, "Join the video call") : p("We'll email you the video link before the call.")) +
       p("We'll talk about what you're good at, what you enjoy, and the kind of role where you'd shine. No preparation needed.") +
       (o.recorded ? quiet("We record the call so your rep can focus on you instead of taking notes. The notes help write your profile, and only our team sees them.") : "") +
-      box(`<strong>Before we talk:</strong> please take the 6 Working Genius assessment at <a href="https://www.workinggenius.com" style="color:#17213a">workinggenius.com</a>. It takes about 10 minutes and shows the kind of work that gives you energy. Reply to this email with your results, or bring them to the call.`) +
+      box(`<strong>Before we talk:</strong> please take our free <a href="${o.assess}" style="color:#17213a">Strengths Assessment</a>. It takes about 8 minutes and shows the kind of work that gives you energy. Your results come straight to us when you finish.`) +
       quiet(`Need a different time? <a href="${o.manage}" style="color:#5b667e">Reschedule or cancel here</a>.`),
   }),
 
@@ -414,7 +414,7 @@ export const team = {
     html:
       hi(o.name) +
       p(`Welcome to the team. Before anything else: this work is about people. You're here because you care about candidates and want to help them find work that truly fits them. That comes first, always. The site guides clients for you, so your time and warmth go to candidates.`) +
-      p(`<strong>Your job, in one line:</strong> help each candidate discover what they're naturally great at, and the kind of role they belong in. We use the 6 Working Genius assessment to put words to it: ask every candidate to take it at <a href="https://www.workinggenius.com" style="color:#17213a">workinggenius.com</a> before your call (they buy it themselves), then walk through their results together.`) +
+      p(`<strong>Your job, in one line:</strong> help each candidate discover what they're naturally great at, and the kind of role they belong in. We use our own Strengths Assessment to put words to it. Every candidate is asked to take it before your call (it's free, about 8 minutes), and the result lands on their profile by itself. Then walk through it together.`) +
       box(
         `<strong>Your terms</strong><br>` +
           (o.isAdmin ? "Admin access to the back office." : `Commission: <strong>${esc(o.terms)}</strong>, paid within 30 days after we collect the fee and the candidate starts work.<br>Independent contractor. Candidates never pay anything.`) +

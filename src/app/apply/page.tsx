@@ -19,7 +19,6 @@ export default async function ApplyPage() {
       </div>
       <ApplyFlow
         times={times}
-        assessmentUrl={process.env.ASSESSMENT_URL || "https://www.workinggenius.com"}
         agreement={{ how: HOW_IT_WORKS, ask: YOUR_PART }}
         reps={reps.list}
         referred={reps.referred}

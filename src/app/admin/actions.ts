@@ -1,5 +1,6 @@
 "use server";
 
+import { strengthsLink } from "@/lib/strengthsLink";
 import { hiddenStaffIds } from "@/lib/hiddenStaff";
 import { canSeeCandidate } from "@/lib/reps";
 import { cleanLanguages } from "@/lib/languages";
@@ -254,7 +255,7 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
   if (status === "listed") {
     const missing = [
       !record.role_category && "the role they want",
-      !describe(record.working_genius as string | null) && "their Working Genius result (at least the top two)",
+      !describe(record.working_genius as string | null) && "their Strengths Assessment result (at least the top two)",
     ].filter(Boolean);
     if (missing.length) return { error: `To list this candidate, fill in: ${missing.join(", ")}. Nothing was saved.` };
   }
@@ -405,13 +406,13 @@ ${hireSummaryHtml(notice)}`,
   if (report instanceof File && report.size > 0) {
     const n = report.name.toLowerCase();
     const ext = report.type === "application/pdf" || n.endsWith(".pdf") ? "pdf" : /\.(png|jpe?g)$/.test(n) || report.type.startsWith("image/") ? (n.endsWith(".png") || report.type === "image/png" ? "png" : "jpg") : null;
-    if (!ext) resumeProblem = "the Working Genius report needs to be a PDF or a photo";
-    else if (report.size > 6 * 1024 * 1024) resumeProblem = "the Working Genius report is over 6 MB";
+    if (!ext) resumeProblem = "the assessment report needs to be a PDF or a photo";
+    else if (report.size > 6 * 1024 * 1024) resumeProblem = "the assessment report is over 6 MB";
     else {
       const path = `${candidateId}/assessment.${ext}`;
       const type = ext === "pdf" ? "application/pdf" : ext === "png" ? "image/png" : "image/jpeg";
       const { error } = await db().storage.from("resumes").upload(path, Buffer.from(await report.arrayBuffer()), { contentType: type, upsert: true });
-      if (error) resumeProblem = `the Working Genius report didn't upload (${error.message})`;
+      if (error) resumeProblem = `the assessment report didn't upload (${error.message})`;
       else await db().from("candidates").update({ assessment_path: path }).eq("id", candidateId);
     }
   }
@@ -1081,7 +1082,7 @@ export async function sendCandidateReminder(candidateId: string, kind: ReminderK
   } else {
     // Signed by whoever clicked (if they're a named rep), otherwise the candidate's rep.
     const rep = me.id ? { full_name: me.name, email: me.email } : await repFor(candidateId);
-    const link = kind === "book" ? `${candidateUrl()}/apply/book?c=${signedToken(`cand_${candidateId}`, 30)}` : undefined;
+    const link = kind === "book" ? `${candidateUrl()}/apply/book?c=${signedToken(`cand_${candidateId}`, 30)}` : kind === "assessment" ? strengthsLink(candidateId) : undefined;
     const r = await sendEmail({
       to: c.email,
       ...candMail.reminder({ kind, name: c.full_name, rep: rep?.full_name ?? null, link }),

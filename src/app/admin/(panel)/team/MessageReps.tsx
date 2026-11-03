@@ -3,16 +3,22 @@
 import { useActionState } from "react";
 import { FormState, messageAllReps } from "../../actions";
 
-const SUBJECT = "What's new for reps";
-const BODY = `A few updates to make your work easier:
+const SUBJECT = "New: our own Strengths Assessment";
+const BODY = `Big update: we no longer use Working Genius. We have our own Strengths Assessment, built for our candidates. It's free and takes about 8 minutes.
 
-1. Your job, in one line: help each candidate discover what they're naturally great at, and the kind of role they belong in.
+What changes for you:
 
-2. Working Genius before every call. As soon as a candidate books, ask them to take the 6 Working Genius assessment at workinggenius.com (they buy it themselves) and send you their results. Their booking email now asks them too, and their replies come straight to you. On the call, walk through their two geniuses and their frustrations, then talk about roles where they'd shine.
+1. You don't ask candidates to buy anything or send you results. Their booking email links to our assessment, and the day-before reminder does too.
 
-3. Share kit, in your menu. Two ready-made pictures with short messages: one to find candidates in your network, one for business owners. On your phone, tap Share and pick the person. Your links carry your name, so anyone who signs up through them is credited to you.
+2. When they finish, their result lands on their profile by itself, and you get an email. On their profile it shows as six strengths: two natural strengths, two they can do well, and two that wear them down. You can still change the order if the call tells you otherwise.
 
-4. The rep guide now has a quick tour of your dashboard. Worth two minutes.
+3. The six, in our words: Big-picture thinking, Fresh ideas, Sound judgment, Getting people moving, Supporting the team, Finishing the job.
+
+4. Want someone to take it? On your dashboard, the Strengths Assessment box has Send on WhatsApp and Copy link. Or open their profile and use Send a reminder.
+
+5. Please don't mention Working Genius to candidates or businesses anymore. It's our Strengths Assessment now.
+
+Take it yourself first (it's on your dashboard). It makes the conversation with candidates much easier.
 
 Thank you for what you do for our candidates.`;
 

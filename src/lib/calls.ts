@@ -4,6 +4,7 @@ import { brandName, candidateUrl, teamUrl } from "./format";
 import { candidate as candMail } from "./emails";
 import { callIcs } from "./ics";
 import { signedToken } from "./session";
+import { strengthsLink } from "./strengthsLink";
 import { repsFreeAt } from "./slots";
 import { COMPANY_TZ, formatInZone, validTimeZone } from "./time";
 import { newRecordedMeeting } from "./googleCalls";
@@ -141,7 +142,7 @@ export async function sendBookingEmails(callId: string, cancelled: boolean, hand
     to: c.email,
     ...(handedOver
       ? candMail.callNewHost({ name: c.full_name, rep: rep.full_name || "our team", when: whenCandidate, link, manage })
-      : candMail.onboardingBooked({ name: c.full_name, rep: rep.full_name || "our team", when: whenCandidate, link, manage, recorded, minutes: Math.round((Date.parse(call.ends_at) - Date.parse(call.starts_at)) / 60e3) || 45 })),
+      : candMail.onboardingBooked({ name: c.full_name, rep: rep.full_name || "our team", when: whenCandidate, link, manage, recorded, assess: strengthsLink(c.id), minutes: Math.round((Date.parse(call.ends_at) - Date.parse(call.starts_at)) / 60e3) || 45 })),
     attachments: [{ filename: "career-call.ics", content: ics(false) }],
     // Replies (like their assessment results) go straight to their rep.
     replyTo: rep.email,
@@ -156,7 +157,7 @@ export async function sendBookingEmails(callId: string, cancelled: boolean, hand
 ${app.looking_for ? `<p>Looking for: ${escapeHtml(app.looking_for)}</p>` : ""}
 ${app.no_resume ? `<p style="padding:10px 12px;background:#fde8e2;border-radius:8px"><strong>No resume yet.</strong> They told us they don't have one. Use the call to go through their work history; afterwards, click <strong>Make a clean version</strong> in the Resume box on their profile to build one from the call.</p>` : ""}
 ${link ? `<p>Video link: <a href="${escapeHtml(link)}">${escapeHtml(link)}</a>${recorded ? `<br><small>This room records and takes notes on its own, so you can focus on the candidate. <strong>Join signed in to Google as ${escapeHtml(callEmail)}</strong> (phone or computer): the recording only starts once you're in with that account.</small>` : ""}</p>` : `<p><strong>You don't have a video link saved.</strong> Add one on your My hours page, or email the candidate a link.</p>`}
-<p style="padding:10px 12px;background:#fff8e1;border-radius:8px">We asked them to take the <strong>6 Working Genius assessment</strong> at workinggenius.com before the call. Their replies come straight to you. If you don't have their results a day before, send them a friendly reminder.</p>
+<p style="padding:10px 12px;background:#fff8e1;border-radius:8px">We asked them to take our <strong>Strengths Assessment</strong> before the call. Their result lands on their profile by itself. If it isn't there a day before, we send them a friendly reminder from you.</p>
 <p><a href="${teamUrl()}/admin/candidates/${c.id}">Open their profile</a> · <a href="${teamUrl()}/admin/calls">All your calls</a></p>`,
     attachments: [{ filename: "onboarding-call.ics", content: ics(true) }],
   });

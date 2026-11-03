@@ -45,7 +45,7 @@ export default async function RepGuide() {
         </p>
         <p>
           <strong>Your job, in one line:</strong> help each candidate discover what they&rsquo;re naturally great at, and the
-          kind of role they belong in. We use the 6 Working Genius assessment to put words to it. When a candidate knows
+          kind of role they belong in. We use our own Strengths Assessment to put words to it. When a candidate knows
           where they shine, and an employer knows what they need, that&rsquo;s a setup for success.
         </p>
         <p className={styles.missionLabel} style={{ marginTop: 16 }}>
@@ -151,8 +151,8 @@ export default async function RepGuide() {
             them live right away. <a href="#profile">More</a>
           </li>
           <li>
-            <b>Assessment before the call.</b> Candidates are asked right after booking, can upload their results, and get a
-            reminder the day before if they haven&rsquo;t. You get a heads-up saying whether the results are in.
+            <b>Our own Strengths Assessment.</b> Candidates are asked right after booking, and their result lands on their
+            profile by itself. They get a reminder the day before if they haven&rsquo;t taken it, and you get a heads-up.
           </li>
           <li>
             <b>Your candidate link shows only the candidate side.</b> People who come in through it or the flyer don&rsquo;t
@@ -187,23 +187,22 @@ export default async function RepGuide() {
         <li id="call" style={{ scrollMarginTop: 16 }}>
           <h3>Get them assessed, then take the call</h3>
           <p>
-            Candidates are asked to take the <b>6 Working Genius assessment</b> at{" "}
-            <a href="https://www.workinggenius.com" target="_blank" rel="noreferrer">workinggenius.com</a> as soon as they
-            book, and they can upload their results on their own page. They buy it themselves. The day before your call, if
-            their results aren&rsquo;t in, the site sends them a friendly reminder from you, and you get a heads-up email
-            saying whether the results are in.
+            Candidates are asked to take our free <b>Strengths Assessment</b> as soon as they book (about 8 minutes). When
+            they finish, their result lands on their profile by itself and you get an email. The day before your call, if
+            it isn&rsquo;t in, the site sends them a friendly reminder from you, and you get a heads-up email saying whether
+            it&rsquo;s in. You can also send it to anyone from the Strengths Assessment box on your dashboard.
           </p>
           <p className={styles.tip}>
             Need to nudge someone? Open their profile and use <b>Send a reminder</b>. One tap sends a friendly email from
-            you: take the Working Genius assessment, book their call, sign their agreement, or send their resume. Replies
+            you: take our Strengths Assessment, book their call, sign their agreement, or send their resume. Replies
             come straight to your inbox, and the same reminder can&rsquo;t go out twice in two days, so you never have to
             chase anyone yourself.
           </p>
           <p>
             You get an email and calendar invite for every booking. On the call, get to know them: what gives them
-            energy, what drains them, what they&rsquo;ve done, what they want next. Walk through their Working Genius
-            results together: their two geniuses (the work that gives them energy), and their frustrations (the work that
-            drains them). Then talk about the roles where that would shine. Be warm. For many people, this is the first time
+            energy, what drains them, what they&rsquo;ve done, what they want next. Walk through their Strengths Assessment
+            together: their two natural strengths (the work that gives them energy), the two they can do well, and the two
+            that wear them down. Then talk about the roles where that would shine. Be warm. For many people, this is the first time
             someone has really listened.
           </p>
           <p className={styles.tip}>
@@ -223,8 +222,8 @@ export default async function RepGuide() {
             If their call was recorded, most of this is already drafted for you: open them from Candidates and start at the
             &ldquo;From the call&rdquo; box. Otherwise, click <Link href="/admin/candidates/new">+ Add candidate</Link> (or
             open them from Candidates). Add their
-            resume, which fills in their details. Tap their Working Genius letters, strongest first, and upload their results
-            report (only our team ever sees it). The site then suggests roles and words for the headline. Fill in role,
+            resume, which fills in their details. Their strengths fill in by themselves once they take our Strengths Assessment;
+            you can change the order if the call tells you otherwise. The site then suggests roles and words for the headline. Fill in role,
             location and salary, then a headline and a short story.
           </p>
           <p className={styles.tip}>
@@ -282,7 +281,7 @@ export default async function RepGuide() {
         </div>
         <div>
           <p className={styles.label}>Only after they sign</p>
-          <p>Name, contact details and resume. Never your private notes, and never the Working Genius letters.</p>
+          <p>Name, contact details and resume. Never your private notes, and never their assessment results.</p>
         </div>
       </div>
 

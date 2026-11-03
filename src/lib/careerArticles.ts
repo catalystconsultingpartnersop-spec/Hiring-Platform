@@ -18,7 +18,7 @@ Job titles are a poor guide. Instead, think about your days. Which parts of your
 Do friends ask you to plan the trip, fix the spreadsheet, talk them through a decision, or cheer them on? What people rely on you for is usually a strength you take for granted.
 
 ## Try the six kinds of work
-Most work is a mix of six things: dreaming up questions, coming up with ideas, judging what will work, rallying people, helping, and finishing. Most of us are naturally drawn to two of them. The Working Genius assessment takes about 10 minutes and puts words to yours.
+Most work is a mix of six things: dreaming up questions, coming up with ideas, judging what will work, rallying people, helping, and finishing. Most of us are naturally drawn to two of them. Our free Strengths Assessment takes about 8 minutes and puts words to yours. Find it at thecandidatecollection.com/strengths.
 
 ## Then talk it through
 That's what our call is for. You don't need to arrive with answers. We'll help you connect what you enjoy with the kinds of roles where it matters.`,

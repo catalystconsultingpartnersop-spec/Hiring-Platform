@@ -9,7 +9,6 @@ import { ApplyState, askUsToReachOut, bookTime, saveExtras, submitApplication } 
 
 export function ApplyFlow({
   times,
-  assessmentUrl,
   startToken = null,
   startFirst = "",
   agreement,
@@ -17,7 +16,6 @@ export function ApplyFlow({
   referred = null,
 }: {
   times: string[];
-  assessmentUrl: string;
   agreement: { how: string[]; ask: string[] };
   reps?: [string, string][];
   referred?: string | null;
@@ -46,16 +44,15 @@ export function ApplyFlow({
           <a href={booked.manage}>Reschedule or cancel here</a>.
         </p>
         <div className="assess-nudge" style={{ marginTop: 22 }}>
-          <p className="assess-nudge-title">Before your call: take your strengths assessment</p>
+          <p className="assess-nudge-title">Before your call: take our Strengths Assessment</p>
           <p>
-            It takes about 10 minutes and shows the kind of work that gives you energy and the kind that drains you.
+            It&rsquo;s free, takes about 8 minutes, and shows the kind of work that gives you energy and the kind that drains you.
             Taking it before we talk makes our call much more useful, because we can spend the time on you and where
             you&rsquo;d shine.
           </p>
-          <a className="btn btn-gold btn-small" href={assessmentUrl} target="_blank" rel="noopener noreferrer">
+          <a className="btn btn-gold btn-small" href={`/strengths${state.token ? `?t=${encodeURIComponent(state.token)}` : ""}`} target="_blank" rel="noopener noreferrer">
             Take the assessment
           </a>
-          {state.token && <UploadResults token={state.token} />}
         </div>
         {state.token && <Extras token={state.token} />}
         <p className="notice" style={{ marginTop: 18 }}>
@@ -258,35 +255,6 @@ export function ApplyFlow({
   );
 }
 
-// Already took the assessment? Upload the results so the rep has them before the call.
-function UploadResults({ token }: { token: string }) {
-  const [state, action, pending] = useActionState<{ ok?: boolean; error?: string }, FormData>(saveExtras.bind(null, token), {});
-  if (state.ok) {
-    return (
-      <p className="notice notice-good" role="status" style={{ marginTop: 14 }}>
-        Got it, thank you! Your rep will have your results before the call.
-      </p>
-    );
-  }
-  return (
-    <form action={action} style={{ marginTop: 16, borderTop: "1px solid var(--line)", paddingTop: 14 }}>
-      <UploadHelper />
-      <label className="field">
-        <span>Done already? Upload your results (PDF or photo)</span>
-        <input className="input" type="file" name="assessment" accept=".pdf,image/*" required />
-      </label>
-      {state.error && (
-        <p className="notice notice-bad" role="alert" style={{ marginTop: 10 }}>
-          {state.error}
-        </p>
-      )}
-      <button className="btn btn-small" type="submit" disabled={pending} style={{ marginTop: 10 }}>
-        {pending ? "Uploading…" : "Upload my results"}
-      </button>
-    </form>
-  );
-}
-
 function Extras({ token }: { token: string }) {
   const [state, action, pending] = useActionState<{ ok?: boolean; error?: string }, FormData>(saveExtras.bind(null, token), {});
   if (state.ok) {
@@ -298,13 +266,9 @@ function Extras({ token }: { token: string }) {
   }
   return (
     <details className="apply-extras">
-      <summary>Optional: two quick things that help us prepare</summary>
+      <summary>Optional: one quick thing that helps us prepare</summary>
       <form action={action}>
         <label className="field" style={{ marginTop: 14 }}>
-          <span>Your Working Genius letters, if you have them</span>
-          <input className="input" name="working_genius" placeholder="e.g. WDGEIT, or your top two like Wonder and Discernment" />
-        </label>
-        <label className="field">
           <span>Any companies that should never see your profile?</span>
           <input className="input" name="never_show_to" placeholder="e.g. your current employer" />
           <small>

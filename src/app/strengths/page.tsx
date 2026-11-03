@@ -8,12 +8,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function StrengthsPage() {
+export default async function StrengthsPage({ searchParams }: PageProps<"/strengths">) {
+  const t = (await searchParams).t;
   return (
     <>
       <section className={s.hero}>
         <div className="wrap">
-          <p className={s.label}>Strengths assessment</p>
+          <p className={s.label}>Strengths Assessment</p>
           <h1>Discover what you&rsquo;re naturally great at.</h1>
           <p className={s.lead}>
             A few minutes of honest answers, and you&rsquo;ll see the kind of work that gives you energy, what wears you down,
@@ -22,7 +23,7 @@ export default function StrengthsPage() {
         </div>
       </section>
       <div className={`wrap ${s.main}`}>
-        <Assessment />
+        <Assessment token={typeof t === "string" ? t : null} />
       </div>
     </>
   );
