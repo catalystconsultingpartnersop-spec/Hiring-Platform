@@ -17,6 +17,8 @@ import {
 } from "@/lib/writingHelp";
 import { FormState, saveCandidate } from "../../actions";
 import styles from "./form.module.css";
+import { WordingHelp } from "./WordingHelp";
+import { findBlanks, tidyHeadline, tidyHighlight, tidyParagraphs } from "@/lib/tidyText";
 
 
 // Staff-facing names for the six letters (owners never see these).
@@ -148,6 +150,10 @@ export function CandidateForm({
         e.preventDefault();
         const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
         const fd = new FormData(e.currentTarget, submitter);
+        // Show the same tidy-up the save applies (spacing, capitals, periods).
+        setHeadline(tidyHeadline(headline));
+        setSummary(tidyParagraphs(summary));
+        setHighlights(highlights.split("\n").map(tidyHighlight).filter(Boolean).join("\n"));
         startTransition(() => action(fd));
       }}
     >
@@ -482,7 +488,7 @@ export function CandidateForm({
         <label className="field" style={{ marginTop: 14 }}>
           <span>Headline</span>
           <input
-            className="input"
+            className={`input ${findBlanks(headline).length ? styles.hasBlank : ""}`}
             name="headline"
             value={headline}
             onChange={(e) => setHeadline(e.target.value)}
@@ -502,7 +508,7 @@ export function CandidateForm({
         <label className="field">
           <span>Short summary</span>
           <textarea
-            className="textarea"
+            className={`textarea ${findBlanks(summary).length ? styles.hasBlank : ""}`}
             name="summary"
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
@@ -530,7 +536,7 @@ export function CandidateForm({
         <label className="field">
           <span>Highlights (one per line)</span>
           <textarea
-            className="textarea"
+            className={`textarea ${findBlanks(highlights).length ? styles.hasBlank : ""}`}
             name="highlights"
             value={highlights}
             onChange={(e) => setHighlights(e.target.value)}
@@ -547,6 +553,16 @@ export function CandidateForm({
             ))}
           </div>
         )}
+        <WordingHelp
+          candidateId={c?.id ?? null}
+          role={role}
+          value={{ headline, summary, highlights }}
+          onUse={(w) => {
+            if (w.headline) setHeadline(w.headline);
+            if (w.summary) setSummary(w.summary);
+            if (w.highlights) setHighlights(w.highlights);
+          }}
+        />
         <label className="field">
           <span>Full profile (shown only after a client signs)</span>
           <textarea className="textarea" name="full_profile" defaultValue={v("full_profile")} />

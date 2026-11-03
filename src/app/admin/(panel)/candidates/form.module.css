@@ -156,3 +156,14 @@
 .reportUpload { display: grid; gap: 4px; margin: 10px 0 14px; padding: 12px 14px; border: 1.5px dashed var(--line); border-radius: 12px; font-size: 14px; }
 .reportUpload > span { font-weight: 600; }
 .reportUpload small { color: var(--ink-2); }
+
+/* Wording help under the story fields */
+.wording { margin: 6px 0 14px; }
+.hasBlank { border-color: #d9b84a !important; background: #fffbea !important; }
+.blankNote { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; background: #fff8e1; border: 1px solid #ecd38a; border-radius: 10px; padding: 10px 12px; font-size: 14px; margin: 6px 0; }
+.wordingHint { font-size: 12.5px; color: var(--ink-2); width: auto !important; }
+.suggestion { border: 1px solid var(--line, #dfe3ea); border-left: 4px solid #d9b84a; border-radius: 10px; padding: 12px 14px; background: #fff; margin-top: 8px; }
+.suggestRow { margin: 8px 0; }
+.suggestRow b { font-size: 13px; color: var(--ink-2); }
+.suggestRow p { margin: 2px 0 0; white-space: pre-line; }
+.inlineBtns { display: flex; gap: 8px; margin-top: 10px; }

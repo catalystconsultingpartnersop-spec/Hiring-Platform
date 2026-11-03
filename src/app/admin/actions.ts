@@ -3,6 +3,7 @@
 import { hiddenStaffIds } from "@/lib/hiddenStaff";
 import { canSeeCandidate } from "@/lib/reps";
 import { cleanLanguages } from "@/lib/languages";
+import { tidyHeadline, tidyHighlight, tidyParagraphs } from "@/lib/tidyText";
 import { requestPromise } from "@/lib/promise";
 
 import { clearCatalog } from "@/lib/catalog";
@@ -221,7 +222,7 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
     also_roles: many("also_roles", get("role_category")),
     also_industries: many("also_industries", get("industry")),
     status,
-    headline: get("headline") || null,
+    headline: tidyHeadline(get("headline")) || null,
     role_category: get("role_category") || null,
     industry: get("industry") || null,
     level: get("level") || null,
@@ -232,8 +233,8 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
     salary_max: toInt(get("salary_max")),
     strengths: listFrom(get("strengths"), /[,\n]/),
     working_genius: get("working_genius") || null,
-    summary: get("summary") || null,
-    highlights: listFrom(get("highlights"), /\n/),
+    summary: tidyParagraphs(get("summary")) || null,
+    highlights: listFrom(get("highlights"), /\n/).map(tidyHighlight).filter(Boolean),
     ...(me.role === "admin" ? { fee_override_cents: dollarsToCents(get("fee_override")) } : {}),
     full_name: get("full_name"),
     email: get("email").toLowerCase(),
@@ -1080,6 +1081,29 @@ export async function checkTestRoom(): Promise<{ lines?: string[]; error?: strin
           `Call ${i + 1}${c.ended ? "" : " (still going)"}: recording ${word(c.recordings)}, transcript ${word(c.transcripts)}, notes ${word(c.notes)}.`,
       ),
     };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+// "Fix it for me" / "Polish wording" on the profile form. Suggests only; saves nothing.
+export async function suggestProfileWording(
+  candidateId: string | null,
+  mode: "fix" | "polish",
+  w: { headline: string; summary: string; highlights: string; role: string },
+): Promise<{ wording?: { headline: string; summary: string; highlights: string }; error?: string }> {
+  const me = await requireStaff();
+  if (candidateId && !(await canSeeCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
+  if (!(await allow(`wording:${me.id ?? me.email}`, 10, 60))) return { error: SLOW_DOWN };
+  const { suggestWording } = await import("@/lib/polishWording");
+  try {
+    const clip = (x: string, n: number) => String(x ?? "").slice(0, n);
+    const wording = await suggestWording(
+      { headline: clip(w.headline, 300), summary: clip(w.summary, 4000), highlights: clip(w.highlights, 3000) },
+      mode,
+      clip(w.role, 80),
+    );
+    return { wording };
   } catch (e) {
     return { error: (e as Error).message };
   }
