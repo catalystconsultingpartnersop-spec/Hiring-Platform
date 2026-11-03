@@ -1,7 +1,7 @@
 "use client";
 
 import { LANGUAGES } from "@/lib/languages";
-import { startTransition, useActionState, useState } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { TimePicker } from "@/components/TimePicker";
 import { ApplyState, askUsToReachOut, bookTime, saveExtras, submitApplication } from "./actions";
 
@@ -36,6 +36,7 @@ export function ApplyFlow({
   if (booked) {
     return (
       <div className="apply-card">
+        <ScrollHere />
         <p className="apply-step">You&rsquo;re booked</p>
         <h2>See you {booked.when}.</h2>
         <p>
@@ -68,6 +69,7 @@ export function ApplyFlow({
   if (state.ok) {
     return (
       <div className="apply-card">
+        <ScrollHere />
         <p className="apply-step">Step 2 of 2</p>
         <h2>Thanks, {state.first}! Now pick a time to talk.</h2>
         <p>
@@ -308,4 +310,15 @@ function Contact() {
       Questions? <a href="/contact?kind=work">Send us a note</a> and we&rsquo;ll get back to you. We&rsquo;re happy to help.
     </p>
   );
+}
+
+// When a new step appears, bring its top into view (on phones the page would
+// otherwise stay scrolled down at the bottom of the previous step).
+function ScrollHere() {
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const el = ref.current?.closest(".apply-card");
+    if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, []);
+  return <span ref={ref} aria-hidden="true" />;
 }
