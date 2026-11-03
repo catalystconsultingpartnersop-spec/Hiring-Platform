@@ -102,7 +102,7 @@ export function RepWork({ r, self, reps, canMove = false }: { r: RepSummary; sel
         <h2>Calls coming up</h2>
         {r.upcoming.length > 0 && (
           <p className={styles.sub}>
-            {self ? "Join" : "Reps join"} from a computer, signed in to Google as <b>{r.email}</b>. The call records by itself once {self ? "you're" : "they're"} in.
+            {self ? "Join" : "They join"} signed in to Google as <b>{r.callEmail}</b>. The call records by itself once {self ? "you're" : "they're"} in with that account.
           </p>
         )}
         {r.upcoming.length ? (
@@ -118,7 +118,7 @@ export function RepWork({ r, self, reps, canMove = false }: { r: RepSummary; sel
                 </span>
                 <span className={styles.actions}>
                   {k.meet_link && (
-                    <a className="btn btn-small btn-ghost" href={k.meet_link} target="_blank" rel="noreferrer" title="Join from a computer, signed in to your Google account, so the call records.">
+                    <a className="btn btn-small btn-ghost" href={k.meet_link} target="_blank" rel="noreferrer" title={`Join signed in to Google as ${r.callEmail}, so the call records.`}>
                       Join call
                     </a>
                   )}

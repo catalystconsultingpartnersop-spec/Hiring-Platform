@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { CallAccountField } from "./CallAccountField";
+import { callAccounts } from "@/lib/callAccounts";
 import { db } from "@/lib/db";
 import { dateShort } from "@/lib/format";
 
@@ -47,6 +49,7 @@ export default async function TeamPage() {
   const pct = await commissionPercent();
   const members = (data ?? []) as Member[];
   const hidden = await hiddenStaffIds();
+  const accounts = await callAccounts();
 
   const { data: counts } = await db().from("candidates").select("added_by").not("added_by", "is", null);
   const added = new Map<string, number>();
@@ -107,6 +110,7 @@ export default async function TeamPage() {
                         {owner ? m.full_name || m.email : <Link prefetch={false} href={`/admin/team/${m.id}`}>{m.full_name || m.email}</Link>}
                       </strong>
                       <div className="small muted">{m.email}</div>
+                      {m.active && !owner && me.role === "admin" && <CallAccountField staffId={m.id} value={accounts[m.id] ?? ""} />}
                     </td>
                     <td>
                       {owner ? (

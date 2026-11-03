@@ -58,7 +58,7 @@ export default async function CallsPage({ searchParams }: PageProps<"/admin/call
   const nameOf = new Map(((staffRows ?? []) as { id: string; full_name: string | null; email: string }[]).map((s) => [s.id, (s.full_name || s.email).split(" ")[0]]));
   const admin = me.manager;
   const mine = admin ? null : me.id;
-  const [upcoming, recent] = await Promise.all([load(mine, true), load(mine, false)]);
+  const [upcoming, recent, accounts] = await Promise.all([load(mine, true), load(mine, false), (await import("@/lib/callAccounts")).callAccounts()]);
 
   const table = (rows: Row[], showActions: boolean) => (
     <div className="table-wrap">
@@ -117,7 +117,7 @@ export default async function CallsPage({ searchParams }: PageProps<"/admin/call
                         href={(r.meet_link || r.staff.meeting_link)!}
                         target="_blank"
                         rel="noopener noreferrer"
-                        title={r.meet_link ? `Join from a computer, signed in to Google as ${r.staff.email}, so the call records.` : undefined}
+                        title={r.meet_link ? `Join signed in to Google as ${accounts[r.staff_id] || r.staff.email}, so the call records.` : undefined}
                       >
                         Join
                       </a>

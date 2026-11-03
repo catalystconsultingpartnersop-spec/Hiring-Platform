@@ -22,6 +22,7 @@ export type RepSummary = {
   id: string;
   name: string;
   email: string;
+  callEmail: string; // the Google account they join calls with
   partner: boolean;
   hasHours: boolean;
   signed: boolean; // signed their rep agreement (admins always count as signed)
@@ -55,6 +56,7 @@ export async function loadTeam(): Promise<RepSummary[]> {
   const callRows = (calls ?? []) as unknown as CallRow[];
   const candRows = (cands ?? []) as CandRow[];
   const hidden = await hiddenStaffIds();
+  const accounts = await (await import("./callAccounts")).callAccounts();
   const owner = await effectiveReps(candRows.map((c) => ({ id: c.id, added_by: c.added_by })));
   const hours = new Set((wins ?? []).map((w) => w.staff_id as string));
   const weekEnd = now + 7 * DAY;
@@ -73,6 +75,7 @@ export async function loadTeam(): Promise<RepSummary[]> {
         id: s.id,
         name: s.full_name || s.email,
         email: s.email,
+        callEmail: accounts[s.id] || s.email,
         partner: !!s.is_partner,
         hasHours: hours.has(s.id),
         signed: s.role === "admin" || !!s.agreement_signed_at,

@@ -13,10 +13,10 @@ const SAYS: Record<RecStatus, string> = {
   processing:
     "Google is still processing the recording. Check back in a few minutes.",
   not_recorded:
-    "This call wasn't recorded. Google only records once the rep joins from a computer, signed in to the Google account we have for them. Write their profile from your notes.",
+    "This call wasn't recorded. Google only records once the rep joins signed in to their company Google account. Write their profile from your notes.",
   no_call_yet: "Nobody joined this call's video room, so there's no recording.",
   upcoming:
-    "Their call will be recorded once you join from a computer, signed in to the Google account we have for you.",
+    "Their call will be recorded once you join signed in to your company Google account (it's on your dashboard).",
   unknown:
     "Their call was held in a recorded room. One click turns it into a first draft of their profile, plus private notes for the team.",
 };

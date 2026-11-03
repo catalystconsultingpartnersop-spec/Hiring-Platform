@@ -1113,6 +1113,35 @@ export async function recordingStatuses(callIds: string[]): Promise<Record<strin
   return out;
 }
 
+// A rep's company Google account for calls. Saving it also makes that account the
+// co-host on all their upcoming calls.
+export async function setCallAccountAction(staffId: string, email: string): Promise<{ ok?: string; error?: string }> {
+  const me = await requireAdmin();
+  const clean = email.trim().toLowerCase();
+  if (clean && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) return { error: "That doesn't look like an email address." };
+  const { setCallAccount } = await import("@/lib/callAccounts");
+  await setCallAccount(staffId, clean);
+  const { data } = await db()
+    .from("onboarding_calls")
+    .select("id")
+    .eq("staff_id", staffId)
+    .eq("status", "booked")
+    .not("meet_space", "is", null)
+    .gte("starts_at", new Date(Date.now() - 3600e3).toISOString());
+  const { cohostForCall } = await import("@/lib/calls");
+  let ok = 0;
+  let failed = "";
+  for (const k of data ?? []) {
+    const r = await cohostForCall(k.id as string);
+    if (r?.ok) ok++;
+    else if (r?.error) failed = r.error;
+  }
+  await logActivity(me.email, "call_account_set", { staff_id: staffId, email: clean, calls: ok });
+  revalidatePath("/admin/team");
+  if (failed) return { error: `Saved, but Google said no for some calls: ${failed}` };
+  return { ok: clean ? `Saved. Added to ${ok} upcoming call${ok === 1 ? "" : "s"}.` : "Removed." };
+}
+
 // One-time and safe to repeat: make each rep a co-host of their upcoming calls' rooms.
 export async function cohostUpcomingCalls(): Promise<{ lines?: string[]; error?: string }> {
   const me = await requireAdmin();
