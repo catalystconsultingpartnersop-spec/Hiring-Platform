@@ -95,6 +95,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
         </div>
       </div>
 
+      <div className="card-shelf">
       <div className={`wrap ${styles.layout}`}>
         <FiltersToggle active={active.length} count={rows.length} sort={<SortBy value={f.sort ?? ""} />}>
           <aside className={styles.rail} aria-label="Filters">
@@ -224,6 +225,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
             </div>
           )}
         </section>
+      </div>
       </div>
       <CompareTray />
     </>

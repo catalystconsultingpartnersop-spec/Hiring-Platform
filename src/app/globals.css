@@ -1,4 +1,5 @@
 :root {
+  --shelf: #eef1f6;
   --ink: #17213a;
   --ink-2: #4a5570;
   --ink-3: #7a8399;
@@ -626,7 +627,19 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 .badge-new { background: var(--marigold); }
 .badge-busy { background: var(--moss); color: #fff; }
 
-.card.card-store { padding: 0; gap: 0; overflow: visible; }
+.card.card-store {
+  padding: 0;
+  gap: 0;
+  overflow: visible;
+  border: 1.5px solid #d5dbe6;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(23, 33, 58, 0.06), 0 8px 22px rgba(23, 33, 58, 0.08);
+}
+.card-store .cover-card { margin: 10px 10px 0; border-radius: 12px; }
+.card-store .view-profile { display: block; margin-top: 12px; text-align: center; font-weight: 800; font-size: 15px; border: 1.5px solid var(--ink); border-radius: 999px; padding: 10px; }
+.card.card-store:has(.card-link:hover) .view-profile { background: var(--ink); color: var(--paper); }
+/* Grey behind lists of cards, so each card stands out as its own box. */
+.card-shelf { background: var(--shelf); width: 100%; padding-bottom: 40px; }
 .card-store .shortlist-btn { top: 10px; right: 10px; background: var(--paper); }
 .card-body { display: flex; flex-direction: column; gap: 8px; padding: 14px 18px 16px; flex: 1; }
 .card-vetted { font-size: 12.5px; color: var(--moss); font-weight: 600; margin: 0; }

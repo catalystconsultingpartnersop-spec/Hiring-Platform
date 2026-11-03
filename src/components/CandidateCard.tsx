@@ -165,6 +165,11 @@ export function CandidateCard({
             <strong>{fee != null ? money(fee) : "Ask"}</strong>
           </div>
         )}
+        {href && (
+          <span className="view-profile" aria-hidden="true">
+            View profile
+          </span>
+        )}
         {store && href && <CompareToggle id={c.id} />}
       </div>
       {href && <ShortlistButton id={c.id} />}
