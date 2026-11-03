@@ -184,3 +184,13 @@
 .missionKicker { margin: 18px 0 0; font-size: clamp(18px, 2vw, 22px); color: #6b4f00; font-weight: 600; }
 .missionLink { display: inline-flex; align-items: center; gap: 8px; margin-top: 26px; font-weight: 700; color: var(--ink); text-decoration: none; border-bottom: 2px solid var(--marigold); padding-bottom: 2px; }
 .missionLink::after { content: "→"; }
+
+.faqs { padding: clamp(40px, 6vw, 72px) 0 8px; }
+.faqs h2 { font-size: clamp(26px, 3.4vw, 36px); margin-bottom: 12px; }
+.faqs .wrap { max-width: 760px; }
+.faq { border-bottom: 1px solid var(--line); padding: 14px 0; }
+.faq summary { cursor: pointer; font-weight: 700; font-size: 17px; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; font-weight: 400; color: var(--ink-3); }
+.faq[open] summary::after { content: "\2013"; }
+.faq p { margin: 8px 0 0; color: var(--ink-2); line-height: 1.6; }

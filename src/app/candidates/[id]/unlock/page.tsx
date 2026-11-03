@@ -82,11 +82,15 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
                 <b>Not a fit? You owe nothing.</b> Just let us know, with one tap.
               </li>
               <li>
+                <b>No refunds once they start.</b> The fee pays for the introduction. If they never start work, ask us
+                within 30 days and we&rsquo;ll refund it.
+              </li>
+              <li>
                 <b>Hiring documents included.</b> Offer letter, NDA, scorecard and more, ready to fill in.
               </li>
               <li>
-                <b>Keep their details to yourself.</b> They&rsquo;re for your own hiring. If they&rsquo;re passed on and
-                someone else hires this person within 12 months, the fee still applies.
+                <b>Keep their details to yourself.</b> They&rsquo;re for your own hiring. If you, or anyone you share them
+                with, hires this person within 12 months, the fee applies.
               </li>
             </ul>
           </section>

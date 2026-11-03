@@ -101,8 +101,8 @@ export default async function Home() {
             <h1 className={styles.big}>Find the one you&rsquo;re looking for.</h1>
             <p className={styles.wink}>Or the one you didn&rsquo;t know you needed.</p>
             <p className={styles.lede}>
-              Scroll through our collection of vetted candidates. Look around, take your time, and see the talent
-              that&rsquo;s available to you.
+              Job seekers in the New York and New Jersey area, each interviewed one-on-one by our team. Browse free,
+              meet them free, and pay one flat fee only if you hire.
             </p>
             <div className={styles.cta}>
               <Link className="btn btn-gold" href="/candidates">
@@ -169,7 +169,7 @@ export default async function Home() {
             </div>
             <div>
               <h3>One fair, flat fee</h3>
-              <p>Usually $5,000, and only if you hire. Never a percentage of salary.</p>
+              <p>Usually $5,000, shown on every profile before you sign. Charged only if you hire. Never a percentage of salary.</p>
             </div>
           </div>
         </div>
@@ -206,13 +206,28 @@ export default async function Home() {
             </li>
             <li>
               <strong>Meet them, free</strong>
-              <span>See their name, resume and number in a minute. Card on file, nothing charged.</span>
+              <span>
+                See their name, resume and number in a minute. We ask for a card so candidates know you&rsquo;re serious.
+                Nothing is charged unless you hire.
+              </span>
             </li>
             <li>
               <strong>Hire with one click</strong>
               <span>One flat fee. You get a receipt and a ready-to-fill offer letter.</span>
             </li>
           </ol>
+        </div>
+      </section>
+
+      <section className={styles.faqs} aria-labelledby="faq-title">
+        <div className="wrap">
+          <h2 id="faq-title">Good to know</h2>
+          {OWNER_FAQ.map(([q, a]) => (
+            <details key={q} className={styles.faq}>
+              <summary>{q}</summary>
+              <p>{a}</p>
+            </details>
+          ))}
         </div>
       </section>
 
@@ -233,3 +248,27 @@ export default async function Home() {
     </>
   );
 }
+
+// The questions every owner asks, answered plainly.
+const OWNER_FAQ: [string, string][] = [
+  [
+    "Who are these people?",
+    "Job seekers in the New York and New Jersey area looking for a regular job. You hire them directly, onto your own payroll. We're not a staffing or temp agency.",
+  ],
+  [
+    "What does \u201cvetted\u201d mean?",
+    "Every candidate has a 30 to 45 minute one-on-one conversation with our team and takes a strengths assessment, so their profile shows what they've done and how they work best. We don't run background or reference checks; those are part of your own hiring.",
+  ],
+  [
+    "Why do you need my card if nothing is charged?",
+    "Candidates trust us with their name and phone number, so we only share them with employers who are serious. Your card is held securely by Stripe and charged only if you tell us you're hiring.",
+  ],
+  [
+    "When am I charged?",
+    "Only when you hire. Meeting and interviewing are free, and if someone isn't a fit you owe nothing. The fee is shown on each profile before you sign, and it's once, never a percentage of salary.",
+  ],
+  [
+    "What if the hire doesn't work out?",
+    "The fee pays for the introduction, so it isn't refunded and we don't replace a hire once they've started. The one exception: if they never start work, ask us within 30 days and we'll refund it. That's why meeting is free: take your time and get to know them first.",
+  ],
+];
