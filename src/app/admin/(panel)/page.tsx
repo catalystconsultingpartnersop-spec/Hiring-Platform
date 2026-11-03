@@ -98,7 +98,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
   if (failedMail?.length)
     todo.push({
       text: <>{failedMail.length} email{failedMail.length > 1 ? "s" : ""} didn&rsquo;t go out this week</>,
-      href: "/admin/activity",
+      href: "/admin/activity?only=email_failed",
       cta: "See which",
     });
   if (calls?.length) todo.push({ text: <>{calls.length} onboarding call{calls.length > 1 ? "s" : ""} in the next 7 days</>, href: "/admin/calls", cta: "See calls" });

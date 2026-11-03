@@ -2,14 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CAREER_ARTICLES, getCareerArticle } from "@/lib/careerArticles";
-import { brandName } from "@/lib/format";
 
 import { markupToHtml } from "@/lib/markup";
 import styles from "../../../hiring-help/help.module.css";
 
 export async function generateMetadata({ params }: PageProps<"/join/help/[slug]">): Promise<Metadata> {
   const a = getCareerArticle((await params).slug);
-  return a ? { title: `${a.title} | ${brandName()}`, description: a.blurb } : {};
+  return a ? { title: "${a.title}", description: a.blurb } : {};
 }
 
 export function generateStaticParams() {

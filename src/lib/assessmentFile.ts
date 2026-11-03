@@ -15,7 +15,7 @@ export async function saveAssessmentFile(candidateId: string, file: File): Promi
           ? "jpg"
           : null;
   if (!ext) return "Your results need to be a PDF or a photo.";
-  if (file.size > 6 * 1024 * 1024) return "That file is over 6 MB. Try a smaller one.";
+  if (file.size > 4.3 * 1024 * 1024) return "That file is over 4 MB. Try a smaller PDF, or a photo of your results.";
   const path = `${candidateId}/assessment.${ext}`;
   const type = ext === "pdf" ? "application/pdf" : ext === "png" ? "image/png" : "image/jpeg";
   const { error } = await db().storage.from("resumes").upload(path, Buffer.from(await file.arrayBuffer()), { contentType: type, upsert: true });

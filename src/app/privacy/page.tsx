@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { legalEntity } from "@/lib/agreement";
 import { brandName } from "@/lib/format";
 
-export const metadata: Metadata = { title: `Privacy policy | ${brandName()}` };
+export const metadata: Metadata = { title: "Privacy policy" };
 
 const UPDATED = "October 28, 2026";
 

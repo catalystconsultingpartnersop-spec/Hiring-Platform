@@ -4,15 +4,27 @@ import styles from "../admin.module.css";
 
 type Row = { id: number; at: string; actor: string; action: string; details: Record<string, unknown> };
 
-export default async function ActivityPage() {
+export default async function ActivityPage({ searchParams }: PageProps<"/admin/activity">) {
   await requireAdmin();
-  const { data } = await db().from("activity_log").select("*").order("at", { ascending: false }).limit(300);
+  const sp = await searchParams;
+  const only = typeof sp.only === "string" && /^[a-z_]{2,40}$/.test(sp.only) ? sp.only : null;
+  let q = db().from("activity_log").select("*").order("at", { ascending: false }).limit(300);
+  if (only) q = q.eq("action", only);
+  const { data } = await q;
   const rows = (data ?? []) as Row[];
   return (
     <>
       <div className="page-head" style={{ paddingBottom: 8 }}>
-        <h1>Activity</h1>
-        <p>Every sign-in, signature, payment and change, newest first. The last 300 are shown.</p>
+        <h1>{only === "email_failed" ? "Emails that didn\u2019t go out" : "Activity"}</h1>
+        <p>
+          {only ? (
+            <>
+              Only &ldquo;{only.replace(/_/g, " ")}&rdquo;, newest first. <a href="/admin/activity">Show everything</a>
+            </>
+          ) : (
+            "Every sign-in, signature, payment and change, newest first. The last 300 are shown."
+          )}
+        </p>
       </div>
       <div className="table-wrap">
         <table className={`table ${styles.log}`}>

@@ -8,6 +8,12 @@ import styles from "../../help.module.css";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ params }: PageProps<"/hiring-help/articles/[slug]">) {
+  const { slug } = await params;
+  const a = getArticle(slug);
+  return a ? { title: a.title, description: a.blurb } : {};
+}
+
 export default async function ArticlePage({ params }: PageProps<"/hiring-help/articles/[slug]">) {
   const { slug } = await params;
   const a = getArticle(slug);

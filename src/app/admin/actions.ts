@@ -1,6 +1,7 @@
 "use server";
 
 import { hiddenStaffIds } from "@/lib/hiddenStaff";
+import { canSeeCandidate } from "@/lib/reps";
 import { cleanLanguages } from "@/lib/languages";
 import { requestPromise } from "@/lib/promise";
 
@@ -208,6 +209,7 @@ const listFrom = (v: string, sep: RegExp) =>
 
 export async function saveCandidate(id: string | null, _prev: FormState, form: FormData): Promise<FormState> {
   const me = await requireStaff();
+  if (id && !(await canSeeCandidate(me, id))) return { error: "This candidate belongs to another rep." };
   const actor = staffActor(me);
   const get = (k: string) => String(form.get(k) ?? "").trim();
 
@@ -258,11 +260,9 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
   let candidateId = id;
   let merged = false;
   let wasListed = false;
-  let prevListedAt: string | null = null;
   if (id) {
     const { data: before } = await db().from("candidates").select("status, listed_at").eq("id", id).single();
     wasListed = before?.status === "listed";
-    prevListedAt = before?.listed_at ?? null;
     if (status === "listed" && !before?.listed_at) record.listed_at = new Date().toISOString();
     const { error } = await db().from("candidates").update(record).eq("id", id);
     if (error) return { error: `Could not save: ${error.message}` };
@@ -332,7 +332,7 @@ ${hireSummaryHtml(notice)}`,
   let resumeProblem = "";
   if (resume instanceof File && resume.size > 0) {
     const kind = resumeKind(resume);
-    if (!kind) resumeProblem = "the resume needs to be a PDF or Word file";
+    if (!kind) resumeProblem = "the resume needs to be a PDF, Word file or photo";
     else if (resume.size > 4 * 1024 * 1024) resumeProblem = "the resume is over 4 MB";
     else {
       const path = `${candidateId}/resume.${kind}`;
@@ -975,6 +975,7 @@ export async function messageAllReps(_prev: FormState, form: FormData): Promise<
 // Sends the candidate agreement again (e.g. they lost the email).
 export async function resendPromise(candidateId: string) {
   const me = await requireStaff();
+  if (!(await canSeeCandidate(me, candidateId))) return;
   const { data } = await db().from("candidates").select("*").eq("id", candidateId).single();
   if (!data || data.promise_signed_at) return;
   await requestPromise(candidateId, !!data.list_on_sign);
@@ -997,6 +998,7 @@ const REMINDER_GAP_HOURS = 48;
 
 export async function sendCandidateReminder(candidateId: string, kind: ReminderKind): Promise<FormState> {
   const me = await requireStaff();
+  if (!(await canSeeCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
   const { data: c } = await db().from("candidates").select("*").eq("id", candidateId).maybeSingle();
   if (!c) return { error: "Couldn't find this candidate." };
   if (!(await allow(`remind:${candidateId}`, 6, 60))) return { error: SLOW_DOWN };
@@ -1085,6 +1087,7 @@ export async function checkTestRoom(): Promise<{ lines?: string[]; error?: strin
 
 export async function draftProfileFromCall(candidateId: string): Promise<{ ok?: boolean; error?: string }> {
   const me = await requireStaff();
+  if (!(await canSeeCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
   if (!(await allow(`draft:${candidateId}`, 5, 60))) return { error: SLOW_DOWN };
   const { draftFromCall } = await import("@/lib/callDraft");
   const r = await draftFromCall(candidateId);
@@ -1243,6 +1246,7 @@ async function keepOriginalResume(candidateId: string) {
 
 export async function makeCleanResumeAction(candidateId: string): Promise<{ error?: string }> {
   const me = await requireStaff();
+  if (!(await canSeeCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
   const { makeCleanResume } = await import("@/lib/cleanResume");
   const r = await makeCleanResume(candidateId, me.name);
   if (!r.ok) return { error: r.error };
@@ -1252,6 +1256,7 @@ export async function makeCleanResumeAction(candidateId: string): Promise<{ erro
 
 export async function saveCleanResumeAction(candidateId: string, text: string): Promise<{ error?: string }> {
   const me = await requireStaff();
+  if (!(await canSeeCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
   if (!String(text ?? "").trim().startsWith("#")) return { error: "Start with the name line, like: # Full Name" };
   const { saveCleanResumeText } = await import("@/lib/cleanResume");
   await saveCleanResumeText(candidateId, String(text), me.name);
@@ -1262,6 +1267,7 @@ export async function saveCleanResumeAction(candidateId: string, text: string): 
 // Which resume business owners get: the file they sent, or our clean version.
 export async function setOwnerResumeAction(candidateId: string, which: "clean" | "original"): Promise<{ error?: string }> {
   const me = await requireStaff();
+  if (!(await canSeeCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
   const { data: c } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
   const app = (c?.application ?? {}) as Record<string, string>;
   if (which === "clean" && !app.clean_resume) return { error: "Make the clean version first." };

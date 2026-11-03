@@ -8,6 +8,8 @@ const ERRORS: Record<string, string> = {
   "google-cancelled": "Google sign-in was cancelled. Try again whenever you're ready.",
 };
 
+export const metadata = { title: "Sign in" };
+
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const sp = await searchParams;
   const next = typeof sp.next === "string" ? sp.next : "";

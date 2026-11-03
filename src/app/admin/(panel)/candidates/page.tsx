@@ -51,13 +51,17 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
     .from("candidates")
     .select("id, status, full_name, email, headline, role_category, created_at, listed_at, updated_at, added_by, working_genius, assessment_path, application, staff(full_name, email)")
     .order("created_at", { ascending: false });
-  const cands = (data ?? []) as unknown as CandRow[];
+  let cands = (data ?? []) as unknown as CandRow[];
+  // Regular reps see only their own candidates (Heshy, admins and partners see everyone).
+  if (!me.manager) {
+    const owner = await effectiveReps(cands);
+    cands = cands.filter((c) => owner.get(c.id)?.id === me.id);
+  }
   const count = (s: string) => cands.filter((c) => c.status === s).length;
   const shown = cands.filter((c) =>
     q ? [c.full_name, c.email, c.headline, c.role_category, refCode(c.id)].join(" ").toLowerCase().includes(q) : c.status === view,
   );
   const [options, reps] = admin ? await Promise.all([repOptions(), effectiveReps(shown)]) : [[], new Map()];
-  const nameOf = new Map(options);
   // Reports uploaded before results were read automatically: catch up a few at a time.
   after(() => backfillWorkingGenius(3).catch(() => null));
 

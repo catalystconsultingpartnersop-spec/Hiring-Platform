@@ -8,6 +8,12 @@ import styles from "../../help.module.css";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ params }: PageProps<"/hiring-help/templates/[slug]">) {
+  const { slug } = await params;
+  const t = getTemplate(slug);
+  return t ? { title: t.title, robots: { index: false } } : {};
+}
+
 export default async function TemplatePage({ params, searchParams }: PageProps<"/hiring-help/templates/[slug]">) {
   const { slug } = await params;
   const sp = await searchParams;

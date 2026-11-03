@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { brandName } from "@/lib/format";
 import { wordResumeToPdf } from "@/lib/resumePdf";
+import { canSeeCandidate } from "@/lib/reps";
 import { currentOwner, currentStaff } from "@/lib/session";
 
 // Resumes live in private storage. This hands out the resume, as a PDF named
@@ -11,7 +12,9 @@ export async function GET(req: Request, ctx: RouteContext<"/api/resume/[id]">) {
   const { id } = await ctx.params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return new NextResponse("Not found", { status: 404 });
 
-  const staff = !!(await currentStaff());
+  const me = await currentStaff();
+  // Regular reps can open only their own candidates' files.
+  const staff = !!me && (await canSeeCandidate(me, id));
   let allowed = staff;
   if (!allowed) {
     const owner = await currentOwner();

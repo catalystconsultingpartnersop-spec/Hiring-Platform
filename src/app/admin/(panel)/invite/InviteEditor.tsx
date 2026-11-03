@@ -28,7 +28,7 @@ export function InviteEditor({ initial }: { initial: Invite }) {
   // Rebuild the preview shortly after typing stops.
   useEffect(() => {
     const n = ++seq.current;
-    setStatus("Updating preview…");
+    const busy = setTimeout(() => setStatus("Updating preview…"), 0);
     const t = setTimeout(async () => {
       try {
         const blob = await buildPdf(name, inv);
@@ -43,7 +43,10 @@ export function InviteEditor({ initial }: { initial: Invite }) {
         if (n === seq.current) setStatus((e as Error).message);
       }
     }, 600);
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(busy);
+      clearTimeout(t);
+    };
   }, [name, inv]);
 
   const set = <K extends keyof Invite>(k: K, v: Invite[K]) => {

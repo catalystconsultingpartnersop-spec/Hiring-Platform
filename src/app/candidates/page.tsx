@@ -31,6 +31,8 @@ function href(f: CatalogFilters, change: Partial<CatalogFilters>) {
   return s ? `/candidates?${s}` : "/candidates";
 }
 
+export const metadata = { title: "Browse candidates" };
+
 export default async function Catalog({ searchParams }: PageProps<"/candidates">) {
   const sp = await searchParams;
   const signedIn = !!(await currentOwner().catch(() => null));

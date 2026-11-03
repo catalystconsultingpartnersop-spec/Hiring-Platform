@@ -23,6 +23,12 @@ import styles from "./detail.module.css";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ params }: PageProps<"/candidates/[id]">) {
+  const { id } = await params;
+  const c = await getListed(id);
+  return c ? { title: c.headline ?? "Candidate", description: c.summary?.slice(0, 160) ?? undefined } : { title: "Candidate" };
+}
+
 export default async function CandidatePage({ params, searchParams }: PageProps<"/candidates/[id]">) {
   const { id } = await params;
   const sp = await searchParams;

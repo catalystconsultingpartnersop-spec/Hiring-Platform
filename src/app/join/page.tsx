@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CAREER_ARTICLES } from "@/lib/careerArticles";
-import { brandName } from "@/lib/format";
 import styles from "./join.module.css";
 
 export const metadata: Metadata = {
-  title: `Looking for work? | ${brandName()}`,
+  title: "Looking for work?",
   description:
     "Sit down with us, discover what you're naturally great at, and meet employers who need exactly that. It doesn't cost you a thing.",
   // Candidates' own link preview, without the employer picture.

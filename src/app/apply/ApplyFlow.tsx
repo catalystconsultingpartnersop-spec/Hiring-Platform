@@ -1,6 +1,7 @@
 "use client";
 
 import { LANGUAGES } from "@/lib/languages";
+import { UploadHelper } from "@/components/UploadHelper";
 import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { TimePicker } from "@/components/TimePicker";
 import { ApplyState, askUsToReachOut, bookTime, saveExtras, submitApplication } from "./actions";
@@ -138,6 +139,7 @@ export function ApplyFlow({
         startTransition(() => action(fd));
       }}
     >
+      <UploadHelper />
       <p className="apply-step">Step 1 of 2</p>
       <h2>A few basics</h2>
       <p className="muted">Takes about a minute. Then you&rsquo;ll pick a time to talk.</p>
@@ -199,8 +201,8 @@ export function ApplyFlow({
       )}
       <label className="field">
         <span>Upload your resume</span>
-        <input className="input" type="file" name="resume" accept=".pdf,.doc,.docx" required={!noResume} disabled={noResume} />
-        <small>A PDF or Word file. Needed to book your call. It doesn&rsquo;t need to be perfect; we&rsquo;ll help you polish it.</small>
+        <input className="input" type="file" name="resume" accept=".pdf,.doc,.docx,image/jpeg,image/png" required={!noResume} disabled={noResume} />
+        <small>A PDF, Word file or a clear photo of it. Needed to book your call. It doesn&rsquo;t need to be perfect; we&rsquo;ll help you polish it.</small>
       </label>
       <div style={{ margin: "-6px 0 16px", fontSize: 13, color: "var(--ink-3)" }}>
         {!showNoResume ? (
@@ -255,6 +257,7 @@ function UploadResults({ token }: { token: string }) {
   }
   return (
     <form action={action} style={{ marginTop: 16, borderTop: "1px solid var(--line)", paddingTop: 14 }}>
+      <UploadHelper />
       <label className="field">
         <span>Done already? Upload your results (PDF or photo)</span>
         <input className="input" type="file" name="assessment" accept=".pdf,image/*" required />

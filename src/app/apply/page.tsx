@@ -4,6 +4,8 @@ import { HOW_IT_WORKS, YOUR_PART } from "@/lib/promise";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = { title: "Find work that fits you" };
+
 export default async function ApplyPage() {
   const [times, reps] = await Promise.all([availableTimes(), repChoices()]);
   return (

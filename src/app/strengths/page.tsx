@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { brandName } from "@/lib/format";
 import { Assessment } from "./Assessment";
 import s from "./strengths.module.css";
 
 export const metadata: Metadata = {
-  title: `Discover your natural strengths | ${brandName()}`,
+  title: "Discover your natural strengths",
   description: "A short assessment that shows the kind of work that gives you energy, and where you could shine.",
   robots: { index: false, follow: false },
 };

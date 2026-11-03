@@ -2,13 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ARTICLES } from "@/lib/articles";
 import { ownerHasDocs } from "@/lib/docsAccess";
-import { brandName } from "@/lib/format";
 import { TEMPLATES } from "@/lib/templates";
 import styles from "./help.module.css";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: `Hiring help | ${brandName()}`,
+  title: "Hiring help",
   description: "Practical, plain-English guidance for interviewing, making the offer, the paperwork and the first weeks.",
 };
 

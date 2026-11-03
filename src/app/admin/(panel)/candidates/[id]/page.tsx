@@ -12,7 +12,7 @@ import { ReminderOption, Reminders } from "../Reminders";
 import { CallDraftPanel } from "../CallDraftPanel";
 import { ResumePanel } from "../ResumePanel";
 import { cleanResumeOf } from "@/lib/cleanResume";
-import { effectiveReps, repOptions } from "@/lib/reps";
+import { canSeeCandidate, effectiveReps, repOptions } from "@/lib/reps";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 
 export default async function EditCandidate({ params, searchParams }: PageProps<"/admin/candidates/[id]">) {
@@ -22,6 +22,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { data } = await db().from("candidates").select("*").eq("id", id).maybeSingle();
   if (!data) notFound();
+  if (!(await canSeeCandidate(me, id))) notFound();
   const c = data as Candidate;
   const tierFee = feeFor({ ...c, fee_override_cents: null }, await getTiers());
 

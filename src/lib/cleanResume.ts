@@ -48,7 +48,7 @@ function promptFor(o: { name: string; resumeText: string | null; hasPdf: boolean
 
 Candidate: ${o.name}
 
-${o.hasPdf ? "Their original resume is the attached PDF." : o.resumeText ? `Their original resume (text):\n${o.resumeText.slice(0, 30000)}` : "There is no readable resume on file; build it only from the call and notes."}
+${o.hasPdf ? "Their original resume is attached (a PDF, or a photo of it)." : o.resumeText ? `Their original resume (text):\n${o.resumeText.slice(0, 30000)}` : "There is no readable resume on file; build it only from the call and notes."}
 
 ${o.call ? `What they told our team on their onboarding call:\n${o.call.slice(0, 60000)}` : "No call transcript is available."}
 
@@ -96,14 +96,16 @@ export async function makeCleanResume(candidateId: string, by: string): Promise<
   // Their own resume: PDFs go to the AI as-is (scans included); Word files as text.
   let pdf: string | null = null;
   let text: string | null = null;
+  let photo: { data: string; type: string } | null = null;
   if (c.resume_path) {
     const { data: file } = await db().storage.from("resumes").download(c.resume_path);
     if (file) {
       const buf = Buffer.from(await file.arrayBuffer());
       if (/\.pdf$/i.test(c.resume_path)) pdf = buf.toString("base64");
+      else if (/\.(jpe?g|png)$/i.test(c.resume_path)) photo = { data: buf.toString("base64"), type: /\.png$/i.test(c.resume_path) ? "image/png" : "image/jpeg" };
       else if (/\.docx$/i.test(c.resume_path)) text = await resumeText(buf, "docx").catch(() => null);
     }
-    if (pdf || text) sources.push("their resume");
+    if (pdf || text || photo) sources.push("their resume");
   }
 
   // What they said on the call: the transcript if it was recorded, otherwise our notes.
@@ -125,7 +127,7 @@ export async function makeCleanResume(candidateId: string, by: string): Promise<
   } catch {}
   const notes = [c.admin_notes, draftNotes].filter(Boolean).join("\n");
   if (!call && notes) sources.push("our notes");
-  if (!pdf && !text && !call && !notes) return { ok: false, error: "There's no resume or call to work from yet." };
+  if (!pdf && !text && !photo && !call && !notes) return { ok: false, error: "There's no resume or call to work from yet." };
 
   const extra = [
     `Contact details we have: ${[c.email, c.phone, c.linkedin_url].filter(Boolean).join(" · ") || "none"}`,
@@ -141,7 +143,8 @@ export async function makeCleanResume(candidateId: string, by: string): Promise<
 
   const content: unknown[] = [];
   if (pdf) content.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: pdf } });
-  content.push({ type: "text", text: promptFor({ name: c.full_name, resumeText: text, hasPdf: !!pdf, call, extra }) });
+  if (photo) content.push({ type: "image", source: { type: "base64", media_type: photo.type, data: photo.data } });
+  content.push({ type: "text", text: promptFor({ name: c.full_name, resumeText: text, hasPdf: !!pdf || !!photo, call, extra }) });
 
   let raw: string;
   try {

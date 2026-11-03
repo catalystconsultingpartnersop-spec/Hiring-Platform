@@ -727,3 +727,6 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 @media (prefers-reduced-motion: reduce) { .admin-skel { animation: none; } }
 .nav-progress { position: fixed; top: 0; left: 0; height: 3px; z-index: 1000; background: var(--marigold); animation: nav-progress 8s cubic-bezier(0.1, 0.7, 0.2, 1) forwards; box-shadow: 0 0 8px var(--marigold); }
 @keyframes nav-progress { from { width: 0; } 10% { width: 45%; } to { width: 92%; } }
+
+/* A line that's this person's own, so cards don't all read alike. */
+.card-own { margin: 2px 0 0; font-size: 14px; line-height: 1.45; color: var(--ink); padding-left: 10px; border-left: 3px solid var(--marigold); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }

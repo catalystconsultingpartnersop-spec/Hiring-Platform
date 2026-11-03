@@ -16,6 +16,12 @@ export function proxy(req: NextRequest) {
   const host = (req.headers.get("host") ?? "").toLowerCase().replace(/:\d+$/, "").replace(/^www\./, "");
   const path = req.nextUrl.pathname;
   if (path === "/" && host.startsWith("team.")) return NextResponse.redirect(new URL("/admin", req.url));
+  // The team address is only for the back office. Public pages live on the main
+  // site, so search engines don't see the same page twice.
+  const site = process.env.SITE_URL;
+  if (host.startsWith("team.") && site && hostOf(site) !== host) {
+    return NextResponse.redirect(new URL(path + req.nextUrl.search, site), 308);
+  }
   const candidateHost = hostOf(process.env.CANDIDATE_URL);
   const res =
     path === "/" && candidateHost && host === candidateHost && candidateHost !== hostOf(process.env.SITE_URL)
@@ -36,4 +42,6 @@ export function proxy(req: NextRequest) {
   return res;
 }
 
-export const config = { matcher: ["/", "/why", "/candidates", "/join", "/hiring-help"] };
+export const config = {
+  matcher: ["/", "/why", "/mission", "/apply", "/contact", "/privacy", "/strengths", "/candidates", "/candidates/:path*", "/join", "/join/:path*", "/hiring-help", "/hiring-help/:path*"],
+};

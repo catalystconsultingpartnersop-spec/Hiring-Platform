@@ -1,4 +1,5 @@
 import { freshHeadline } from "./strengths";
+import { tidyHeadline, tidyRoles } from "./roles";
 import { isAnyIndustry } from "./format";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { db, FeeTier, PublicCandidate, PUBLIC_CANDIDATE_COLUMNS } from "./db";
@@ -53,7 +54,7 @@ const cachedListed = unstable_cache(
       .eq("status", "listed")
       .order("listed_at", { ascending: false });
     if (error) throw error;
-    return (data ?? []) as unknown as PublicCandidate[];
+    return ((data ?? []) as unknown as PublicCandidate[]).map(tidyRoles);
   },
   ["catalog-listed"],
   { revalidate: 30, tags: [CATALOG_TAG] },
@@ -63,7 +64,7 @@ const cachedListed = unstable_cache(
 // as empty rather than breaking.
 export async function allListed(): Promise<{ rows: PublicCandidate[] }> {
   try {
-    const rows = (await cachedListed()).map((r) => ({ ...r, headline: freshHeadline(r.headline) }));
+    const rows = (await cachedListed()).map((r) => ({ ...r, headline: tidyHeadline(freshHeadline(r.headline)) }));
     // Hide candidates who asked not to be shown to this owner's company.
     const blocked = await blockedIdsFor(await currentOwner().catch(() => null));
     return { rows: blocked.size ? rows.filter((r) => !blocked.has(r.id)) : rows };
@@ -246,7 +247,8 @@ export async function getListed(id: string): Promise<PublicCandidate | null> {
       .maybeSingle();
     if (!data) return null;
     const { never_show_to, ...pub } = data as unknown as PublicCandidate & { never_show_to: string | null };
-    pub.headline = freshHeadline(pub.headline);
+    pub.headline = tidyHeadline(freshHeadline(pub.headline));
+    Object.assign(pub, tidyRoles(pub as PublicCandidate));
     if (never_show_to && isBlockedFor(never_show_to, await currentOwner().catch(() => null))) return null;
     return pub as PublicCandidate;
   } catch {

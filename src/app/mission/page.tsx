@@ -1,12 +1,11 @@
 import { candidateOnly } from "@/lib/candidateMode";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { brandName } from "@/lib/format";
 
 import styles from "./mission.module.css";
 
 export const metadata: Metadata = {
-  title: `Our mission | ${brandName()}`,
+  title: "Our mission",
   description: "We help people discover their natural strengths and character, so they can find work that truly fits them.",
 };
 

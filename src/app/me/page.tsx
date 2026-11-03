@@ -1,3 +1,4 @@
+import { UploadHelper } from "@/components/UploadHelper";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -177,6 +178,7 @@ export default async function MyPage({ searchParams }: PageProps<"/me">) {
                 Take the assessment
               </a>
               <form action={uploadMyResults} style={{ marginTop: 14, display: "flex", gap: 10, alignItems: "end", flexWrap: "wrap" }}>
+                <UploadHelper />
                 <label className="field" style={{ flex: "1 1 240px", margin: 0 }}>
                   <span>Done already? Upload your results</span>
                   <input className="input" type="file" name="assessment" accept=".pdf,image/*" required />

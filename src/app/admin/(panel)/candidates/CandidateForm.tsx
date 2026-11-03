@@ -1,6 +1,7 @@
 "use client";
 
 import { cleanLanguages, LANGUAGES } from "@/lib/languages";
+import { UploadHelper } from "@/components/UploadHelper";
 import { startTransition, useActionState, useState } from "react";
 import type { Candidate } from "@/lib/db";
 import { describe, parseResult, suggestedHeadline, type Letter } from "@/lib/strengths";
@@ -150,6 +151,7 @@ export function CandidateForm({
         startTransition(() => action(fd));
       }}
     >
+      <UploadHelper />
       <input type="hidden" name="working_genius" value={code} />
       <p className="small muted">
         Fields marked <span className="req">*</span> are needed to list someone. Everything else makes the profile
@@ -165,14 +167,14 @@ export function CandidateForm({
           <input
             type="file"
             name="resume"
-            accept=".pdf,.doc,.docx"
+            accept=".pdf,.doc,.docx,image/jpeg,image/png"
             onChange={(e) => readResume(e.target.files?.[0])}
           />
           <strong>{c?.resume_path ? "Replace their resume" : "Add their resume"}</strong>
           <span>
             {reading === "reading"
               ? "Reading it…"
-              : "PDF or Word. We'll fill in their name, email, phone and LinkedIn for you."}
+              : "PDF, Word or a photo. We'll fill in their name, email, phone and LinkedIn for you."}
           </span>
         </label>
         {readNote && (

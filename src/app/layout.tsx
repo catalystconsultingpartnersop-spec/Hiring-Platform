@@ -13,7 +13,7 @@ import { candidateOnly } from "@/lib/candidateMode";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
-  title: `${brandName()} — browse coached, assessed candidates`,
+  title: { default: `${brandName()} — browse coached, assessed candidates`, template: `%s | ${brandName()}` },
   description:
     "Browse candidates who have been coached and assessed. Sign to see who they are. Pay one flat fee when you decide to hire.",
   // The picture that shows when someone pastes our link (WhatsApp, iMessage, LinkedIn, email).

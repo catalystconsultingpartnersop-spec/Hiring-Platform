@@ -32,3 +32,14 @@ export async function effectiveReps(cands: { id: string; added_by: string | null
   }
   return out;
 }
+
+// Regular reps work only with their own candidates. Heshy, admins and
+// partners see everyone.
+export async function canSeeCandidate(me: { id: string | null; manager: boolean }, candidateId: string): Promise<boolean> {
+  if (me.manager) return true;
+  if (!me.id) return false;
+  const { data } = await db().from("candidates").select("id, added_by").eq("id", candidateId).maybeSingle();
+  if (!data) return false;
+  const rep = (await effectiveReps([data as { id: string; added_by: string | null }])).get(data.id);
+  return rep?.id === me.id;
+}

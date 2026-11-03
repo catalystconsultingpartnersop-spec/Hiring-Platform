@@ -5,7 +5,7 @@ import { brandName } from "@/lib/format";
 import styles from "./why.module.css";
 
 export const metadata: Metadata = {
-  title: `Why we started | ${brandName()}`,
+  title: "Why we started",
   description: "We're business owners. We built the hiring experience we always wanted: browse candidates who were met and coached, and choose for yourself.",
 };
 

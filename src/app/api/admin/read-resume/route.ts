@@ -13,7 +13,8 @@ export async function POST(req: Request) {
   const file = form.get("resume");
   if (!(file instanceof File) || file.size === 0) return NextResponse.json({ found: {}, note: "That file looks empty." });
   const kind = resumeKind(file);
-  if (!kind) return NextResponse.json({ found: {}, note: "Resumes need to be a PDF or Word file." });
+  if (!kind) return NextResponse.json({ found: {}, note: "Resumes need to be a PDF, Word file or photo." });
+  if (kind === "jpg" || kind === "png") return NextResponse.json({ found: {}, note: `A photo can't be read automatically, so fill in the details by hand. ${KEEP}` });
   if (kind === "doc")
     return NextResponse.json({ found: {}, note: `Older Word files (.doc) can't be read automatically, so fill in the details by hand. ${KEEP}` });
   try {

@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
-import { brandName, refCode } from "@/lib/format";
+import { refCode } from "@/lib/format";
 
 import { currentCandidateId, currentOwner } from "@/lib/session";
 import { ContactForm } from "./ContactForm";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: `Contact us | ${brandName()}` };
+export const metadata: Metadata = { title: "Contact us" };
 
 export default async function ContactPage({ searchParams }: PageProps<"/contact">) {
   const sp = await searchParams;

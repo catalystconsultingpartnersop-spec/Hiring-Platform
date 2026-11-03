@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { checkTestRoom, makeTestRoom, testCandidateFromCall, testDraft } from "../../actions";
 
 // Makes one recorded Meet room, without booking anything, to check recording works.
 export function TestRoom() {
+  const router = useRouter();
   const [r, setR] = useState<{ link?: string; error?: string }>({});
   const [pending, start] = useTransition();
   const [check, setCheck] = useState<{ lines?: string[]; error?: string }>({});
@@ -57,7 +59,7 @@ export function TestRoom() {
           onClick={() =>
             startCheck(async () => {
               const r = await testCandidateFromCall();
-              if (r.id && !r.error) window.location.href = `/admin/candidates/${r.id}`;
+              if (r.id && !r.error) router.push(`/admin/candidates/${r.id}`);
               else setCheck({ error: r.error ?? "Something went wrong." });
             })
           }

@@ -120,6 +120,7 @@ export function CandidateCard({
     salary,
   ].filter(Boolean) as string[];
   const label = roleLine(c);
+  const own = ownLine(c);
 
   return (
     <div className="card card-store">
@@ -147,6 +148,7 @@ export function CandidateCard({
           )}
         </h3>
         <WorksBest c={c} compact />
+        {own && <p className="card-own">{own}</p>}
         {meta.length > 0 && (
           <div className="card-meta">
             {meta.map((m) => (
@@ -175,4 +177,15 @@ export function CandidateCard({
       {href && <ShortlistButton id={c.id} />}
     </div>
   );
+}
+
+// Something specific to this person, so no two cards read the same: their first
+// highlight, or else the first sentence of their summary.
+function ownLine(c: PublicCandidate): string | null {
+  const raw = (c.highlights ?? []).find((h) => h.trim()) ?? (c.summary ?? "").split(/(?<=[.!?])\s/)[0] ?? "";
+  let t = raw.replace(/\s+/g, " ").trim().replace(/^[-•*]\s*/, "");
+  if (t.length < 12) return null;
+  if (t.length > 120) t = `${t.slice(0, 117).replace(/\s+\S*$/, "")}…`;
+  t = t.charAt(0).toUpperCase() + t.slice(1);
+  return /[.!?…]$/.test(t) ? t : `${t}.`;
 }

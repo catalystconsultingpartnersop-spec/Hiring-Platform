@@ -15,12 +15,16 @@ export function ShareTools({ message, link, image }: { message: string; link: st
       .then((r) => r.blob())
       .then((b) => (picture.current = new File([b], "the-candidate-collection.png", { type: "image/png" })))
       .catch(() => {});
-    try {
-      const f = new File([new Blob()], "x.png", { type: "image/png" });
-      setCanShareFiles(!!navigator.canShare?.({ files: [f] }));
-    } catch {
-      setCanShareFiles(false);
-    }
+    // Whether this phone can share a picture (checked once the page is on screen).
+    const t = setTimeout(() => {
+      try {
+        const f = new File([new Blob()], "x.png", { type: "image/png" });
+        setCanShareFiles(!!navigator.canShare?.({ files: [f] }));
+      } catch {
+        setCanShareFiles(false);
+      }
+    }, 0);
+    return () => clearTimeout(t);
   }, [image]);
 
   async function copy(text: string, what: string) {
