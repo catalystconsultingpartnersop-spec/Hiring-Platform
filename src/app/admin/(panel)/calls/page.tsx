@@ -59,6 +59,7 @@ export default async function CallsPage({ searchParams }: PageProps<"/admin/call
   const admin = me.manager;
   const mine = admin ? null : me.id;
   const [upcoming, recent, accounts] = await Promise.all([load(mine, true), load(mine, false), (await import("@/lib/callAccounts")).callAccounts()]);
+  const confirmed = await (await import("@/lib/calls")).confirmedCallIds(upcoming.map((r) => r.id));
 
   const table = (rows: Row[], showActions: boolean) => (
     <div className="table-wrap">
@@ -108,6 +109,11 @@ export default async function CallsPage({ searchParams }: PageProps<"/admin/call
                 <td>
                   <span className={`tag ${cls}`}>{label}</span>
                   {!showActions && <RecBadge id={r.id} />}
+                  {showActions && confirmed.has(r.id) && (
+                    <span className="tag tag-good" style={{ marginLeft: 6 }}>
+                      Confirmed ✓
+                    </span>
+                  )}
                 </td>
                 <td>
                   <div className={styles.inline}>

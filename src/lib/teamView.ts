@@ -23,6 +23,7 @@ export type RepSummary = {
   name: string;
   email: string;
   callEmail: string; // the Google account they join calls with
+  confirmed: string[]; // upcoming calls the candidate confirmed from their reminder
   partner: boolean;
   hasHours: boolean;
   signed: boolean; // signed their rep agreement (admins always count as signed)
@@ -57,6 +58,8 @@ export async function loadTeam(): Promise<RepSummary[]> {
   const candRows = (cands ?? []) as CandRow[];
   const hidden = await hiddenStaffIds();
   const accounts = await (await import("./callAccounts")).callAccounts();
+  const { confirmedCallIds } = await import("./calls");
+  const confirmedSet = await confirmedCallIds(callRows.filter((k) => k.status === "booked" && Date.parse(k.starts_at) >= now).map((k) => k.id));
   const owner = await effectiveReps(candRows.map((c) => ({ id: c.id, added_by: c.added_by })));
   const hours = new Set((wins ?? []).map((w) => w.staff_id as string));
   const weekEnd = now + 7 * DAY;
@@ -76,6 +79,7 @@ export async function loadTeam(): Promise<RepSummary[]> {
         name: s.full_name || s.email,
         email: s.email,
         callEmail: accounts[s.id] || s.email,
+        confirmed: upcoming.filter((k) => confirmedSet.has(k.id)).map((k) => k.id),
         partner: !!s.is_partner,
         hasHours: hours.has(s.id),
         signed: s.role === "admin" || !!s.agreement_signed_at,

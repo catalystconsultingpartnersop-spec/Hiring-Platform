@@ -215,3 +215,47 @@ export async function sendMissedCallEmail(callId: string) {
   });
   await logActivity("system", "missed_call_email", { call_id: callId, candidate_id: c.id });
 }
+
+// About an hour before each call: remind the candidate, with "Yes, I'll be there". Once per call.
+export async function sendHourReminders() {
+  const now = Date.now();
+  const { data } = await db()
+    .from("onboarding_calls")
+    .select("id")
+    .eq("status", "booked")
+    .gte("starts_at", new Date(now + 40 * 60e3).toISOString())
+    .lte("starts_at", new Date(now + 75 * 60e3).toISOString());
+  let sent = 0;
+  for (const { id } of (data ?? []) as { id: string }[]) {
+    const { count } = await db().from("activity_log").select("id", { count: "exact", head: true }).eq("action", "call_hour_reminder").eq("details->>call_id", id);
+    if (count) continue;
+    const call = await getCall(id);
+    if (!call) continue;
+    const token = signedToken(`call_${id}`, 60);
+    const tz = call.candidate_time_zone ?? COMPANY_TZ;
+    const clock = formatInZone(call.starts_at, tz, { weekday: undefined, month: undefined, day: undefined, timeZoneName: undefined });
+    await logActivity("system", "call_hour_reminder", { call_id: id });
+    await sendEmail({
+      to: call.candidates.email,
+      ...candMail.hourReminder({
+        name: call.candidates.full_name,
+        rep: call.staff.full_name || "our team",
+        when: `Today at ${clock}`,
+        confirm: `${candidateUrl()}/call/${token}/confirm`,
+        join: call.meet_link || call.staff.meeting_link,
+        manage: `${candidateUrl()}/call/${token}`,
+      }),
+      replyTo: call.staff.email,
+    });
+    sent++;
+  }
+  return { sent };
+}
+
+// Calls the candidate confirmed from their reminder.
+export async function confirmedCallIds(ids: string[]): Promise<Set<string>> {
+  if (!ids.length) return new Set();
+  const { data } = await db().from("activity_log").select("details").eq("action", "call_confirmed").gte("at", new Date(Date.now() - 3 * 864e5).toISOString());
+  const want = new Set(ids);
+  return new Set(((data ?? []) as { details: { call_id?: string } }[]).map((r) => r.details?.call_id ?? "").filter((x) => want.has(x)));
+}

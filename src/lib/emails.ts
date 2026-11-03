@@ -293,6 +293,19 @@ export const candidate = {
       quiet(`Need a different time? <a href="${o.manage}" style="color:#5b667e">Reschedule or cancel here</a>.`),
   }),
 
+  // An hour before their call: confirm, join, or pick another time.
+  hourReminder: (o: { name: string; rep: string; when: string; confirm: string; join: string | null; manage: string }): Mail => ({
+    audience: "candidate",
+    subject: `Your call with ${first(o.rep)} is in 1 hour`,
+    html:
+      hi(o.name) +
+      p("Quick reminder: your career call is coming up.") +
+      big(esc(o.when)) +
+      button(o.confirm, "Yes, I'll be there") +
+      (o.join ? p(`<a href="${o.join}" style="color:#17213a;font-weight:bold">Join the video call</a>`) : "") +
+      quiet(`Something came up? <a href="${o.manage}" style="color:#5b667e">Pick a different time</a>.`),
+  }),
+
   // Marked as a no-show by their rep: kind, no blame, one button to rebook.
   missedCall: (o: { name: string; time: string; rep: string; rebook: string }): Mail => ({
     audience: "candidate",

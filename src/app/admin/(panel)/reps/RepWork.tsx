@@ -112,6 +112,7 @@ export function RepWork({ r, self, reps, canMove = false }: { r: RepSummary; sel
                 <span className={styles.when}>{when(k.starts_at)}</span>
                 <span className={styles.who}>
                   <Link prefetch={false} href={`/admin/candidates/${k.candidates.id}`}>{k.candidates.full_name}</Link>
+                  {r.confirmed.includes(k.id) && <span className="tag tag-good" style={{ marginLeft: 6 }}>Confirmed ✓</span>}
                   {k.candidates.added_by && k.candidates.added_by !== r.id && (
                     <span className={styles.flag}>{repName(k.candidates.added_by)}&rsquo;s candidate</span>
                   )}

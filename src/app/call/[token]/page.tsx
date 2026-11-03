@@ -8,8 +8,9 @@ import { ManageCall } from "./ManageCall";
 export const dynamic = "force-dynamic";
 
 // The candidate's own page for their call: see it, join it, move it, cancel it.
-export default async function CallPage({ params }: PageProps<"/call/[token]">) {
+export default async function CallPage({ params, searchParams }: PageProps<"/call/[token]">) {
   const { token } = await params;
+  const confirmed = (await searchParams).confirmed === "1";
   const callId = readSignedToken(token, "call_");
   const call = callId ? await getCall(callId) : null;
 
@@ -29,6 +30,11 @@ export default async function CallPage({ params }: PageProps<"/call/[token]">) {
   const times = call.status === "booked" || call.status === "cancelled" ? (await openSlots((await db().from("candidates").select("added_by").eq("id", call.candidates.id).maybeSingle()).data?.added_by ?? null)).map((s) => s.start) : [];
   return (
     <div className="wrap narrow apply-page">
+      {confirmed && call.status === "booked" && (
+        <p className="notice notice-good" role="status" style={{ marginBottom: 16 }}>
+          Thanks, see you soon! {call.staff.full_name?.split(" ")[0] || "Your rep"} knows you&rsquo;re coming.
+        </p>
+      )}
       <ManageCall
         token={token}
         status={call.status}
