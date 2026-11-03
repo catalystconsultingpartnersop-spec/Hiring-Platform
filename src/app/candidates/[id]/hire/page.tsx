@@ -154,7 +154,7 @@ export default async function HirePage({ params, searchParams }: PageProps<"/can
           </p>
         )}
         <p className="small muted" style={{ marginTop: 14 }}>
-          The fee isn&rsquo;t refundable once paid, except if {first} never starts work: then ask us within 30 days.
+          If {first} doesn&rsquo;t start work, you don&rsquo;t pay. Just let us know within 30 days and we&rsquo;ll refund the fee in full. Once {first} starts, the fee is final.
           See section 6 of your <Link href={`/account/agreements/${unlock.id}`}>agreement</Link>.
         </p>
       </form>
