@@ -24,6 +24,7 @@ import {
   hashPassword,
   hashToken,
   newLoginToken,
+  isCheckAccount,
   isOwnerEmail,
   requireAdmin,
   type Staff,
@@ -955,7 +956,7 @@ export async function messageAllReps(_prev: FormState, form: FormData): Promise<
   const body = String(form.get("body") ?? "").trim().slice(0, 5000);
   if (!subject || !body) return { error: "Add a subject and a message." };
   const { data } = await db().from("staff").select("email, full_name, active").eq("active", true);
-  const reps = ((data ?? []) as { email: string; full_name: string | null }[]).filter((s) => !isOwnerEmail(s.email));
+  const reps = ((data ?? []) as { email: string; full_name: string | null }[]).filter((s) => !isOwnerEmail(s.email) && !isCheckAccount(s.email));
   if (!reps.length) return { error: "No active reps to send to." };
   let sent = 0;
   const failed: string[] = [];

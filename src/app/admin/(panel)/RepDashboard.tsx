@@ -1,3 +1,4 @@
+import { isCheckAccount } from "@/lib/session";
 import Link from "next/link";
 import { commissionOf, commissionTerms, loadAgreements } from "@/lib/adminData";
 import { db } from "@/lib/db";
@@ -18,7 +19,7 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
     loadRep(staffId),
     db().from("staff").select("id, full_name, email").eq("active", true),
   ]);
-  const staffList = ((staff ?? []) as { id: string; full_name: string | null; email: string }[]).map((s) => ({ id: s.id, name: s.full_name || s.email }));
+  const staffList = ((staff ?? []) as { id: string; full_name: string | null; email: string }[]).filter((s) => !isCheckAccount(s.email)).map((s) => ({ id: s.id, name: s.full_name || s.email }));
 
   // Hires credited to this rep.
   const hires = agreements

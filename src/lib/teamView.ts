@@ -1,3 +1,4 @@
+import { isCheckAccount } from "./session";
 import { db } from "./db";
 import { effectiveReps } from "./reps";
 import { openSlots } from "./slots";
@@ -88,6 +89,7 @@ export async function loadTeam(keepAll = false): Promise<RepSummary[]> {
         candidates: mineCands,
       };
     })
+    .filter((r) => !isCheckAccount(r.email))
     .filter((r) => keepAll || r.hasHours || r.calls.length || r.candidates.length)
     .sort((a, b) => b.week.length - a.week.length || a.name.localeCompare(b.name));
 }

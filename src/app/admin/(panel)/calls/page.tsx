@@ -1,3 +1,4 @@
+import { isCheckAccount } from "@/lib/session";
 import Link from "next/link";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { db } from "@/lib/db";
@@ -47,7 +48,7 @@ export default async function CallsPage({ searchParams }: PageProps<"/admin/call
   const sp = await searchParams;
   const me = await requireStaff();
   const { data: staffRows } = await db().from("staff").select("id, full_name, email, active");
-  const activeReps = ((staffRows ?? []) as { id: string; full_name: string | null; email: string; active: boolean }[]).filter((s) => s.active);
+  const activeReps = ((staffRows ?? []) as { id: string; full_name: string | null; email: string; active: boolean }[]).filter((s) => s.active && !isCheckAccount(s.email));
   const nameOf = new Map(((staffRows ?? []) as { id: string; full_name: string | null; email: string }[]).map((s) => [s.id, (s.full_name || s.email).split(" ")[0]]));
   const admin = me.manager;
   const mine = admin ? null : me.id;

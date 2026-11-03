@@ -58,6 +58,12 @@ const cookieOptions = (days: number) => ({
 // and candidates and can move them between reps.
 export type Staff = { id: string | null; email: string; name: string; role: "admin" | "rep"; owner: boolean; manager: boolean };
 
+// Check-only accounts (like Claude's site checks) can sign in and look around,
+// but never show up as a rep: not on the application form, not in lists.
+export function isCheckAccount(email: string | null | undefined) {
+  return /\+claude@/i.test(email ?? "");
+}
+
 export function isOwnerEmail(email: string | null | undefined) {
   const owner = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase();
   return !!owner && (email ?? "").trim().toLowerCase() === owner;

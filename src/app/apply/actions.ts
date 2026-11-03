@@ -1,5 +1,6 @@
 "use server";
 
+import { isCheckAccount } from "@/lib/session";
 import { cleanLanguages } from "@/lib/languages";
 import { allow, SLOW_DOWN } from "@/lib/throttle";
 import { referringRep } from "@/lib/shareKit";
@@ -128,7 +129,7 @@ async function chosenRep(picked: string): Promise<string | null> {
 export async function repChoices(): Promise<{ list: [string, string][]; referred: string | null }> {
   const { data } = await db().from("staff").select("id, full_name, email").eq("active", true);
   const list = ((data ?? []) as { id: string; full_name: string | null; email: string }[])
-    .filter((s) => s.full_name)
+    .filter((s) => s.full_name && !isCheckAccount(s.email))
     .map((s): [string, string] => [s.id, s.full_name!])
     .sort((a, b) => a[1].localeCompare(b[1]));
   return { list, referred: await referringRep() };
