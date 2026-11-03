@@ -732,3 +732,13 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 
 /* A line that's this person's own, so cards don't all read alike. */
 .card-own { margin: 2px 0 0; font-size: 14px; line-height: 1.45; color: var(--ink); padding-left: 10px; border-left: 3px solid var(--marigold); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Owners: candidates who may fit what they're hiring for */
+.owner-fit { background: var(--wash); border-radius: 16px; padding: 16px 44px 14px 18px; margin: 0 0 20px; }
+.owner-fit-title { margin: 0; font-weight: 800; font-size: 17px; }
+.owner-fit-sub { margin: 2px 0 8px; font-size: 14px; color: var(--ink-2); }
+.owner-fit ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.owner-fit li { background: var(--paper, #fff); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.owner-fit li a { font-weight: 700; color: var(--ink); text-decoration: none; }
+.owner-fit li span { display: block; font-size: 13px; color: var(--moss); font-weight: 600; margin-top: 2px; }
+.owner-fit-close { position: absolute; top: 8px; right: 10px; border: 0; background: transparent; font-size: 22px; line-height: 1; cursor: pointer; color: var(--ink-2); padding: 6px; }

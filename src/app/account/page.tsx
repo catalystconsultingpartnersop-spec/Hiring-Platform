@@ -5,6 +5,9 @@ import { dateShort, money, refCode } from "@/lib/format";
 
 import { requireOwner } from "@/lib/session";
 import styles from "./account.module.css";
+import { HiringFor } from "./HiringFor";
+import { OwnerMatchNote } from "@/components/OwnerMatchNote";
+import { ownerPositions } from "@/lib/ownerMatches";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +43,12 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
           {owner.card_label && owner.card_label !== "card on file" ? ` Card on file: ${owner.card_label}.` : owner.card_pm ? " Your card is on file." : ""}
         </p>
       </div>
+      {sp.hiring === "saved" && (
+        <p className="notice notice-good" role="status" style={{ marginBottom: 20 }}>
+          Saved. We&rsquo;ll point out candidates who fit, here and on the browse page.
+        </p>
+      )}
+      <OwnerMatchNote ownerId={owner.id} />
       {sp.card === "failed" && (
         <p className="notice notice-bad" role="alert" style={{ marginBottom: 20 }}>
           We couldn&rsquo;t confirm your card, so nothing was unlocked and nothing was charged. Open the candidate and
@@ -102,6 +111,8 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
           })}
         </ul>
       )}
+
+      <HiringFor positions={(await ownerPositions(owner.id)).map((p) => ({ id: p.id, title: p.title, location: p.location }))} />
 
       <div className={styles.actions}>
         <Link className="btn btn-small" href="/hiring-help">

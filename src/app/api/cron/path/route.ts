@@ -26,6 +26,9 @@ export async function GET(req: NextRequest) {
   const beforeCall = await beforeCallNudges().catch(() => null);
   // Recorded calls that ended: draft the candidate's profile from the transcript.
   const drafts = await draftFinishedCalls().catch(() => null);
+  // Owners who told us what they're hiring for: one email when a strong new fit is listed (max weekly).
+  const { sendOwnerNudges } = await import("@/lib/ownerMatches");
+  const ownerNudges = await sendOwnerNudges().catch(() => null);
 
   const now = Date.now();
   const iso = (ms: number) => new Date(ms).toISOString();
@@ -43,7 +46,7 @@ export async function GET(req: NextRequest) {
     (u) => u.candidates.status !== "hired" && !u.hires.some((h) => h.status === "paid" || h.status === "hired"),
   );
   const ids = active.map((u) => u.id);
-  if (!ids.length) return NextResponse.json({ ok: true, sent, checkins, beforeCall, drafts });
+  if (!ids.length) return NextResponse.json({ ok: true, sent, checkins, beforeCall, drafts, ownerNudges });
 
   const [{ data: ms }, { data: rs }] = await Promise.all([
     db().from("meetings").select("*").in("unlock_id", ids),
@@ -91,5 +94,5 @@ export async function GET(req: NextRequest) {
   }
 
   if (Object.values(sent).some(Boolean)) await logActivity("system", "path_nudges", sent);
-  return NextResponse.json({ ok: true, sent, checkins, beforeCall, drafts });
+  return NextResponse.json({ ok: true, sent, checkins, beforeCall, drafts, ownerNudges });
 }

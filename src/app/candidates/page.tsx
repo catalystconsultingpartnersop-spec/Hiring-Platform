@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { currentOwner } from "@/lib/session";
+import { OwnerMatchNote } from "@/components/OwnerMatchNote";
 import { CandidateCard } from "@/components/CandidateCard";
 import {
   allListed,
@@ -35,7 +36,8 @@ export const metadata = { title: "Browse candidates" };
 
 export default async function Catalog({ searchParams }: PageProps<"/candidates">) {
   const sp = await searchParams;
-  const signedIn = !!(await currentOwner().catch(() => null));
+  const owner = await currentOwner().catch(() => null);
+  const signedIn = !!owner;
   const f: CatalogFilters = {};
   for (const k of KEYS) if (typeof sp[k] === "string" && sp[k]) f[k] = sp[k] as string;
 
@@ -181,6 +183,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
               is hired.
             </p>
           )}
+          {owner && !shortlistView && !Object.keys(f).length && <OwnerMatchNote ownerId={owner.id} />}
           <div className={styles.resultsHead}>
             <h1>
               {shortlistView ? "Your shortlist" : f.role ?? "All candidates"}
