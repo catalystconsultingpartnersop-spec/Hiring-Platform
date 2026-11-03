@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MoreMenu } from "./MoreMenu";
 import { Suspense } from "react";
 import { NavProgress } from "./NavProgress";
 import { redirect } from "next/navigation";
@@ -42,7 +43,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           + Add candidate
         </Link>
         {admin ? (
-          <details className={styles.more}>
+          <MoreMenu className={styles.more}>
             <summary>More</summary>
             <div>
               <Link href="/admin/share">Share kit</Link>
@@ -54,7 +55,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <Link href="/admin/activity">Activity</Link>
               <Link href="/admin/guide">Rep guide</Link>
             </div>
-          </details>
+          </MoreMenu>
         ) : (
           <>
             <Link href="/admin/share">Share kit</Link>
