@@ -293,6 +293,17 @@ export const candidate = {
       quiet(`Need a different time? <a href="${o.manage}" style="color:#5b667e">Reschedule or cancel here</a>.`),
   }),
 
+  // Marked as a no-show by their rep: kind, no blame, one button to rebook.
+  missedCall: (o: { name: string; time: string; rep: string; rebook: string }): Mail => ({
+    audience: "candidate",
+    subject: o.time.startsWith("today") ? "We missed you today. Pick a new time?" : "We missed you. Pick a new time?",
+    html:
+      hi(o.name) +
+      p(`We were looking forward to talking with you ${esc(o.time)}. No problem, things come up. Pick a time that works better and we'll be there.`) +
+      button(o.rebook, "Pick a new time") +
+      quiet(`From your rep, ${esc(first(o.rep))}. Reply to this email with any questions.`),
+  }),
+
   onboardingCancelled: (o: { name: string; when: string; rebook: string }): Mail => ({
     audience: "candidate",
     subject: "Your call is cancelled",

@@ -746,8 +746,14 @@ async function myCallOrNull(callId: string) {
 export async function markCall(callId: string, status: "done" | "no_show") {
   const found = await myCallOrNull(callId);
   if (!found) return;
+  const wasBooked = (found.call as { status?: string }).status === "booked";
   await db().from("onboarding_calls").update({ status, updated_at: new Date().toISOString() }).eq("id", callId);
   await logActivity(staffActor(found.me), `onboarding_call_${status}`, { call_id: callId });
+  // Didn't show: send them a kind note with a link to pick a new time (once).
+  if (status === "no_show" && wasBooked) {
+    const { sendMissedCallEmail } = await import("@/lib/calls");
+    await sendMissedCallEmail(callId).catch((e) => console.error("missed call email", e));
+  }
   // Marked done: if Google already has the transcript, draft their profile right away.
   if (status === "done") {
     const { data: k } = await db().from("onboarding_calls").select("*").eq("id", callId).maybeSingle();

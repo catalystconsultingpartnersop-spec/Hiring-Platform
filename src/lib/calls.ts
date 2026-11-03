@@ -192,3 +192,26 @@ export async function cohostForCall(callId: string): Promise<{ ok: boolean; erro
   if (!r.ok) await logActivity("system", "meet_cohost_failed", { call_id: callId, error: r.error });
   return r;
 }
+
+// The rep marked a call as a no-show: send the candidate a kind note with a link to rebook.
+export async function sendMissedCallEmail(callId: string) {
+  const call = await getCall(callId);
+  if (!call) return;
+  const c = call.candidates;
+  const tz = call.candidate_time_zone ?? COMPANY_TZ;
+  const clock = formatInZone(call.starts_at, tz, { weekday: undefined, month: undefined, day: undefined, timeZoneName: undefined });
+  const day = (ms: string | number) => formatInZone(ms, tz, { hour: undefined, minute: undefined, timeZoneName: undefined });
+  // "today at 10:30 AM", or "on Monday at 10:30 AM" if they're marked a day later.
+  const time = day(call.starts_at) === day(Date.now()) ? `today at ${clock}` : `on ${formatInZone(call.starts_at, tz, { month: undefined, day: undefined, hour: undefined, minute: undefined, timeZoneName: undefined })} at ${clock}`;
+  await sendEmail({
+    to: c.email,
+    ...candMail.missedCall({
+      name: c.full_name,
+      time,
+      rep: call.staff.full_name || "our team",
+      rebook: `${candidateUrl()}/apply/book?c=${encodeURIComponent(signedToken(`cand_${c.id}`, 30))}`,
+    }),
+    replyTo: call.staff.email,
+  });
+  await logActivity("system", "missed_call_email", { call_id: callId, candidate_id: c.id });
+}

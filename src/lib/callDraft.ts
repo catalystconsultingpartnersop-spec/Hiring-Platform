@@ -134,14 +134,15 @@ export async function draftFromCall(candidateId: string, opts: { notifyRep?: boo
   return { ok: true, draft };
 }
 
-// From the daily run: draft every finished recorded call that doesn't have one yet.
-export async function draftFinishedCalls() {
+// From the daily run (last 7 days) and the every-10-minutes run (last few hours):
+// draft every finished recorded call that doesn't have one yet, and tell the rep.
+export async function draftFinishedCalls(opts: { withinHours?: number } = {}) {
   if (!process.env.ANTHROPIC_API_KEY) return { drafted: 0 };
-  const since = new Date(Date.now() - 7 * 864e5).toISOString();
+  const since = new Date(Date.now() - (opts.withinHours ? opts.withinHours * 3600e3 : 7 * 864e5)).toISOString();
   const { data } = await db()
     .from("onboarding_calls")
     .select("*")
-    .neq("status", "cancelled")
+    .not("status", "in", "(cancelled,no_show)")
     .lte("ends_at", new Date().toISOString())
     .gte("ends_at", since);
   let drafted = 0;
