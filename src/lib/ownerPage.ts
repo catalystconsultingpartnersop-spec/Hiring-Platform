@@ -4,6 +4,7 @@ import { describe, profileOf, suggestedHeadline, TRAITS } from "./strengths";
 import { LEVEL_LABEL, WORK_MODE_LABEL, salaryRange } from "./format";
 import { languagesText } from "./languages";
 import { parseOwnerPage, type OwnerPage } from "./ownerPageShared";
+import { tidyHeadline } from "./tidyText";
 
 export { parseOwnerPage, handleFromText, handleToText, type OwnerPage, type HandleItem } from "./ownerPageShared";
 
@@ -139,20 +140,31 @@ Give 3 to 5 "handle" items, fewer if the material is thin.`;
 
 // Every listed candidate gets the page automatically: written when they're listed,
 // and rewritten when their details change, unless a rep has edited it by hand.
-// The headline is filled in too, when the rep hasn't written their own.
+// The headline works the same way: the system writes it, and keeps it up to date,
+// until a rep writes their own (application.headline_auto remembers what we wrote).
 export async function fillOwnerPage(candidateId: string, by: string, opts: { refresh?: boolean } = {}) {
   const { data } = await db()
     .from("candidates")
-    .select("status, headline, role_category, working_genius, owner_page:application->>owner_page")
+    .select("status, headline, role_category, working_genius, owner_page:application->>owner_page, headline_auto:application->>headline_auto")
     .eq("id", candidateId)
     .maybeSingle();
   if (!data || data.status !== "listed") return;
-  const have = parseOwnerPage((data as { owner_page?: string }).owner_page);
-  if (have && !(opts.refresh && have.auto)) return;
+  const row = data as { headline: string | null; role_category: string | null; working_genius: string | null; owner_page?: string; headline_auto?: string };
+  const have = parseOwnerPage(row.owner_page);
+  const needPage = !have || (!!opts.refresh && !!have.auto);
+  const generic = !row.headline || (!!row.role_category && row.headline === suggestedHeadline(row.role_category, row.working_genius));
+  const ours = !!row.headline_auto && row.headline === row.headline_auto;
+  // Write the headline when it's blank or generic, or refresh ours along with the page.
+  const needHeadline = generic || (ours && needPage);
+  if (!needPage && !needHeadline) return;
   const r = await draftOwnerPage(candidateId);
   if ("error" in r) return;
-  await saveOwnerPage(candidateId, r.page, by, { auto: true });
-  const generic = !data.headline || (data.role_category && data.headline === suggestedHeadline(data.role_category, data.working_genius));
-  if (generic && r.headline) await db().from("candidates").update({ headline: r.headline.slice(0, 140) }).eq("id", candidateId);
-  await logActivity(by, "owner_page_written", { candidate_id: candidateId, refresh: !!have });
+  if (needPage) await saveOwnerPage(candidateId, r.page, by, { auto: true });
+  const headline = tidyHeadline(r.headline).slice(0, 140);
+  if (needHeadline && headline) {
+    const { data: cur } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
+    const app = { ...((cur?.application ?? {}) as Record<string, string>), headline_auto: headline };
+    await db().from("candidates").update({ headline, application: app }).eq("id", candidateId);
+  }
+  await logActivity(by, "owner_page_written", { candidate_id: candidateId, page: needPage, headline: needHeadline });
 }

@@ -493,8 +493,11 @@ export function CandidateForm({
             name="headline"
             value={headline}
             onChange={(e) => setHeadline(e.target.value)}
-            placeholder={autoHeadline ? `Leave blank to use: ${autoHeadline}` : "e.g. Bookkeeper who finds the mistake everyone else missed"}
+            placeholder={autoHeadline ? "Leave blank and we'll write one for you" : "e.g. Bookkeeper who finds the mistake everyone else missed"}
           />
+          {headline && headline === (c?.application as Record<string, string> | undefined)?.headline_auto && (
+            <small>✓ Written automatically. It updates with their page. Change it to use your own.</small>
+          )}
         </label>
         {ideas.length > 0 && (
           <div className={styles.ideas}>
