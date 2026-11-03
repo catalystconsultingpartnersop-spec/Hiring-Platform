@@ -41,7 +41,15 @@ export type RepSummary = {
 
 const DAY = 864e5;
 
+// Everyone on the team who shows up in rep lists: not hidden, not the check account, agreement signed.
 export async function loadTeam(): Promise<RepSummary[]> {
+  const hidden = await hiddenStaffIds();
+  return (await buildTeam())
+    .filter((r) => !isCheckAccount(r.email) && !hidden.has(r.id) && r.signed)
+    .sort((a, b) => b.week.length - a.week.length || a.name.localeCompare(b.name));
+}
+
+async function buildTeam(): Promise<RepSummary[]> {
   const now = Date.now();
   const [{ data: staff }, { data: wins }, { data: calls }, { data: cands }, slots] = await Promise.all([
     db().from("staff").select("*").eq("active", true),
@@ -56,7 +64,6 @@ export async function loadTeam(): Promise<RepSummary[]> {
   ]);
   const callRows = (calls ?? []) as unknown as CallRow[];
   const candRows = (cands ?? []) as CandRow[];
-  const hidden = await hiddenStaffIds();
   const accounts = await (await import("./callAccounts")).callAccounts();
   const { confirmedCallIds } = await import("./calls");
   const confirmedSet = await confirmedCallIds(callRows.filter((k) => k.status === "booked" && Date.parse(k.starts_at) >= now).map((k) => k.id));
@@ -100,13 +107,12 @@ export async function loadTeam(): Promise<RepSummary[]> {
         calls: mineCalls,
         candidates: mineCands,
       };
-    })
-    .filter((r) => !isCheckAccount(r.email) && !hidden.has(r.id) && r.signed)
-    .sort((a, b) => b.week.length - a.week.length || a.name.localeCompare(b.name));
+    });
 }
 
+// One rep's own view: always shown, even while hidden or before they sign their agreement.
 export async function loadRep(id: string): Promise<RepSummary | null> {
-  return (await loadTeam()).find((r) => r.id === id) ?? null;
+  return (await buildTeam()).find((r) => r.id === id) ?? null;
 }
 
 // What needs attention, worded for the rep themselves ("you") or for a manager.
