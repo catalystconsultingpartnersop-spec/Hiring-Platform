@@ -95,7 +95,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/admin/cl
                 return (
                   <tr key={o.id}>
                     <td>
-                      <Link href={`/admin/clients/${o.id}`}>
+                      <Link prefetch={false} href={`/admin/clients/${o.id}`}>
                         <strong>{o.company || "(no company yet)"}</strong>
                       </Link>
                       <div className="small muted">{o.card_label ? `${o.card_label} on file` : "No card on file"}</div>

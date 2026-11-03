@@ -221,7 +221,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
               repRows.map((r) => (
                 <tr key={r.rep.id}>
                   <td>
-                    <Link href={`/admin/team/${r.rep.id}`}>{repName(r.rep)}</Link>
+                    <Link prefetch={false} href={`/admin/team/${r.rep.id}`}>{repName(r.rep)}</Link>
                     <div className="small">
                       <Link href={`${qs("all", r.rep.id)}#payments`}>Their hires</Link>
                     </div>
@@ -372,7 +372,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
                       </div>
                     </td>
                     <td>
-                      <Link href={`/admin/candidates/${h.candidateId}`}>{h.candidate}</Link>
+                      <Link prefetch={false} href={`/admin/candidates/${h.candidateId}`}>{h.candidate}</Link>
                       <div className="small muted">{refCode(h.candidateId)}</div>
                     </td>
                     <td>

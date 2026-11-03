@@ -98,7 +98,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/a
                     </div>
                   </td>
                   <td>
-                    <Link href={`/admin/candidates/${a.candidate_id}`}>{a.candidates.full_name}</Link>
+                    <Link prefetch={false} href={`/admin/candidates/${a.candidate_id}`}>{a.candidates.full_name}</Link>
                     <div className="small muted">{refCode(a.candidate_id)}</div>
                   </td>
                   <td>{money(h.amount_cents)}</td>
@@ -137,7 +137,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/a
               {mine.map((a) => (
                 <tr key={a.id}>
                   <td>
-                    <Link href={`/admin/candidates/${a.candidate_id}`}>{a.candidates.full_name}</Link>
+                    <Link prefetch={false} href={`/admin/candidates/${a.candidate_id}`}>{a.candidates.full_name}</Link>
                     <div className="small muted">{refCode(a.candidate_id)}</div>
                   </td>
                   <td>

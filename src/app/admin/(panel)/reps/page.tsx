@@ -36,7 +36,7 @@ export default async function Team() {
           <ul>
             {loose.map((f) => (
               <li key={f.id + f.why}>
-                <Link href={`/admin/candidates/${f.id}`}>{f.name}</Link>
+                <Link prefetch={false} href={`/admin/candidates/${f.id}`}>{f.name}</Link>
                 <span>
                   {f.why}
                   {f.rep ? ` · rep: ${f.rep}` : ""}
@@ -57,7 +57,7 @@ export default async function Team() {
           if (r.talkedNotListed.length) alerts.push([styles.warn, `${r.talkedNotListed.length} spoken to but not listed yet`]);
           if (!alerts.length) alerts.push([styles.ok, "All good"]);
           return (
-            <Link key={r.id} href={`/admin/reps/${r.id}`} className={styles.card}>
+            <Link prefetch={false} key={r.id} href={`/admin/reps/${r.id}`} className={styles.card}>
               <div className={styles.head}>
                 <h2>{r.name}</h2>
                 {r.partner && <span className="tag tag-gold">Partner</span>}

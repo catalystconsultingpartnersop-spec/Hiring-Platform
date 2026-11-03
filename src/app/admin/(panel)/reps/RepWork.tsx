@@ -17,7 +17,7 @@ function Stage({ title, rows, hint }: { title: string; rows: CandRow[]; hint?: s
         <ul>
           {rows.slice(0, 12).map((c) => (
             <li key={c.id}>
-              <Link href={`/admin/candidates/${c.id}`}>{c.full_name}</Link>
+              <Link prefetch={false} href={`/admin/candidates/${c.id}`}>{c.full_name}</Link>
             </li>
           ))}
           {rows.length > 12 && <li className={styles.empty}>and {rows.length - 12} more</li>}
@@ -77,7 +77,7 @@ export function RepWork({ r, self, reps, canMove = false }: { r: RepSummary; sel
             {r.needsMark.map((k) => (
               <li key={k.id}>
                 <span className={styles.when}>{when(k.starts_at)}</span>
-                <Link href={`/admin/candidates/${k.candidates.id}`} className={styles.who}>
+                <Link prefetch={false} href={`/admin/candidates/${k.candidates.id}`} className={styles.who}>
                   {k.candidates.full_name}
                 </Link>
                 <div className={adminStyles.inline}>
@@ -106,7 +106,7 @@ export function RepWork({ r, self, reps, canMove = false }: { r: RepSummary; sel
               <li key={k.id}>
                 <span className={styles.when}>{when(k.starts_at)}</span>
                 <span className={styles.who}>
-                  <Link href={`/admin/candidates/${k.candidates.id}`}>{k.candidates.full_name}</Link>
+                  <Link prefetch={false} href={`/admin/candidates/${k.candidates.id}`}>{k.candidates.full_name}</Link>
                   {k.candidates.added_by && k.candidates.added_by !== r.id && (
                     <span className={styles.flag}>{repName(k.candidates.added_by)}&rsquo;s candidate</span>
                   )}

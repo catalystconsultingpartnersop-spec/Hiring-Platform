@@ -34,7 +34,7 @@ export async function Introductions({ rows, now, title = "Introductions in progr
               {live.map(({ a, p }) => (
                 <tr key={a.id}>
                   <td>
-                    <Link href={`/admin/candidates/${a.candidate_id}`}>{a.candidates.full_name}</Link>
+                    <Link prefetch={false} href={`/admin/candidates/${a.candidate_id}`}>{a.candidates.full_name}</Link>
                   </td>
                   <td>
                     {a.owners.company}

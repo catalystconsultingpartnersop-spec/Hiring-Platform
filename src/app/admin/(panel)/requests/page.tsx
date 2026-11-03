@@ -67,7 +67,7 @@ export default async function Requests({ searchParams }: PageProps<"/admin/reque
                     {r.candidate_id && (
                       <>
                         {" · About "}
-                        <Link href={`/admin/candidates/${r.candidate_id}`}>{r.candidates?.full_name ?? refCode(r.candidate_id)}</Link>
+                        <Link prefetch={false} href={`/admin/candidates/${r.candidate_id}`}>{r.candidates?.full_name ?? refCode(r.candidate_id)}</Link>
                       </>
                     )}
                   </div>

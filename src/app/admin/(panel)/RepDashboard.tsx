@@ -105,7 +105,7 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
                 {hires.map(({ h, a }) => (
                   <tr key={h.id}>
                     <td>
-                      <Link href={`/admin/candidates/${a.candidate_id}`}>{a.candidates.full_name}</Link>
+                      <Link prefetch={false} href={`/admin/candidates/${a.candidate_id}`}>{a.candidates.full_name}</Link>
                       <div className="small muted">
                         {refCode(a.candidate_id)}, {dateShort(h.paid_at)}
                       </div>

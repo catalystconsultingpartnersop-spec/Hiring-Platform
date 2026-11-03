@@ -75,7 +75,7 @@ export default async function CallsPage({ searchParams }: PageProps<"/admin/call
                   {formatInZone(r.starts_at, r.staff.time_zone ?? COMPANY_TZ, { weekday: "short", month: "short" })}
                 </td>
                 <td>
-                  <Link href={`/admin/candidates/${r.candidates.id}`}>{r.candidates.full_name}</Link>
+                  <Link prefetch={false} href={`/admin/candidates/${r.candidates.id}`}>{r.candidates.full_name}</Link>
                   <div className="small muted">
                     {r.candidates.email}
                     {r.candidates.phone ? `, ${r.candidates.phone}` : ""}

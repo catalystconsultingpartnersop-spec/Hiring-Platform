@@ -116,7 +116,7 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
               {shown.map((c) => (
                 <tr key={c.id}>
                   <td>
-                    <Link href={`/admin/candidates/${c.id}`}>{c.full_name}</Link>
+                    <Link prefetch={false} href={`/admin/candidates/${c.id}`}>{c.full_name}</Link>
                     <div className="small muted">{c.email}</div>
                   </td>
                   <td>

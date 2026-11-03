@@ -185,7 +185,7 @@ export default async function AgreementsPage({ searchParams }: PageProps<"/admin
               <li key={a.id}>
                 <span>
                   <strong>{a.owners.company}</strong> has been considering{" "}
-                  <Link href={`/admin/candidates/${a.candidate_id}`}>{a.candidates.full_name}</Link> for{" "}
+                  <Link prefetch={false} href={`/admin/candidates/${a.candidate_id}`}>{a.candidates.full_name}</Link> for{" "}
                   {Math.max(0, Math.round((NOW - new Date(a.signed_at).getTime()) / DAY))} days
                 </span>
                 <a href={`mailto:${a.owners.email}`} className="small">
@@ -214,7 +214,7 @@ export default async function AgreementsPage({ searchParams }: PageProps<"/admin
                 {topCandidates.map((t) => (
                   <tr key={t.sample.candidate_id}>
                     <td>
-                      <Link href={`/admin/candidates/${t.sample.candidate_id}`}>{t.sample.candidates.full_name}</Link>
+                      <Link prefetch={false} href={`/admin/candidates/${t.sample.candidate_id}`}>{t.sample.candidates.full_name}</Link>
                       <div className="small muted">{t.sample.candidates.role_category}</div>
                     </td>
                     <td>{t.n} signed</td>
@@ -285,7 +285,7 @@ export default async function AgreementsPage({ searchParams }: PageProps<"/admin
                       </div>
                     </td>
                     <td>
-                      <Link href={`/admin/candidates/${u.candidate_id}`}>{u.candidates.full_name}</Link>
+                      <Link prefetch={false} href={`/admin/candidates/${u.candidate_id}`}>{u.candidates.full_name}</Link>
                       <div className="small muted">
                         {refCode(u.candidate_id)}
                         {rep ? `, rep: ${repName(rep)}` : ""}

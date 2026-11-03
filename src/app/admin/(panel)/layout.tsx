@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { NavProgress } from "./NavProgress";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
@@ -20,6 +22,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
   return (
     <div className="wrap">
+      <Suspense fallback={null}>
+        <NavProgress />
+      </Suspense>
       <nav className={styles.bar} aria-label="Admin">
         {!admin && me.manager && <Link href="/admin/reps">Team</Link>}
         <Link href={!admin && me.manager ? "/admin?mine=1" : "/admin"}>{admin ? "Dashboard" : "My dashboard"}</Link>

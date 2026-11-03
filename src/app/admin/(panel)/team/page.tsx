@@ -102,7 +102,7 @@ export default async function TeamPage() {
                   <tr key={m.id} style={m.active ? undefined : { opacity: 0.55 }}>
                     <td>
                       <strong>
-                        {owner ? m.full_name || m.email : <Link href={`/admin/team/${m.id}`}>{m.full_name || m.email}</Link>}
+                        {owner ? m.full_name || m.email : <Link prefetch={false} href={`/admin/team/${m.id}`}>{m.full_name || m.email}</Link>}
                       </strong>
                       <div className="small muted">{m.email}</div>
                     </td>
@@ -118,7 +118,7 @@ export default async function TeamPage() {
                       {!m.active && <span className="tag" style={{ marginLeft: 6 }}>Switched off</span>}
                       {!owner && m.role === "rep" && (
                         <div className="small" style={{ marginTop: 4 }}>
-                          <Link href={`/admin/team/${m.id}#terms`}>{commissionTerms(m, pct)}</Link>
+                          <Link prefetch={false} href={`/admin/team/${m.id}#terms`}>{commissionTerms(m, pct)}</Link>
                           {" · "}
                           {m.package_sent_at ? `Package sent ${dateShort(m.package_sent_at)}` : <span style={{ color: "#9a7300" }}>Package not sent</span>}
                         </div>
