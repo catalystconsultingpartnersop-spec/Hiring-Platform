@@ -17,6 +17,7 @@ export type CallDraft = {
   roles: string[];
   languages: string[];
   private_notes: string;
+  available?: string;
   made_at: string;
 };
 
@@ -57,12 +58,13 @@ Rules:
 - "roles": up to 3 that fit, chosen from this list: ${ROLE_LIST.join(", ")}.
 - If the call doesn't give enough to write an employer-facing field honestly, leave that field as an empty string (or an empty list) rather than writing filler like "details to come". Say what's missing in "private_notes".
 - "languages": languages they said they speak fluently, e.g. ["English", "Yiddish"]. Only what was actually said; empty list if it never came up.
+- "available": when they can start, only if they said it: "now", "2weeks", "month", or "" if it never came up.
 - "private_notes": for the team only, short bullet lines starting with "- ": what gives them energy, what drains them, what they want next, pay and schedule hopes, availability, anything to follow up on.
 
 What they said they're looking for when they applied: ${lookingFor || "not given"}
 
 Answer with JSON only, no other text:
-{"headline": "...", "summary": "...", "highlights": ["..."], "full_profile": "...", "roles": ["..."], "languages": ["..."], "private_notes": "..."}
+{"headline": "...", "summary": "...", "highlights": ["..."], "full_profile": "...", "roles": ["..."], "languages": ["..."], "available": "", "private_notes": "..."}
 
 Transcript:
 ${transcript.slice(0, 120000)}`;
@@ -92,6 +94,7 @@ export async function draftText(name: string, lookingFor: string, transcript: st
     roles: Array.isArray(j.roles) ? j.roles.map(String).filter((r: string) => ROLE_LIST.includes(r)).slice(0, 3) : [],
     languages: cleanLanguages(Array.isArray(j.languages) ? j.languages : []),
     private_notes: String(j.private_notes ?? ""),
+    available: ["now", "2weeks", "month"].includes(String(j.available ?? "")) ? String(j.available) : "",
     made_at: new Date().toISOString(),
   };
 }
@@ -126,7 +129,9 @@ export async function draftFromCall(candidateId: string, opts: { notifyRep?: boo
   }
 
   // Fill in only what's still empty; never overwrite the rep's own words.
-  const update: Record<string, unknown> = { application: { ...(c.application ?? {}), call_draft: JSON.stringify(draft) } };
+  const update: Record<string, unknown> = {
+    application: { ...(c.application ?? {}), call_draft: JSON.stringify(draft), ...(!c.application?.available && draft.available ? { available: draft.available } : {}) },
+  };
   if (!c.headline && draft.headline) update.headline = draft.headline;
   if (!c.summary && draft.summary) update.summary = draft.summary;
   if (!(c.highlights ?? []).length && draft.highlights.length) update.highlights = draft.highlights;

@@ -361,6 +361,19 @@ ${hireSummaryHtml(notice)}`,
   }
 
   // Their page for owners: what the rep wrote or kept. Listed without one? Write it.
+  // When they can start: kept in their application, so it rides along without a new column.
+  if (candidateId && form.has("available")) {
+    const { cleanAvailability } = await import("@/lib/availability");
+    const avail = cleanAvailability(form.get("available"));
+    const { data: cur } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
+    const app = { ...((cur?.application ?? {}) as Record<string, string>) };
+    if ((app.available ?? "") !== avail) {
+      if (avail) app.available = avail;
+      else delete app.available;
+      await db().from("candidates").update({ application: app }).eq("id", candidateId);
+    }
+  }
+
   // Only when the rep actually changed it here (compared with what the form showed them).
   const ownerFields = ["owner_intro", "owner_handle", "owner_fit", "owner_years"].map((k) => get(k).replace(/\s+/g, " ")).join("|");
   if (candidateId && form.has("owner_intro") && ownerFields !== String(form.get("owner_was") ?? "")) {

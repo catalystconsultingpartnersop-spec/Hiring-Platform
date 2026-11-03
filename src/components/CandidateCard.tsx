@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { availabilityTag } from "@/lib/availability";
 import type { PublicCandidate } from "@/lib/db";
 import { describe, profileOf, TRAITS } from "@/lib/strengths";
 import { isAnyIndustry, LEVEL_LABEL, WORK_MODE_LABEL, money, salaryRange } from "@/lib/format";
@@ -156,6 +157,7 @@ export function CandidateCard({
             ))}
           </div>
         )}
+        {availabilityTag(c.available) && <span className="card-available">✓ {availabilityTag(c.available)}</span>}
         {!example && (
           <p className="card-vetted">
             <span aria-hidden="true">✓</span> Vetted one-on-one by our team

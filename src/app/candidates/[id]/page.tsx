@@ -1,5 +1,6 @@
 import { languagesText } from "@/lib/languages";
 import Link from "next/link";
+import { availabilityLabel } from "@/lib/availability";
 import { PendingButton } from "@/components/PendingButton";
 import { notFound } from "next/navigation";
 import { CandidateCard, roleLine } from "@/components/CandidateCard";
@@ -109,6 +110,7 @@ function Tiles({ c, page }: { c: PublicCandidate; page: OwnerPage | null }) {
     ["Works", c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null],
     ["Looking for", salaryRange(c.salary_min, c.salary_max)],
     ["Speaks", languagesText(c.languages)],
+    ["Can start", availabilityLabel(c.available ?? (c as { application?: Record<string, string> }).application?.available)],
   ];
   const also = (c.also_roles ?? []).join(", ");
   return (

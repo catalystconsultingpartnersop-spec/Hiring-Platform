@@ -1,5 +1,6 @@
 "use server";
 
+import { cleanAvailability } from "@/lib/availability";
 import { hiddenStaffIds } from "@/lib/hiddenStaff";
 import { isCheckAccount } from "@/lib/session";
 import { cleanLanguages } from "@/lib/languages";
@@ -67,7 +68,11 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
         full_name,
         email,
         phone,
-        application: hasResume ? { looking_for } : { looking_for, no_resume: "yes" },
+        application: {
+          looking_for,
+          ...(hasResume ? {} : { no_resume: "yes" }),
+          ...(cleanAvailability(form.get("available")) ? { available: cleanAvailability(form.get("available")) } : {}),
+        },
         languages: cleanLanguages(form.getAll("languages")),
         consent_at: new Date().toISOString(),
         // They sign their candidate agreement right here, so nothing is left to do after their call.

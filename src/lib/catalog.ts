@@ -56,7 +56,7 @@ const cachedListed = unstable_cache(
     if (error) throw error;
     return ((data ?? []) as unknown as PublicCandidate[]).map(tidyRoles);
   },
-  ["catalog-listed"],
+  ["catalog-listed", "v2-available"],
   { revalidate: 30, tags: [CATALOG_TAG] },
 );
 

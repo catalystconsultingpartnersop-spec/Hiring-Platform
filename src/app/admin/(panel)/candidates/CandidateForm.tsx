@@ -18,6 +18,7 @@ import {
 import { FormState, saveCandidate } from "../../actions";
 import styles from "./form.module.css";
 import { WordingHelp } from "./WordingHelp";
+import { AVAILABILITY } from "@/lib/availability";
 import { OwnerPageFields } from "./OwnerPageFields";
 import { findBlanks, tidyHeadline, tidyHighlight, tidyParagraphs } from "@/lib/tidyText";
 
@@ -81,6 +82,7 @@ export function CandidateForm({
   const [role, setRole] = useState(v("role_category"));
   const [level, setLevel] = useState(v("level"));
   const [mode, setMode] = useState(v("work_mode"));
+  const [avail, setAvail] = useState((c?.application as Record<string, string> | undefined)?.available ?? "");
   const [langs, setLangs] = useState<string[]>(c?.languages ?? []);
   const [otherLang, setOtherLang] = useState("");
   const [industry, setIndustry] = useState(v("industry"));
@@ -387,6 +389,23 @@ export function CandidateForm({
                 onClick={() => setMode(mode === val ? "" : val)}
               >
                 {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={styles.chipField} style={{ marginTop: 18 }}>
+          <span>Can start</span>
+          <input type="hidden" name="available" value={avail} />
+          <div className={styles.chips}>
+            {AVAILABILITY.map((a) => (
+              <button
+                key={a.value}
+                type="button"
+                className={avail === a.value ? styles.chipOn : styles.chip}
+                aria-pressed={avail === a.value}
+                onClick={() => setAvail(avail === a.value ? "" : a.value)}
+              >
+                {a.label}
               </button>
             ))}
           </div>
