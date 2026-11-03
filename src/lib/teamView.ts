@@ -1,3 +1,4 @@
+import { hiddenStaffIds } from "./hiddenStaff";
 import { isCheckAccount } from "./session";
 import { db } from "./db";
 import { effectiveReps } from "./reps";
@@ -53,6 +54,7 @@ export async function loadTeam(): Promise<RepSummary[]> {
   ]);
   const callRows = (calls ?? []) as unknown as CallRow[];
   const candRows = (cands ?? []) as CandRow[];
+  const hidden = await hiddenStaffIds();
   const owner = await effectiveReps(candRows.map((c) => ({ id: c.id, added_by: c.added_by })));
   const hours = new Set((wins ?? []).map((w) => w.staff_id as string));
   const weekEnd = now + 7 * DAY;
@@ -92,7 +94,7 @@ export async function loadTeam(): Promise<RepSummary[]> {
         candidates: mineCands,
       };
     })
-    .filter((r) => !isCheckAccount(r.email))
+    .filter((r) => !isCheckAccount(r.email) && !hidden.has(r.id))
     .sort((a, b) => b.week.length - a.week.length || a.name.localeCompare(b.name));
 }
 

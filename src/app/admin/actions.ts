@@ -1,5 +1,6 @@
 "use server";
 
+import { hiddenStaffIds } from "@/lib/hiddenStaff";
 import { cleanLanguages } from "@/lib/languages";
 import { requestPromise } from "@/lib/promise";
 
@@ -955,8 +956,8 @@ export async function messageAllReps(_prev: FormState, form: FormData): Promise<
   const subject = String(form.get("subject") ?? "").trim().slice(0, 150);
   const body = String(form.get("body") ?? "").trim().slice(0, 5000);
   if (!subject || !body) return { error: "Add a subject and a message." };
-  const { data } = await db().from("staff").select("email, full_name, active").eq("active", true);
-  const reps = ((data ?? []) as { email: string; full_name: string | null }[]).filter((s) => !isOwnerEmail(s.email) && !isCheckAccount(s.email));
+  const [{ data }, hidden] = await Promise.all([db().from("staff").select("id, email, full_name, active").eq("active", true), hiddenStaffIds()]);
+  const reps = ((data ?? []) as { id: string; email: string; full_name: string | null }[]).filter((s) => !isOwnerEmail(s.email) && !isCheckAccount(s.email) && !hidden.has(s.id));
   if (!reps.length) return { error: "No active reps to send to." };
   let sent = 0;
   const failed: string[] = [];
@@ -1291,4 +1292,14 @@ export async function welcomeStaff(token: string, _prev: FormState, form: FormDa
   await startStaffSession(member.id);
   await logActivity(`staff:${data.email}`, "staff_welcomed");
   redirect("/admin?welcome=1");
+}
+
+// Hide a test account from the Reps page, the application form, Move lists and Finance.
+export async function setStaffHiddenAction(id: string, hide: boolean) {
+  const me = await requireAdmin();
+  const { setStaffHidden } = await import("@/lib/hiddenStaff");
+  await setStaffHidden(id, hide);
+  await logActivity(staffActor(me), hide ? "staff_hidden" : "staff_unhidden", { staff_id: id });
+  revalidatePath("/admin/team");
+  revalidatePath("/admin/reps");
 }

@@ -1,3 +1,4 @@
+import { hiddenStaffIds } from "@/lib/hiddenStaff";
 import { isCheckAccount } from "@/lib/session";
 import { logKnownExpenses } from "@/lib/knownExpenses";
 import Link from "next/link";
@@ -119,8 +120,9 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
   const shownMonths = months.filter((m) => m.key >= firstMonth);
 
   // Every rep, even before their first hire.
+  const hidden = await hiddenStaffIds();
   const repRows = [...people.values()]
-    .filter((p) => !isOwnerEmail(p.email) && !isCheckAccount(p.email) && ((p as StaffLite & { active?: boolean }).active !== false || reps.has(p.id)))
+    .filter((p) => !isOwnerEmail(p.email) && !isCheckAccount(p.email) && !hidden.has(p.id) && ((p as StaffLite & { active?: boolean }).active !== false || reps.has(p.id)))
     .map((p) => {
       const r = reps.get(p.id);
       const owedIds = earning.filter((h) => h.rep?.id === p.id && !h.commission_paid_at).map((h) => h.id);

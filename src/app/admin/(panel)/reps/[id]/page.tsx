@@ -1,3 +1,4 @@
+import { hiddenStaffIds } from "@/lib/hiddenStaff";
 import { isCheckAccount } from "@/lib/session";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -16,7 +17,8 @@ export default async function RepView({ params }: PageProps<"/admin/reps/[id]">)
   const r = await loadRep(id);
   if (!r) notFound();
   const { data: staff } = await db().from("staff").select("id, full_name, email").eq("active", true);
-  const reps = ((staff ?? []) as { id: string; full_name: string | null; email: string }[]).filter((s) => !isCheckAccount(s.email)).map((s) => ({ id: s.id, name: s.full_name || s.email }));
+  const hidden = await hiddenStaffIds();
+  const reps = ((staff ?? []) as { id: string; full_name: string | null; email: string }[]).filter((s) => !isCheckAccount(s.email) && !hidden.has(s.id)).map((s) => ({ id: s.id, name: s.full_name || s.email }));
 
   return (
     <>

@@ -1,10 +1,12 @@
+import { hiddenStaffIds } from "./hiddenStaff";
 import { db } from "./db";
 import { isCheckAccount, isOwnerEmail } from "./session";
 
 // Everyone a candidate can be assigned to: Heshy first, then partners, then reps.
 export async function repOptions(): Promise<[string, string][]> {
   const { data } = await db().from("staff").select("*").eq("active", true);
-  const rows = ((data ?? []) as { id: string; email: string; full_name: string | null; is_partner?: boolean }[]).filter((r) => !isCheckAccount(r.email));
+  const hidden = await hiddenStaffIds();
+  const rows = ((data ?? []) as { id: string; email: string; full_name: string | null; is_partner?: boolean }[]).filter((r) => !isCheckAccount(r.email) && !hidden.has(r.id));
   const rank = (r: (typeof rows)[number]) => (isOwnerEmail(r.email) ? 0 : r.is_partner ? 1 : 2);
   return rows
     .sort((a, b) => rank(a) - rank(b) || (a.full_name ?? a.email).localeCompare(b.full_name ?? b.email))

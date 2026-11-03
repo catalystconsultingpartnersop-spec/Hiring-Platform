@@ -1,5 +1,6 @@
 "use server";
 
+import { hiddenStaffIds } from "@/lib/hiddenStaff";
 import { isCheckAccount } from "@/lib/session";
 import { cleanLanguages } from "@/lib/languages";
 import { allow, SLOW_DOWN } from "@/lib/throttle";
@@ -128,8 +129,9 @@ async function chosenRep(picked: string): Promise<string | null> {
 // The team members a candidate can say sent them.
 export async function repChoices(): Promise<{ list: [string, string][]; referred: string | null }> {
   const { data } = await db().from("staff").select("id, full_name, email").eq("active", true);
+  const hidden = await hiddenStaffIds();
   const list = ((data ?? []) as { id: string; full_name: string | null; email: string }[])
-    .filter((s) => s.full_name && !isCheckAccount(s.email))
+    .filter((s) => s.full_name && !isCheckAccount(s.email) && !hidden.has(s.id))
     .map((s): [string, string] => [s.id, s.full_name!])
     .sort((a, b) => a[1].localeCompare(b[1]));
   return { list, referred: await referringRep() };

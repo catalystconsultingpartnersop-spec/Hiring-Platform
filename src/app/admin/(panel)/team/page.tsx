@@ -6,7 +6,8 @@ import { isOwnerEmail, requireAdmin } from "@/lib/session";
 import { minutesLabel } from "@/lib/time";
 import { commissionTerms } from "@/lib/adminData";
 import { commissionPercent } from "@/lib/settings";
-import { setPartner, setStaffActive, setStaffRole } from "../../actions";
+import { setPartner, setStaffActive, setStaffHiddenAction, setStaffRole } from "../../actions";
+import { hiddenStaffIds } from "@/lib/hiddenStaff";
 import { AddStaffForm } from "./AddStaffForm";
 import { MessageReps } from "./MessageReps";
 
@@ -45,6 +46,7 @@ export default async function TeamPage() {
   const { data, error } = await db().from("staff").select("*").order("created_at");
   const pct = await commissionPercent();
   const members = (data ?? []) as Member[];
+  const hidden = await hiddenStaffIds();
 
   const { data: counts } = await db().from("candidates").select("added_by").not("added_by", "is", null);
   const added = new Map<string, number>();
@@ -116,6 +118,11 @@ export default async function TeamPage() {
                       )}
                       {m.is_partner && <span className="tag tag-gold" style={{ marginLeft: 6 }}>Partner</span>}
                       {!m.active && <span className="tag" style={{ marginLeft: 6 }}>Switched off</span>}
+                      {hidden.has(m.id) && (
+                        <span className="tag" style={{ marginLeft: 6 }} title="Can still sign in, but doesn't show on the Reps page, the application form, Move lists or Finance">
+                          Hidden
+                        </span>
+                      )}
                       {!owner && m.role === "rep" && (
                         <div className="small" style={{ marginTop: 4 }}>
                           <Link prefetch={false} href={`/admin/team/${m.id}#terms`}>{commissionTerms(m, pct)}</Link>
@@ -140,6 +147,13 @@ export default async function TeamPage() {
                     <td>{upcoming.get(m.id) ?? 0}</td>
                     <td>{dateShort(m.last_login_at)}</td>
                     <td>
+                      {m.active && (
+                        <form action={setStaffHiddenAction.bind(null, m.id, !hidden.has(m.id))} style={{ marginBottom: 8 }}>
+                          <button className="btn btn-small btn-ghost" type="submit" title="Hidden people can still sign in, but don't show on the Reps page, the application form, Move lists or Finance">
+                            {hidden.has(m.id) ? "Show again" : "Hide (testing)"}
+                          </button>
+                        </form>
+                      )}
                       {self ? (
                         <span className="small muted">You</span>
                       ) : locked ? (
