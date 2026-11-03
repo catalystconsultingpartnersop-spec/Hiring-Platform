@@ -120,7 +120,9 @@ export async function draftFromCall(candidateId: string, opts: { notifyRep?: boo
   try {
     draft = await draftText(c.full_name, c.application?.looking_for ?? "", transcript);
   } catch (e) {
-    return { ok: false, error: (e as Error).message.startsWith("The AI") ? (e as Error).message : "The AI's answer didn't come through right. Try again." };
+    const msg = (e as Error).message ?? String(e);
+    await logActivity("system", "call_draft_failed", { candidate_id: candidateId, error: msg.slice(0, 300), transcript_chars: transcript.length });
+    return { ok: false, error: msg.startsWith("The AI") ? msg : "The AI's answer didn't come through right. Try again." };
   }
 
   // Fill in only what's still empty; never overwrite the rep's own words.
