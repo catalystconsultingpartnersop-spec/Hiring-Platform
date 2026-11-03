@@ -1,16 +1,13 @@
 import { keepCandidatesOut } from "@/lib/candidateMode";
 import Link from "next/link";
 import { CandidateCard, isNew } from "@/components/CandidateCard";
-import { getTiers, listListed, rolesOf } from "@/lib/catalog";
+import { getTiers, listListed } from "@/lib/catalog";
 import type { FeeTier, PublicCandidate } from "@/lib/db";
 import { feeFor } from "@/lib/format";
 import { nowMs } from "@/lib/time";
 import styles from "./home.module.css";
 
 export const dynamic = "force-dynamic";
-
-// Shown as quick picks even before there's anyone listed in that role.
-const POPULAR = ["Office manager", "Bookkeeping", "Sales", "Executive assistant", "Graphic design", "Customer service", "Operations", "Marketing"];
 
 // Fixed examples for the welcome stack at the top. The real, live
 // candidates appear as soon as the owner starts browsing.
@@ -82,12 +79,6 @@ export default async function Home() {
     // Database not reachable: the page still explains the idea.
   }
 
-  // Roles people can jump straight into, busiest first.
-  const counts = new Map<string, number>();
-  for (const c of all) for (const r of rolesOf(c)) counts.set(r, (counts.get(r) ?? 0) + 1);
-  const chips = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([r, n]) => ({ role: r, n }));
-  for (const r of POPULAR) if (chips.length < 8 && !counts.has(r)) chips.push({ role: r, n: 0 });
-
   const fresh = all.filter(isNew);
   const feed = [...fresh, ...all.filter((c) => !isNew(c))].slice(0, 12);
   const card = (c: PublicCandidate) => <CandidateCard key={c.id} c={c} fee={feeFor(c, tiers)} href={`/candidates/${c.id}`} />;
@@ -108,15 +99,6 @@ export default async function Home() {
               <Link className="btn btn-gold" href="/candidates">
                 Start browsing
               </Link>
-            </div>
-            <p className={styles.jump}>Or jump straight to</p>
-            <div className={styles.chips}>
-              {chips.map(({ role, n }) => (
-                <Link key={role} href={n ? `/candidates?role=${encodeURIComponent(role)}` : `/candidates?q=${encodeURIComponent(role)}`}>
-                  {role}
-                  {n > 0 && <b>{n}</b>}
-                </Link>
-              ))}
             </div>
           </div>
           <div className={styles.stack} aria-hidden="true">
