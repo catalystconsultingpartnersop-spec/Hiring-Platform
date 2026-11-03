@@ -40,9 +40,18 @@ export function RepTerms(p: {
       <form action={switchEmail} style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }}>
         <h2 style={{ fontSize: 19, margin: 0 }}>Work email</h2>
         {onWork ? (
-          <p className="small" style={{ margin: "6px 0 0" }}>
-            {first} uses <strong>{p.email}</strong>.
-          </p>
+          <>
+            <p className="small" style={{ margin: "6px 0 10px" }}>
+              {first} signs in with <strong>{p.email}</strong>. To switch {first} back to a personal email, enter it here (same
+              password; nothing is emailed).
+            </p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <input className="input" name="work_email" type="email" placeholder="their personal email" style={{ maxWidth: 320 }} required />
+              <button className="btn btn-small btn-ghost" type="submit" disabled={switching}>
+                {switching ? "Switching…" : "Switch back"}
+              </button>
+            </div>
+          </>
         ) : (
           <>
             <p className="small muted" style={{ margin: "6px 0 10px" }}>

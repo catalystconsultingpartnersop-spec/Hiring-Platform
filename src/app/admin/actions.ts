@@ -573,15 +573,23 @@ export async function switchToWorkEmail(staffId: string, _prev: FormState, form:
   const me = await requireAdmin();
   const email = String(form.get("work_email") ?? "").trim().toLowerCase();
   const domain = workEmailDomain();
-  if (!email.endsWith(`@${domain}`) || !/^[^\s@]+@[^\s@]+$/.test(email)) return { error: `Enter their @${domain} address.` };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Enter an email address." };
   const { data: m } = await db().from("staff").select("*").eq("id", staffId).single();
   if (!m) return { error: "Not found." };
+  // Moving them off the work email (back to a personal one): change it quietly.
+  const back = String(m.email).endsWith(`@${domain}`) && !email.endsWith(`@${domain}`);
+  if (!back && !email.endsWith(`@${domain}`)) return { error: `Enter their @${domain} address.` };
   if (m.email === email) return { ok: "They're already on that email." };
   const { data: taken } = await db().from("staff").select("id").eq("email", email).maybeSingle();
   if (taken) return { error: "Someone on the team already uses that email." };
   const { error } = await db().from("staff").update({ email }).eq("id", staffId);
   if (error) return { error: `Could not switch: ${error.message}` };
-  await logActivity(staffActor(me), "work_email_set", { staff: staffId, from: m.email, to: email });
+  await logActivity(staffActor(me), back ? "work_email_undone" : "work_email_set", { staff: staffId, from: m.email, to: email });
+  if (back) {
+    revalidatePath(`/admin/team/${staffId}`);
+    revalidatePath("/admin/team");
+    return { ok: `Switched back. ${m.full_name?.split(" ")[0] ?? "They"} signs in with ${email} again, same password.` };
+  }
   const mail = teamExtra.workEmailReady({ name: m.full_name ?? email, workEmail: email });
   await sendEmail({ to: email, ...mail });
   await sendEmail({ to: m.email, ...mail });
