@@ -94,7 +94,7 @@ export async function loadTeam(): Promise<RepSummary[]> {
         candidates: mineCands,
       };
     })
-    .filter((r) => !isCheckAccount(r.email) && !hidden.has(r.id))
+    .filter((r) => !isCheckAccount(r.email) && !hidden.has(r.id) && r.signed)
     .sort((a, b) => b.week.length - a.week.length || a.name.localeCompare(b.name));
 }
 

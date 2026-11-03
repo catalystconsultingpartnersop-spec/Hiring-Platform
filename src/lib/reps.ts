@@ -6,7 +6,9 @@ import { isCheckAccount, isOwnerEmail } from "./session";
 export async function repOptions(): Promise<[string, string][]> {
   const { data } = await db().from("staff").select("*").eq("active", true);
   const hidden = await hiddenStaffIds();
-  const rows = ((data ?? []) as { id: string; email: string; full_name: string | null; is_partner?: boolean }[]).filter((r) => !isCheckAccount(r.email) && !hidden.has(r.id));
+  const rows = ((data ?? []) as { id: string; email: string; full_name: string | null; is_partner?: boolean; role?: string; agreement_signed_at?: string | null }[]).filter(
+    (r) => !isCheckAccount(r.email) && !hidden.has(r.id) && (r.role === "admin" || !!r.agreement_signed_at),
+  );
   const rank = (r: (typeof rows)[number]) => (isOwnerEmail(r.email) ? 0 : r.is_partner ? 1 : 2);
   return rows
     .sort((a, b) => rank(a) - rank(b) || (a.full_name ?? a.email).localeCompare(b.full_name ?? b.email))

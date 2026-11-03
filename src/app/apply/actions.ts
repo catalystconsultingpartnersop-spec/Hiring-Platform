@@ -128,10 +128,11 @@ async function chosenRep(picked: string): Promise<string | null> {
 
 // The team members a candidate can say sent them.
 export async function repChoices(): Promise<{ list: [string, string][]; referred: string | null }> {
-  const { data } = await db().from("staff").select("id, full_name, email").eq("active", true);
+  const { data } = await db().from("staff").select("id, full_name, email, role, agreement_signed_at").eq("active", true);
   const hidden = await hiddenStaffIds();
-  const list = ((data ?? []) as { id: string; full_name: string | null; email: string }[])
-    .filter((s) => s.full_name && !isCheckAccount(s.email) && !hidden.has(s.id))
+  const list = ((data ?? []) as { id: string; full_name: string | null; email: string; role: string; agreement_signed_at: string | null }[])
+    // Only people who can take candidates: admins, and reps who signed their agreement.
+    .filter((s) => s.full_name && !isCheckAccount(s.email) && !hidden.has(s.id) && (s.role === "admin" || !!s.agreement_signed_at))
     .map((s): [string, string] => [s.id, s.full_name!])
     .sort((a, b) => a[1].localeCompare(b[1]));
   return { list, referred: await referringRep() };

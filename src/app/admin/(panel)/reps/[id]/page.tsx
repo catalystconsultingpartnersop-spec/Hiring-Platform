@@ -16,9 +16,9 @@ export default async function RepView({ params }: PageProps<"/admin/reps/[id]">)
   const { id } = await params;
   const r = await loadRep(id);
   if (!r) notFound();
-  const { data: staff } = await db().from("staff").select("id, full_name, email").eq("active", true);
+  const { data: staff } = await db().from("staff").select("id, full_name, email, role, agreement_signed_at").eq("active", true);
   const hidden = await hiddenStaffIds();
-  const reps = ((staff ?? []) as { id: string; full_name: string | null; email: string }[]).filter((s) => !isCheckAccount(s.email) && !hidden.has(s.id)).map((s) => ({ id: s.id, name: s.full_name || s.email }));
+  const reps = ((staff ?? []) as { id: string; full_name: string | null; email: string; role: string; agreement_signed_at: string | null }[]).filter((s) => !isCheckAccount(s.email) && !hidden.has(s.id) && (s.role === "admin" || !!s.agreement_signed_at)).map((s) => ({ id: s.id, name: s.full_name || s.email }));
 
   return (
     <>

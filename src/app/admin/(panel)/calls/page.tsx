@@ -48,9 +48,11 @@ async function load(staffId: string | null, upcoming: boolean) {
 export default async function CallsPage({ searchParams }: PageProps<"/admin/calls">) {
   const sp = await searchParams;
   const me = await requireStaff();
-  const { data: staffRows } = await db().from("staff").select("id, full_name, email, active");
+  const { data: staffRows } = await db().from("staff").select("id, full_name, email, active, role, agreement_signed_at");
   const hidden = await hiddenStaffIds();
-  const activeReps = ((staffRows ?? []) as { id: string; full_name: string | null; email: string; active: boolean }[]).filter((s) => s.active && !isCheckAccount(s.email) && !hidden.has(s.id));
+  const activeReps = ((staffRows ?? []) as { id: string; full_name: string | null; email: string; active: boolean; role: string; agreement_signed_at: string | null }[]).filter(
+    (s) => s.active && !isCheckAccount(s.email) && !hidden.has(s.id) && (s.role === "admin" || !!s.agreement_signed_at),
+  );
   const nameOf = new Map(((staffRows ?? []) as { id: string; full_name: string | null; email: string }[]).map((s) => [s.id, (s.full_name || s.email).split(" ")[0]]));
   const admin = me.manager;
   const mine = admin ? null : me.id;

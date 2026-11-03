@@ -18,10 +18,10 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
     loadAgreements(),
     commissionPercent(),
     loadRep(staffId),
-    db().from("staff").select("id, full_name, email").eq("active", true),
+    db().from("staff").select("id, full_name, email, role, agreement_signed_at").eq("active", true),
   ]);
   const hidden = await hiddenStaffIds();
-  const staffList = ((staff ?? []) as { id: string; full_name: string | null; email: string }[]).filter((s) => !isCheckAccount(s.email) && !hidden.has(s.id)).map((s) => ({ id: s.id, name: s.full_name || s.email }));
+  const staffList = ((staff ?? []) as { id: string; full_name: string | null; email: string; role: string; agreement_signed_at: string | null }[]).filter((s) => !isCheckAccount(s.email) && !hidden.has(s.id) && (s.role === "admin" || !!s.agreement_signed_at)).map((s) => ({ id: s.id, name: s.full_name || s.email }));
 
   // Hires credited to this rep.
   const hires = agreements
