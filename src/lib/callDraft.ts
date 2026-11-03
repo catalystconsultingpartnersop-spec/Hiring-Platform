@@ -22,7 +22,7 @@ export type CallDraft = {
 
 const MODELS = ["claude-sonnet-5-5", "claude-sonnet-4-5"];
 
-async function askAI(prompt: string): Promise<string> {
+async function askAI(prompt: string): Promise<{ text: string; stop: string }> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("The AI key isn't set up yet.");
   let last = "";
@@ -30,11 +30,12 @@ async function askAI(prompt: string): Promise<string> {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model, max_tokens: 2000, messages: [{ role: "user", content: prompt }] }),
+      // Long calls make long drafts: leave plenty of room so the answer isn't cut off.
+      body: JSON.stringify({ model, max_tokens: 8000, messages: [{ role: "user", content: prompt }] }),
     });
     if (r.ok) {
-      const j = (await r.json()) as { content: { type: string; text?: string }[] };
-      return j.content.map((x) => x.text ?? "").join("");
+      const j = (await r.json()) as { content: { type: string; text?: string }[]; stop_reason?: string };
+      return { text: j.content.map((x) => x.text ?? "").join(""), stop: j.stop_reason ?? "" };
     }
     last = `${r.status} ${(await r.text()).slice(0, 200)}`;
     if (r.status !== 404 && r.status !== 400) break;
@@ -68,8 +69,21 @@ ${transcript.slice(0, 120000)}`;
 }
 
 export async function draftText(name: string, lookingFor: string, transcript: string): Promise<CallDraft> {
-  const raw = await askAI(promptFor(name, lookingFor, transcript));
-  const j = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1));
+  // One quiet retry if the answer comes back cut off or garbled.
+  let j: Record<string, unknown> | null = null;
+  let why = "";
+  for (let attempt = 0; attempt < 2 && !j; attempt++) {
+    const { text, stop } = await askAI(promptFor(name, lookingFor, transcript));
+    try {
+      j = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
+    } catch {
+      why = `stop=${stop} length=${text.length}`;
+    }
+  }
+  if (!j) {
+    await logActivity("system", "call_draft_failed", { name, why });
+    throw new Error("draft parse");
+  }
   return {
     headline: String(j.headline ?? "").slice(0, 140),
     summary: String(j.summary ?? ""),
