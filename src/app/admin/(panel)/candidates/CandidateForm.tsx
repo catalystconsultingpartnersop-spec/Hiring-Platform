@@ -18,6 +18,7 @@ import {
 import { FormState, saveCandidate } from "../../actions";
 import styles from "./form.module.css";
 import { WordingHelp } from "./WordingHelp";
+import { OwnerPageFields } from "./OwnerPageFields";
 import { findBlanks, tidyHeadline, tidyHighlight, tidyParagraphs } from "@/lib/tidyText";
 
 
@@ -575,6 +576,12 @@ export function CandidateForm({
             <small>Leave empty to use the words from their result. Separate with commas.</small>
           </label>
         </details>
+        <OwnerPageFields
+          candidateId={c?.id ?? null}
+          raw={(c?.application as Record<string, string> | undefined)?.owner_page}
+          onHeadline={(h) => setHeadline(h)}
+          headline={headline}
+        />
       </section>
 
       {/* 5. Private */}

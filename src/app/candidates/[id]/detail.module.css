@@ -18,11 +18,12 @@
 .ref { color: var(--ink-3); font-size: 14px; font-variant-numeric: tabular-nums; }
 
 .headline {
-  font-size: clamp(30px, 4.6vw, 46px);
+  font-size: clamp(27px, 4vw, 42px);
   font-weight: 800;
   letter-spacing: -0.025em;
-  margin-top: 8px;
-  max-width: 20ch;
+  line-height: 1.12;
+  margin-top: 0;
+  max-width: 24ch;
 }
 
 .wired { margin: 18px 0 16px; }
@@ -122,3 +123,49 @@
 .glance ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .glance li { position: relative; padding-left: 24px; font-size: 15.5px; line-height: 1.4; }
 .glance li::before { content: "✓"; position: absolute; left: 0; top: 0; color: var(--moss); font-weight: 800; }
+
+/* ---- Profile page, written to the owner ---- */
+.chip { display: inline-block; margin: 0 0 12px; background: var(--wash); border-radius: 999px; padding: 5px 12px; font-size: 13.5px; font-weight: 600; color: #3b4660; }
+.intro { margin-top: 14px; max-width: 64ch; font-size: 17.5px; line-height: 1.6; color: #2c3650; }
+.intro p + p { margin-top: 12px; }
+.tiles { margin: 22px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; max-width: 680px; }
+.tiles > div { background: var(--wash); border-radius: 12px; padding: 10px 14px; }
+.tiles dt { font-size: 12.5px; color: var(--ink-2); }
+.tiles dd { margin: 2px 0 0; font-weight: 700; font-size: 15px; }
+.tiles > .tileWide { grid-column: 1 / -1; }
+.block { margin-top: 34px; max-width: 680px; }
+.block h2 { font-size: 21px; letter-spacing: -0.01em; margin: 0 0 4px; }
+.blockSub { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+.handle { list-style: none; margin: 0; padding: 0; }
+.handle li { display: flex; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+.handle li:last-child { border-bottom: 0; }
+.handleIcon { flex: 0 0 30px; height: 30px; border-radius: 9px; background: #fff3c4; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.handle b { display: block; font-size: 16px; margin-bottom: 2px; }
+.handle span:not(.handleIcon) { color: #4a5570; font-size: 15px; line-height: 1.45; }
+.work { background: var(--wash); border-radius: 16px; padding: 16px 18px; margin-top: 10px; }
+.work p { margin: 0 0 10px; font-size: 16px; line-height: 1.55; color: #2c3650; }
+.work p:last-child { margin: 0; }
+.workTags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.workTags span { background: #fff; border: 1px solid #e3e6ee; border-radius: 999px; padding: 5px 12px; font-size: 13.5px; font-weight: 600; }
+.workTags .tagMain { background: #e3f2ea; border-color: #cde6d8; color: #17603d; }
+.fit { list-style: none; margin: 8px 0 0; padding: 0; }
+.fit li { position: relative; padding: 6px 0 6px 28px; font-size: 16px; line-height: 1.45; }
+.fit li::before { content: "✓"; position: absolute; left: 3px; top: 6px; color: var(--moss); font-weight: 800; }
+.vet { display: flex; gap: 14px; align-items: flex-start; border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-top: 32px; max-width: 680px; }
+.vetMark { flex: 0 0 40px; height: 40px; border-radius: 50%; background: var(--ink); color: var(--marigold); font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.vet p { margin: 0; font-size: 15px; line-height: 1.5; color: #3b4660; }
+.vet b { color: var(--ink); }
+.page .ref { margin-top: 14px; }
+
+.deal { background: var(--ink); color: #fff; border-radius: 20px; padding: 22px 20px; }
+.deal h2 { color: #fff; font-size: 22px; margin: 0 0 6px; }
+.dealSub { margin: 0 0 16px; font-size: 15px; line-height: 1.5; color: #d5dae6; }
+.dealNums { display: flex; gap: 8px; margin-bottom: 16px; }
+.dealNums div { flex: 1; background: #ffffff14; border-radius: 12px; padding: 10px 12px; }
+.dealNums b { display: block; font-size: 23px; font-family: var(--display); }
+.dealNums span { font-size: 12.5px; color: #c4cad8; }
+.dealSave { margin-top: 8px; }
+.dealSave :global(.shortlist-btn) { width: 100%; justify-content: center; background: transparent; color: #fff; border-color: #ffffff55; }
+.dealSave :global(.shortlist-btn.is-saved) { background: #ffffff14; color: #ffd27a; border-color: #ffd27a88; }
+.dealNote { margin: 12px 0 0; font-size: 12.5px; line-height: 1.5; color: #aab2c4; text-align: center; }
+.dealNote a { color: #fff; }

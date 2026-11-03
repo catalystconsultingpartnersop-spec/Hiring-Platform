@@ -87,9 +87,11 @@ async function askAI(content: unknown[]): Promise<string> {
   throw new Error(`The AI didn't answer (${last}). Try again in a minute.`);
 }
 
-export async function makeCleanResume(candidateId: string, by: string): Promise<{ ok: true } | { ok: false; error: string }> {
+// Everything we have to work from for a candidate: their resume file and what they
+// said on their call (or our notes). Used for the clean resume and the owner page.
+export async function gatherSources(candidateId: string) {
   const { data: c } = await db().from("candidates").select("*").eq("id", candidateId).maybeSingle();
-  if (!c) return { ok: false, error: "Couldn't find this candidate." };
+  if (!c) return null;
   const app = (c.application ?? {}) as Record<string, string>;
   const sources: string[] = [];
 
@@ -127,6 +129,13 @@ export async function makeCleanResume(candidateId: string, by: string): Promise<
   } catch {}
   const notes = [c.admin_notes, draftNotes].filter(Boolean).join("\n");
   if (!call && notes) sources.push("our notes");
+  return { c, app, pdf, text, photo, call, notes, sources };
+}
+
+export async function makeCleanResume(candidateId: string, by: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const g = await gatherSources(candidateId);
+  if (!g) return { ok: false, error: "Couldn't find this candidate." };
+  const { c, app, pdf, text, photo, call, notes, sources } = g;
   if (!pdf && !text && !photo && !call && !notes) return { ok: false, error: "There's no resume or call to work from yet." };
 
   const extra = [

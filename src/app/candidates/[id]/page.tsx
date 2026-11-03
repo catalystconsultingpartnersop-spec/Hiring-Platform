@@ -1,14 +1,13 @@
 import { languagesText } from "@/lib/languages";
 import Link from "next/link";
-import { lowerRole } from "@/lib/format";
 import { PendingButton } from "@/components/PendingButton";
 import { notFound } from "next/navigation";
-import { bestAtText, CandidateCard, HowTheyWork, roleLine, WorksBest } from "@/components/CandidateCard";
-import { RoleCover } from "@/components/RoleCover";
+import { CandidateCard, roleLine } from "@/components/CandidateCard";
 import { MobileBar } from "@/components/MobileBar";
 import { ShortlistButton } from "@/components/Shortlist";
-import { allListed, getListed, getTiers, industriesOf, similarTo } from "@/lib/catalog";
-import { wiredFor } from "@/lib/strengths";
+import { allListed, getListed, getTiers, similarTo } from "@/lib/catalog";
+import { describe, profileOf, TRAITS } from "@/lib/strengths";
+import { loadOwnerPage, parseOwnerPage, type OwnerPage } from "@/lib/ownerPage";
 import { Candidate, db, Hire, PublicCandidate, Unlock } from "@/lib/db";
 import { dateShort, feeFor, LEVEL_LABEL, lines, money, refCode, salaryRange, WORK_MODE_LABEL } from "@/lib/format";
 
@@ -96,25 +95,25 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
       () => undefined,
     );
   }
-  const [tiers, { rows }] = await Promise.all([getTiers(), allListed()]);
+  const [tiers, { rows }, page] = await Promise.all([getTiers(), allListed(), loadOwnerPage(id)]);
   const similar = similarTo(c, rows).map((s) => ({ c: s, fee: feeFor(s, tiers) }));
-  return <Teaser c={c} fee={feeFor(c, tiers)} similar={similar} />;
+  return <Teaser c={c} page={page} fee={feeFor(c, tiers)} similar={similar} />;
 }
 
-function Facts({ c }: { c: PublicCandidate }) {
-  const rows: [string, string | null][] = [
-    ["Role", c.role_category],
-    ["Also a fit for", (c.also_roles ?? []).join(", ") || null],
-    ["Industry", industriesOf(c).join(", ") || null],
-    ["Experience", c.level ? LEVEL_LABEL[c.level] : null],
+// The few facts an owner checks first, as tiles.
+function Tiles({ c, page }: { c: PublicCandidate; page: OwnerPage | null }) {
+  const level = c.level ? LEVEL_LABEL[c.level] : null;
+  const tiles: [string, string | null][] = [
+    ["Experience", [level, page?.years].filter(Boolean).join(", ") || null],
     ["Location", c.location_region],
-    ["Work setting", c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null],
-    ["Languages", languagesText(c.languages)],
-    ["Salary expectation", salaryRange(c.salary_min, c.salary_max)],
+    ["Works", c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null],
+    ["Looking for", salaryRange(c.salary_min, c.salary_max)],
+    ["Speaks", languagesText(c.languages)],
   ];
+  const also = (c.also_roles ?? []).join(", ");
   return (
-    <dl className={styles.facts}>
-      {rows
+    <dl className={styles.tiles}>
+      {tiles
         .filter(([, v]) => v)
         .map(([k, v]) => (
           <div key={k}>
@@ -122,59 +121,56 @@ function Facts({ c }: { c: PublicCandidate }) {
             <dd>{v}</dd>
           </div>
         ))}
+      {also && (
+        <div className={styles.tileWide}>
+          <dt>Also a fit for</dt>
+          <dd>{also}</dd>
+        </div>
+      )}
     </dl>
   );
 }
 
-// Like a store's "About this item": the few facts an owner scans first.
-function AtAGlance({ c }: { c: PublicCandidate }) {
-  const salary = salaryRange(c.salary_min, c.salary_max);
-  const items = [
-    [c.level ? LEVEL_LABEL[c.level] : null, c.role_category ? lowerRole(c.role_category) : null].filter(Boolean).join(" ") || null,
-    [c.location_region, c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null].filter(Boolean).join(" · ") || null,
-    salary ? `Looking for ${salary}` : null,
-    languagesText(c.languages) ? `Fluent in ${languagesText(c.languages)}` : null,
-    bestAtText(c),
-    "Vetted in a one-on-one conversation with our team",
-  ].filter((x): x is string => !!x);
+// Their natural strengths, in everyday words.
+function HowWork({ c }: { c: PublicCandidate }) {
+  const p = profileOf(c.working_genius);
+  const d = describe(c.working_genius);
+  if (!d) return null;
+  const own = c.strengths ?? [];
   return (
-    <section className={styles.glance} aria-labelledby="glance">
-      <h2 id="glance">At a glance</h2>
-      <ul>
-        {items.map((x) => (
-          <li key={x}>{x.charAt(0).toUpperCase() + x.slice(1)}</li>
-        ))}
-      </ul>
+    <section className={styles.block}>
+      <h2>How they work</h2>
+      <div className={styles.work}>
+        <div className={styles.workTags}>
+          {p.primary.map((l) => (
+            <span key={l} className={styles.tagMain}>
+              {TRAITS[l].label}
+            </span>
+          ))}
+          {p.secondary.map((l) => (
+            <span key={l}>{TRAITS[l].label}</span>
+          ))}
+          {own.map((w) => (
+            <span key={w}>{w.charAt(0).toUpperCase() + w.slice(1)}</span>
+          ))}
+        </div>
+        <p>{d.thrives}</p>
+        {d.alsoBrings && <p>{d.alsoBrings}</p>}
+      </div>
     </section>
   );
 }
 
-function Profile({ c }: { c: PublicCandidate }) {
+function Profile({ c, page }: { c: PublicCandidate; page: OwnerPage | null }) {
+  const label = roleLine(c);
+  const intro = page?.intro || c.summary;
   return (
     <>
-      <RoleCover role={c.role_category} label={roleLine(c) || null} size="hero" />
-      <p className={styles.ref} style={{ marginTop: 16 }}>
-        {refCode(c.id)}
-        {c.listed_at ? ` · listed ${dateShort(c.listed_at)}` : ""}
-      </p>
+      {label && <p className={styles.chip}>{label}</p>}
       <h1 className={styles.headline}>{c.headline}</h1>
-      <AtAGlance c={c} />
-      {wiredFor(c).length > 0 && (
-        <div className={styles.wired}>
-          <p className={styles.wiredLabel}>Wired for</p>
-          <ul className={styles.wiredList}>
-            {wiredFor(c).map((w) => (
-              <li key={w}>{w}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <div className={styles.tagsRow}>
-        <WorksBest c={c} detail />
-      </div>
-      {c.summary && (
-        <div className={styles.summary}>
-          {lines(c.summary).map((p, i) => (
+      {intro && (
+        <div className={styles.intro}>
+          {lines(intro).map((p, i) => (
             <p key={i}>{p}</p>
           ))}
         </div>
@@ -186,17 +182,62 @@ function Profile({ c }: { c: PublicCandidate }) {
           ))}
         </ul>
       )}
-      <HowTheyWork c={c} />
+      <Tiles c={c} page={page} />
+      {page && page.handle.length > 0 && (
+        <section className={styles.block}>
+          <h2>What they&rsquo;d handle for you</h2>
+          <p className={styles.blockSub}>From their experience and our conversation with them.</p>
+          <ul className={styles.handle}>
+            {page.handle.map((h) => (
+              <li key={h.title}>
+                <span className={styles.handleIcon} aria-hidden="true">
+                  {h.icon || "✓"}
+                </span>
+                <div>
+                  <b>{h.title}</b>
+                  {h.detail && <span>{h.detail}</span>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <HowWork c={c} />
+      {page && page.fit.length > 0 && (
+        <section className={styles.block}>
+          <h2>A strong fit if you&hellip;</h2>
+          <ul className={styles.fit}>
+            {page.fit.map((f) => (
+              <li key={f}>{f}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <div className={styles.vet}>
+        <span className={styles.vetMark} aria-hidden="true">
+          ✓
+        </span>
+        <p>
+          <b>We met them one-on-one.</b> We went through their experience, learned how they work best, and checked what
+          they&rsquo;re looking for, before listing them here.
+        </p>
+      </div>
+      <p className={styles.ref}>
+        {refCode(c.id)}
+        {c.listed_at ? ` · listed ${dateShort(c.listed_at)}` : ""}
+      </p>
     </>
   );
 }
 
 function Teaser({
   c,
+  page,
   fee,
   similar,
 }: {
   c: PublicCandidate;
+  page: OwnerPage | null;
   fee: number | null;
   similar: { c: PublicCandidate; fee: number | null }[];
 }) {
@@ -207,22 +248,32 @@ function Teaser({
       </Link>
       <div className={styles.grid}>
         <article>
-          <Profile c={c} />
-          <Facts c={c} />
+          <Profile c={c} page={page} />
         </article>
         <aside className={styles.side}>
-          <div className="panel">
-            <p className="muted small">Flat fee if you hire</p>
-            <p className={styles.fee}>{fee != null ? money(fee) : "Ask us"}</p>
-            <p className="small muted">No percentage of salary. Charged only when you decide to hire.</p>
-            <Link className="btn btn-gold" href={`/candidates/${c.id}/unlock`} style={{ width: "100%", marginTop: 18 }}>
+          <div className={styles.deal}>
+            <h2>Like what you see?</h2>
+            <p className={styles.dealSub}>
+              See their name, resume and phone number, and reach out to them directly. Talking and interviewing are free.
+            </p>
+            <div className={styles.dealNums}>
+              <div>
+                <b>$0</b>
+                <span>to meet them</span>
+              </div>
+              <div>
+                <b>{fee != null ? money(fee) : "Ask us"}</b>
+                <span>flat, only if you hire</span>
+              </div>
+            </div>
+            <Link className="btn btn-gold" href={`/candidates/${c.id}/unlock`} style={{ width: "100%" }}>
               See who this is
             </Link>
-            <div className={styles.sideSave}>
+            <div className={styles.dealSave}>
               <ShortlistButton id={c.id} label />
             </div>
-            <p className={`small muted ${styles.sideNote}`}>
-              You&rsquo;ll sign a short agreement first. Seeing their name and contact details costs nothing.{" "}
+            <p className={styles.dealNote}>
+              You&rsquo;ll sign a short agreement and keep a card on file. Nothing is charged unless you hire.{" "}
               <Link href={`/contact?c=${c.id}`}>Questions about this candidate?</Link>
             </p>
           </div>
@@ -342,7 +393,7 @@ function Unlocked({
             </ul>
           </div>
           <NextSteps c={c} path={path} again={again} step={step} />
-          <Profile c={c} />
+          <Profile c={c} page={parseOwnerPage((c as { application?: Record<string, string> }).application?.owner_page)} />
           {c.full_profile && (
             <section className={styles.full}>
               <h2>Full profile</h2>
@@ -351,7 +402,6 @@ function Unlocked({
               ))}
             </section>
           )}
-          <Facts c={c} />
         </article>
 
         <aside className={styles.side}>

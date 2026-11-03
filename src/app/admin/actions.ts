@@ -11,6 +11,7 @@ import { clearCatalog } from "@/lib/catalog";
 import { allow, SLOW_DOWN } from "@/lib/throttle";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db, logActivity } from "@/lib/db";
@@ -348,6 +349,26 @@ ${hireSummaryHtml(notice)}`,
         await db().from("candidates").update({ resume_path: path }).eq("id", candidateId);
       }
     }
+  }
+
+  // Their page for owners: what the rep wrote or kept. Listed without one? Write it.
+  if (candidateId && form.has("owner_intro")) {
+    const { handleFromText, saveOwnerPage } = await import("@/lib/ownerPage");
+    const page = {
+      intro: tidyParagraphs(get("owner_intro")),
+      handle: handleFromText(get("owner_handle")).map((h) => ({ ...h, title: tidyHighlight(h.title), detail: h.detail ? tidyParagraphs(h.detail) : "" })),
+      fit: listFrom(get("owner_fit"), /\n/).map(tidyHighlight).slice(0, 4),
+      years: get("owner_years").slice(0, 30),
+    };
+    await saveOwnerPage(candidateId, page.intro || page.handle.length || page.fit.length ? page : null, actor);
+  }
+  if (candidateId && status === "listed") {
+    const cid = candidateId;
+    after(async () => {
+      const { fillOwnerPage } = await import("@/lib/ownerPage");
+      await fillOwnerPage(cid, actor).catch((e) => console.error("owner page", e));
+      clearCatalog();
+    });
   }
 
   revalidatePath("/admin");
@@ -1107,6 +1128,18 @@ export async function suggestProfileWording(
   } catch (e) {
     return { error: (e as Error).message };
   }
+}
+
+// "Write it for me" on the owner page section. Drafts only; the rep saves.
+export async function draftOwnerPageAction(candidateId: string): Promise<{ intro?: string; handle?: string; fit?: string; years?: string; headline?: string; error?: string }> {
+  const me = await requireStaff();
+  if (!(await canSeeCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
+  if (!(await allow(`ownerpage:${candidateId}`, 6, 60))) return { error: SLOW_DOWN };
+  const { draftOwnerPage, handleToText } = await import("@/lib/ownerPage");
+  const r = await draftOwnerPage(candidateId);
+  if ("error" in r) return { error: r.error };
+  await logActivity(staffActor(me), "owner_page_drafted", { candidate: refCode(candidateId) });
+  return { intro: r.page.intro, handle: handleToText(r.page.handle), fit: r.page.fit.join("\n"), years: r.page.years, headline: r.headline };
 }
 
 export async function draftProfileFromCall(candidateId: string): Promise<{ ok?: boolean; error?: string }> {

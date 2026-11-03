@@ -167,3 +167,8 @@
 .suggestRow b { font-size: 13px; color: var(--ink-2); }
 .suggestRow p { margin: 2px 0 0; white-space: pre-line; }
 .inlineBtns { display: flex; gap: 8px; margin-top: 10px; }
+
+/* Their page for owners */
+.ownerPage { margin-top: 26px; padding: 18px; border-radius: 14px; background: #f6f7fa; border: 1px solid var(--line, #dfe3ea); }
+.ownerPage h3 { margin: 0 0 4px; font-size: 18px; }
+.ownerPage .field { margin-top: 12px; }
