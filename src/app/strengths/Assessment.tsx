@@ -107,6 +107,7 @@ export function Assessment() {
       <p className={s.partLabel}>
         Part {page!.part} of 3 · Page {step + 1} of {total}
       </p>
+      <p className={s.change}>Changed your mind? Tap a different answer. Use Back to fix an earlier page.</p>
 
       {page && "items" in page && (
         <>
