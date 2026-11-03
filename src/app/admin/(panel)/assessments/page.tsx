@@ -1,4 +1,5 @@
-import { requireAdmin } from "@/lib/session";
+import { requireStaff } from "@/lib/session";
+import { StrengthsCard } from "../StrengthsCard";
 import { db } from "@/lib/db";
 import { summarize } from "@/lib/assessment";
 import { candidateUrl } from "@/lib/format";
@@ -6,7 +7,17 @@ import { candidateUrl } from "@/lib/format";
 type Row = { id: number; at: string; details: { name: string; email?: string; result: unknown } };
 
 export default async function AssessmentsPage() {
-  await requireAdmin();
+  const me = await requireStaff();
+  if (me.role !== "admin")
+    return (
+      <>
+        <div className="page-head" style={{ paddingBottom: 0 }}>
+          <h1>Strengths Assessment</h1>
+          <p>Our own. Candidates get it automatically when they book, and their results land on their profile.</p>
+        </div>
+        {me.id && <StrengthsCard staffId={me.id} />}
+      </>
+    );
   const { data } = await db()
     .from("activity_log")
     .select("id, at, details")
@@ -18,7 +29,7 @@ export default async function AssessmentsPage() {
   return (
     <>
       <div className="page-head" style={{ paddingBottom: 8 }}>
-        <h1>Strengths assessment (pilot)</h1>
+        <h1>Strengths Assessment</h1>
         <p>
           Our own assessment. Send people this link: <a href={link}>{link}</a>. Every result shows up here, and you get an
           email each time.

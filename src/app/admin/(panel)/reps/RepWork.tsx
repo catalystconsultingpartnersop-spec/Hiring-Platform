@@ -31,32 +31,98 @@ function Stage({ title, rows, hint }: { title: string; rows: CandRow[]; hint?: s
 
 // One rep's day-to-day work, the same for the rep's own dashboard and the manager's view:
 // numbers, what needs doing, calls coming up, and candidates by stage.
-export function RepWork({ r, self, reps, canMove = false }: { r: RepSummary; self: boolean; reps?: { id: string; name: string }[]; canMove?: boolean }) {
+export function RepWork({
+  r,
+  self,
+  reps,
+  canMove = false,
+  owed,
+}: {
+  r: RepSummary;
+  self: boolean;
+  reps?: { id: string; name: string }[];
+  canMove?: boolean;
+  owed?: string;
+}) {
   const when = (iso: string) => formatInZone(iso, COMPANY_TZ, { weekday: "short", month: "short" });
   const alerts = alertsFor(r, self);
   const repName = (id: string) => reps?.find((x) => x.id === id)?.name ?? "another rep";
+  const total = Object.values(r.stages).reduce((n, xs) => n + xs.length, 0);
+  const waiting = r.stages.fresh.length + r.stages.drafting.length;
 
   return (
     <>
+      <div className={styles.top5}>
+        <a href="#stages" className={styles.num}>
+          <b>{total}</b>
+          <span>{self ? "your candidates" : "candidates"}</span>
+        </a>
+        <a href="#stages" className={`${styles.num} ${waiting ? styles.numHot : ""}`}>
+          <b>{waiting}</b>
+          <span>waiting on {self ? "you" : "them"}</span>
+        </a>
+        <a href="#stages" className={styles.num}>
+          <b>{r.stages.listed.length}</b>
+          <span>listed</span>
+        </a>
+        <a href="#stages" className={styles.num}>
+          <b>{r.stages.hired.length}</b>
+          <span>hired</span>
+        </a>
+        {owed !== undefined && (
+          <a href="#earnings" className={styles.num}>
+            <b>{owed}</b>
+            <span>owed to {self ? "you" : "them"}</span>
+          </a>
+        )}
+      </div>
+
       <div className={styles.today}>
-        <div className={styles.nums4}>
-          <div className={styles.num}>
-            <b>{r.today.length}</b>
-            <span>calls today</span>
-          </div>
-          <div className={styles.num}>
-            <b>{r.week.length}</b>
-            <span>calls this week</span>
-          </div>
-          <div className={styles.num}>
-            <b>{r.hasHours ? r.openThisWeek : "–"}</b>
-            <span>open times left</span>
-          </div>
-          <div className={styles.num}>
-            <b>{r.stages.listed.length}</b>
-            <span>listed now</span>
-          </div>
-        </div>
+        <section className={styles.schedule}>
+        <h2>{self ? "Your schedule" : "Their schedule"}</h2>
+        <p className={styles.sub}>
+          {r.today.length} today · {r.week.length} this week{r.hasHours ? ` · ${r.openThisWeek} open times left` : ""}
+        </p>
+        {r.upcoming.length > 0 && (
+          <p className={styles.sub}>
+            {self ? "Join" : "They join"} signed in to Google as <b>{r.callEmail}</b>. The call records by itself once {self ? "you're" : "they're"} in with that account.
+          </p>
+        )}
+        {r.upcoming.length ? (
+          <ul className={styles.rows}>
+            {r.upcoming.map((k) => (
+              <li key={k.id}>
+                <span className={styles.when}>{when(k.starts_at)}</span>
+                <span className={styles.who}>
+                  <Link prefetch={false} href={`/admin/candidates/${k.candidates.id}`}>{k.candidates.full_name}</Link>
+                  {r.confirmed.includes(k.id) && <span className="tag tag-good" style={{ marginLeft: 6 }}>Confirmed ✓</span>}
+                  {k.candidates.added_by && k.candidates.added_by !== r.id && (
+                    <span className={styles.flag}>{repName(k.candidates.added_by)}&rsquo;s candidate</span>
+                  )}
+                </span>
+                <span className={styles.actions}>
+                  {k.meet_link && (
+                    <a className="btn btn-small btn-ghost" href={k.meet_link} target="_blank" rel="noreferrer" title={`Join signed in to Google as ${r.callEmail}, so the call records.`}>
+                      Join call
+                    </a>
+                  )}
+                  {canMove && reps && <MoveCallForm callId={k.id} currentRep={r.id} reps={reps} />}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="panel panel-wash">
+            No calls coming up.{" "}
+            {self && (
+              <>
+                Share your link from the <Link href="/admin/share">Share kit</Link> to get people booking.
+              </>
+            )}
+          </p>
+        )}
+      </section>
+
         <div className={styles.todo}>
           <h2>{self ? "Your to-do" : "Needs attention"}</h2>
           <ul className={styles.alerts}>
@@ -97,48 +163,6 @@ export function RepWork({ r, self, reps, canMove = false }: { r: RepSummary; sel
           </ul>
         </section>
       )}
-
-      <section className={styles.section}>
-        <h2>Calls coming up</h2>
-        {r.upcoming.length > 0 && (
-          <p className={styles.sub}>
-            {self ? "Join" : "They join"} signed in to Google as <b>{r.callEmail}</b>. The call records by itself once {self ? "you're" : "they're"} in with that account.
-          </p>
-        )}
-        {r.upcoming.length ? (
-          <ul className={styles.rows}>
-            {r.upcoming.map((k) => (
-              <li key={k.id}>
-                <span className={styles.when}>{when(k.starts_at)}</span>
-                <span className={styles.who}>
-                  <Link prefetch={false} href={`/admin/candidates/${k.candidates.id}`}>{k.candidates.full_name}</Link>
-                  {r.confirmed.includes(k.id) && <span className="tag tag-good" style={{ marginLeft: 6 }}>Confirmed ✓</span>}
-                  {k.candidates.added_by && k.candidates.added_by !== r.id && (
-                    <span className={styles.flag}>{repName(k.candidates.added_by)}&rsquo;s candidate</span>
-                  )}
-                </span>
-                <span className={styles.actions}>
-                  {k.meet_link && (
-                    <a className="btn btn-small btn-ghost" href={k.meet_link} target="_blank" rel="noreferrer" title={`Join signed in to Google as ${r.callEmail}, so the call records.`}>
-                      Join call
-                    </a>
-                  )}
-                  {canMove && reps && <MoveCallForm callId={k.id} currentRep={r.id} reps={reps} />}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="panel panel-wash">
-            No calls coming up.{" "}
-            {self && (
-              <>
-                Share your link from the <Link href="/admin/share">Share kit</Link> to get people booking.
-              </>
-            )}
-          </p>
-        )}
-      </section>
 
       <section className={styles.section} id="stages">
         <h2>{self ? "Your candidates" : "Candidates"}</h2>

@@ -11,7 +11,6 @@ import { RepWork } from "./reps/RepWork";
 import repStyles from "./reps/reps.module.css";
 import styles from "./admin.module.css";
 import { Introductions } from "./Introductions";
-import { StrengthsCard } from "./StrengthsCard";
 
 // A rep's home: today's work and to-do first, then their candidates, then what they've earned.
 export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: string; name: string; self: boolean; nowIso: string }) {
@@ -55,8 +54,8 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
       {self && (
         <p className="notice notice-gold" style={{ marginTop: 14, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <span>
-            <strong>New:</strong> your calls now record and take notes for you, the site drafts profiles from the call, one-click
-            reminders, and more flexible hours.
+            <strong>New:</strong> our own Strengths Assessment replaces Working Genius. Candidates get it automatically, and
+            their results land on their profile.
           </span>
           <Link className="btn btn-small" href="/admin/guide#new">
             See what&rsquo;s new
@@ -64,11 +63,9 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
         </p>
       )}
 
-      {work && <RepWork r={work} self={self} reps={staffList} canMove={!self} />}
+      {work && <RepWork r={work} self={self} reps={staffList} canMove={!self} owed={money(owed)} />}
 
-      {self && <StrengthsCard staffId={staffId} />}
-
-      <section style={{ marginTop: 32 }}>
+      <section style={{ marginTop: 32 }} id="earnings">
         <h2 className={styles.h2} style={{ marginTop: 0 }}>
           {self ? "Your earnings" : "Their earnings"}
         </h2>

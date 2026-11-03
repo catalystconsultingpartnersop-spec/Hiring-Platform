@@ -25,10 +25,9 @@ export async function StrengthsCard({ staffId }: { staffId: string }) {
     .slice(0, 12);
   const wa = `https://wa.me/?text=${encodeURIComponent(`Here's a short assessment that shows what you're naturally great at. It takes a few minutes: ${link}`)}`;
   return (
-    <section className="panel" style={{ marginTop: 24 }}>
-      <h2 style={{ fontSize: 19, margin: 0 }}>Strengths assessment</h2>
-      <p className="small muted" style={{ margin: "4px 0 12px" }}>
-        Our own. A few minutes. Shows what someone is naturally great at.
+    <section className="panel" style={{ marginTop: 18 }}>
+      <p className="small muted" style={{ margin: "0 0 12px" }}>
+        Send it to anyone else, or take it yourself.
       </p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <a className="btn btn-gold btn-small" href={link} target="_blank" rel="noreferrer">
