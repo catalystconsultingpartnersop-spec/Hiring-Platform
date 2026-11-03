@@ -104,6 +104,7 @@ export function CandidateCard({
   hideFee = false,
   store = false,
   interviewing = false,
+  reason = null,
 }: {
   c: PublicCandidate;
   fee: number | null;
@@ -112,6 +113,7 @@ export function CandidateCard({
   hideFee?: boolean; // the candidate looking at their own card
   store?: boolean; // catalog extras: quick look and compare
   interviewing?: boolean; // in an introduction with an employer right now
+  reason?: string | null; // why it's shown as similar ("Similar: office management, brooklyn")
 }) {
   const salary = salaryRange(c.salary_min, c.salary_max);
   const meta = [
@@ -148,6 +150,7 @@ export function CandidateCard({
             c.headline
           )}
         </h3>
+        {reason && <p className="card-similar">{reason}</p>}
         <WorksBest c={c} compact />
         {own && <p className="card-own">{own}</p>}
         {meta.length > 0 && (

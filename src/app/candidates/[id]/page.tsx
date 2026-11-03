@@ -1,6 +1,7 @@
 import { languagesText } from "@/lib/languages";
 import Link from "next/link";
 import { availabilityLabel } from "@/lib/availability";
+import { similarReason } from "@/lib/matching";
 import { PendingButton } from "@/components/PendingButton";
 import { notFound } from "next/navigation";
 import { CandidateCard, roleLine } from "@/components/CandidateCard";
@@ -97,7 +98,7 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
     );
   }
   const [tiers, { rows }, page] = await Promise.all([getTiers(), allListed(), loadOwnerPage(id)]);
-  const similar = similarTo(c, rows).map((s) => ({ c: s, fee: feeFor(s, tiers) }));
+  const similar = similarTo(c, rows).map((s) => ({ c: s, fee: feeFor(s, tiers), reason: similarReason(c, s) }));
   return <Teaser c={c} page={page} fee={feeFor(c, tiers)} similar={similar} />;
 }
 
@@ -241,7 +242,7 @@ function Teaser({
   c: PublicCandidate;
   page: OwnerPage | null;
   fee: number | null;
-  similar: { c: PublicCandidate; fee: number | null }[];
+  similar: { c: PublicCandidate; fee: number | null; reason: string | null }[];
 }) {
   return (
     <div className={`wrap ${styles.page}`}>
@@ -286,7 +287,7 @@ function Teaser({
           <h2>More candidates like this</h2>
           <div className="shelf">
             {similar.map((s) => (
-              <CandidateCard key={s.c.id} c={s.c} fee={s.fee} href={`/candidates/${s.c.id}`} />
+              <CandidateCard key={s.c.id} c={s.c} fee={s.fee} href={`/candidates/${s.c.id}`} reason={s.reason} />
             ))}
           </div>
         </section>

@@ -2,6 +2,7 @@ import { freshHeadline } from "./strengths";
 import { tidyHeadline, tidyRoles } from "./roles";
 import { isAnyIndustry } from "./format";
 import { revalidateTag, unstable_cache } from "next/cache";
+import { asPosition, scoreMatch } from "./matching";
 import { db, FeeTier, PublicCandidate, PUBLIC_CANDIDATE_COLUMNS } from "./db";
 import { profileOf, TRAITS, wiredFor } from "./strengths";
 import { blockedIdsFor, isBlockedFor } from "./blocklist";
@@ -219,18 +220,14 @@ export function facetCounts(rows: PublicCandidate[], f: CatalogFilters, key: Fil
   return counts;
 }
 
+// "More candidates like this": ranked by the same matching used for open positions
+// (role, place, pay, level, how they work), with shared strengths as a tie-breaker.
 export function similarTo(c: PublicCandidate, rows: PublicCandidate[], n = 4) {
   const g = new Set(strengthsOf(c));
+  const like = asPosition(c);
   return rows
     .filter((r) => r.id !== c.id)
-    .map((r) => ({
-      r,
-      score:
-        (r.role_category === c.role_category ? 3 : rolesOf(r).some((x) => rolesOf(c).includes(x)) ? 2 : 0) +
-        (industriesOf(r).some((x) => industriesOf(c).includes(x)) ? 1 : 0) +
-        (r.level === c.level ? 1 : 0) +
-        strengthsOf(r).filter((x) => g.has(x)).length,
-    }))
+    .map((r) => ({ r, score: scoreMatch(r, like).score + strengthsOf(r).filter((x) => g.has(x)).length * 3 }))
     .sort((a, b) => b.score - a.score)
     .slice(0, n)
     .map((x) => x.r);

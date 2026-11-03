@@ -8,6 +8,7 @@ import { dateShort, feeFor, money, refCode } from "@/lib/format";
 import { deleteCandidate, resendPromise } from "../../../actions";
 import { CandidateForm } from "../CandidateForm";
 import { RepPicker } from "../RepPicker";
+import { PositionsTheyFit } from "../PositionsTheyFit";
 import { ReminderOption, Reminders } from "../Reminders";
 import { CallDraftPanel } from "../CallDraftPanel";
 import { ResumePanel } from "../ResumePanel";
@@ -114,6 +115,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
           .sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at))[0];
         return <CallDraftPanel candidateId={c.id} callId={k?.id ?? null} madeAt={d?.made_at ?? null} notes={d?.private_notes ?? null} />;
       })()}
+      <PositionsTheyFit candidateId={c.id} status={c.status} />
       <ResumePanel
         candidateId={c.id}
         hasResume={!!(c as { resume_path?: string | null }).resume_path}
