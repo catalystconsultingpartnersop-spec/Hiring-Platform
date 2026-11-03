@@ -4,6 +4,7 @@ import { effectiveReps } from "./reps";
 import { openSlots } from "./slots";
 
 // Everything a manager needs to see each rep's work at a glance. No money.
+// Every active rep is shown, including those still setting up (no hours or agreement yet).
 
 export type CallRow = {
   id: string;
@@ -22,6 +23,7 @@ export type RepSummary = {
   email: string;
   partner: boolean;
   hasHours: boolean;
+  signed: boolean; // signed their rep agreement (admins always count as signed)
   openThisWeek: number;
   today: CallRow[];
   week: CallRow[];
@@ -36,7 +38,7 @@ export type RepSummary = {
 
 const DAY = 864e5;
 
-export async function loadTeam(keepAll = false): Promise<RepSummary[]> {
+export async function loadTeam(): Promise<RepSummary[]> {
   const now = Date.now();
   const [{ data: staff }, { data: wins }, { data: calls }, { data: cands }, slots] = await Promise.all([
     db().from("staff").select("*").eq("active", true),
@@ -57,7 +59,7 @@ export async function loadTeam(keepAll = false): Promise<RepSummary[]> {
   const nyDay = (ms: number) => new Date(ms).toLocaleDateString("en-US", { timeZone: "America/New_York" });
   const todayNY = nyDay(now);
 
-  return ((staff ?? []) as { id: string; full_name: string | null; email: string; is_partner?: boolean }[])
+  return ((staff ?? []) as { id: string; full_name: string | null; email: string; is_partner?: boolean; role?: string; agreement_signed_at?: string | null }[])
     .map((s) => {
       const mineCalls = callRows.filter((k) => k.staff_id === s.id && k.status !== "cancelled");
       const upcoming = mineCalls.filter((k) => k.status === "booked" && Date.parse(k.starts_at) >= now);
@@ -71,6 +73,7 @@ export async function loadTeam(keepAll = false): Promise<RepSummary[]> {
         email: s.email,
         partner: !!s.is_partner,
         hasHours: hours.has(s.id),
+        signed: s.role === "admin" || !!s.agreement_signed_at,
         openThisWeek: slots.filter((x) => x.reps.includes(s.id) && Date.parse(x.start) < weekEnd).length,
         today: upcoming.filter((k) => nyDay(Date.parse(k.starts_at)) === todayNY),
         week: upcoming.filter((k) => Date.parse(k.starts_at) < weekEnd),
@@ -90,12 +93,11 @@ export async function loadTeam(keepAll = false): Promise<RepSummary[]> {
       };
     })
     .filter((r) => !isCheckAccount(r.email))
-    .filter((r) => keepAll || r.hasHours || r.calls.length || r.candidates.length)
     .sort((a, b) => b.week.length - a.week.length || a.name.localeCompare(b.name));
 }
 
 export async function loadRep(id: string): Promise<RepSummary | null> {
-  return (await loadTeam(true)).find((r) => r.id === id) ?? null;
+  return (await loadTeam()).find((r) => r.id === id) ?? null;
 }
 
 // What needs attention, worded for the rep themselves ("you") or for a manager.
@@ -103,6 +105,7 @@ export type Alert = { tone: "bad" | "warn" | "ok"; text: string; href?: string }
 export function alertsFor(r: RepSummary, self = false): Alert[] {
   const a: Alert[] = [];
   const n = (k: number, one: string, many: string) => `${k} ${k === 1 ? one : many}`;
+  if (!r.signed) a.push({ tone: "bad", text: self ? "Sign your rep agreement to get started" : "Hasn't signed their rep agreement yet", href: self ? "/admin/agreement" : undefined });
   if (!r.hasHours)
     a.push({ tone: "bad", text: self ? "You have no hours set, so candidates can't book a call with you" : "No hours set, so candidates can't book them", href: self ? "/admin/hours" : undefined });
   else if (r.openThisWeek === 0)
