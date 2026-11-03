@@ -1,24 +1,67 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useSyncExternalStore } from "react";
 import { offerTimes, OfferState } from "./pathActions";
 import styles from "./path.module.css";
 
-// Suggests the next three weekdays at 10am, 1pm and 4pm in the client's own time.
-function suggestions() {
-  const out: string[] = [];
-  const d = new Date();
-  const hours = [10, 13, 16];
-  let i = 0;
-  while (out.length < 3 && i < 14) {
-    i++;
-    const day = new Date(d.getFullYear(), d.getMonth(), d.getDate() + i);
-    if (day.getDay() === 0 || day.getDay() === 6) continue;
-    const h = hours[out.length];
-    const pad = (n: number) => String(n).padStart(2, "0");
-    out.push(`${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}T${pad(h)}:00`);
+const pad = (n: number) => String(n).padStart(2, "0");
+const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+// The next three weeks, without Saturdays.
+function dayChoices() {
+  const out: { v: string; label: string }[] = [];
+  const now = new Date();
+  for (let i = 1; out.length < 18 && i < 30; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+    if (d.getDay() === 6) continue;
+    out.push({ v: ymd(d), label: d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) });
   }
   return out;
+}
+
+// Business-hours times on the half hour.
+const TIMES = Array.from({ length: 25 }, (_, i) => {
+  const h = 8 + Math.floor(i / 2);
+  const m = i % 2 ? 30 : 0;
+  return { v: `${pad(h)}:${pad(m)}`, label: `${h % 12 || 12}:${pad(m)} ${h < 12 ? "AM" : "PM"}` };
+});
+
+// Starts on the next three weekdays at 10am, 1pm and 4pm.
+function suggestions(days: { v: string }[]) {
+  const weekdays = days.filter((d) => new Date(`${d.v}T12:00`).getDay() !== 0);
+  return ["10:00", "13:00", "16:00"].map((t, i) => ({ day: weekdays[i]?.v ?? "", time: t }));
+}
+
+function Slots() {
+  const [days] = useState(dayChoices);
+  const [starts] = useState(() => suggestions(days));
+  return starts.map((s, i) => <Slot key={i} n={i + 1} days={days} start={s} />);
+}
+
+function Slot({ n, days, start }: { n: number; days: { v: string; label: string }[]; start: { day: string; time: string } }) {
+  const [day, setDay] = useState(start.day);
+  const [time, setTime] = useState(start.time);
+  return (
+    <div className={styles.slot}>
+      <span className={styles.slotN}>{n}</span>
+      <select className="select" aria-label={`Day ${n}`} value={day} onChange={(e) => setDay(e.target.value)} required={n === 1}>
+        {n > 1 && <option value="">No time</option>}
+        {days.map((d) => (
+          <option key={d.v} value={d.v}>
+            {d.label}
+          </option>
+        ))}
+      </select>
+      <select className="select" aria-label={`Time ${n}`} value={time} onChange={(e) => setTime(e.target.value)} disabled={!day}>
+        {TIMES.map((t) => (
+          <option key={t.v} value={t.v}>
+            {t.label}
+          </option>
+        ))}
+      </select>
+      <input type="hidden" name="slot" value={day ? `${day}T${time}` : ""} />
+    </div>
+  );
 }
 
 export function OfferTimes({
@@ -36,7 +79,11 @@ export function OfferTimes({
 }) {
   const [state, action, pending] = useActionState<OfferState, FormData>(offerTimes.bind(null, candidateId, kind), {});
   const [mode, setMode] = useState<"phone" | "video" | "in_person">(kind === "call" ? "phone" : "in_person");
-  const [slots] = useState(suggestions);
+  const inBrowser = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const modes: [typeof mode, string][] =
     kind === "call"
       ? [
@@ -100,9 +147,8 @@ export function OfferTimes({
         </label>
       </div>
       <div className={styles.slots}>
-        {slots.map((s, i) => (
-          <input key={i} className="input" type="datetime-local" name="slot" defaultValue={s} required={i === 0} />
-        ))}
+        {/* Days depend on the visitor's own date, so they're filled in the browser. */}
+        {inBrowser ? <Slots /> : <div style={{ minHeight: 140 }} />}
       </div>
       <label className="field">
         <span>A short note to {first} (optional)</span>

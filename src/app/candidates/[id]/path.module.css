@@ -27,7 +27,9 @@
 .slotsHead { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 600; font-size: 14px; margin: 10px 0 8px; }
 .slotsHead label { font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
 .slotsHead select { width: auto; min-height: 36px; padding: 4px 30px 4px 10px; }
-.slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.slots { display: grid; gap: 8px; max-width: 460px; margin-bottom: 10px; }
+.slot { display: grid; grid-template-columns: 26px minmax(0, 1.3fr) minmax(0, 1fr); gap: 8px; align-items: center; }
+.slotN { width: 26px; height: 26px; border-radius: 50%; background: var(--wash); font-weight: 700; font-size: 13px; display: grid; place-items: center; }
 
 .choices { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; margin-top: 10px; }
 .passInline summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; min-height: 48px; padding: 0 20px; border: 1.5px solid var(--ink); border-radius: 999px; font-weight: 700; }
@@ -50,7 +52,7 @@
 
 @media (max-width: 640px) {
   .panel { padding: 18px; border-radius: 16px; }
-  .slots, .decide { grid-template-columns: 1fr; }
+  .decide { grid-template-columns: 1fr; }
   .choices > * { width: 100%; }
   .choices .btn, .passInline summary { width: 100%; justify-content: center; }
 }
