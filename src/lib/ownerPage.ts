@@ -1,6 +1,6 @@
 import { db, logActivity } from "./db";
 import { gatherSources } from "./cleanResume";
-import { describe, profileOf, TRAITS } from "./strengths";
+import { describe, profileOf, suggestedHeadline, TRAITS } from "./strengths";
 import { LEVEL_LABEL, WORK_MODE_LABEL, salaryRange } from "./format";
 import { languagesText } from "./languages";
 import { parseOwnerPage, type OwnerPage } from "./ownerPageShared";
@@ -21,16 +21,17 @@ export async function loadOwnerPage(candidateId: string): Promise<OwnerPage | nu
   return parseOwnerPage((data as { owner_page?: string } | null)?.owner_page);
 }
 
-export async function saveOwnerPage(candidateId: string, page: OwnerPage | null, by: string) {
+// Save the page. "auto" means the system wrote it and nobody has changed it, so we
+// keep it up to date by ourselves. Once a rep edits it, we leave their words alone.
+export async function saveOwnerPage(candidateId: string, page: OwnerPage | null, by: string, opts: { auto?: boolean } = {}) {
   const { data: c } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
   if (!c) return;
   const app = { ...((c.application ?? {}) as Record<string, string>) };
-  const before = app.owner_page ?? "";
-  if (page) app.owner_page = JSON.stringify({ ...page, at: new Date().toISOString(), by });
+  const before = parseOwnerPage(app.owner_page);
+  const body = (x: OwnerPage | null) => (x ? JSON.stringify({ intro: x.intro, handle: x.handle, fit: x.fit, years: x.years }) : "");
+  if (!opts.auto && body(before) === body(page)) return; // the rep saved without changing it
+  if (page) app.owner_page = JSON.stringify({ ...page, auto: !!opts.auto, at: new Date().toISOString(), by });
   else delete app.owner_page;
-  // Don't touch the row (or the "updated by" stamp) if nothing changed.
-  const same = (parseOwnerPage(before) && page && JSON.stringify({ ...parseOwnerPage(before), at: 0, by: 0 }) === JSON.stringify({ ...page, at: 0, by: 0 })) || (!before && !page);
-  if (same) return;
   await db().from("candidates").update({ application: app }).eq("id", candidateId);
 }
 
@@ -136,12 +137,22 @@ Give 3 to 5 "handle" items, fewer if the material is thin.`;
   return { page, headline };
 }
 
-// Listed with no owner page yet: write one so every listed candidate gets the full page.
-export async function fillOwnerPage(candidateId: string, by: string) {
-  const { data } = await db().from("candidates").select("status, owner_page:application->>owner_page").eq("id", candidateId).maybeSingle();
-  if (!data || data.status !== "listed" || parseOwnerPage((data as { owner_page?: string }).owner_page)) return;
+// Every listed candidate gets the page automatically: written when they're listed,
+// and rewritten when their details change, unless a rep has edited it by hand.
+// The headline is filled in too, when the rep hasn't written their own.
+export async function fillOwnerPage(candidateId: string, by: string, opts: { refresh?: boolean } = {}) {
+  const { data } = await db()
+    .from("candidates")
+    .select("status, headline, role_category, working_genius, owner_page:application->>owner_page")
+    .eq("id", candidateId)
+    .maybeSingle();
+  if (!data || data.status !== "listed") return;
+  const have = parseOwnerPage((data as { owner_page?: string }).owner_page);
+  if (have && !(opts.refresh && have.auto)) return;
   const r = await draftOwnerPage(candidateId);
   if ("error" in r) return;
-  await saveOwnerPage(candidateId, r.page, by);
-  await logActivity(by, "owner_page_written", { candidate_id: candidateId });
+  await saveOwnerPage(candidateId, r.page, by, { auto: true });
+  const generic = !data.headline || (data.role_category && data.headline === suggestedHeadline(data.role_category, data.working_genius));
+  if (generic && r.headline) await db().from("candidates").update({ headline: r.headline.slice(0, 140) }).eq("id", candidateId);
+  await logActivity(by, "owner_page_written", { candidate_id: candidateId, refresh: !!have });
 }

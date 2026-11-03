@@ -1,7 +1,7 @@
 // The owner page's shape and text helpers, safe to use in the browser too.
 
 export type HandleItem = { icon: string; title: string; detail: string };
-export type OwnerPage = { intro: string; handle: HandleItem[]; fit: string[]; years: string; at?: string; by?: string };
+export type OwnerPage = { intro: string; handle: HandleItem[]; fit: string[]; years: string; at?: string; by?: string; auto?: boolean };
 
 export function parseOwnerPage(raw: string | null | undefined): OwnerPage | null {
   if (!raw) return null;
@@ -14,6 +14,7 @@ export function parseOwnerPage(raw: string | null | undefined): OwnerPage | null
         .filter((h) => h.title),
       fit: (Array.isArray(j.fit) ? j.fit : []).map((x) => String(x).trim()).filter(Boolean),
       years: String(j.years ?? "").trim(),
+      auto: j.auto === true,
       at: j.at,
       by: j.by,
     };

@@ -262,8 +262,17 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
   let candidateId = id;
   let merged = false;
   let wasListed = false;
+  let detailsChanged = false;
   if (id) {
-    const { data: before } = await db().from("candidates").select("status, listed_at").eq("id", id).single();
+    const { data: before } = await db().from("candidates").select("status, listed_at, summary, highlights, working_genius, role_category, also_roles, level, industry").eq("id", id).single();
+    detailsChanged =
+      before?.summary !== record.summary ||
+      JSON.stringify(before?.highlights ?? []) !== JSON.stringify(record.highlights) ||
+      before?.working_genius !== record.working_genius ||
+      before?.role_category !== record.role_category ||
+      JSON.stringify(before?.also_roles ?? []) !== JSON.stringify(record.also_roles) ||
+      before?.level !== record.level ||
+      before?.industry !== record.industry;
     wasListed = before?.status === "listed";
     if (status === "listed" && !before?.listed_at) record.listed_at = new Date().toISOString();
     const { error } = await db().from("candidates").update(record).eq("id", id);
@@ -352,7 +361,9 @@ ${hireSummaryHtml(notice)}`,
   }
 
   // Their page for owners: what the rep wrote or kept. Listed without one? Write it.
-  if (candidateId && form.has("owner_intro")) {
+  // Only when the rep actually changed it here (compared with what the form showed them).
+  const ownerFields = ["owner_intro", "owner_handle", "owner_fit", "owner_years"].map((k) => get(k).replace(/\s+/g, " ")).join("|");
+  if (candidateId && form.has("owner_intro") && ownerFields !== String(form.get("owner_was") ?? "")) {
     const { handleFromText, saveOwnerPage } = await import("@/lib/ownerPage");
     const page = {
       intro: tidyParagraphs(get("owner_intro")),
@@ -364,9 +375,10 @@ ${hireSummaryHtml(notice)}`,
   }
   if (candidateId && status === "listed") {
     const cid = candidateId;
+    const refresh = detailsChanged || (resume instanceof File && resume.size > 0);
     after(async () => {
       const { fillOwnerPage } = await import("@/lib/ownerPage");
-      await fillOwnerPage(cid, actor).catch((e) => console.error("owner page", e));
+      await fillOwnerPage(cid, actor, { refresh }).catch((e) => console.error("owner page", e));
       clearCatalog();
     });
   }
@@ -1128,18 +1140,6 @@ export async function suggestProfileWording(
   } catch (e) {
     return { error: (e as Error).message };
   }
-}
-
-// "Write it for me" on the owner page section. Drafts only; the rep saves.
-export async function draftOwnerPageAction(candidateId: string): Promise<{ intro?: string; handle?: string; fit?: string; years?: string; headline?: string; error?: string }> {
-  const me = await requireStaff();
-  if (!(await canSeeCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
-  if (!(await allow(`ownerpage:${candidateId}`, 6, 60))) return { error: SLOW_DOWN };
-  const { draftOwnerPage, handleToText } = await import("@/lib/ownerPage");
-  const r = await draftOwnerPage(candidateId);
-  if ("error" in r) return { error: r.error };
-  await logActivity(staffActor(me), "owner_page_drafted", { candidate: refCode(candidateId) });
-  return { intro: r.page.intro, handle: handleToText(r.page.handle), fit: r.page.fit.join("\n"), years: r.page.years, headline: r.headline };
 }
 
 export async function draftProfileFromCall(candidateId: string): Promise<{ ok?: boolean; error?: string }> {

@@ -576,12 +576,7 @@ export function CandidateForm({
             <small>Leave empty to use the words from their result. Separate with commas.</small>
           </label>
         </details>
-        <OwnerPageFields
-          candidateId={c?.id ?? null}
-          raw={(c?.application as Record<string, string> | undefined)?.owner_page}
-          onHeadline={(h) => setHeadline(h)}
-          headline={headline}
-        />
+        <OwnerPageFields raw={(c?.application as Record<string, string> | undefined)?.owner_page} listed={c?.status === "listed"} />
       </section>
 
       {/* 5. Private */}
