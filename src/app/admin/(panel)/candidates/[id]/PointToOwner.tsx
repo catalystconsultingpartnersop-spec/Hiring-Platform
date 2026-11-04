@@ -20,19 +20,22 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
   const isEmail = contact.includes("@");
   const digits = contact.replace(/\D/g, "");
   const intl = digits.length === 10 ? `1${digits}` : digits;
-  const href =
-    channel === "whatsapp"
-      ? `https://wa.me/${intl}?text=${encodeURIComponent(message)}`
-      : channel === "text"
-        ? `sms:+${intl}?&body=${encodeURIComponent(message)}`
-        : "";
+  const hrefFor = (ch: Channel) =>
+    ch === "whatsapp" ? `https://wa.me/${intl}?text=${encodeURIComponent(message)}` : ch === "text" ? `sms:+${intl}?&body=${encodeURIComponent(message)}` : "";
 
-  const send = (force = false) =>
+  // Never a greyed-out button: if something's missing, say what.
+  const send = (ch: Channel, force = false) => {
+    setChannel(ch);
+    if (!contact.trim()) return setState({ error: ch === "email" ? "Add their email first." : "Add their phone number first." });
+    if (ch === "email" && !isEmail) return setState({ error: "That's a phone number. Use WhatsApp or Text, or type their email." });
+    if (ch !== "email" && isEmail) return setState({ error: "That's an email address. Use Email, or type their phone number." });
     start(async () => {
-      const r = await pointCandidate(candidateId, { name, contact, channel, message, force });
+      const r = await pointCandidate(candidateId, { name, contact, channel: ch, message, force });
       setState(r);
+      const href = hrefFor(ch);
       if (r.ok && href) window.location.href = href;
     });
+  };
 
   if (!open)
     return (
@@ -107,25 +110,11 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
             value={contact}
             onChange={(e) => {
               setContact(e.target.value);
-              if (e.target.value.includes("@")) setChannel("email");
-              else if (channel === "email" && /\d{3}/.test(e.target.value)) setChannel("whatsapp");
+              setState(null);
             }}
             placeholder="(917) 555-0123 or name@business.com"
           />
         </label>
-      </div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "12px 0 6px" }}>
-        {(
-          [
-            ["whatsapp", "WhatsApp"],
-            ["text", "Text"],
-            ["email", "Email"],
-          ] as [Channel, string][]
-        ).map(([c, l]) => (
-          <button key={c} type="button" className={`btn btn-small ${channel === c ? "" : "btn-ghost"}`} onClick={() => setChannel(c)} disabled={c === "email" ? !isEmail && !!contact : !!contact && isEmail}>
-            {l}
-          </button>
-        ))}
       </div>
       <label className="field" style={{ marginTop: 6 }}>
         <span>Message (ready to go, change anything)</span>
@@ -135,15 +124,23 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
       {state?.already && (
         <p className="notice notice-gold small">
           {state.already}{" "}
-          <button type="button" className="btn btn-ghost btn-small" onClick={() => send(true)}>
+          <button type="button" className="btn btn-ghost btn-small" onClick={() => send(channel, true)}>
             Send anyway
           </button>
         </p>
       )}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
-        <button type="button" className="btn btn-gold btn-small" disabled={pending || !contact.trim()} onClick={() => send()}>
-          {pending ? "Sending…" : channel === "email" ? "Send email" : channel === "whatsapp" ? "Open in WhatsApp" : "Open in Messages"}
-        </button>
+        {(
+          [
+            ["whatsapp", "Send on WhatsApp"],
+            ["text", "Send a text"],
+            ["email", "Send by email"],
+          ] as [Channel, string][]
+        ).map(([ch, l]) => (
+          <button key={ch} type="button" className={`btn btn-small ${(isEmail ? ch === "email" : ch !== "email") ? "btn-gold" : "btn-ghost"}`} onClick={() => !pending && send(ch)}>
+            {pending && channel === ch ? "Sending…" : l}
+          </button>
+        ))}
         <button type="button" className="btn btn-ghost btn-small" onClick={() => setOpen(false)}>
           Cancel
         </button>
