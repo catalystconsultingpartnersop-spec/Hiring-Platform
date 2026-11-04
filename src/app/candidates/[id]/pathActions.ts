@@ -114,3 +114,72 @@ export async function askReferences(candidateId: string, form: FormData) {
   }
   redirect(`/candidates/${candidateId}?step=refs#next`);
 }
+
+// ---- Already further along? The client tells us what already happened. ----
+
+const cutoff = () => new Date().toISOString();
+
+// Clears anything still open (times offered, or a booked time that hasn't come yet).
+async function clearOpen(unlockId: string) {
+  const now = new Date().toISOString();
+  await db().from("meetings").update({ status: "cancelled", updated_at: now }).eq("unlock_id", unlockId).in("status", ["proposed", "declined"]);
+  await db().from("meetings").update({ status: "cancelled", updated_at: now }).eq("unlock_id", unlockId).eq("status", "booked").gt("starts_at", now);
+}
+
+async function recordDone(candidateId: string, kind: "call" | "meeting") {
+  const { owner, unlock } = await myUnlock(candidateId);
+  await clearOpen(unlock.id);
+  const minutes = kind === "call" ? 15 : 60;
+  const at = new Date(Date.now() - minutes * 60e3 - 60e3).toISOString();
+  const { data } = await db()
+    .from("meetings")
+    .insert({ unlock_id: unlock.id, kind, mode: kind === "call" ? "phone" : "in_person", place: null, slots: [at], minutes, time_zone: null, status: "booked", starts_at: at, owner_verdict: "yes", note: "Told us it already happened" })
+    .select("*")
+    .single();
+  await logActivity(`owner:${owner.email}`, kind === "call" ? "owner_already_spoke" : "owner_already_met", { candidate: refCode(candidateId), at: cutoff() });
+  if (data)
+    try {
+      await emailVerdict(data as Meeting, "owner", "yes");
+    } catch (e) {
+      console.error(e);
+    }
+}
+
+export async function alreadySpoke(candidateId: string) {
+  await recordDone(candidateId, "call");
+  redirect(`/candidates/${candidateId}?step=spoke#next`);
+}
+
+export async function alreadyMet(candidateId: string) {
+  await recordDone(candidateId, "meeting");
+  redirect(`/candidates/${candidateId}?step=met#next`);
+}
+
+// "We already set a time ourselves": the meeting goes straight to booked, and
+// both sides get the confirmation with calendar buttons.
+export async function setOwnTime(candidateId: string, _prev: OfferState, form: FormData): Promise<OfferState> {
+  const { owner, unlock } = await myUnlock(candidateId);
+  const tz = validTimeZone(String(form.get("tz") ?? ""));
+  const kind = form.get("kind") === "call" ? "call" : "meeting";
+  const mode = String(form.get("mode") ?? "in_person") as Meeting["mode"];
+  if (!["phone", "video", "in_person"].includes(mode)) return { error: "Pick how you're meeting." };
+  const place = String(form.get("place") ?? "").trim().slice(0, 500);
+  const iso = toIso(`${form.get("day")}T${form.get("time")}`, tz);
+  if (!iso) return { error: "Pick the day and time." };
+  if (Date.parse(iso) < Date.now() - 60 * 60e3) return { error: "That time has passed. If you already met, tap “We already met” instead." };
+  await clearOpen(unlock.id);
+  const { data, error } = await db()
+    .from("meetings")
+    .insert({ unlock_id: unlock.id, kind, mode, place: mode === "phone" ? null : place || null, slots: [iso], minutes: kind === "call" ? 20 : 60, time_zone: tz, status: "booked", starts_at: iso, note: "Set by the client directly" })
+    .select("*")
+    .single();
+  if (error || !data) return { error: "Something went wrong saving it. Try again." };
+  await logActivity(`owner:${owner.email}`, "owner_set_own_time", { candidate: refCode(candidateId), kind, at: iso });
+  try {
+    const { emailBooked } = await import("@/lib/pathEmails");
+    await emailBooked(data as Meeting);
+  } catch (e) {
+    console.error(e);
+  }
+  redirect(`/candidates/${candidateId}?step=set#next`);
+}

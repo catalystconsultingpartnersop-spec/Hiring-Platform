@@ -56,3 +56,12 @@
   .choices > * { width: 100%; }
   .choices .btn, .passInline summary { width: 100%; justify-content: center; }
 }
+
+.ahead { margin-top: 18px; padding: 14px 16px; border-radius: 14px; background: #fff8e1; border: 1px solid #f3d27a; }
+.aheadTitle { margin: 0 0 10px; font-weight: 700; }
+.aheadRow { display: flex; gap: 8px; flex-wrap: wrap; }
+.aheadRow form { margin: 0; }
+.ownTime { margin-top: 12px; }
+.modeRow { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
+.modePick { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; }
+.ownSlot { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; max-width: 460px; }

@@ -4,6 +4,7 @@ import type { Candidate } from "@/lib/db";
 import { BIG_STEPS, bigStepIndex, MODE_LABEL, PathState } from "@/lib/path";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 import { passOnCandidate } from "./actions";
+import { AlreadyAhead } from "./AlreadyAhead";
 import { OfferTimes } from "./OfferTimes";
 import { askReferences, ownerKeepGoing, withdrawOffer } from "./pathActions";
 import styles from "./path.module.css";
@@ -16,6 +17,8 @@ export function NextSteps({ c, path, again, step }: { c: Candidate; path: PathSt
   const tz = m?.time_zone || COMPANY_TZ;
   const big = bigStepIndex(stage);
   const what = m?.kind === "meeting" ? "meeting" : "first call";
+  // Anywhere before the decision, the client can say they're already further along.
+  const ahead = !again && ["offer_call", "call_proposed", "call_retime", "call_booked", "offer_meeting", "meeting_proposed", "meeting_retime", "meeting_booked"].includes(stage);
 
   let body: React.ReactNode;
   if (stage === "declined") {
@@ -183,7 +186,11 @@ export function NextSteps({ c, path, again, step }: { c: Candidate; path: PathSt
       </div>
       {step === "offered" && <p className={`notice notice-good ${styles.flash}`}>Sent. We&rsquo;ll email you when {first} picks a time.</p>}
       {step === "refs" && <p className={`notice notice-good ${styles.flash}`}>Asked. We&rsquo;ll email you {first}&rsquo;s references.</p>}
+      {step === "spoke" && <p className={`notice notice-good ${styles.flash}`}>Got it. Next: a proper meeting with {first}.</p>}
+      {step === "set" && <p className={`notice notice-good ${styles.flash}`}>Saved. We sent you and {first} a confirmation with calendar buttons.</p>}
+      {step === "met" && <p className={`notice notice-good ${styles.flash}`}>Got it. Here&rsquo;s what&rsquo;s next with {first}.</p>}
       {body}
+      {ahead && <AlreadyAhead candidateId={c.id} first={first} callDone={!stage.startsWith("call") && stage !== "offer_call"} />}
       <p className={styles.phone}>
         Prefer to just pick up the phone? Call {first}
         {c.phone ? (
