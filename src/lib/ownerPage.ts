@@ -102,7 +102,7 @@ ${call ? `What they told our team on their call:\n${call.slice(0, 40000)}` : not
 
 ${app.rep_take ? `MOST IMPORTANT. Our rep knows this person. In the rep's words:
 "${app.rep_take}"
-Build the page around this: who they are, what they want next and where they'd thrive. Their past jobs and results are proof of what they can do, not a promise they want the same job again. Don't assume they want to stay in their past field.
+Build the page around this: who they are, what they want next and where they'd thrive. Their past jobs and results are proof of what they can do, not a promise they want the same job again. Don't assume they want to stay in their past field. Never quote the rep or say a rep said it. Never quote the rep or say a rep said it.
 ` : ""}What we know:
 ${facts}
 

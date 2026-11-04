@@ -37,12 +37,14 @@ function prompt(opts: { letters: string; lookingFor: string; repTake: string; te
           .map((x) => TRAITS[x].label.toLowerCase())
           .join(" and ")}${d ? ` ("${d.name}": ${d.line})` : ""}${l.length >= 4 ? `; also good at ${l.slice(2, 4).map((x) => TRAITS[x].label.toLowerCase()).join(" and ")}` : ""}.`
       : "No assessment result yet.";
+  const drains = l.length === 6 ? `Never describe them as strong at ${l.slice(4).map((x) => TRAITS[x].label.toLowerCase()).join(" or ")}: that's the work that wears them down.` : "";
   return `You help a hiring platform turn a candidate's resume into their profile. Business owners browse these profiles BEFORE they know who the person is, then sign to see the full details.
 
 ${strengths}
+${drains}
 ${opts.repTake ? `MOST IMPORTANT. Our rep knows this person. In the rep's words:
 "${opts.repTake}"
-Write the whole profile around this: who they are, what they want next and where they'd thrive. Their past jobs are proof of what they can do, not necessarily what they want to do again. If the rep says they want something new, don't steer them back to their old field.
+Write the whole profile around this: who they are, what they want next and where they'd thrive. Their past jobs are proof of what they can do, not necessarily what they want to do again. If the rep says they want something new, don't steer them back to their old field. Never quote the rep or say a rep said it; write it as plain fact.
 ` : ""}What they said they're looking for: ${opts.lookingFor || "not given"}
 
 Use the resume as evidence. Don't invent facts, numbers or skills. Warm, specific, plain English, written so an owner thinks "I need that person".
