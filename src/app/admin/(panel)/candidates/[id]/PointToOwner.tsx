@@ -6,7 +6,7 @@ import { pointCandidate } from "@/app/admin/actions";
 type Channel = "whatsapp" | "text" | "email";
 
 // "Know someone who'd want to meet them?" A ready, personal message to a business owner.
-export function PointToOwner({ candidateId, headline, link, repFirst, mine }: { candidateId: string; headline: string; link: string; repFirst: string; mine: boolean }) {
+export function PointToOwner({ candidateId, headline, link, repFirst, mine, first }: { candidateId: string; headline: string; link: string; repFirst: string; mine: boolean; first: string }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
@@ -36,13 +36,33 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine }: { 
 
   if (!open)
     return (
-      <section className="panel" style={{ marginTop: 18, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-        <span>
-          <strong>💡 Know someone this person would be great for?</strong>{" "}
-          <span className="small muted">Pass their profile along in a personal message.</span>
-        </span>
-        <button type="button" className="btn btn-gold btn-small" onClick={() => setOpen(true)}>
-          Pass it along
+      <section
+        style={{
+          marginTop: 18,
+          background: "var(--ink)",
+          color: "#fff",
+          borderRadius: "var(--radius-lg)",
+          padding: "18px 22px",
+          display: "flex",
+          gap: 16,
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", gap: 14, alignItems: "center", minWidth: 0 }}>
+          <span aria-hidden="true" style={{ fontSize: 30, lineHeight: 1 }}>
+            🤝
+          </span>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 19 }}>{repFirst ? `${repFirst}, know` : "Know"} someone who&rsquo;d want to meet {first}?</div>
+            <div style={{ fontSize: 14.5, color: "rgba(255,255,255,0.78)", marginTop: 2 }}>
+              A business owner, a friend who&rsquo;s hiring. One message, 30 seconds. They see the anonymous profile.
+            </div>
+          </div>
+        </div>
+        <button type="button" className="btn btn-gold" onClick={() => setOpen(true)}>
+          Suggest {first} →
         </button>
       </section>
     );

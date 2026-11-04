@@ -122,6 +122,10 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
           </p>
         )}
       </div>
+      {c.status === "listed" && c.headline && (
+        <PointToOwner candidateId={c.id} headline={c.headline} link={`${siteUrl().replace(/^https?:\/\//, "")}/c/${refCode(c.id)}`} repFirst={(me.name || "").split(" ")[0]} mine={canEdit && !me.manager} first={c.full_name.split(" ")[0]} />
+      )}
+      <PointedLog candidateId={c.id} />
       {callRows.some((k) => (k as { meet_space?: string | null }).meet_space && k.status !== "cancelled") && (() => {
         let d: { made_at?: string; private_notes?: string } | null = null;
         try {
@@ -138,10 +142,6 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
       })()}
       <WaitingOn candidateId={c.id} canEdit={canEdit} repFirst={(me.name || "").split(" ")[0]} />
       <PositionsTheyFit candidateId={c.id} status={c.status} />
-      {c.status === "listed" && c.headline && (
-        <PointToOwner candidateId={c.id} headline={c.headline} link={`${siteUrl().replace(/^https?:\/\//, "")}/c/${refCode(c.id)}`} repFirst={(me.name || "").split(" ")[0]} mine={canEdit && !me.manager} />
-      )}
-      <PointedLog candidateId={c.id} />
       <RO edit={canEdit}>
       <ResumePanel
         candidateId={c.id}
