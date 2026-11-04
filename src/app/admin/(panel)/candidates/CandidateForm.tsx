@@ -4,7 +4,13 @@ import { cleanLanguages, LANGUAGES } from "@/lib/languages";
 import { UploadHelper } from "@/components/UploadHelper";
 import { startTransition, useActionState, useState } from "react";
 import type { Candidate } from "@/lib/db";
-import { describe, parseResult, suggestedHeadline, TRAIT_LIST, type Letter } from "@/lib/strengths";
+import {
+  describe,
+  parseResult,
+  suggestedHeadline,
+  TRAIT_LIST,
+  type Letter,
+} from "@/lib/strengths";
 import {
   headlineIdeas,
   HIGHLIGHT_IDEAS,
@@ -20,11 +26,18 @@ import styles from "./form.module.css";
 import { WordingHelp } from "./WordingHelp";
 import { AVAILABILITY } from "@/lib/availability";
 import { OwnerPageFields } from "./OwnerPageFields";
-import { findBlanks, tidyHeadline, tidyHighlight, tidyParagraphs } from "@/lib/tidyText";
-
+import {
+  findBlanks,
+  tidyHeadline,
+  tidyHighlight,
+  tidyParagraphs,
+} from "@/lib/tidyText";
 
 // The six kinds of work, in our own words.
-const LETTERS: { key: Letter; name: string }[] = TRAIT_LIST.map((t) => ({ key: t.key, name: t.label }));
+const LETTERS: { key: Letter; name: string }[] = TRAIT_LIST.map((t) => ({
+  key: t.key,
+  name: t.label,
+}));
 
 const APPLICATION_LABELS: Record<string, string> = {
   looking_for: "What kind of work they want",
@@ -55,11 +68,23 @@ export function CandidateForm({
   tierFeeLabel: string;
   isAdmin: boolean;
 }) {
-  const [state, action, pending] = useActionState<FormState, FormData>(saveCandidate.bind(null, c?.id ?? null), {});
+  const [state, action, pending] = useActionState<FormState, FormData>(
+    saveCandidate.bind(null, c?.id ?? null),
+    {},
+  );
   const v = <K extends keyof Candidate>(k: K) => (c?.[k] ?? "") as string;
   // Set to Listed, but waiting for them to sign their candidate agreement first.
-  const signing = c as (Candidate & { list_on_sign?: boolean; promise_signed_at?: string | null }) | null;
-  const waitingToSign = !!signing && signing.status === "draft" && !!signing.list_on_sign && !signing.promise_signed_at;
+  const signing = c as
+    | (Candidate & {
+        list_on_sign?: boolean;
+        promise_signed_at?: string | null;
+      })
+    | null;
+  const waitingToSign =
+    !!signing &&
+    signing.status === "draft" &&
+    !!signing.list_on_sign &&
+    !signing.promise_signed_at;
 
   // Contact details can be filled in from the resume.
   const [contact, setContact] = useState({
@@ -71,72 +96,168 @@ export function CandidateForm({
   const [reading, setReading] = useState<"" | "reading" | "done" | "none">("");
   const [readNote, setReadNote] = useState("");
 
-  const [order, setOrder] = useState<Letter[]>(parseResult(v("working_genius")));
+  const [order, setOrder] = useState<Letter[]>(
+    parseResult(v("working_genius")),
+  );
   const [role, setRole] = useState(v("role_category"));
   const [level, setLevel] = useState(v("level"));
   const [mode, setMode] = useState(v("work_mode"));
-  const [avail, setAvail] = useState((c?.application as Record<string, string> | undefined)?.available ?? "");
+  const [avail, setAvail] = useState(
+    (c?.application as Record<string, string> | undefined)?.available ?? "",
+  );
   const [langs, setLangs] = useState<string[]>(c?.languages ?? []);
   const [otherLang, setOtherLang] = useState("");
   const [industry, setIndustry] = useState(v("industry"));
   const [alsoRoles, setAlsoRoles] = useState<string[]>(c?.also_roles ?? []);
-  const [alsoIndustries, setAlsoIndustries] = useState<string[]>(c?.also_industries ?? []);
+  const [alsoIndustries, setAlsoIndustries] = useState<string[]>(
+    c?.also_industries ?? [],
+  );
   const [headline, setHeadline] = useState(v("headline"));
   const [summary, setSummary] = useState(v("summary"));
   const [highlights, setHighlights] = useState(c?.highlights.join("\n") ?? "");
+  const [locationRegion, setLocationRegion] = useState(v("location_region"));
+  const [fullProfile, setFullProfile] = useState(v("full_profile"));
+  // Fields the resume filled in, shown highlighted so the rep knows what to check.
+  const [fromResume, setFromResume] = useState<Set<string>>(new Set());
+  const mark = (k: string) => (fromResume.has(k) ? styles.fromResume : "");
 
   const code = order.join("");
   const d = describe(code);
   const autoHeadline = role ? suggestedHeadline(role, code) : "";
   const roleIdeas = suggestRoles(code);
   const ideas = headlineIdeas(role, code, level);
-  const highlightIdeas = [...new Set([role, ...alsoRoles].flatMap((r) => HIGHLIGHT_IDEAS[r] ?? []))].slice(0, 8);
-  const addLine = (line: string) => setHighlights((h) => (h.trim() ? `${h.trimEnd()}\n${line}` : line));
-  const addToSummary = (bit: string) => setSummary((cur) => (cur.trim() ? `${cur.trimEnd()} ${bit}` : bit));
+  const highlightIdeas = [
+    ...new Set([role, ...alsoRoles].flatMap((r) => HIGHLIGHT_IDEAS[r] ?? [])),
+  ].slice(0, 8);
+  const addLine = (line: string) =>
+    setHighlights((h) => (h.trim() ? `${h.trimEnd()}\n${line}` : line));
+  const addToSummary = (bit: string) =>
+    setSummary((cur) => (cur.trim() ? `${cur.trimEnd()} ${bit}` : bit));
   const app = c?.application ?? {};
-  const ours = (app as { strengths?: { letters: string; at: string } }).strengths ?? null;
+  const ours =
+    (app as { strengths?: { letters: string; at: string } }).strengths ?? null;
   const hasApp = Object.values(app).some(Boolean);
 
   async function readResume(file: File | undefined) {
     if (!file) return;
     if (file.size > 4 * 1024 * 1024) {
       setReading("none");
-      setReadNote("This file is over 4 MB, which is too big to upload. Save it as a smaller PDF and try again.");
+      setReadNote(
+        "This file is over 4 MB, which is too big to upload. Save it as a smaller PDF and try again.",
+      );
       return;
     }
     setReading("reading");
     setReadNote("");
     const body = new FormData();
     body.append("resume", file);
+    body.append("letters", code);
+    body.append(
+      "looking_for",
+      String(
+        (c?.application as Record<string, string> | undefined)?.looking_for ??
+          "",
+      ),
+    );
     try {
-      const res = await fetch("/api/admin/read-resume", { method: "POST", body });
-      const json = res.ok ? await res.json() : { note: `We couldn't read this file automatically (error ${res.status}), so fill in the details by hand. It will still be attached when you save.` };
-      const found = (json.found ?? {}) as Record<string, string>;
-      const filled: string[] = [];
+      const res = await fetch("/api/admin/read-resume", {
+        method: "POST",
+        body,
+      });
+      const json = res.ok
+        ? await res.json()
+        : {
+            note: `We couldn't read this file automatically (error ${res.status}), so fill in the details by hand. It will still be attached when you save.`,
+          };
+      const f = (json.found ?? {}) as Partial<
+        Record<string, string | string[]>
+      >;
+      const s = (k: string) =>
+        typeof f[k] === "string" ? (f[k] as string) : "";
+      const l = (k: string) => (Array.isArray(f[k]) ? (f[k] as string[]) : []);
+      const filled = new Set<string>();
+      // Only fill what's empty: never overwrite what the rep already wrote.
       const next = { ...contact };
-      const label = { full_name: "name", email: "email", phone: "phone", linkedin_url: "LinkedIn" } as const;
-      for (const k of ["full_name", "email", "phone", "linkedin_url"] as const) {
-        if (!contact[k] && found[k]) {
-          next[k] = found[k];
-          filled.push(label[k]);
+      for (const k of [
+        "full_name",
+        "email",
+        "phone",
+        "linkedin_url",
+      ] as const) {
+        if (!contact[k] && s(k)) {
+          next[k] = s(k);
+          filled.add(k);
         }
       }
       setContact(next);
-      setReading(filled.length ? "done" : "none");
+      const fill = (
+        k: string,
+        cur: string,
+        val: string,
+        set: (v: string) => void,
+      ) => {
+        if (!cur.trim() && val) {
+          set(val);
+          filled.add(k);
+        }
+      };
+      fill("role_category", role, s("role_category"), setRole);
+      fill("level", level, s("level"), setLevel);
+      fill(
+        "location_region",
+        locationRegion,
+        s("location_region"),
+        setLocationRegion,
+      );
+      fill("industry", industry, s("industry"), setIndustry);
+      fill("headline", headline, s("headline"), setHeadline);
+      fill("summary", summary, s("summary"), setSummary);
+      fill("highlights", highlights, l("highlights").join("\n"), setHighlights);
+      fill("full_profile", fullProfile, s("full_profile"), setFullProfile);
+      if (!alsoRoles.length && l("also_roles").length) {
+        setAlsoRoles(l("also_roles"));
+        filled.add("also_roles");
+      }
+      if (!alsoIndustries.length && l("also_industries").length) {
+        setAlsoIndustries(l("also_industries"));
+        filled.add("also_industries");
+      }
+      if (!langs.length && l("languages").length) {
+        setLangs(l("languages"));
+        filled.add("languages");
+      }
+      setFromResume(filled);
+      setReading(filled.size ? "done" : "none");
+      const left = [
+        !mode && "how they want to work",
+        !(
+          document.querySelector("[name=salary_min]") as HTMLInputElement | null
+        )?.value && "their pay range",
+        !avail && "when they can start",
+        !code && "their Strengths Assessment result",
+      ].filter(Boolean);
       setReadNote(
         json.note ??
-          (filled.length
-            ? `Filled in their ${filled.join(", ")} from the resume. Check they're right.`
+          (filled.size
+            ? `Done. We filled in ${filled.size} things from the resume (highlighted in gold). Check them${left.length ? `, then add ${left.join(", ")}` : ""}.`
             : "Nothing new to fill in from this resume."),
       );
     } catch {
       setReading("none");
-      setReadNote("We couldn't read this file automatically, so fill in the details by hand. It will still be attached when you save.");
+      setReadNote(
+        "We couldn't read this file automatically, so fill in the details by hand. It will still be attached when you save.",
+      );
     }
   }
 
   function tap(l: Letter) {
-    setOrder((cur) => (cur.includes(l) ? cur.slice(0, cur.indexOf(l)) : cur.length < 6 ? [...cur, l] : cur));
+    setOrder((cur) =>
+      cur.includes(l)
+        ? cur.slice(0, cur.indexOf(l))
+        : cur.length < 6
+          ? [...cur, l]
+          : cur,
+    );
   }
 
   return (
@@ -145,20 +266,23 @@ export function CandidateForm({
       onSubmit={(e) => {
         // Submitting this way keeps everything typed in place if the save is refused.
         e.preventDefault();
-        const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+        const submitter = (e.nativeEvent as SubmitEvent)
+          .submitter as HTMLButtonElement | null;
         const fd = new FormData(e.currentTarget, submitter);
         // Show the same tidy-up the save applies (spacing, capitals, periods).
         setHeadline(tidyHeadline(headline));
         setSummary(tidyParagraphs(summary));
-        setHighlights(highlights.split("\n").map(tidyHighlight).filter(Boolean).join("\n"));
+        setHighlights(
+          highlights.split("\n").map(tidyHighlight).filter(Boolean).join("\n"),
+        );
         startTransition(() => action(fd));
       }}
     >
       <UploadHelper />
       <input type="hidden" name="working_genius" value={code} />
       <p className="small muted">
-        Fields marked <span className="req">*</span> are needed to list someone. Everything else makes the profile
-        stronger.
+        Fields marked <span className="req">*</span> are needed to list someone.
+        Everything else makes the profile stronger.
       </p>
 
       {/* 1. Resume and contact */}
@@ -166,22 +290,30 @@ export function CandidateForm({
         <h2>
           <span className={styles.num}>1</span> Who they are
         </h2>
-        <label className={`${styles.drop} ${reading === "reading" ? styles.dropBusy : ""}`}>
+        <label
+          className={`${styles.drop} ${reading === "reading" ? styles.dropBusy : ""}`}
+        >
           <input
             type="file"
             name="resume"
             accept=".pdf,.doc,.docx,image/jpeg,image/png"
             onChange={(e) => readResume(e.target.files?.[0])}
           />
-          <strong>{c?.resume_path ? "Replace their resume" : "Add their resume"}</strong>
+          <strong>
+            {c?.resume_path ? "Replace their resume" : "Add their resume"}
+          </strong>
           <span>
             {reading === "reading"
-              ? "Reading it…"
-              : "PDF, Word or a photo. We'll fill in their name, email, phone and LinkedIn for you."}
+              ? "Reading the resume and writing their profile… about 20 seconds."
+              : "PDF, Word or a photo. We'll fill in everything we can: contact details, roles, location, headline, summary and highlights. You just check it."}
           </span>
         </label>
         {readNote && (
-          <p className={`notice ${reading === "done" ? "notice-good" : ""}`} role="status" style={{ marginTop: 12 }}>
+          <p
+            className={`notice ${reading === "done" ? "notice-good" : ""}`}
+            role="status"
+            style={{ marginTop: 12 }}
+          >
             {readNote}
           </p>
         )}
@@ -197,11 +329,13 @@ export function CandidateForm({
               <Req />
             </span>
             <input
-              className="input"
+              className={`input ${mark("full_name")}`}
               name="full_name"
               required
               value={contact.full_name}
-              onChange={(e) => setContact({ ...contact, full_name: e.target.value })}
+              onChange={(e) =>
+                setContact({ ...contact, full_name: e.target.value })
+              }
             />
           </label>
           <label className="field">
@@ -210,25 +344,36 @@ export function CandidateForm({
               <Req />
             </span>
             <input
-              className="input"
+              className={`input ${mark("email")}`}
               type="email"
               name="email"
               required
               value={contact.email}
-              onChange={(e) => setContact({ ...contact, email: e.target.value })}
+              onChange={(e) =>
+                setContact({ ...contact, email: e.target.value })
+              }
             />
           </label>
           <label className="field">
             <span>Phone</span>
-            <input className="input" name="phone" value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} />
+            <input
+              className={`input ${mark("phone")}`}
+              name="phone"
+              value={contact.phone}
+              onChange={(e) =>
+                setContact({ ...contact, phone: e.target.value })
+              }
+            />
           </label>
           <label className="field">
             <span>LinkedIn</span>
             <input
-              className="input"
+              className={`input ${mark("linkedin_url")}`}
               name="linkedin_url"
               value={contact.linkedin_url}
-              onChange={(e) => setContact({ ...contact, linkedin_url: e.target.value })}
+              onChange={(e) =>
+                setContact({ ...contact, linkedin_url: e.target.value })
+              }
             />
           </label>
         </div>
@@ -237,21 +382,32 @@ export function CandidateForm({
       {/* 2. Assessment */}
       <section className={styles.step}>
         <h2>
-          <span className={styles.num}>2</span> Their Strengths Assessment result
+          <span className={styles.num}>2</span> Their Strengths Assessment
+          result
           <Req />
         </h2>
         <p className="small muted">
-          Fills in by itself when they take our Strengths Assessment. To change it, tap the six in order, strongest first. Tap one
-          again to undo from there.
+          Fills in by itself when they take our Strengths Assessment. To change
+          it, tap the six in order, strongest first. Tap one again to undo from
+          there.
         </p>
         {ours && (
           <p className="small" style={{ margin: "0 0 10px" }}>
-            From our Strengths Assessment, {new Date(ours.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}:{" "}
+            From our Strengths Assessment,{" "}
+            {new Date(ours.at).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            })}
+            :{" "}
             <b>{`${ours.letters.slice(0, 2)} ${ours.letters.slice(2, 4)} ${ours.letters.slice(4)}`}</b>
             {code !== ours.letters && (
               <>
                 {" "}
-                <button type="button" className="btn btn-ghost btn-small" onClick={() => setOrder(parseResult(ours.letters))}>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-small"
+                  onClick={() => setOrder(parseResult(ours.letters))}
+                >
                   Use this
                 </button>
               </>
@@ -260,12 +416,20 @@ export function CandidateForm({
         )}
         {c?.assessment_path && (
           <p className="small muted" style={{ margin: "0 0 10px" }}>
-            <a href={`/api/assessment/${c.id}`} target="_blank" rel="noopener noreferrer">
+            <a
+              href={`/api/assessment/${c.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Open the report they sent earlier
             </a>
           </p>
         )}
-        <div className={styles.letters} role="group" aria-label="Strengths order">
+        <div
+          className={styles.letters}
+          role="group"
+          aria-label="Strengths order"
+        >
           {LETTERS.map((l) => {
             const pos = order.indexOf(l.key);
             return (
@@ -285,10 +449,19 @@ export function CandidateForm({
         </div>
         <div className={styles.codeRow}>
           <span>
-            Result: <strong>{code ? `${code.slice(0, 2)} ${code.slice(2, 4)} ${code.slice(4)}`.trim() : "not set"}</strong>
+            Result:{" "}
+            <strong>
+              {code
+                ? `${code.slice(0, 2)} ${code.slice(2, 4)} ${code.slice(4)}`.trim()
+                : "not set"}
+            </strong>
           </span>
           {order.length > 0 && (
-            <button type="button" className="btn btn-ghost btn-small" onClick={() => setOrder([])}>
+            <button
+              type="button"
+              className="btn btn-ghost btn-small"
+              onClick={() => setOrder([])}
+            >
               Clear
             </button>
           )}
@@ -326,7 +499,7 @@ export function CandidateForm({
             <Req />
           </span>
           <input
-            className="input"
+            className={`input ${mark("role_category")}`}
             name="role_category"
             list="roles"
             value={role}
@@ -423,7 +596,13 @@ export function CandidateForm({
                 type="button"
                 className={langs.includes(l) ? styles.chipOn : styles.chip}
                 aria-pressed={langs.includes(l)}
-                onClick={() => setLangs(langs.includes(l) ? langs.filter((x) => x !== l) : [...langs, l])}
+                onClick={() =>
+                  setLangs(
+                    langs.includes(l)
+                      ? langs.filter((x) => x !== l)
+                      : [...langs, l],
+                  )
+                }
               >
                 {l}
               </button>
@@ -447,19 +626,31 @@ export function CandidateForm({
               }}
               placeholder="Another one? Type it"
               aria-label="Another language"
-              style={{ width: 190, minHeight: 36, padding: "4px 10px", fontSize: 14 }}
+              style={{
+                width: 190,
+                minHeight: 36,
+                padding: "4px 10px",
+                fontSize: 14,
+              }}
             />
           </div>
         </div>
         <div className="grid-2" style={{ marginTop: 18 }}>
           <label className="field">
-            <span>Location (broad, e.g. &ldquo;Northern New Jersey&rdquo;)</span>
-            <input className="input" name="location_region" defaultValue={v("location_region")} />
+            <span>
+              Location (broad, e.g. &ldquo;Northern New Jersey&rdquo;)
+            </span>
+            <input
+              className={`input ${mark("location_region")}`}
+              name="location_region"
+              value={locationRegion}
+              onChange={(e) => setLocationRegion(e.target.value)}
+            />
           </label>
           <label className="field">
             <span>Main industry</span>
             <input
-              className="input"
+              className={`input ${mark("industry")}`}
               name="industry"
               list="industries"
               value={industry}
@@ -474,14 +665,26 @@ export function CandidateForm({
           </label>
           <label className="field">
             <span>Salary from ($)</span>
-            <input className="input" name="salary_min" inputMode="numeric" defaultValue={c?.salary_min ?? ""} placeholder="70000" />
+            <input
+              className="input"
+              name="salary_min"
+              inputMode="numeric"
+              defaultValue={c?.salary_min ?? ""}
+              placeholder="70000"
+            />
           </label>
           <label className="field">
             <span>Salary to ($)</span>
-            <input className="input" name="salary_max" inputMode="numeric" defaultValue={c?.salary_max ?? ""} placeholder="85000" />
+            <input
+              className="input"
+              name="salary_max"
+              inputMode="numeric"
+              defaultValue={c?.salary_max ?? ""}
+              placeholder="85000"
+            />
           </label>
         </div>
-      <ChipPicker
+        <ChipPicker
           name="also_industries"
           label="Other industries they'd fit"
           hint="Experience or interest in more than one? Add them all."
@@ -499,31 +702,50 @@ export function CandidateForm({
           <span className={styles.num}>4</span> Their story
         </h2>
         <p className="small muted">
-          Owners see this before signing, so describe, don&rsquo;t identify: no names, employers, schools or exact titles.
+          Owners see this before signing, so describe, don&rsquo;t identify: no
+          names, employers, schools or exact titles.
         </p>
-        <ul className={styles.tips}>
-          {WRITING_TIPS.map((t) => (
-            <li key={t}>{t}</li>
-          ))}
-        </ul>
+        <details className={styles.more}>
+          <summary>Writing tips</summary>
+          <ul className={styles.tips}>
+            {WRITING_TIPS.map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ul>
+        </details>
         <label className="field" style={{ marginTop: 14 }}>
           <span>Headline</span>
           <input
-            className={`input ${findBlanks(headline).length ? styles.hasBlank : ""}`}
+            className={`input ${findBlanks(headline).length ? styles.hasBlank : ""} ${mark("headline")}`}
             name="headline"
             value={headline}
             onChange={(e) => setHeadline(e.target.value)}
-            placeholder={autoHeadline ? "Leave blank and we'll write one for you" : "e.g. Bookkeeper who finds the mistake everyone else missed"}
+            placeholder={
+              autoHeadline
+                ? "Leave blank and we'll write one for you"
+                : "e.g. Bookkeeper who finds the mistake everyone else missed"
+            }
           />
-          {headline && headline === (c?.application as Record<string, string> | undefined)?.headline_auto && (
-            <small>✓ Written automatically. It updates with their page. Change it to use your own.</small>
-          )}
+          {headline &&
+            headline ===
+              (c?.application as Record<string, string> | undefined)
+                ?.headline_auto && (
+              <small>
+                ✓ Written automatically. It updates with their page. Change it
+                to use your own.
+              </small>
+            )}
         </label>
-        {ideas.length > 0 && (
+        {ideas.length > 0 && !headline.trim() && (
           <div className={styles.ideas}>
             <span>Ideas (tap to use, then make it yours):</span>
             {ideas.map((h) => (
-              <button key={h} type="button" className={styles.idea} onClick={() => setHeadline(h)}>
+              <button
+                key={h}
+                type="button"
+                className={styles.idea}
+                onClick={() => setHeadline(h)}
+              >
                 {h}
               </button>
             ))}
@@ -532,46 +754,74 @@ export function CandidateForm({
         <label className="field">
           <span>Short summary</span>
           <textarea
-            className={`textarea ${findBlanks(summary).length ? styles.hasBlank : ""}`}
+            className={`textarea ${findBlanks(summary).length ? styles.hasBlank : ""} ${mark("summary")}`}
             name="summary"
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
             placeholder="Two or three sentences: what they've done and where they shine."
           />
         </label>
-        <div className={styles.ideas}>
-          <button
-            type="button"
-            className={styles.ideaMain}
-            disabled={!role && !code}
-            onClick={() => {
-              if (summary.trim() && !window.confirm("Replace what you've written with a first draft?")) return;
-              setSummary(summaryDraft({ role, level, code }));
-            }}
-          >
-            Write a first draft for me
-          </button>
-          {SUMMARY_STARTERS.map((t) => (
-            <button key={t} type="button" className={styles.idea} onClick={() => addToSummary(t)}>
-              {t.trim()}…
+        {!summary.trim() && (
+          <div className={styles.ideas}>
+            <button
+              type="button"
+              className={styles.ideaMain}
+              disabled={!role && !code}
+              onClick={() => {
+                if (
+                  summary.trim() &&
+                  !window.confirm(
+                    "Replace what you've written with a first draft?",
+                  )
+                )
+                  return;
+                setSummary(summaryDraft({ role, level, code }));
+              }}
+            >
+              Write a first draft for me
             </button>
-          ))}
-        </div>
+            {SUMMARY_STARTERS.map((t) => (
+              <button
+                key={t}
+                type="button"
+                className={styles.idea}
+                onClick={() => addToSummary(t)}
+              >
+                {t.trim()}…
+              </button>
+            ))}
+          </div>
+        )}
         <label className="field">
           <span>Highlights (one per line)</span>
           <textarea
-            className={`textarea ${findBlanks(highlights).length ? styles.hasBlank : ""}`}
+            className={`textarea ${findBlanks(highlights).length ? styles.hasBlank : ""} ${mark("highlights")}`}
             name="highlights"
             value={highlights}
             onChange={(e) => setHighlights(e.target.value)}
-            placeholder={"Grew a territory to 40 accounts in 18 months\nComfortable on a job site and in a boardroom"}
+            placeholder={
+              "Grew a territory to 40 accounts in 18 months\nComfortable on a job site and in a boardroom"
+            }
           />
         </label>
-        {highlightIdeas.length > 0 && (
+        {highlightIdeas.length > 0 && !highlights.trim() && (
           <div className={styles.ideas}>
-            <span>Ideas for {[role, ...alsoRoles].filter(Boolean).slice(0, 2).join(" and ").toLowerCase()} (tap to add, then fill in the [brackets]):</span>
+            <span>
+              Ideas for{" "}
+              {[role, ...alsoRoles]
+                .filter(Boolean)
+                .slice(0, 2)
+                .join(" and ")
+                .toLowerCase()}{" "}
+              (tap to add, then fill in the [brackets]):
+            </span>
             {highlightIdeas.map((h) => (
-              <button key={h} type="button" className={styles.idea} onClick={() => addLine(h)}>
+              <button
+                key={h}
+                type="button"
+                className={styles.idea}
+                onClick={() => addLine(h)}
+              >
                 + {h}
               </button>
             ))}
@@ -589,17 +839,37 @@ export function CandidateForm({
         />
         <label className="field">
           <span>Full profile (shown only after a client signs)</span>
-          <textarea className="textarea" name="full_profile" defaultValue={v("full_profile")} />
+          <textarea
+            className={`textarea ${mark("full_profile")}`}
+            name="full_profile"
+            value={fullProfile}
+            onChange={(e) => setFullProfile(e.target.value)}
+          />
         </label>
         <details className={styles.more}>
-          <summary>Write your own &ldquo;Wired for&rdquo; words instead</summary>
+          <summary>
+            Write your own &ldquo;Wired for&rdquo; words instead
+          </summary>
           <label className="field" style={{ marginTop: 12 }}>
             <span>Wired for</span>
-            <input className="input" name="strengths" defaultValue={c?.strengths.join(", ") ?? ""} placeholder={d ? d.wiredFor.join(", ") : ""} />
-            <small>Leave empty to use the words from their result. Separate with commas.</small>
+            <input
+              className="input"
+              name="strengths"
+              defaultValue={c?.strengths.join(", ") ?? ""}
+              placeholder={d ? d.wiredFor.join(", ") : ""}
+            />
+            <small>
+              Leave empty to use the words from their result. Separate with
+              commas.
+            </small>
           </label>
         </details>
-        <OwnerPageFields raw={(c?.application as Record<string, string> | undefined)?.owner_page} listed={c?.status === "listed"} />
+        <OwnerPageFields
+          raw={
+            (c?.application as Record<string, string> | undefined)?.owner_page
+          }
+          listed={c?.status === "listed"}
+        />
       </section>
 
       {/* 5. Private */}
@@ -610,7 +880,12 @@ export function CandidateForm({
         <div className="grid-2">
           <label className="field">
             <span>Never show to these companies</span>
-            <input className="input" name="never_show_to" defaultValue={v("never_show_to")} placeholder="e.g. their current employer" />
+            <input
+              className="input"
+              name="never_show_to"
+              defaultValue={v("never_show_to")}
+              placeholder="e.g. their current employer"
+            />
           </label>
           {isAdmin && (
             <label className="field">
@@ -619,7 +894,11 @@ export function CandidateForm({
                 className="input"
                 name="fee_override"
                 inputMode="numeric"
-                defaultValue={c?.fee_override_cents != null ? c.fee_override_cents / 100 : ""}
+                defaultValue={
+                  c?.fee_override_cents != null
+                    ? c.fee_override_cents / 100
+                    : ""
+                }
                 placeholder={`Default: ${tierFeeLabel}`}
               />
             </label>
@@ -627,7 +906,11 @@ export function CandidateForm({
         </div>
         <label className="field" style={{ marginTop: 18 }}>
           <span>Team notes</span>
-          <textarea className="textarea" name="admin_notes" defaultValue={v("admin_notes")} />
+          <textarea
+            className="textarea"
+            name="admin_notes"
+            defaultValue={v("admin_notes")}
+          />
         </label>
         {!c && (
           <label className="check" style={{ marginTop: 16 }}>
@@ -657,8 +940,16 @@ export function CandidateForm({
           <>
             <label className={styles.statusPick}>
               <span>Status</span>
-              <select className="select" name="status" defaultValue={waitingToSign ? "listed" : c.status}>
-                <option value="listed">{waitingToSign ? "Listed: goes live when they sign" : "Listed: owners can see them"}</option>
+              <select
+                className="select"
+                name="status"
+                defaultValue={waitingToSign ? "listed" : c.status}
+              >
+                <option value="listed">
+                  {waitingToSign
+                    ? "Listed: goes live when they sign"
+                    : "Listed: owners can see them"}
+                </option>
                 <option value="draft">Draft: hidden</option>
                 <option value="paused">Paused: hidden</option>
                 <option value="applied">New application</option>
@@ -671,16 +962,29 @@ export function CandidateForm({
             </button>
             {waitingToSign && !state.ok && !state.error && (
               <span className="notice" role="status">
-                Waiting for them to sign their candidate agreement. They go live the moment they do.
+                Waiting for them to sign their candidate agreement. They go live
+                the moment they do.
               </span>
             )}
           </>
         ) : (
           <>
-            <button className="btn btn-gold" type="submit" name="status" value="listed" disabled={pending}>
+            <button
+              className="btn btn-gold"
+              type="submit"
+              name="status"
+              value="listed"
+              disabled={pending}
+            >
               {pending ? "Saving…" : "List now"}
             </button>
-            <button className="btn btn-ghost" type="submit" name="status" value="draft" disabled={pending}>
+            <button
+              className="btn btn-ghost"
+              type="submit"
+              name="status"
+              value="draft"
+              disabled={pending}
+            >
               Save as draft
             </button>
           </>
@@ -725,18 +1029,29 @@ function ChipPicker({
   addPlaceholder: string;
 }) {
   const [typed, setTyped] = useState("");
+  const [open, setOpen] = useState(false);
   const ex = exclude.trim().toLowerCase();
-  const all = [...new Set([...suggested, ...value, ...options])].filter((o) => o.toLowerCase() !== ex);
-  const toggle = (o: string) => onChange(value.includes(o) ? value.filter((x) => x !== o) : [...value, o]);
+  const all = [...new Set([...suggested, ...value, ...options])].filter(
+    (o) => o.toLowerCase() !== ex,
+  );
+  // Keep it short: what's picked and suggested, and the full list only when asked for.
+  const picked = all.filter((o) => value.includes(o) || suggested.includes(o));
+  const shown = open ? all : picked.length ? picked : all.slice(0, 8);
+  const toggle = (o: string) =>
+    onChange(value.includes(o) ? value.filter((x) => x !== o) : [...value, o]);
   const add = () => {
     const t = typed.trim();
-    if (t && !value.includes(t) && t.toLowerCase() !== ex) onChange([...value, t]);
+    if (t && !value.includes(t) && t.toLowerCase() !== ex)
+      onChange([...value, t]);
     setTyped("");
   };
   return (
     <div className={styles.chipField}>
       <span>{label}</span>
-      <small className="muted" style={{ display: "block", margin: "2px 0 8px" }}>
+      <small
+        className="muted"
+        style={{ display: "block", margin: "2px 0 8px" }}
+      >
         {hint}
         {suggested.length > 0 && suggestedNote ? ` ★ ${suggestedNote}.` : ""}
       </small>
@@ -746,7 +1061,7 @@ function ChipPicker({
           <input key={x} type="hidden" name={name} value={x} />
         ))}
       <div className={styles.chips}>
-        {all.map((o) => (
+        {shown.map((o) => (
           <button
             key={o}
             type="button"
@@ -758,24 +1073,41 @@ function ChipPicker({
             {o}
           </button>
         ))}
+        {shown.length < all.length || open ? (
+          <button
+            type="button"
+            className={styles.chip}
+            onClick={() => setOpen(!open)}
+            style={{ borderStyle: "dashed" }}
+          >
+            {open ? "Show fewer" : "+ More"}
+          </button>
+        ) : null}
       </div>
-      <div className={styles.addRow}>
-        <input
-          className="input"
-          value={typed}
-          onChange={(e) => setTyped(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              add();
-            }
-          }}
-          placeholder={addPlaceholder}
-        />
-        <button type="button" className="btn btn-ghost btn-small" onClick={add} disabled={!typed.trim()}>
-          Add
-        </button>
-      </div>
+      {open && (
+        <div className={styles.addRow}>
+          <input
+            className="input"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                add();
+              }
+            }}
+            placeholder={addPlaceholder}
+          />
+          <button
+            type="button"
+            className="btn btn-ghost btn-small"
+            onClick={add}
+            disabled={!typed.trim()}
+          >
+            Add
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -174,3 +174,6 @@
 .ownerPage .field { margin-top: 12px; }
 .ownerStatus { margin: 4px 0 0; font-size: 14.5px; color: #2c3650; display: flex; gap: 8px; align-items: baseline; }
 .ownerStatus span { color: var(--moss); font-weight: 800; }
+
+/* Filled in from the resume: check it. */
+.fromResume { background: #fff8e1 !important; border-color: var(--marigold) !important; }

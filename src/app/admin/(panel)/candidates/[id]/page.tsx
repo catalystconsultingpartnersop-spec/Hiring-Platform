@@ -1,4 +1,5 @@
 import { requireStaff } from "@/lib/session";
+import { SendButton } from "@/components/SendButton";
 import { problemFor } from "@/lib/emailProblems";
 import { EmailProblemFlag } from "@/components/EmailProblemFlag";
 import Link from "next/link";
@@ -195,9 +196,7 @@ function PromiseRow({
         <span>
           <strong>Candidate agreement:</strong> not sent yet. Mention it to them, then send it.
         </span>
-        <button className="btn btn-ghost btn-small" type="submit">
-          Send the candidate agreement
-        </button>
+        <SendButton label="Send the candidate agreement" />
       </form>
     ) : null;
   return (
@@ -206,9 +205,7 @@ function PromiseRow({
         <strong>Candidate agreement:</strong> sent {dateShort(c.promise_requested_at)}, not signed yet.
         {c.list_on_sign ? " Their profile goes live the moment they sign." : ""}
       </span>
-      <button className="btn btn-ghost btn-small" type="submit">
-        Send it again
-      </button>
+      <SendButton label="Send it again" />
     </form>
   );
 }
