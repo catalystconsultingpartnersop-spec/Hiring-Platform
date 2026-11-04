@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { db, logActivity } from "./db";
 import { Audience, layout } from "./emailKit";
 import { brandName } from "./format";
+import { calendarButtons } from "./calendarLinks";
 
 // The sender always shows our name, whatever display name EMAIL_FROM carries.
 function senderFrom(raw: string, fromName?: string) {
@@ -25,10 +26,14 @@ export async function sendEmail(opts: {
   attachments?: { filename: string; content: Buffer }[];
   fromName?: string; // shows as "Name via The Candidate Collection"
 }) {
+  // Any calendar file also gets one-tap "Add to calendar" buttons in the email.
+  const icsFile = opts.attachments?.find((a) => a.filename.endsWith(".ics"));
+  const buttons = icsFile ? calendarButtons(icsFile.content.toString("utf8")) : null;
+  const body = buttons ? `${opts.html}${buttons}` : opts.html;
   const key = process.env.RESEND_API_KEY?.trim();
   const from = process.env.EMAIL_FROM?.trim();
   if (!key || !from) {
-    console.log(`[email not sent: RESEND_API_KEY/EMAIL_FROM missing] to=${opts.to} subject=${opts.subject}\n${opts.html}`);
+    console.log(`[email not sent: RESEND_API_KEY/EMAIL_FROM missing] to=${opts.to} subject=${opts.subject}\n${body}`);
     const missing = [!key && "RESEND_API_KEY", !from && "EMAIL_FROM"].filter(Boolean).join(" and ");
     await logActivity("system", "email_failed", { to: opts.to, subject: opts.subject, error: `${missing} is missing in Vercel` });
     return { ok: false, error: `${missing} is missing in Vercel` };
@@ -43,7 +48,7 @@ export async function sendEmail(opts: {
         from: senderFrom(from, opts.fromName),
         to: opts.to,
         subject: opts.subject,
-        html: layout(opts.html, opts.audience ?? "team"),
+        html: layout(body, opts.audience ?? "team"),
         replyTo: opts.replyTo ?? process.env.ADMIN_EMAIL,
         attachments: opts.attachments,
       });

@@ -104,7 +104,7 @@ export const owner = {
       (o.m.kind === "call"
         ? box("<strong>Good first questions:</strong> What kind of work gives you energy? What are you looking for next? What would you like to know about us?")
         : box(`Use the <a href="${siteUrl()}/hiring-help/templates/interview-scorecard" style="color:#17213a">interview scorecard</a> to keep it fair and easy to decide.`)) +
-      quiet("It's in the calendar invite attached."),
+      "",
   }),
 
   needOtherTimes: (o: { name: string | null; candidate: string; candidateId: string; note: string | null; phone: string | null }): Mail => ({
@@ -369,7 +369,7 @@ export const candidate = {
       big(esc(o.when)) +
       p(o.how) +
       box(`Be yourself and talk about the work you enjoy. That's what makes a great match. Our 4-minute guide <a href="${candidateUrl()}/join/help/get-ready-for-an-interview" style="color:#17213a">Getting ready for an interview</a> can help.`) +
-      quiet("It's in the calendar invite attached."),
+      "",
   }),
 
   askFeedback: (o: { name: string; company: string; m: MeetingInfo; link: string }): Mail => ({
