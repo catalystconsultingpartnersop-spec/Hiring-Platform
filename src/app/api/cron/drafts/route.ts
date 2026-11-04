@@ -13,6 +13,8 @@ export async function GET(req: NextRequest) {
   }
   const { sendHourReminders } = await import("@/lib/calls");
   const reminders = await sendHourReminders().catch(() => ({ sent: 0 }));
+  const { stallAlerts } = await import("@/lib/pathEmails");
+  const stalls = await stallAlerts().catch(() => ({ stalls: 0 }));
   const r = await draftFinishedCalls({ withinHours: 6 }).catch(() => ({ drafted: 0 }));
-  return NextResponse.json({ ...r, ...reminders });
+  return NextResponse.json({ ...r, ...reminders, ...stalls });
 }

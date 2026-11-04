@@ -1,5 +1,7 @@
 import { requireStaff } from "@/lib/session";
 import { PointToOwner } from "./PointToOwner";
+import { pathCtx, phoneLinks, pickNudgeText } from "@/lib/pathEmails";
+import { remindToPick } from "@/app/admin/actions";
 import { siteUrl } from "@/lib/format";
 import { CallNow } from "./CallNow";
 import { callEmailFor } from "@/lib/callAccounts";
@@ -21,7 +23,7 @@ import { CallDraftPanel } from "../CallDraftPanel";
 import { ResumePanel } from "../ResumePanel";
 import { cleanResumeOf } from "@/lib/cleanResume";
 import { canEditCandidate, effectiveReps, repOptions } from "@/lib/reps";
-import { COMPANY_TZ, formatInZone } from "@/lib/time";
+import { COMPANY_TZ, formatInZone, nowMs } from "@/lib/time";
 
 export default async function EditCandidate({ params, searchParams }: PageProps<"/admin/candidates/[id]">) {
   const me = await requireStaff();
@@ -134,6 +136,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
           </RO>
         );
       })()}
+      <WaitingOn candidateId={c.id} canEdit={canEdit} repFirst={(me.name || "").split(" ")[0]} />
       <PositionsTheyFit candidateId={c.id} status={c.status} />
       {c.status === "listed" && c.headline && (
         <PointToOwner candidateId={c.id} headline={c.headline} link={`${siteUrl().replace(/^https?:\/\//, "")}/c/${refCode(c.id)}`} repFirst={(me.name || "").split(" ")[0]} mine={canEdit && !me.manager} />
@@ -294,5 +297,55 @@ async function PointedLog({ candidateId }: { candidateId: string }) {
         .map((r) => `${r.details.to_name || r.details.to_key} (${r.details.channel === "whatsapp" ? "WhatsApp" : r.details.channel}, by ${(r.details.by_name ?? "").split(" ")[0]}, ${dateShort(r.at)})`)
         .join(" · ")}
     </p>
+  );
+}
+
+// An employer offered times and the candidate hasn't answered: show it, with one-tap nudges.
+async function WaitingOn({ candidateId, canEdit, repFirst }: { candidateId: string; canEdit: boolean; repFirst: string }) {
+  const { data: us } = await db().from("unlocks").select("id").eq("candidate_id", candidateId);
+  const ids = ((us ?? []) as { id: string }[]).map((u) => u.id);
+  if (!ids.length) return null;
+  const { data: ms } = await db().from("meetings").select("id, unlock_id, kind, created_at, nudged_at").in("unlock_id", ids).eq("status", "proposed");
+  const rows = (ms ?? []) as { id: string; unlock_id: string; kind: string; created_at: string; nudged_at: string | null }[];
+  if (!rows.length) return null;
+  const items = await Promise.all(rows.map(async (m) => ({ m, c: await pathCtx(m.unlock_id) })));
+  const now = nowMs();
+  return (
+    <>
+      {items.map(({ m, c }) => {
+        if (!c) return null;
+        const hours = Math.max(1, Math.round((now - Date.parse(m.created_at)) / 36e5));
+        const first = c.cand.full_name.split(" ")[0];
+        const links = phoneLinks(c.cand.phone, pickNudgeText(c, repFirst));
+        return (
+          <section key={m.id} className="panel" style={{ marginTop: 18, borderColor: hours >= 4 ? "var(--rust)" : "var(--marigold)" }}>
+            <strong>
+              ⏳ {c.owner.company ?? "An employer"} is waiting on {first}
+            </strong>
+            <p className="small muted" style={{ margin: "4px 0 10px" }}>
+              They offered times for a {m.kind === "call" ? "first call" : "meeting"} {hours < 24 ? `${hours} hour${hours === 1 ? "" : "s"}` : `${Math.round(hours / 24)} days`} ago.
+              {m.nudged_at ? ` Reminder sent ${dateShort(m.nudged_at)}.` : ""}
+            </p>
+            {canEdit && (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {links && (
+                  <>
+                    <a className="btn btn-gold btn-small" href={links.whatsapp} target="_blank" rel="noreferrer">
+                      WhatsApp {first}
+                    </a>
+                    <a className="btn btn-ghost btn-small" href={links.text}>
+                      Text
+                    </a>
+                  </>
+                )}
+                <form action={remindToPick.bind(null, m.id)}>
+                  <SendButton label="Email a reminder" />
+                </form>
+              </div>
+            )}
+          </section>
+        );
+      })}
+    </>
   );
 }

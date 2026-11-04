@@ -11,7 +11,7 @@ import { COMPANY_TZ, formatInZone } from "./time";
 // Sends the emails in the path from "unlocked" to "hired". The words live in
 // emails.ts; this file gathers the details and copies the rep on each step.
 
-type Ctx = {
+export type Ctx = {
   unlockId: string;
   cand: { id: string; full_name: string; email: string; phone: string | null; tz: string };
   owner: Owner;
@@ -205,4 +205,79 @@ export async function nudgeCandidateRefs(unlockId: string) {
   const c = await pathCtx(unlockId);
   if (!c) return;
   await sendEmail({ to: c.cand.email, ...toCand.refsNudge({ name: c.cand.full_name, company: company(c), link: candidatePageLink(c.cand.id) }) });
+}
+
+// ---- When a candidate hasn't answered an employer's times ----
+
+const HOUR = 36e5;
+export const STALL_HOURS = 4;
+
+// What the rep can send the candidate: the same short message for WhatsApp and text.
+export function pickNudgeText(c: Ctx, repFirst: string) {
+  return `Hi ${first(c.cand.full_name)}, quick heads up: ${company(c)} wants to meet you and offered a few times. Pick one here (takes a minute): ${candidatePageLink(c.cand.id)}\nAny answer is fine, even "not for me".\n${repFirst}`;
+}
+
+export function phoneLinks(phone: string | null | undefined, text: string) {
+  const d = (phone ?? "").replace(/\D/g, "");
+  if (d.length < 10) return null;
+  const intl = d.length === 10 ? `1${d}` : d;
+  return { whatsapp: `https://wa.me/${intl}?text=${encodeURIComponent(text)}`, text: `sms:+${intl}?&body=${encodeURIComponent(text)}` };
+}
+
+// The rep taps "Email a reminder": the reminder goes to the candidate from the site, in the rep's name.
+export async function sendPickReminder(meetingId: string, by: { name: string | null; email: string }) {
+  const { data: m } = await db().from("meetings").select("*").eq("id", meetingId).maybeSingle();
+  if (!m || m.status !== "proposed") return { error: "They've already answered." };
+  const c = await pathCtx(m.unlock_id);
+  if (!c) return { error: "Not found." };
+  const r = await sendEmail({
+    to: c.cand.email,
+    ...toCand.pickNudge({ name: c.cand.full_name, company: company(c), m: m as Meeting, link: candidatePageLink(c.cand.id) }),
+    replyTo: by.email,
+    fromName: by.name ?? undefined,
+  });
+  if (!r.ok) return { error: `The email didn't send: ${r.error}` };
+  await db().from("meetings").update({ nudged_at: new Date().toISOString() }).eq("id", meetingId);
+  await logActivity(`staff:${by.email}`, "pick_reminder_sent", { meeting_id: meetingId, candidate: refCode(c.cand.id) });
+  return { ok: true };
+}
+
+// Every 10 minutes: an employer offered times a few hours ago and the candidate hasn't
+// answered. Tell the rep once, with one-tap ways to nudge. Never between 10pm and 8am.
+export async function stallAlerts() {
+  const now = Date.now();
+  const hourNY = Number(new Date(now).toLocaleString("en-US", { timeZone: COMPANY_TZ, hour: "numeric", hour12: false }));
+  if (hourNY < 8 || hourNY >= 22) return { stalls: 0 };
+  const { data } = await db()
+    .from("meetings")
+    .select("*")
+    .eq("status", "proposed")
+    .lte("created_at", new Date(now - STALL_HOURS * HOUR).toISOString())
+    .gte("created_at", new Date(now - 7 * 24 * HOUR).toISOString());
+  let stalls = 0;
+  for (const m of (data ?? []) as Meeting[]) {
+    const { count } = await db().from("activity_log").select("id", { count: "exact", head: true }).eq("action", "meeting_stall_alert").eq("details->>meeting_id", m.id);
+    if (count) continue;
+    const c = await pathCtx(m.unlock_id);
+    if (!c) continue;
+    await logActivity("system", "meeting_stall_alert", { meeting_id: m.id, candidate: refCode(c.cand.id) });
+    const hours = Math.round((now - Date.parse(m.created_at)) / HOUR);
+    for (const t of c.team) {
+      const repFirst = (t.full_name ?? "").split(" ")[0] || "";
+      const links = phoneLinks(c.cand.phone, pickNudgeText(c, repFirst));
+      const nudge = `${teamUrl()}/api/nudge?t=${encodeURIComponent(signedToken(`nudge_${m.id}`, 7))}`;
+      const btn = (href: string, label: string, gold = false) =>
+        `<a href="${href}" style="display:inline-block;margin:0 8px 8px 0;padding:10px 16px;border-radius:999px;text-decoration:none;font-weight:bold;${gold ? "background:#f2b300;color:#17213a" : "border:1.5px solid #17213a;color:#17213a"}">${label}</a>`;
+      await sendEmail({
+        to: t.email,
+        audience: "team",
+        subject: `${company(c)} is waiting on ${first(c.cand.full_name)}`,
+        html: `<p style="margin:0 0 12px"><strong>${e(company(c))}</strong> offered ${e(first(c.cand.full_name))} times for a ${m.kind === "call" ? "first call" : "meeting"} ${hours} hours ago, and ${e(first(c.cand.full_name))} hasn't answered yet. A quick nudge from you usually does it.</p>
+<p style="margin:0 0 6px">${links ? btn(links.whatsapp, "WhatsApp " + e(first(c.cand.full_name)), true) + btn(links.text, "Text") : ""}${btn(nudge, "Email a reminder")}</p>
+<p style="margin:8px 0 0;font-size:13px;color:#5b667e">WhatsApp and Text open with a short message ready, including the link to answer. <a href="${teamUrl()}/admin/candidates/${c.cand.id}" style="color:#5b667e">Open ${e(c.cand.full_name)}'s profile</a></p>`,
+      });
+    }
+    stalls++;
+  }
+  return { stalls };
 }

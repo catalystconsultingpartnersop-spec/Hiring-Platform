@@ -1650,3 +1650,14 @@ export async function pointCandidate(
   revalidatePath(`/admin/candidates/${candidateId}`);
   return { ok: true };
 }
+
+// From a candidate's page: email them a reminder to answer an employer's times, in the rep's name.
+export async function remindToPick(meetingId: string) {
+  const me = await requireStaff();
+  const { data: m } = await db().from("meetings").select("unlock_id, unlocks(candidate_id)").eq("id", meetingId).maybeSingle();
+  const cid = (m as unknown as { unlocks?: { candidate_id: string } } | null)?.unlocks?.candidate_id;
+  if (!cid || !(await canEditCandidate(me, cid))) return;
+  const { sendPickReminder } = await import("@/lib/pathEmails");
+  await sendPickReminder(meetingId, { name: me.name || null, email: me.email });
+  revalidatePath(`/admin/candidates/${cid}`);
+}
