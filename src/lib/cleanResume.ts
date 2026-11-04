@@ -48,7 +48,7 @@ function promptFor(o: { name: string; resumeText: string | null; hasPdf: boolean
 
 Candidate: ${o.name}
 
-${o.hasPdf ? "Their original resume is attached (a PDF, or a photo of it)." : o.resumeText ? `Their original resume (text):\n${o.resumeText.slice(0, 30000)}` : "There is no readable resume on file; build it only from the call and notes."}
+${o.hasPdf ? "Their original resume is attached (a PDF, or a photo of it)." : o.resumeText ? `Their original resume (text):\n${o.resumeText.slice(0, 30000)}` : "There is no readable resume on file; build it only from the call, our notes and what their rep wrote about them. If that is thin, keep the resume short and leave out anything you cannot support; never fill gaps with made-up jobs or dates."}
 
 ${o.call ? `What they told our team on their onboarding call:\n${o.call.slice(0, 60000)}` : "No call transcript is available."}
 
@@ -129,6 +129,7 @@ export async function gatherSources(candidateId: string) {
   } catch {}
   const notes = [c.admin_notes, draftNotes].filter(Boolean).join("\n");
   if (!call && notes) sources.push("our notes");
+  if (app.rep_take) sources.push("their rep's first take");
   return { c, app, pdf, text, photo, call, notes, sources };
 }
 
@@ -136,13 +137,17 @@ export async function makeCleanResume(candidateId: string, by: string): Promise<
   const g = await gatherSources(candidateId);
   if (!g) return { ok: false, error: "Couldn't find this candidate." };
   const { c, app, pdf, text, photo, call, notes, sources } = g;
-  if (!pdf && !text && !photo && !call && !notes) return { ok: false, error: "There's no resume or call to work from yet." };
+  const repTake = (app.rep_take ?? "").trim();
+  if (!pdf && !text && !photo && !call && !notes && !repTake && !app.experience)
+    return { ok: false, error: "There's nothing to work from yet. Add their resume, write your first take on them, or have the call." };
 
   const extra = [
     `Contact details we have: ${[c.email, c.phone, c.linkedin_url].filter(Boolean).join(" · ") || "none"}`,
     c.location_region ? `Location: ${c.location_region}` : "",
     languagesText(c.languages) ? `Languages: ${languagesText(c.languages)}` : "",
     app.looking_for ? `What they're looking for: ${app.looking_for}` : "",
+    repTake ? `What their rep knows about them (who they are and what they want next):\n${repTake}` : "",
+    app.experience ? `Experience they told us about: ${app.experience}` : "",
     c.summary ? `Our profile summary of them: ${c.summary}` : "",
     (c.highlights ?? []).length ? `Our highlights: ${(c.highlights as string[]).join("; ")}` : "",
     !call && notes ? `Our team's notes from talking with them:\n${notes.slice(0, 8000)}` : "",

@@ -306,6 +306,21 @@ export const candidate = {
       quiet(`Something came up? <a href="${o.manage}" style="color:#5b667e">Pick a different time</a>.`),
   }),
 
+  // The day before (or the morning of) their call: the time, one tap to confirm, and the
+  // assessment link only if they haven't taken it yet.
+  dayBefore: (o: { name: string; rep: string; when: string; confirm: string; join: string | null; manage: string; assess: string | null }): Mail => ({
+    audience: "candidate",
+    subject: `See you ${o.when.startsWith("Today") ? "today" : "tomorrow"}: your call with ${first(o.rep)}`,
+    html:
+      hi(o.name) +
+      p(`Looking forward to your career call with ${esc(first(o.rep))}:`) +
+      big(esc(o.when)) +
+      button(o.confirm, "Yes, I'll be there") +
+      (o.join ? p(`<a href="${o.join}" style="color:#17213a;font-weight:bold">The video call link</a> (it works at the time of the call).`) : "") +
+      (o.assess ? box(`<strong>Before we talk:</strong> take our free <a href="${o.assess}" style="color:#17213a">Strengths Assessment</a>. About 8 minutes, and it makes the call much more useful.`) : "") +
+      quiet(`Something came up? <a href="${o.manage}" style="color:#5b667e">Pick a different time</a>.`),
+  }),
+
   // Marked as a no-show by their rep: kind, no blame, one button to rebook.
   missedCall: (o: { name: string; time: string; rep: string; rebook: string }): Mail => ({
     audience: "candidate",
