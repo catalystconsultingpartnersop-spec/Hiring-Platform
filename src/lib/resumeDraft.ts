@@ -27,7 +27,7 @@ export type ResumeDraft = {
 
 const MODELS = ["claude-sonnet-5-5", "claude-sonnet-4-5"];
 
-function prompt(opts: { letters: string; lookingFor: string; repTake: string; text: string | null }) {
+function prompt(opts: { letters: string; lookingFor: string; repTake: string; text: string | null; noResume?: boolean }) {
   const l = parseResult(opts.letters);
   const d = describe(opts.letters);
   const strengths =
@@ -47,7 +47,7 @@ ${opts.repTake ? `MOST IMPORTANT. Our rep knows this person. In the rep's words:
 Write the whole profile around this: who they are, what they want next and where they'd thrive. Their past jobs are proof of what they can do, not necessarily what they want to do again. If the rep says they want something new, don't steer them back to their old field. Never quote the rep or say a rep said it; write it as plain fact.
 ` : ""}What they said they're looking for: ${opts.lookingFor || "not given"}
 
-Use the resume as evidence. Don't invent facts, numbers or skills. Warm, specific, plain English, written so an owner thinks "I need that person".
+${opts.noResume ? "There's no resume yet: write only from what's above, keep it shorter, and leave contact fields and anything you can't support empty." : "Use the resume as evidence."} Don't invent facts, numbers or skills. Warm, specific, plain English, written so an owner thinks "I need that person".
 
 Rules:
 - "headline", "summary" and "highlights" are seen before an owner signs, so they must be anonymous:
@@ -71,12 +71,12 @@ Answer with JSON only:
 
 // The resume goes to the AI as the file itself when it's a PDF or a photo (so scanned
 // resumes work too), or as text for Word files.
-export async function draftFromResume(file: { buf: Buffer; kind: "pdf" | "docx" | "jpg" | "png"; text?: string }, opts: { letters?: string | null; lookingFor?: string | null; repTake?: string | null } = {}): Promise<ResumeDraft> {
+export async function draftFromResume(file: { buf: Buffer; kind: "pdf" | "docx" | "jpg" | "png"; text?: string } | null, opts: { letters?: string | null; lookingFor?: string | null; repTake?: string | null } = {}): Promise<ResumeDraft> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("The AI key isn't set up yet.");
-  const p = prompt({ letters: opts.letters ?? "", lookingFor: opts.lookingFor ?? "", repTake: opts.repTake ?? "", text: file.kind === "docx" ? file.text ?? "" : null });
+  const p = prompt({ letters: opts.letters ?? "", lookingFor: opts.lookingFor ?? "", repTake: opts.repTake ?? "", text: file?.kind === "docx" ? file.text ?? "" : null, noResume: !file });
   const content =
-    file.kind === "docx"
+    !file || file.kind === "docx"
       ? [{ type: "text", text: p }]
       : [
           file.kind === "pdf"

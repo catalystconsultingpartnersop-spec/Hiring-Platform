@@ -1,41 +1,58 @@
 import { NextResponse } from "next/server";
+import { gatherSources } from "@/lib/cleanResume";
 import { logActivity } from "@/lib/db";
 import { resumeBasics, resumeKind, resumeText } from "@/lib/resume";
 import { draftFromResume } from "@/lib/resumeDraft";
+import { canSeeCandidate } from "@/lib/reps";
 import { currentStaff } from "@/lib/session";
 import { allow } from "@/lib/throttle";
 
 export const maxDuration = 60;
 const KEEP = "It will still be attached when you save.";
 
-// Staff only: reads an uploaded resume and drafts the whole profile from it (contact
-// details, roles, level, location, industries, languages, headline, summary,
-// highlights, full profile). Nothing is stored here; the form fills in and the rep checks it.
+// Staff only: drafts the whole profile from whatever we have: the rep's own words, the
+// resume (just added, or the one on file) and their Strengths Assessment result. Any of
+// them can be missing; it uses the rest. Nothing is stored here; the form fills in.
 export async function POST(req: Request) {
   const me = await currentStaff();
   if (!me) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
   const form = await req.formData();
-  const file = form.get("resume");
+  const upload = form.get("resume");
   const letters = String(form.get("letters") ?? "");
   const lookingFor = String(form.get("looking_for") ?? "");
   const repTake = String(form.get("rep_take") ?? "").slice(0, 2000);
-  if (!(file instanceof File) || file.size === 0) return NextResponse.json({ found: {}, note: "That file looks empty." });
-  const kind = resumeKind(file);
-  if (!kind) return NextResponse.json({ found: {}, note: "Resumes need to be a PDF, Word file or photo." });
-  if (kind === "doc") return NextResponse.json({ found: {}, note: `Older Word files (.doc) can't be read automatically. Save it as a PDF and add it again. ${KEEP}` });
-  const buf = Buffer.from(await file.arrayBuffer());
+  const candidateId = String(form.get("candidate_id") ?? "");
+
+  let file: { buf: Buffer; kind: "pdf" | "docx" | "jpg" | "png"; text?: string } | null = null;
   let text = "";
+  let note: string | undefined;
+  if (upload instanceof File && upload.size > 0) {
+    const kind = resumeKind(upload);
+    if (!kind) return NextResponse.json({ found: {}, note: "Resumes need to be a PDF, Word file or photo." });
+    if (kind === "doc") note = `Older Word files (.doc) can't be read automatically. Save it as a PDF and add it again. ${KEEP}`;
+    else {
+      const buf = Buffer.from(await upload.arrayBuffer());
+      text = await resumeText(buf, kind).catch(() => "");
+      file = { buf, kind, text };
+    }
+  } else if (/^[0-9a-f-]{36}$/i.test(candidateId) && (await canSeeCandidate(me, candidateId))) {
+    // No new file: use the resume we already have for them.
+    const g = await gatherSources(candidateId);
+    if (g?.pdf) file = { buf: Buffer.from(g.pdf, "base64"), kind: "pdf" };
+    else if (g?.photo) file = { buf: Buffer.from(g.photo.data, "base64"), kind: g.photo.type === "image/png" ? "png" : "jpg" };
+    else if (g?.text) file = { buf: Buffer.alloc(0), kind: "docx", text: g.text };
+  }
+  if (!file && !repTake.trim() && letters.length < 2)
+    return NextResponse.json({ found: {}, note: note ?? "Add their resume, a few words about them, or their Strengths Assessment result, and we'll write the profile." });
+
+  if (!(await allow(`resume:${me.id ?? me.email}`, 30, 60)))
+    return NextResponse.json({ found: text ? resumeBasics(text) : {}, note: "That's a lot of drafts in an hour. Try again in a little while." });
   try {
-    text = await resumeText(buf, kind);
-  } catch {}
-  if (!(await allow(`resume:${me.id ?? me.email}`, 20, 60))) return NextResponse.json({ found: text ? resumeBasics(text) : {}, note: "That's a lot of resumes in an hour. We filled in the contact details only." });
-  try {
-    const draft = await draftFromResume({ buf, kind, text }, { letters, lookingFor, repTake });
-    return NextResponse.json({ found: draft, drafted: true });
+    const draft = await draftFromResume(file, { letters, lookingFor, repTake });
+    return NextResponse.json({ found: draft, drafted: true, note });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    await logActivity("system", "resume_read_failed", { file: file.name, error: msg });
-    // Fall back to the basics we can read without the AI.
-    return NextResponse.json({ found: text ? resumeBasics(text) : {}, note: `We couldn't draft the profile from this resume right now, so only the contact details were filled in. ${KEEP}` });
+    await logActivity("system", "resume_read_failed", { error: msg });
+    return NextResponse.json({ found: text ? resumeBasics(text) : {}, note: `We couldn't write the profile right now${text ? ", so only the contact details were filled in" : ""}. Try again in a minute.` });
   }
 }

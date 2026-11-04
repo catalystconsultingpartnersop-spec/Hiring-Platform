@@ -1,5 +1,6 @@
 import { requireStaff } from "@/lib/session";
 import { StrengthsCard } from "../StrengthsCard";
+import { convertEarlierResult } from "../../actions";
 import { db } from "@/lib/db";
 import { summarize } from "@/lib/assessment";
 import { candidateUrl } from "@/lib/format";
@@ -64,7 +65,20 @@ export default async function AssessmentsPage() {
                       {r.details.email ? <div className="small muted">{r.details.email}</div> : null}
                     </td>
                     <td style={{ whiteSpace: "nowrap", fontWeight: 700 }}>
-                      {x.letters ? `${x.letters.slice(0, 2)} / ${x.letters.slice(2, 4)} / ${x.letters.slice(4)}` : <span className="small muted">Earlier version</span>}
+                      {x.letters ? (
+                        `${x.letters.slice(0, 2)} / ${x.letters.slice(2, 4)} / ${x.letters.slice(4)}`
+                      ) : (
+                        <>
+                          <span className="small muted">Earlier version</span>
+                          {r.details.email && (
+                            <form action={convertEarlierResult.bind(null, r.id)} style={{ marginTop: 4 }}>
+                              <button className="btn btn-ghost btn-small" type="submit" title="Turns this earlier result into the six, as closely as we can, and puts it on their profile">
+                                Convert to the six
+                              </button>
+                            </form>
+                          )}
+                        </>
+                      )}
                     </td>
                     <td><strong>{x.top.join(" + ")}</strong></td>
                     <td>{x.mid.join(", ")}</td>

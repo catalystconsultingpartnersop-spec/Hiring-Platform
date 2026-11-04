@@ -1506,3 +1506,23 @@ export async function clearEmailProblemAction(email: string) {
   revalidatePath("/admin/team");
   revalidatePath("/admin/candidates");
 }
+
+// An earlier-version assessment result, converted to the six and put on the candidate's profile.
+export async function convertEarlierResult(logId: number) {
+  const me = await requireAdmin();
+  const { data: row } = await db().from("activity_log").select("at, details").eq("id", logId).eq("action", "assessment_taken").maybeSingle();
+  const det = (row?.details ?? {}) as { email?: string; result?: { ranked?: { key: string; score: number }[] } };
+  const { convertEarlier } = await import("@/lib/strengthsConvert");
+  const letters = convertEarlier(det.result?.ranked ?? []);
+  if (!row || !letters || !det.email) redirect("/admin/assessments?converted=0");
+  const { data: cs } = await db().from("candidates").select("id, working_genius, application").ilike("email", det.email.trim().replace(/[%_]/g, "")).neq("status", "archived").limit(2);
+  if (!cs || cs.length !== 1) redirect("/admin/assessments?converted=none");
+  const c = cs[0] as { id: string; working_genius: string | null; application: Record<string, unknown> | null };
+  await db()
+    .from("candidates")
+    .update({ working_genius: letters, application: { ...(c.application ?? {}), strengths: { letters, at: row.at, converted: true } } })
+    .eq("id", c.id);
+  await logActivity(staffActor(me), "strengths_converted", { candidate_id: c.id, letters, was: c.working_genius });
+  revalidatePath("/admin/candidates");
+  redirect(`/admin/candidates/${c.id}?converted=${letters}`);
+}

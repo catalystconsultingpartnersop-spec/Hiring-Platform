@@ -2,7 +2,8 @@
 
 import { cleanLanguages, LANGUAGES } from "@/lib/languages";
 import { UploadHelper } from "@/components/UploadHelper";
-import { startTransition, useActionState, useState } from "react";
+import { startTransition, useActionState, useRef, useState } from "react";
+import { SpeakButton } from "./SpeakButton";
 import type { Candidate } from "@/lib/db";
 import {
   describe,
@@ -115,6 +116,8 @@ export function CandidateForm({
   const [headline, setHeadline] = useState(v("headline"));
   const [summary, setSummary] = useState(v("summary"));
   const [highlights, setHighlights] = useState(c?.highlights.join("\n") ?? "");
+  const [resumeName, setResumeName] = useState(c?.resume_path ? "on file" : "");
+  const [repTake, setRepTake] = useState(String((c?.application as Record<string, string> | undefined)?.rep_take ?? ""));
   const [locationRegion, setLocationRegion] = useState(v("location_region"));
   const [fullProfile, setFullProfile] = useState(v("full_profile"));
   // Fields the resume filled in, shown highlighted so the rep knows what to check.
@@ -138,115 +141,83 @@ export function CandidateForm({
     (app as { strengths?: { letters: string; at: string } }).strengths ?? null;
   const hasApp = Object.values(app).some(Boolean);
 
-  async function readResume(file: File | undefined) {
-    if (!file) return;
-    if (file.size > 4 * 1024 * 1024) {
+  // What the site last wrote into each field. A field it wrote and nobody has touched
+  // since can be rewritten when there's new information; anything the rep typed stays.
+  const lastDraft = useRef<Record<string, string>>({});
+  const [draftedWith, setDraftedWith] = useState<string | null>(null);
+  const sourcesKey = `${repTake.trim()}|${code}|${resumeName}`;
+
+  async function writeProfile(file?: File) {
+    if (file && file.size > 4 * 1024 * 1024) {
       setReading("none");
-      setReadNote(
-        "This file is over 4 MB, which is too big to upload. Save it as a smaller PDF and try again.",
-      );
+      setReadNote("This file is over 4 MB, which is too big to upload. Save it as a smaller PDF and try again.");
       return;
     }
     setReading("reading");
     setReadNote("");
     const body = new FormData();
-    body.append("resume", file);
+    const picked = file ?? (document.querySelector("input[name=resume]") as HTMLInputElement | null)?.files?.[0];
+    if (picked) body.append("resume", picked);
+    if (c?.id) body.append("candidate_id", c.id);
     body.append("letters", code);
-    body.append(
-      "looking_for",
-      String(
-        (c?.application as Record<string, string> | undefined)?.looking_for ??
-          "",
-      ),
-    );
+    body.append("rep_take", repTake);
+    body.append("looking_for", String((c?.application as Record<string, string> | undefined)?.looking_for ?? ""));
     try {
-      const res = await fetch("/api/admin/read-resume", {
-        method: "POST",
-        body,
-      });
-      const json = res.ok
-        ? await res.json()
-        : {
-            note: `We couldn't read this file automatically (error ${res.status}), so fill in the details by hand. It will still be attached when you save.`,
-          };
-      const f = (json.found ?? {}) as Partial<
-        Record<string, string | string[]>
-      >;
-      const s = (k: string) =>
-        typeof f[k] === "string" ? (f[k] as string) : "";
+      const res = await fetch("/api/admin/read-resume", { method: "POST", body });
+      const json = res.ok ? await res.json() : { note: `We couldn't write the profile right now (error ${res.status}). Try again in a minute.` };
+      const f = (json.found ?? {}) as Partial<Record<string, string | string[]>>;
+      const s = (k: string) => (typeof f[k] === "string" ? (f[k] as string) : "");
       const l = (k: string) => (Array.isArray(f[k]) ? (f[k] as string[]) : []);
       const filled = new Set<string>();
-      // Only fill what's empty: never overwrite what the rep already wrote.
-      const next = { ...contact };
-      for (const k of [
-        "full_name",
-        "email",
-        "phone",
-        "linkedin_url",
-      ] as const) {
-        if (!contact[k] && s(k)) {
-          next[k] = s(k);
-          filled.add(k);
-        }
-      }
-      setContact(next);
-      const fill = (
-        k: string,
-        cur: string,
-        val: string,
-        set: (v: string) => void,
-      ) => {
-        if (!cur.trim() && val) {
+      const ld = lastDraft.current;
+      // Empty, or still exactly what the site wrote last time: fine to (re)write.
+      const free = (k: string, cur: string) => !cur.trim() || cur === ld[k];
+      const fill = (k: string, cur: string, val: string, set: (v: string) => void) => {
+        if (val && free(k, cur)) {
           set(val);
+          ld[k] = val;
           filled.add(k);
         }
       };
+      const fillList = (k: string, cur: string[], val: string[], set: (v: string[]) => void) => {
+        if (val.length && free(k, cur.join("|"))) {
+          set(val);
+          ld[k] = val.join("|");
+          filled.add(k);
+        }
+      };
+      const next = { ...contact };
+      for (const k of ["full_name", "email", "phone", "linkedin_url"] as const) fill(k, contact[k], s(k), (v) => (next[k] = v));
+      setContact(next);
       fill("role_category", role, s("role_category"), setRole);
       fill("level", level, s("level"), setLevel);
-      fill(
-        "location_region",
-        locationRegion,
-        s("location_region"),
-        setLocationRegion,
-      );
+      fill("location_region", locationRegion, s("location_region"), setLocationRegion);
       fill("industry", industry, s("industry"), setIndustry);
       fill("headline", headline, s("headline"), setHeadline);
       fill("summary", summary, s("summary"), setSummary);
       fill("highlights", highlights, l("highlights").join("\n"), setHighlights);
       fill("full_profile", fullProfile, s("full_profile"), setFullProfile);
-      if (!alsoRoles.length && l("also_roles").length) {
-        setAlsoRoles(l("also_roles"));
-        filled.add("also_roles");
-      }
-      if (!alsoIndustries.length && l("also_industries").length) {
-        setAlsoIndustries(l("also_industries"));
-        filled.add("also_industries");
-      }
-      if (!langs.length && l("languages").length) {
-        setLangs(l("languages"));
-        filled.add("languages");
-      }
-      setFromResume(filled);
+      fillList("also_roles", alsoRoles, l("also_roles"), setAlsoRoles);
+      fillList("also_industries", alsoIndustries, l("also_industries"), setAlsoIndustries);
+      fillList("languages", langs, l("languages"), setLangs);
+      setFromResume((cur) => new Set([...cur, ...filled]));
       setReading(filled.size ? "done" : "none");
+      if (json.drafted) setDraftedWith(sourcesKey);
       const left = [
         !mode && "how they want to work",
-        !(
-          document.querySelector("[name=salary_min]") as HTMLInputElement | null
-        )?.value && "their pay range",
+        !(document.querySelector("[name=salary_min]") as HTMLInputElement | null)?.value && "their pay range",
         !avail && "when they can start",
         !code && "their Strengths Assessment result",
       ].filter(Boolean);
       setReadNote(
         json.note ??
           (filled.size
-            ? `Done. We filled in ${filled.size} things from the resume (highlighted in gold). Check them${left.length ? `, then add ${left.join(", ")}` : ""}.`
-            : "Nothing new to fill in from this resume."),
+            ? `Done. We wrote ${filled.size} things (highlighted in gold). Check them${left.length ? `, then add ${left.join(", ")}` : ""}.`
+            : "Nothing new to fill in. Anything you've typed yourself stays as it is."),
       );
     } catch {
       setReading("none");
-      setReadNote(
-        "We couldn't read this file automatically, so fill in the details by hand. It will still be attached when you save.",
-      );
+      setReadNote("We couldn't write the profile right now. Try again in a minute.");
     }
   }
 
@@ -290,6 +261,45 @@ export function CandidateForm({
         <h2>
           <span className={styles.num}>1</span> Who they are
         </h2>
+        <div className="field" style={{ marginTop: 0, marginBottom: 14 }}>
+          <label htmlFor="rep_take">
+            <span>
+              Your first take <span className="muted" style={{ fontWeight: 400 }}>(optional)</span>
+            </span>
+          </label>
+          <small style={{ display: "block", margin: "0 0 6px" }}>
+            Type or speak: who are they, and what do they want next? Skip it and we&rsquo;ll go from their resume and Strengths
+            Assessment.
+          </small>
+          <textarea
+            id="rep_take"
+            className="textarea"
+            name="rep_take"
+            rows={3}
+            value={repTake}
+            onChange={(e) => setRepTake(e.target.value)}
+            placeholder="e.g. Successful real estate agent, home for a few years, wants to get back to building something with people. Creative, helpful, gets things moving fast. Not sure which industry yet."
+          />
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
+            <SpeakButton onText={(t) => setRepTake((cur) => (cur.trim() ? `${cur.trimEnd()} ${t}` : t))} />
+            {(repTake.trim() || code.length >= 2 || resumeName) && (
+              <button
+                type="button"
+                className={`btn btn-small ${draftedWith && draftedWith !== sourcesKey ? "btn-gold" : "btn-ghost"}`}
+                disabled={reading === "reading"}
+                onClick={() => writeProfile()}
+              >
+                {reading === "reading"
+                  ? "Writing…"
+                  : draftedWith && draftedWith !== sourcesKey
+                    ? "✨ Rewrite with what's new"
+                    : draftedWith
+                      ? "✨ Write it again"
+                      : "✨ Write the profile for me"}
+              </button>
+            )}
+          </div>
+        </div>
         <label
           className={`${styles.drop} ${reading === "reading" ? styles.dropBusy : ""}`}
         >
@@ -297,7 +307,11 @@ export function CandidateForm({
             type="file"
             name="resume"
             accept=".pdf,.doc,.docx,image/jpeg,image/png"
-            onChange={(e) => readResume(e.target.files?.[0])}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              setResumeName(f?.name ?? "");
+              if (f) writeProfile(f);
+            }}
           />
           <strong>
             {c?.resume_path ? "Replace their resume" : "Add their resume"}
@@ -398,7 +412,7 @@ export function CandidateForm({
               month: "short",
               day: "numeric",
             })}
-            :{" "}
+            {ours.converted ? " (converted from the earlier version)" : ""}:{" "}
             <b>{`${ours.letters.slice(0, 2)} ${ours.letters.slice(2, 4)} ${ours.letters.slice(4)}`}</b>
             {code !== ours.letters && (
               <>

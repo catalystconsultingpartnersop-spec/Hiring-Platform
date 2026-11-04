@@ -7,6 +7,7 @@ import { releaseWaitingProfiles } from "@/lib/promise";
 import { effectiveReps, repOptions } from "@/lib/reps";
 import { after } from "next/server";
 import { backfillWorkingGenius } from "@/lib/readAssessment";
+import { backfillStrengths } from "@/lib/strengthsBackfill";
 import { RepPicker } from "./RepPicker";
 import { WGChips } from "./WGChips";
 import styles from "../admin.module.css";
@@ -64,6 +65,7 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
   const [options, reps] = admin ? await Promise.all([repOptions(), effectiveReps(shown)]) : [[], new Map()];
   // Reports uploaded before results were read automatically: catch up a few at a time.
   after(() => backfillWorkingGenius(3).catch(() => null));
+  after(() => backfillStrengths().catch(() => null));
 
   return (
     <>
