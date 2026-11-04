@@ -1,4 +1,5 @@
 import { db, logActivity } from "./db";
+import { ANONYMITY_RULES } from "./anonymity";
 import { gatherSources } from "./cleanResume";
 import { describe, profileOf, suggestedHeadline, TRAITS } from "./strengths";
 import { LEVEL_LABEL, WORK_MODE_LABEL, salaryRange } from "./format";
@@ -101,7 +102,8 @@ Write to the business owner. The goal: an owner reads it and thinks "yes, I need
 Voice: warm and positive, but clear, precise and practical. No hype, no jokes, no punchy slogans, no exclamation marks, no clichés like "rockstar" or "go-getter". Plain American English.
 
 Strict rules:
-- Anonymous: never use their name, employers, clients, schools or exact job titles that would identify them. Say "they".
+- Say "they". Everything on this page is seen before the owner signs, so it must be anonymous:
+${ANONYMITY_RULES}
 - Only use facts from the material above. Never invent numbers, tools, results or experience. If the material is thin, write less.
 - Never mention weaknesses, things they find draining, assessment letters or jargon.
 

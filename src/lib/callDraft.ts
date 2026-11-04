@@ -1,4 +1,5 @@
 import { cleanLanguages } from "./languages";
+import { ANONYMITY_RULES } from "./anonymity";
 import { db, logActivity } from "./db";
 import { escapeHtml, sendEmail } from "./email";
 import { teamUrl } from "./format";
@@ -50,7 +51,8 @@ function promptFor(name: string, lookingFor: string, transcript: string) {
 Write a draft profile from what was actually said. Don't invent facts. Warm, specific, plain English; written for business owners deciding whether to meet this person.
 
 Rules:
-- "headline", "summary" and "highlights" are shown to employers BEFORE they know who the candidate is: no names, no employer names, no school names, no exact job titles that identify them.
+- "headline", "summary" and "highlights" are shown to employers BEFORE they know who the candidate is, so they must be anonymous:
+${ANONYMITY_RULES}
 - "headline": one line, under 90 characters, about what they're great at (e.g. "Bookkeeper who finds the mistake everyone else missed").
 - "summary": 2 to 4 sentences: what they've done and where they shine.
 - "highlights": 3 to 5 short lines, concrete accomplishments or strengths from the call.

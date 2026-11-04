@@ -1,4 +1,5 @@
 import { cleanLanguages } from "./languages";
+import { ANONYMITY_RULES } from "./anonymity";
 import { TRAITS, describe, parseResult } from "./strengths";
 import { INDUSTRY_LIST, ROLE_LIST } from "./writingHelp";
 
@@ -44,10 +45,11 @@ What they said they're looking for: ${opts.lookingFor || "not given"}
 Write from what the resume actually says. Don't invent facts, numbers or skills. Warm, specific, plain English, written so an owner thinks "I need that person".
 
 Rules:
-- "headline", "summary" and "highlights" must not identify them: no names, no employer names, no school names, no exact titles that give them away.
+- "headline", "summary" and "highlights" are seen before an owner signs, so they must be anonymous:
+${ANONYMITY_RULES}
 - "headline": one line under 90 characters about what they're great at, e.g. "Bookkeeper who finds the mistake everyone else missed".
-- "summary": 2 to 3 sentences: what they've done and where they shine.
-- "highlights": 3 to 5 short, concrete lines from the resume (numbers when the resume has them).
+- "summary": 2 to 3 sentences: what they are great at and the kind of work they have done, in general terms, and where they would shine.
+- "highlights": 3 to 5 short, concrete lines about what they can do, following the anonymity rules above.
 - "full_profile": one or two paragraphs, shown only after an owner signs; specifics are fine here.
 - "role_category": the single best fit from this list: ${ROLE_LIST.join(", ")}.
 - "also_roles": up to 3 more from the same list that genuinely fit.
