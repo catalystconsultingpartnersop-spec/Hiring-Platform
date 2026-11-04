@@ -1569,3 +1569,35 @@ export async function startCallNow(candidateId: string, emailThem: boolean): Pro
   revalidatePath("/admin/calls");
   return { link: room.link, first, emailed };
 }
+
+// Start a call with someone who isn't in the system yet (a rep reaching out to someone
+// they know). They're added as the rep's candidate, then the call starts like any other.
+export async function startCallWithSomeone(
+  name: string,
+  email: string,
+  phone: string,
+  emailThem: boolean,
+): Promise<{ link?: string; error?: string; first?: string; emailed?: boolean; candidateId?: string }> {
+  const me = await requireStaff();
+  if (!me.id) return { error: "Sign in with your own team account to start a call." };
+  name = name.trim().slice(0, 120);
+  email = email.trim().toLowerCase().slice(0, 200);
+  phone = phone.trim().slice(0, 40);
+  if (!name) return { error: "Add their name." };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Add their email, so the call and their profile go to the right person." };
+  const { data: found } = await db().from("candidates").select("id").ilike("email", email.replace(/[%_]/g, "")).neq("status", "archived").limit(1);
+  let id = (found?.[0]?.id as string | undefined) ?? null;
+  if (id && !(await canSeeCandidate(me, id))) return { error: "They're already with another rep. Ask Heshy to move them to you." };
+  if (!id) {
+    const { data, error } = await db()
+      .from("candidates")
+      .insert({ full_name: name, email, phone: phone || null, status: "applied", added_by: me.id, application: { source: "rep_call_now" } })
+      .select("id")
+      .single();
+    if (error || !data) return { error: `Couldn't add them: ${error?.message ?? "unknown"}` };
+    id = data.id as string;
+    await logActivity(staffActor(me), "candidate_added", { candidate: refCode(id), via: "call_now" });
+  }
+  const r = await startCallNow(id, emailThem);
+  return { ...r, candidateId: id };
+}

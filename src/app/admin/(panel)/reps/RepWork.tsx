@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StartCallAnyone } from "@/components/StartCallAnyone";
 import { alertsFor, type CandRow, type RepSummary } from "@/lib/teamView";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 import { markCall } from "../../actions";
@@ -83,6 +84,11 @@ export function RepWork({
         <p className={styles.sub}>
           {r.today.length} today · {r.week.length} this week{r.hasHours ? ` · ${r.openThisWeek} open times left` : ""}
         </p>
+        {self && (
+          <div style={{ margin: "4px 0 12px" }}>
+            <StartCallAnyone callEmail={r.callEmail} />
+          </div>
+        )}
         {r.upcoming.length > 0 && (
           <p className={styles.sub}>
             {self ? "Join" : "They join"} signed in to Google as <b>{r.callEmail}</b>. The call records by itself once {self ? "you're" : "they're"} in with that account.

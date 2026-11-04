@@ -1,4 +1,6 @@
 import { hiddenStaffIds } from "@/lib/hiddenStaff";
+import { StartCallAnyone } from "@/components/StartCallAnyone";
+import { callEmailFor } from "@/lib/callAccounts";
 import { isCheckAccount } from "@/lib/session";
 import Link from "next/link";
 import { ConfirmButton } from "@/components/ConfirmButton";
@@ -173,6 +175,11 @@ export default async function CallsPage({ searchParams }: PageProps<"/admin/call
           {admin ? "Every rep's calls." : "Calls candidates booked with you."} Set your available times on{" "}
           <Link href="/admin/hours">My hours</Link>.
         </p>
+        {me.id && (
+          <div style={{ marginTop: 12 }}>
+            <StartCallAnyone callEmail={await callEmailFor({ id: me.id, email: me.email })} />
+          </div>
+        )}
       </div>
       {sp.move === "done" && (
         <p className="notice notice-good">
