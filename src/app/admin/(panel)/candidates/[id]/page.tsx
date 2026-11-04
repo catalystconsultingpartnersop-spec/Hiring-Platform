@@ -289,7 +289,7 @@ async function PointedLog({ candidateId }: { candidateId: string }) {
   if (!rows.length) return null;
   return (
     <p className="small muted" style={{ marginTop: 8 }}>
-      Sent to owners:{" "}
+      Passed along to:{" "}
       {rows
         .map((r) => `${r.details.to_name || r.details.to_key} (${r.details.channel === "whatsapp" ? "WhatsApp" : r.details.channel}, by ${(r.details.by_name ?? "").split(" ")[0]}, ${dateShort(r.at)})`)
         .join(" · ")}

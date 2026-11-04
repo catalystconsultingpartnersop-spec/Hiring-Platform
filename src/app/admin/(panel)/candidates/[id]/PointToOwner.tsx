@@ -15,7 +15,7 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine }: { 
   const [state, setState] = useState<{ ok?: boolean; error?: string; already?: string } | null>(null);
   const [pending, start] = useTransition();
 
-  const preset = `Hi${name.trim() ? ` ${name.trim()}` : ""}, ${mine ? "I've been working with someone" : "I came across someone"} I think could be a great fit for your team:\n${headline}\n\nTake a look: ${link}\n\nLooking is free, and you only pay if you hire. Thought of you.\n${repFirst}`;
+  const preset = `Hi${name.trim() ? ` ${name.trim()}` : ""}, ${mine ? "someone I've been working with came to mind for you" : "someone came to mind for you"}:\n${headline}\n\nTake a look: ${link}\n\nLooking is free, and you only pay if you hire.\n${repFirst}`;
   const message = edited ?? preset;
   const isEmail = contact.includes("@");
   const digits = contact.replace(/\D/g, "");
@@ -38,11 +38,11 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine }: { 
     return (
       <section className="panel" style={{ marginTop: 18, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
         <span>
-          <strong>💡 Know a business owner who&rsquo;d want to meet them?</strong>{" "}
-          <span className="small muted">Send them this profile in a personal message.</span>
+          <strong>💡 Know someone this person would be great for?</strong>{" "}
+          <span className="small muted">Pass their profile along in a personal message.</span>
         </span>
         <button type="button" className="btn btn-gold btn-small" onClick={() => setOpen(true)}>
-          Send to an owner
+          Pass it along
         </button>
       </section>
     );
@@ -50,7 +50,7 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine }: { 
   if (state?.ok)
     return (
       <section className="panel" style={{ marginTop: 18 }}>
-        <strong>Sent ✓</strong>{" "}
+        <strong>Passed along ✓</strong>{" "}
         <span className="small muted">
           {channel === "email" ? `Emailed to ${contact}. Replies come to you.` : `Your ${channel === "whatsapp" ? "WhatsApp" : "messages"} opened with it ready. Tap send there.`} That&rsquo;s it, nothing else to do.
         </span>{" "}
@@ -64,20 +64,20 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine }: { 
             setEdited(null);
           }}
         >
-          Send to someone else
+          Pass it to someone else
         </button>
       </section>
     );
 
   return (
     <section className="panel" style={{ marginTop: 18, borderColor: "var(--marigold)" }}>
-      <h2 style={{ fontSize: 18, margin: "0 0 4px" }}>💡 Send this profile to a business owner</h2>
+      <h2 style={{ fontSize: 18, margin: "0 0 4px" }}>💡 Pass this profile to someone you know</h2>
       <p className="small muted" style={{ margin: "0 0 10px" }}>
-        They see the anonymous profile, the same one owners see. One message, then you&rsquo;re done.
+        They see the anonymous profile, no name until they sign. One message, then you&rsquo;re done.
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>
         <label className="field" style={{ margin: 0 }}>
-          <span>Their first name</span>
+          <span>Who&rsquo;s it for?</span>
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Yossi" />
         </label>
         <label className="field" style={{ margin: 0 }}>

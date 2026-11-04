@@ -1626,7 +1626,7 @@ export async function pointCandidate(
   if (!o.force) {
     const { data: prev } = await db().from("activity_log").select("at, actor, details").eq("action", "candidate_pointed").eq("details->>candidate_id", candidateId).eq("details->>to_key", key).limit(1);
     const p = prev?.[0] as { at: string; actor: string; details: { by_name?: string } } | undefined;
-    if (p) return { already: `${p.details.by_name ?? "Someone on the team"} already sent this candidate to them on ${new Date(p.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}.` };
+    if (p) return { already: `${p.details.by_name ?? "Someone on the team"} already passed this candidate along to them on ${new Date(p.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}.` };
   }
   if (!(await allow(`point:${me.id ?? me.email}`, 30, 60))) return { error: SLOW_DOWN };
 
@@ -1638,7 +1638,7 @@ export async function pointCandidate(
       .join("");
     const r = await sendEmail({
       to: contact,
-      subject: c.headline ? `Someone who might fit your team: ${c.headline}` : "Someone who might fit your team",
+      subject: c.headline ? `Someone came to mind for you: ${c.headline}` : "Someone came to mind for you",
       audience: "personal",
       fromName: me.name || undefined,
       replyTo: me.email,
