@@ -1526,3 +1526,46 @@ export async function convertEarlierResult(logId: number) {
   revalidatePath("/admin/candidates");
   redirect(`/admin/candidates/${c.id}?converted=${letters}`);
 }
+
+// A recorded call right now: the candidate is free, so the rep starts a room and invites
+// them. It counts like a booked call (My calls, Done/No-show, the profile drafted after).
+export async function startCallNow(candidateId: string, emailThem: boolean): Promise<{ link?: string; error?: string; first?: string; emailed?: boolean }> {
+  const me = await requireStaff();
+  if (!me.id) return { error: "Sign in with your own team account to start a call." };
+  if (!(await canSeeCandidate(me, candidateId))) return { error: "Not found." };
+  const { data: c } = await db().from("candidates").select("id, full_name, email, added_by").eq("id", candidateId).maybeSingle();
+  if (!c) return { error: "Not found." };
+  const { newRecordedMeeting } = await import("@/lib/googleCalls");
+  const { callEmailFor } = await import("@/lib/callAccounts");
+  let room: { link: string; space: string } | null = null;
+  try {
+    room = await newRecordedMeeting(await callEmailFor({ id: me.id, email: me.email }));
+  } catch (e) {
+    await logActivity(staffActor(me), "meet_room_failed", { candidate_id: candidateId, error: (e as Error).message.slice(0, 300) });
+  }
+  if (!room) return { error: "Couldn't make a recorded room right now. Try again in a minute." };
+  const start = new Date();
+  const { error } = await db()
+    .from("onboarding_calls")
+    .insert({ candidate_id: candidateId, staff_id: me.id, starts_at: start.toISOString(), ends_at: new Date(start.getTime() + 45 * 60e3).toISOString(), meet_link: room.link, meet_space: room.space });
+  if (error) return { error: `Couldn't start the call: ${error.message}` };
+  if (!c.added_by) await db().from("candidates").update({ added_by: me.id }).eq("id", candidateId).is("added_by", null);
+  const first = String(c.full_name).split(" ")[0];
+  let emailed = false;
+  if (emailThem && c.email) {
+    const repFirst = (me.name || "Your rep").split(" ")[0];
+    const r = await sendEmail({
+      to: c.email,
+      subject: `Join me now: a quick video call with ${repFirst}`,
+      audience: "personal",
+      fromName: me.name || undefined,
+      replyTo: me.email,
+      html: `<p>Hi ${escapeHtml(first)},</p><p>I'm on the video call now. Tap below to join me.</p><p><a href="${room.link}" style="display:inline-block;background:#f2b300;color:#17213a;padding:12px 22px;border-radius:999px;text-decoration:none;font-weight:bold">Join the video call</a></p><p style="font-size:13px;color:#6b7590">We record the call so I can focus on you instead of taking notes. Only our team sees it.</p><p>${escapeHtml(me.name || "")}</p>`,
+    });
+    emailed = r.ok;
+  }
+  await logActivity(staffActor(me), "call_started_now", { candidate_id: candidateId, emailed });
+  revalidatePath(`/admin/candidates/${candidateId}`);
+  revalidatePath("/admin/calls");
+  return { link: room.link, first, emailed };
+}

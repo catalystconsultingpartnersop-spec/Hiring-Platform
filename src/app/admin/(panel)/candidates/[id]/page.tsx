@@ -1,4 +1,6 @@
 import { requireStaff } from "@/lib/session";
+import { CallNow } from "./CallNow";
+import { callEmailFor } from "@/lib/callAccounts";
 import { SendButton } from "@/components/SendButton";
 import { problemFor } from "@/lib/emailProblems";
 import { EmailProblemFlag } from "@/components/EmailProblemFlag";
@@ -129,6 +131,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         ownerSees={c.application?.owner_resume === "clean" && c.application?.clean_resume ? "clean" : "original"}
         noResume={c.application?.no_resume === "yes"}
       />
+      {me.id && <CallNow candidateId={c.id} first={c.full_name.split(" ")[0]} callEmail={await callEmailFor({ id: me.id, email: me.email })} />}
       <ReminderPanel c={c} hasCall={callRows.some((k) => k.status !== "cancelled")} />
       <CandidateForm c={c} tierFeeLabel={tierFee != null ? money(tierFee) : "set by hand"} isAdmin={me.role === "admin"} />
       {me.role === "admin" && (
