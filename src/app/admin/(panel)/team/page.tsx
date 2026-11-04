@@ -12,6 +12,7 @@ import { setPartner, setStaffActive, setStaffHiddenAction, setStaffRole } from "
 import { hiddenStaffIds } from "@/lib/hiddenStaff";
 import { AddStaffForm } from "./AddStaffForm";
 import { MessageReps } from "./MessageReps";
+import { CopySignIn } from "./CopySignIn";
 
 type Member = {
   id: string;
@@ -134,6 +135,7 @@ export default async function TeamPage() {
                           {m.package_sent_at ? `Package sent ${dateShort(m.package_sent_at)}` : <span style={{ color: "#9a7300" }}>Package not sent</span>}
                         </div>
                       )}
+                      {!owner && !self && m.active && <CopySignIn staffId={m.id} first={(m.full_name ?? m.email).split(" ")[0]} />}
                       {!owner && m.role === "rep" && (
                         <div className="small" style={{ marginTop: 4 }}>
                           {m.agreement_signed_at ? (

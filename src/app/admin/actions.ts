@@ -576,6 +576,21 @@ async function sendPackage(staffId: string) {
   return r;
 }
 
+// A sign-in link to hand someone directly (WhatsApp, text) when email isn't reaching them.
+// Same as the link in their package: good for 7 days, used once, then they choose a password.
+export async function signInLinkFor(staffId: string): Promise<{ link?: string; error?: string }> {
+  const me = await requireAdmin();
+  const { data: m } = await db().from("staff").select("id, email, active").eq("id", staffId).maybeSingle();
+  if (!m || !m.active) return { error: "They're switched off." };
+  const { token, hash } = newLoginToken();
+  const { error } = await db()
+    .from("login_tokens")
+    .insert({ token_hash: hash, email: m.email, kind: "staff", expires_at: new Date(Date.now() + 7 * 864e5).toISOString() });
+  if (error) return { error: "Couldn't make a link. Try again." };
+  await logActivity(staffActor(me), "signin_link_copied", { staff: staffId });
+  return { link: `${teamUrl()}/admin/verify?token=${token}` };
+}
+
 function suggestedWorkEmail(name: string) {
   const first = name.split(/[\s@]/)[0].toLowerCase().replace(/[^a-z]/g, "");
   return `${first || "you"}@${workEmailDomain()}`;
