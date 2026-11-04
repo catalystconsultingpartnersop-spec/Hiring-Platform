@@ -1601,3 +1601,52 @@ export async function startCallWithSomeone(
   const r = await startCallNow(id, emailThem);
   return { ...r, candidateId: id };
 }
+
+// A rep points a listed candidate to a business owner they know. Email goes from the site
+// in the rep's name; WhatsApp and text open on the rep's phone (we just log them).
+// The candidate stays their own rep's: pointing doesn't change who gets credit.
+export async function pointCandidate(
+  candidateId: string,
+  o: { name: string; contact: string; channel: "email" | "whatsapp" | "text"; message: string; force?: boolean },
+): Promise<{ ok?: boolean; error?: string; already?: string }> {
+  const me = await requireStaff();
+  const { data: c } = await db().from("candidates").select("id, status, headline").eq("id", candidateId).maybeSingle();
+  if (!c || c.status !== "listed") return { error: "Only listed candidates can be sent." };
+  const contact = o.contact.trim().slice(0, 200);
+  const name = o.name.trim().slice(0, 80);
+  const message = o.message.trim().slice(0, 3000);
+  if (!contact) return { error: "Add their email or phone." };
+  if (!message) return { error: "Add a message." };
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
+  if (o.channel === "email" && !isEmail) return { error: "That isn't an email address." };
+  if (o.channel !== "email" && contact.replace(/\D/g, "").length < 10) return { error: "Add their full phone number." };
+  const key = isEmail ? contact.toLowerCase() : contact.replace(/\D/g, "").slice(-10);
+
+  // Already sent to this person? Say so, so two reps don't send the same thing twice.
+  if (!o.force) {
+    const { data: prev } = await db().from("activity_log").select("at, actor, details").eq("action", "candidate_pointed").eq("details->>candidate_id", candidateId).eq("details->>to_key", key).limit(1);
+    const p = prev?.[0] as { at: string; actor: string; details: { by_name?: string } } | undefined;
+    if (p) return { already: `${p.details.by_name ?? "Someone on the team"} already sent this candidate to them on ${new Date(p.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}.` };
+  }
+  if (!(await allow(`point:${me.id ?? me.email}`, 30, 60))) return { error: SLOW_DOWN };
+
+  if (o.channel === "email") {
+    const html = escapeHtml(message)
+      .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" style="color:#17213a">$1</a>')
+      .split(/\n{2,}/)
+      .map((para) => `<p>${para.replace(/\n/g, "<br>")}</p>`)
+      .join("");
+    const r = await sendEmail({
+      to: contact,
+      subject: c.headline ? `Someone who might fit your team: ${c.headline}` : "Someone who might fit your team",
+      audience: "personal",
+      fromName: me.name || undefined,
+      replyTo: me.email,
+      html: html + `<p style="font-size:12px;color:#8a93a8">Not interested in hearing about candidates? Just reply and let ${escapeHtml((me.name || "us").split(" ")[0])} know.</p>`,
+    });
+    if (!r.ok) return { error: `The email didn't send: ${r.error}` };
+  }
+  await logActivity(staffActor(me), "candidate_pointed", { candidate_id: candidateId, to_key: key, to_name: name || null, channel: o.channel, by_name: me.name || me.email });
+  revalidatePath(`/admin/candidates/${candidateId}`);
+  return { ok: true };
+}

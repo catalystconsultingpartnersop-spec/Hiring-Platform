@@ -1,4 +1,6 @@
 import { requireStaff } from "@/lib/session";
+import { PointToOwner } from "./PointToOwner";
+import { siteUrl } from "@/lib/format";
 import { CallNow } from "./CallNow";
 import { callEmailFor } from "@/lib/callAccounts";
 import { SendButton } from "@/components/SendButton";
@@ -133,6 +135,10 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         );
       })()}
       <PositionsTheyFit candidateId={c.id} status={c.status} />
+      {c.status === "listed" && c.headline && (
+        <PointToOwner candidateId={c.id} headline={c.headline} link={`${siteUrl().replace(/^https?:\/\//, "")}/c/${refCode(c.id)}`} repFirst={(me.name || "").split(" ")[0]} mine={canEdit && !me.manager} />
+      )}
+      <PointedLog candidateId={c.id} />
       <RO edit={canEdit}>
       <ResumePanel
         candidateId={c.id}
@@ -274,4 +280,19 @@ async function ViewOnly({ candidateId, addedBy }: { candidateId: string; addedBy
 // Another rep's candidate: everything shows, but every button and field is switched off.
 function RO({ edit, children }: { edit: boolean; children: React.ReactNode }) {
   return edit ? <>{children}</> : <fieldset disabled style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>{children}</fieldset>;
+}
+
+// Who this candidate has been sent to, so nobody sends them to the same owner twice.
+async function PointedLog({ candidateId }: { candidateId: string }) {
+  const { data } = await db().from("activity_log").select("at, details").eq("action", "candidate_pointed").eq("details->>candidate_id", candidateId).order("at", { ascending: false }).limit(20);
+  const rows = (data ?? []) as { at: string; details: { to_name?: string | null; to_key?: string; channel?: string; by_name?: string } }[];
+  if (!rows.length) return null;
+  return (
+    <p className="small muted" style={{ marginTop: 8 }}>
+      Sent to owners:{" "}
+      {rows
+        .map((r) => `${r.details.to_name || r.details.to_key} (${r.details.channel === "whatsapp" ? "WhatsApp" : r.details.channel}, by ${(r.details.by_name ?? "").split(" ")[0]}, ${dateShort(r.at)})`)
+        .join(" · ")}
+    </p>
+  );
 }
