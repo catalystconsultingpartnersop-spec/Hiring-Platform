@@ -107,7 +107,6 @@ export function CandidateForm({
     (c?.application as Record<string, string> | undefined)?.available ?? "",
   );
   const [langs, setLangs] = useState<string[]>(c?.languages ?? []);
-  const [otherLang, setOtherLang] = useState("");
   const [industry, setIndustry] = useState(v("industry"));
   const [alsoRoles, setAlsoRoles] = useState<string[]>(c?.also_roles ?? []);
   const [alsoIndustries, setAlsoIndustries] = useState<string[]>(
@@ -507,206 +506,98 @@ export function CandidateForm({
         <h2>
           <span className={styles.num}>3</span> What they&rsquo;re looking for
         </h2>
-        <label className="field">
-          <span>
-            Main role
-            <Req />
-          </span>
-          <input
-            className={`input ${mark("role_category")}`}
-            name="role_category"
-            list="roles"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            placeholder="Pick or type, e.g. Sales"
-          />
-          <datalist id="roles">
-            {ROLE_LIST.map((r) => (
-              <option key={r} value={r} />
-            ))}
-          </datalist>
-        </label>
-        <ChipPicker
-          name="also_roles"
-          label="Also a good fit for"
-          hint="Pick every kind of role they'd shine in. Owners can find them under each one."
-          options={ROLE_LIST}
-          suggested={roleIdeas}
-          suggestedNote="Suggested from their result"
-          exclude={role}
-          value={alsoRoles}
-          onChange={setAlsoRoles}
-          addPlaceholder="Add another role"
-        />
-        <div className={styles.chipField}>
-          <span>Experience</span>
-          <input type="hidden" name="level" value={level} />
-          <div className={styles.chips}>
-            {[
-              ["beginner", "Beginner with potential"],
-              ["experienced", "Experienced"],
-              ["senior", "Senior"],
-            ].map(([val, label]) => (
-              <button
-                key={val}
-                type="button"
-                className={level === val ? styles.chipOn : styles.chip}
-                aria-pressed={level === val}
-                onClick={() => setLevel(level === val ? "" : val)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className={styles.chipField}>
-          <span>Work setting</span>
-          <input type="hidden" name="work_mode" value={mode} />
-          <div className={styles.chips}>
-            {[
-              ["on-site", "On-site"],
-              ["hybrid", "Hybrid"],
-              ["remote", "Remote"],
-              ["flexible", "Flexible"],
-            ].map(([val, label]) => (
-              <button
-                key={val}
-                type="button"
-                className={mode === val ? styles.chipOn : styles.chip}
-                aria-pressed={mode === val}
-                onClick={() => setMode(mode === val ? "" : val)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className={styles.chipField} style={{ marginTop: 18 }}>
-          <span>Can start</span>
-          <input type="hidden" name="available" value={avail} />
-          <div className={styles.chips}>
-            {AVAILABILITY.map((a) => (
-              <button
-                key={a.value}
-                type="button"
-                className={avail === a.value ? styles.chipOn : styles.chip}
-                aria-pressed={avail === a.value}
-                onClick={() => setAvail(avail === a.value ? "" : a.value)}
-              >
-                {a.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className={styles.chipField} style={{ marginTop: 18 }}>
-          <span>Languages they speak fluently</span>
-          {langs.map((l) => (
-            <input key={l} type="hidden" name="languages" value={l} />
+        <datalist id="roles">
+          {ROLE_LIST.map((r) => (
+            <option key={r} value={r} />
           ))}
-          <div className={styles.chips}>
-            {[...new Set([...LANGUAGES, ...langs])].map((l) => (
-              <button
-                key={l}
-                type="button"
-                className={langs.includes(l) ? styles.chipOn : styles.chip}
-                aria-pressed={langs.includes(l)}
-                onClick={() =>
-                  setLangs(
-                    langs.includes(l)
-                      ? langs.filter((x) => x !== l)
-                      : [...langs, l],
-                  )
-                }
-              >
-                {l}
-              </button>
-            ))}
-            <input
-              className="input"
-              value={otherLang}
-              onChange={(e) => setOtherLang(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  const t = cleanLanguages([otherLang]);
-                  if (t.length) setLangs([...new Set([...langs, ...t])]);
-                  setOtherLang("");
-                }
-              }}
-              onBlur={() => {
-                const t = cleanLanguages([otherLang]);
-                if (t.length) setLangs([...new Set([...langs, ...t])]);
-                setOtherLang("");
-              }}
-              placeholder="Another one? Type it"
-              aria-label="Another language"
-              style={{
-                width: 190,
-                minHeight: 36,
-                padding: "4px 10px",
-                fontSize: 14,
-              }}
-            />
-          </div>
-        </div>
-        <div className="grid-2" style={{ marginTop: 18 }}>
+        </datalist>
+        <datalist id="industries">
+          {INDUSTRY_LIST.map((r) => (
+            <option key={r} value={r} />
+          ))}
+        </datalist>
+        <div className={styles.grid3}>
           <label className="field">
             <span>
-              Location (broad, e.g. &ldquo;Northern New Jersey&rdquo;)
+              Main role
+              <Req />
             </span>
-            <input
-              className={`input ${mark("location_region")}`}
-              name="location_region"
-              value={locationRegion}
-              onChange={(e) => setLocationRegion(e.target.value)}
-            />
+            <input className={`input ${mark("role_category")}`} name="role_category" list="roles" value={role} onChange={(e) => setRole(e.target.value)} placeholder="e.g. Sales" />
           </label>
           <label className="field">
             <span>Main industry</span>
-            <input
-              className={`input ${mark("industry")}`}
-              name="industry"
-              list="industries"
-              value={industry}
-              onChange={(e) => setIndustry(e.target.value)}
-              placeholder="e.g. Construction"
-            />
-            <datalist id="industries">
-              {INDUSTRY_LIST.map((r) => (
-                <option key={r} value={r} />
+            <input className={`input ${mark("industry")}`} name="industry" list="industries" value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="e.g. Construction" />
+          </label>
+          <label className="field">
+            <span>Location (broad)</span>
+            <input className={`input ${mark("location_region")}`} name="location_region" value={locationRegion} onChange={(e) => setLocationRegion(e.target.value)} placeholder="e.g. Northern New Jersey" />
+          </label>
+          <label className="field">
+            <span>Experience</span>
+            <select className={`select ${mark("level")}`} name="level" value={level} onChange={(e) => setLevel(e.target.value)}>
+              <option value="">Choose</option>
+              <option value="beginner">Beginner with potential</option>
+              <option value="experienced">Experienced</option>
+              <option value="senior">Senior</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>Work setting</span>
+            <select className="select" name="work_mode" value={mode} onChange={(e) => setMode(e.target.value)}>
+              <option value="">Choose</option>
+              <option value="on-site">On-site</option>
+              <option value="hybrid">Hybrid</option>
+              <option value="remote">Remote</option>
+              <option value="flexible">Flexible</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>Can start</span>
+            <select className="select" name="available" value={avail} onChange={(e) => setAvail(e.target.value)}>
+              <option value="">Choose</option>
+              {AVAILABILITY.map((x) => (
+                <option key={x.value} value={x.value}>
+                  {x.label}
+                </option>
               ))}
-            </datalist>
+            </select>
           </label>
           <label className="field">
-            <span>Salary from ($)</span>
-            <input
-              className="input"
-              name="salary_min"
-              inputMode="numeric"
-              defaultValue={c?.salary_min ?? ""}
-              placeholder="70000"
-            />
+            <span>Pay from ($ a year)</span>
+            <input className="input" name="salary_min" inputMode="numeric" defaultValue={c?.salary_min ?? ""} placeholder="70000" />
           </label>
           <label className="field">
-            <span>Salary to ($)</span>
-            <input
-              className="input"
-              name="salary_max"
-              inputMode="numeric"
-              defaultValue={c?.salary_max ?? ""}
-              placeholder="85000"
-            />
+            <span>Pay to ($ a year)</span>
+            <input className="input" name="salary_max" inputMode="numeric" defaultValue={c?.salary_max ?? ""} placeholder="85000" />
           </label>
         </div>
         <ChipPicker
+          name="also_roles"
+          label="Also a good fit for"
+          options={ROLE_LIST}
+          suggested={roleIdeas}
+          exclude={role}
+          value={alsoRoles}
+          onChange={setAlsoRoles}
+          addPlaceholder="Type a role"
+        />
+        <ChipPicker
           name="also_industries"
           label="Other industries they'd fit"
-          hint="Experience or interest in more than one? Add them all."
           options={INDUSTRY_LIST}
           exclude={industry}
           value={alsoIndustries}
           onChange={setAlsoIndustries}
-          addPlaceholder="Add another industry"
+          addPlaceholder="Type an industry"
+        />
+        <ChipPicker
+          name="languages"
+          label="Languages they speak fluently"
+          options={[...LANGUAGES]}
+          exclude=""
+          value={langs}
+          onChange={(v) => setLangs(cleanLanguages(v))}
+          addPlaceholder="Type a language"
         />
       </section>
 
@@ -1033,7 +924,7 @@ function ChipPicker({
 }: {
   name: string;
   label: string;
-  hint: string;
+  hint?: string;
   options: string[];
   suggested?: string[];
   suggestedNote?: string;
@@ -1050,7 +941,7 @@ function ChipPicker({
   );
   // Keep it short: what's picked and suggested, and the full list only when asked for.
   const picked = all.filter((o) => value.includes(o) || suggested.includes(o));
-  const shown = open ? all : picked.length ? picked : all.slice(0, 8);
+  const shown = open ? all : picked;
   const toggle = (o: string) =>
     onChange(value.includes(o) ? value.filter((x) => x !== o) : [...value, o]);
   const add = () => {
@@ -1062,13 +953,12 @@ function ChipPicker({
   return (
     <div className={styles.chipField}>
       <span>{label}</span>
-      <small
-        className="muted"
-        style={{ display: "block", margin: "2px 0 8px" }}
-      >
-        {hint}
-        {suggested.length > 0 && suggestedNote ? ` ★ ${suggestedNote}.` : ""}
-      </small>
+      {hint && (
+        <small className="muted" style={{ display: "block", margin: "2px 0 8px" }}>
+          {hint}
+          {suggested.length > 0 && suggestedNote ? ` ★ ${suggestedNote}.` : ""}
+        </small>
+      )}
       {value
         .filter((x) => x.toLowerCase() !== ex)
         .map((x) => (
@@ -1094,7 +984,7 @@ function ChipPicker({
             onClick={() => setOpen(!open)}
             style={{ borderStyle: "dashed" }}
           >
-            {open ? "Show fewer" : "+ More"}
+            {open ? "Done" : value.length ? "+ Add more" : "+ Add"}
           </button>
         ) : null}
       </div>

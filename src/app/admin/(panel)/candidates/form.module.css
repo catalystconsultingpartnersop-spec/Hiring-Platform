@@ -177,3 +177,7 @@
 
 /* Filled in from the resume: check it. */
 .fromResume { background: #fff8e1 !important; border-color: var(--marigold) !important; }
+
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 16px; }
+.grid3 :global(.field) { margin-top: 12px; }
+@media (max-width: 700px) { .grid3 { grid-template-columns: 1fr 1fr; } }
