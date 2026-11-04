@@ -27,7 +27,7 @@ export type ResumeDraft = {
 
 const MODELS = ["claude-sonnet-5-5", "claude-sonnet-4-5"];
 
-function prompt(opts: { letters: string; lookingFor: string; text: string | null }) {
+function prompt(opts: { letters: string; lookingFor: string; repTake: string; text: string | null }) {
   const l = parseResult(opts.letters);
   const d = describe(opts.letters);
   const strengths =
@@ -40,9 +40,12 @@ function prompt(opts: { letters: string; lookingFor: string; text: string | null
   return `You help a hiring platform turn a candidate's resume into their profile. Business owners browse these profiles BEFORE they know who the person is, then sign to see the full details.
 
 ${strengths}
-What they said they're looking for: ${opts.lookingFor || "not given"}
+${opts.repTake ? `MOST IMPORTANT. Our rep knows this person. In the rep's words:
+"${opts.repTake}"
+Write the whole profile around this: who they are, what they want next and where they'd thrive. Their past jobs are proof of what they can do, not necessarily what they want to do again. If the rep says they want something new, don't steer them back to their old field.
+` : ""}What they said they're looking for: ${opts.lookingFor || "not given"}
 
-Write from what the resume actually says. Don't invent facts, numbers or skills. Warm, specific, plain English, written so an owner thinks "I need that person".
+Use the resume as evidence. Don't invent facts, numbers or skills. Warm, specific, plain English, written so an owner thinks "I need that person".
 
 Rules:
 - "headline", "summary" and "highlights" are seen before an owner signs, so they must be anonymous:
@@ -51,11 +54,11 @@ ${ANONYMITY_RULES}
 - "summary": 2 to 3 sentences: what they are great at and the kind of work they have done, in general terms, and where they would shine.
 - "highlights": 3 to 5 short, concrete lines about what they can do, following the anonymity rules above.
 - "full_profile": one or two paragraphs, shown only after an owner signs; specifics are fine here.
-- "role_category": the single best fit from this list: ${ROLE_LIST.join(", ")}.
-- "also_roles": up to 3 more from the same list that genuinely fit.
+- "role_category": the single best fit from this list, for the work they'd thrive in next (from what they want and their natural strengths, not just their last title): ${ROLE_LIST.join(", ")}.
+- "also_roles": up to 3 more from the same list where they'd thrive.
 - "level": "beginner", "experienced" or "senior", judged from their years and scope.
 - "location_region": broad area only, like "Brooklyn, NY" or "Northern New Jersey". Never a street.
-- "industry": the best fit from this list: ${INDUSTRY_LIST.join(", ")}. "also_industries": up to 3 more from it.
+- "industry": the best fit from this list for where they'd thrive next: ${INDUSTRY_LIST.join(", ")}. "also_industries": up to 3 more from it. If they're open or unsure, pick a sensible range where their strengths matter, rather than just their past field.
 - "languages": only languages the resume lists. Empty list if none.
 - Contact fields exactly as written on the resume; "" if missing.
 - Leave anything the resume doesn't support as "" or [].
@@ -66,10 +69,10 @@ Answer with JSON only:
 
 // The resume goes to the AI as the file itself when it's a PDF or a photo (so scanned
 // resumes work too), or as text for Word files.
-export async function draftFromResume(file: { buf: Buffer; kind: "pdf" | "docx" | "jpg" | "png"; text?: string }, opts: { letters?: string | null; lookingFor?: string | null } = {}): Promise<ResumeDraft> {
+export async function draftFromResume(file: { buf: Buffer; kind: "pdf" | "docx" | "jpg" | "png"; text?: string }, opts: { letters?: string | null; lookingFor?: string | null; repTake?: string | null } = {}): Promise<ResumeDraft> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("The AI key isn't set up yet.");
-  const p = prompt({ letters: opts.letters ?? "", lookingFor: opts.lookingFor ?? "", text: file.kind === "docx" ? file.text ?? "" : null });
+  const p = prompt({ letters: opts.letters ?? "", lookingFor: opts.lookingFor ?? "", repTake: opts.repTake ?? "", text: file.kind === "docx" ? file.text ?? "" : null });
   const content =
     file.kind === "docx"
       ? [{ type: "text", text: p }]

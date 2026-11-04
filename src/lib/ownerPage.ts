@@ -59,10 +59,16 @@ async function askAI(content: unknown[]): Promise<string> {
   throw new Error(`The AI didn't answer (${last}). Try again in a minute.`);
 }
 
-export async function draftOwnerPage(candidateId: string): Promise<{ page: OwnerPage; headline: string } | { error: string }> {
+export type OwnerDraftOverride = { rep_take?: string; headline?: string; summary?: string; highlights?: string[]; role_category?: string; also_roles?: string[]; industry?: string };
+
+export async function draftOwnerPage(candidateId: string, over: OwnerDraftOverride = {}): Promise<{ page: OwnerPage; headline: string } | { error: string }> {
   const g = await gatherSources(candidateId);
   if (!g) return { error: "Couldn't find this candidate." };
-  const { c, app, pdf, text, photo, call, notes } = g;
+  const { pdf, text, photo, call, notes } = g;
+  // A preview can try different wording without saving it.
+  const { rep_take, ...fields } = over;
+  const c = { ...g.c, ...Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined)) };
+  const app = rep_take !== undefined ? { ...g.app, rep_take } : g.app;
   const p = profileOf(c.working_genius);
   const d = describe(c.working_genius);
   const facts = [
@@ -94,7 +100,10 @@ ${pdf || photo ? "Their resume is attached." : text ? `Their resume:\n${text.sli
 
 ${call ? `What they told our team on their call:\n${call.slice(0, 40000)}` : notes ? `Our team's notes from talking with them:\n${notes.slice(0, 6000)}` : ""}
 
-What we know:
+${app.rep_take ? `MOST IMPORTANT. Our rep knows this person. In the rep's words:
+"${app.rep_take}"
+Build the page around this: who they are, what they want next and where they'd thrive. Their past jobs and results are proof of what they can do, not a promise they want the same job again. Don't assume they want to stay in their past field.
+` : ""}What we know:
 ${facts}
 
 Write to the business owner. The goal: an owner reads it and thinks "yes, I need this person". Make the candidate sound like a real, capable person.
@@ -110,7 +119,7 @@ ${ANONYMITY_RULES}
 Return only JSON:
 {
   "headline": "one line, max 12 words, what they are and what they do for a business, e.g. A senior product owner who takes ideas all the way to a finished product",
-  "intro": "2 to 3 sentences to the owner. Start with the kind of business or need this person is right for (e.g. 'If you're developing products and need one person who can...'). Then their experience in concrete terms.",
+  "intro": "2 to 3 sentences to the owner. Start with the kind of business or need this person is right for (e.g. 'If you're growing a team and need one person who can...'), based on what they want next. Then their experience, in general terms, as proof.",
   "years": "years of experience if clearly stated or easy to add up from the resume, like '7+ years'; otherwise empty",
   "handle": [{"icon": "one fitting emoji", "title": "what they'd handle for the owner, 3 to 7 words, starting with a verb", "detail": "one practical sentence, max 18 words, on what that means for the business"}],
   "fit": ["2 or 3 short lines that complete 'A strong fit if you...', each starting with a capital verb, e.g. 'Want one person to own a project, not just one piece of it'"]

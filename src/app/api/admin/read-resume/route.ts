@@ -18,6 +18,7 @@ export async function POST(req: Request) {
   const file = form.get("resume");
   const letters = String(form.get("letters") ?? "");
   const lookingFor = String(form.get("looking_for") ?? "");
+  const repTake = String(form.get("rep_take") ?? "").slice(0, 2000);
   if (!(file instanceof File) || file.size === 0) return NextResponse.json({ found: {}, note: "That file looks empty." });
   const kind = resumeKind(file);
   if (!kind) return NextResponse.json({ found: {}, note: "Resumes need to be a PDF, Word file or photo." });
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
   } catch {}
   if (!(await allow(`resume:${me.id ?? me.email}`, 20, 60))) return NextResponse.json({ found: text ? resumeBasics(text) : {}, note: "That's a lot of resumes in an hour. We filled in the contact details only." });
   try {
-    const draft = await draftFromResume({ buf, kind, text }, { letters, lookingFor });
+    const draft = await draftFromResume({ buf, kind, text }, { letters, lookingFor, repTake });
     return NextResponse.json({ found: draft, drafted: true });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

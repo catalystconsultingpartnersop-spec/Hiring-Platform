@@ -363,6 +363,18 @@ ${hireSummaryHtml(notice)}`,
   }
 
   // Their page for owners: what the rep wrote or kept. Listed without one? Write it.
+  // The rep's take on who they are and what they want: the AI writes their profile around it.
+  if (candidateId && form.has("rep_take")) {
+    const take = String(form.get("rep_take") ?? "").trim().slice(0, 2000);
+    const { data: cur } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
+    const app = { ...((cur?.application ?? {}) as Record<string, string>) };
+    if ((app.rep_take ?? "") !== take) {
+      if (take) app.rep_take = take;
+      else delete app.rep_take;
+      await db().from("candidates").update({ application: app }).eq("id", candidateId);
+    }
+  }
+
   // When they can start: kept in their application, so it rides along without a new column.
   if (candidateId && form.has("available")) {
     const { cleanAvailability } = await import("@/lib/availability");
