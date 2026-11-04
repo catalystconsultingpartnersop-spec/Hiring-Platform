@@ -138,7 +138,7 @@ export function CandidateForm({
     setSummary((cur) => (cur.trim() ? `${cur.trimEnd()} ${bit}` : bit));
   const app = c?.application ?? {};
   const ours =
-    (app as { strengths?: { letters: string; at: string } }).strengths ?? null;
+    (app as { strengths?: { letters: string; at: string; converted?: boolean } }).strengths ?? null;
   const hasApp = Object.values(app).some(Boolean);
 
   // What the site last wrote into each field. A field it wrote and nobody has touched
