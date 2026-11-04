@@ -1,5 +1,6 @@
 "use server";
 
+import { clearEmailProblem } from "@/lib/emailProblems";
 import { strengthsLink } from "@/lib/strengthsLink";
 import { hiddenStaffIds } from "@/lib/hiddenStaff";
 import { canSeeCandidate } from "@/lib/reps";
@@ -1483,4 +1484,13 @@ export async function setStaffHiddenAction(id: string, hide: boolean) {
   await logActivity(staffActor(me), hide ? "staff_hidden" : "staff_unhidden", { staff_id: id });
   revalidatePath("/admin/team");
   revalidatePath("/admin/reps");
+}
+
+// Heshy says an email problem is sorted (fixed the address or the inbox).
+export async function clearEmailProblemAction(email: string) {
+  const me = await requireStaff();
+  await clearEmailProblem(email);
+  await logActivity(staffActor(me), "email_problem_cleared", { to: email });
+  revalidatePath("/admin/team");
+  revalidatePath("/admin/candidates");
 }

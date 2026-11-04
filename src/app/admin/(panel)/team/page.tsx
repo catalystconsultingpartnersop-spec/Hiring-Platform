@@ -13,6 +13,8 @@ import { hiddenStaffIds } from "@/lib/hiddenStaff";
 import { AddStaffForm } from "./AddStaffForm";
 import { MessageReps } from "./MessageReps";
 import { CopySignIn } from "./CopySignIn";
+import { emailProblems } from "@/lib/emailProblems";
+import { EmailProblemFlag } from "@/components/EmailProblemFlag";
 
 type Member = {
   id: string;
@@ -51,6 +53,7 @@ export default async function TeamPage() {
   const members = (data ?? []) as Member[];
   const hidden = await hiddenStaffIds();
   const accounts = await callAccounts();
+  const problems = await emailProblems();
 
   const { data: counts } = await db().from("candidates").select("added_by").not("added_by", "is", null);
   const added = new Map<string, number>();
@@ -111,6 +114,7 @@ export default async function TeamPage() {
                         {owner ? m.full_name || m.email : <Link prefetch={false} href={`/admin/team/${m.id}`}>{m.full_name || m.email}</Link>}
                       </strong>
                       <div className="small muted">{m.email}</div>
+                      <EmailProblemFlag email={m.email} p={problems[m.email.toLowerCase()] ?? null} />
                       {m.active && !owner && me.role === "admin" && <CallAccountField staffId={m.id} value={accounts[m.id] ?? ""} />}
                     </td>
                     <td>

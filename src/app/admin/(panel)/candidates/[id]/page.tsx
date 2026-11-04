@@ -1,4 +1,6 @@
 import { requireStaff } from "@/lib/session";
+import { problemFor } from "@/lib/emailProblems";
+import { EmailProblemFlag } from "@/components/EmailProblemFlag";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTiers } from "@/lib/catalog";
@@ -58,6 +60,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
           )}
         </p>
         <h1>{c.full_name}</h1>
+        <EmailProblemFlag email={c.email} p={await problemFor(c.email)} />
         {typeof sp.saved === "string" && (
           <p className={`notice ${sp.saved === "listed" ? "notice-good" : "notice-gold"}`} style={{ marginTop: 14 }}>
             {sp.saved === "listed"
