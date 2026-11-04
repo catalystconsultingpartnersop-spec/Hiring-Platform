@@ -18,7 +18,7 @@ import { ReminderOption, Reminders } from "../Reminders";
 import { CallDraftPanel } from "../CallDraftPanel";
 import { ResumePanel } from "../ResumePanel";
 import { cleanResumeOf } from "@/lib/cleanResume";
-import { canSeeCandidate, effectiveReps, repOptions } from "@/lib/reps";
+import { canEditCandidate, effectiveReps, repOptions } from "@/lib/reps";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 
 export default async function EditCandidate({ params, searchParams }: PageProps<"/admin/candidates/[id]">) {
@@ -28,8 +28,10 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { data } = await db().from("candidates").select("*").eq("id", id).maybeSingle();
   if (!data) notFound();
-  if (!(await canSeeCandidate(me, id))) notFound();
+  // Everyone on the team can see every candidate; only their rep (or Heshy) can change them.
+  const canEdit = await canEditCandidate(me, id);
   const c = data as Candidate;
+
   const tierFee = feeFor({ ...c, fee_override_cents: null }, await getTiers());
 
   const { data: calls } = await db()
@@ -63,7 +65,10 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
           )}
         </p>
         <h1>{c.full_name}</h1>
-        <EmailProblemFlag email={c.email} p={await problemFor(c.email)} />
+        {!canEdit && <ViewOnly candidateId={c.id} addedBy={(c as unknown as { added_by: string | null }).added_by ?? null} />}
+        <RO edit={canEdit}>
+          <EmailProblemFlag email={c.email} p={await problemFor(c.email)} />
+        </RO>
         {typeof sp.saved === "string" && (
           <p className={`notice ${sp.saved === "listed" ? "notice-good" : "notice-gold"}`} style={{ marginTop: 14 }}>
             {sp.saved === "listed"
@@ -84,7 +89,9 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
             Everything else was saved, but {sp.resume}. Attach it again in section 1 and save.
           </p>
         )}
-        <PromiseRow c={c as Candidate & { promise_signed_at?: string | null; promise_name?: string | null; promise_requested_at?: string | null; list_on_sign?: boolean }} />
+        <RO edit={canEdit}>
+          <PromiseRow c={c as Candidate & { promise_signed_at?: string | null; promise_name?: string | null; promise_requested_at?: string | null; list_on_sign?: boolean }} />
+        </RO>
         <RepRow
           candidateId={c.id}
           addedBy={(c as unknown as { added_by: string | null }).added_by ?? null}
@@ -119,9 +126,14 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         const k = [...callRows]
           .filter((x) => (x as { meet_space?: string | null }).meet_space && x.status !== "cancelled")
           .sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at))[0];
-        return <CallDraftPanel candidateId={c.id} callId={k?.id ?? null} madeAt={d?.made_at ?? null} notes={d?.private_notes ?? null} />;
+        return (
+          <RO edit={canEdit}>
+            <CallDraftPanel candidateId={c.id} callId={k?.id ?? null} madeAt={d?.made_at ?? null} notes={d?.private_notes ?? null} />
+          </RO>
+        );
       })()}
       <PositionsTheyFit candidateId={c.id} status={c.status} />
+      <RO edit={canEdit}>
       <ResumePanel
         candidateId={c.id}
         hasResume={!!(c as { resume_path?: string | null }).resume_path}
@@ -131,9 +143,12 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         ownerSees={c.application?.owner_resume === "clean" && c.application?.clean_resume ? "clean" : "original"}
         noResume={c.application?.no_resume === "yes"}
       />
-      {me.id && <CallNow candidateId={c.id} first={c.full_name.split(" ")[0]} callEmail={await callEmailFor({ id: me.id, email: me.email })} />}
-      <ReminderPanel c={c} hasCall={callRows.some((k) => k.status !== "cancelled")} />
-      <CandidateForm c={c} tierFeeLabel={tierFee != null ? money(tierFee) : "set by hand"} isAdmin={me.role === "admin"} />
+      </RO>
+      {canEdit && me.id && <CallNow candidateId={c.id} first={c.full_name.split(" ")[0]} callEmail={await callEmailFor({ id: me.id, email: me.email })} />}
+      {canEdit && <ReminderPanel c={c} hasCall={callRows.some((k) => k.status !== "cancelled")} />}
+      <RO edit={canEdit}>
+        <CandidateForm c={c} tierFeeLabel={tierFee != null ? money(tierFee) : "set by hand"} isAdmin={me.role === "admin"} />
+      </RO>
       {me.role === "admin" && (
         <details className="panel" style={{ marginTop: 32, borderColor: "var(--rust-soft)" }} open={typeof sp.delete_error === "string"}>
           <summary style={{ cursor: "pointer", fontWeight: 700, color: "var(--rust)" }}>Delete this candidate</summary>
@@ -171,8 +186,15 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
 async function RepRow({ candidateId, addedBy, admin, meId }: { candidateId: string; addedBy: string | null; admin: boolean; meId: string | null }) {
   const [options, reps] = await Promise.all([repOptions(), effectiveReps([{ id: candidateId, added_by: addedBy }])]);
   const r = reps.get(candidateId);
-  // Reps see this only for their own candidates, to pass one to the rep who really sent them.
-  if (!admin && (!meId || r?.id !== meId)) return null;
+  // Reps can hand off their own candidates. On anyone else's, they just see who the rep is.
+  if (!admin && (!meId || r?.id !== meId)) {
+    const name = options.find(([id]) => id === r?.id)?.[1];
+    return (
+      <p style={{ marginTop: 10 }}>
+        <strong>Rep:</strong> {name?.split(" (")[0] ?? "Not assigned"}
+      </p>
+    );
+  }
   return (
     <p style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
       <strong>Rep:</strong>
@@ -235,4 +257,21 @@ async function ReminderPanel({ c, hasCall }: { c: Candidate; hasCall: boolean })
     options.push({ kind: "agreement", label: "Sign their candidate agreement", hint: "Sends their agreement to sign. It takes about 30 seconds.", lastSent: last("agreement") });
   options.push({ kind: "resume", label: "Send their latest resume", hint: x.resume_path ? "Asks them to reply with an updated resume." : "Asks them to reply with their resume. We don't have one yet.", lastSent: last("resume") });
   return <Reminders candidateId={c.id} first={c.full_name.split(" ")[0]} options={options} />;
+}
+
+// On another rep's candidate: say so, plainly, at the top.
+async function ViewOnly({ candidateId, addedBy }: { candidateId: string; addedBy: string | null }) {
+  const [options, reps] = await Promise.all([repOptions(), effectiveReps([{ id: candidateId, added_by: addedBy }])]);
+  const r = reps.get(candidateId);
+  const name = options.find(([id]) => id === r?.id)?.[1] ?? "Another rep";
+  return (
+    <p className="notice notice-gold" style={{ marginTop: 10 }}>
+      <strong>{name.split(" (")[0]}&rsquo;s candidate: view only.</strong> You can see everything here; only their rep or Heshy can change it.
+    </p>
+  );
+}
+
+// Another rep's candidate: everything shows, but every button and field is switched off.
+function RO({ edit, children }: { edit: boolean; children: React.ReactNode }) {
+  return edit ? <>{children}</> : <fieldset disabled style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>{children}</fieldset>;
 }

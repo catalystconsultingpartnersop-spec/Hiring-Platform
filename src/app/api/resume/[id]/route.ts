@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { brandName } from "@/lib/format";
 import { wordResumeToPdf } from "@/lib/resumePdf";
-import { canSeeCandidate } from "@/lib/reps";
+import { canViewCandidate } from "@/lib/reps";
 import { currentOwner, currentStaff } from "@/lib/session";
 
 // Resumes live in private storage. This hands out the resume, as a PDF named
@@ -14,7 +14,7 @@ export async function GET(req: Request, ctx: RouteContext<"/api/resume/[id]">) {
 
   const me = await currentStaff();
   // Regular reps can open only their own candidates' files.
-  const staff = !!me && (await canSeeCandidate(me, id));
+  const staff = !!me && (await canViewCandidate(me));
   let allowed = staff;
   if (!allowed) {
     const owner = await currentOwner();

@@ -3,7 +3,7 @@
 import { clearEmailProblem } from "@/lib/emailProblems";
 import { strengthsLink } from "@/lib/strengthsLink";
 import { hiddenStaffIds } from "@/lib/hiddenStaff";
-import { canSeeCandidate } from "@/lib/reps";
+import { canEditCandidate } from "@/lib/reps";
 import { cleanLanguages } from "@/lib/languages";
 import { tidyHeadline, tidyHighlight, tidyParagraphs } from "@/lib/tidyText";
 import { requestPromise } from "@/lib/promise";
@@ -213,7 +213,7 @@ const listFrom = (v: string, sep: RegExp) =>
 
 export async function saveCandidate(id: string | null, _prev: FormState, form: FormData): Promise<FormState> {
   const me = await requireStaff();
-  if (id && !(await canSeeCandidate(me, id))) return { error: "This candidate belongs to another rep." };
+  if (id && !(await canEditCandidate(me, id))) return { error: "This candidate belongs to another rep." };
   const actor = staffActor(me);
   const get = (k: string) => String(form.get(k) ?? "").trim();
 
@@ -1065,7 +1065,7 @@ export async function messageAllReps(_prev: FormState, form: FormData): Promise<
 // Sends the candidate agreement again (e.g. they lost the email).
 export async function resendPromise(candidateId: string) {
   const me = await requireStaff();
-  if (!(await canSeeCandidate(me, candidateId))) return;
+  if (!(await canEditCandidate(me, candidateId))) return;
   const { data } = await db().from("candidates").select("*").eq("id", candidateId).single();
   if (!data || data.promise_signed_at) return;
   await requestPromise(candidateId, !!data.list_on_sign);
@@ -1088,7 +1088,7 @@ const REMINDER_GAP_HOURS = 48;
 
 export async function sendCandidateReminder(candidateId: string, kind: ReminderKind): Promise<FormState> {
   const me = await requireStaff();
-  if (!(await canSeeCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
+  if (!(await canEditCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
   const { data: c } = await db().from("candidates").select("*").eq("id", candidateId).maybeSingle();
   if (!c) return { error: "Couldn't find this candidate." };
   if (!(await allow(`remind:${candidateId}`, 6, 60))) return { error: SLOW_DOWN };
@@ -1162,7 +1162,7 @@ export async function recordingStatuses(callIds: string[]): Promise<Record<strin
   await Promise.all(
     ((data ?? []) as { id: string; meet_space: string | null; starts_at: string; staff_id: string; candidate_id: string; status: string }[]).map(async (k) => {
       if (!k.meet_space || k.status === "cancelled") return;
-      if (!me.manager && k.staff_id !== me.id && !(await canSeeCandidate(me, k.candidate_id))) return;
+      if (!me.manager && k.staff_id !== me.id && !(await canEditCandidate(me, k.candidate_id))) return;
       out[k.id] = Date.parse(k.starts_at) > Date.now() ? "upcoming" : await recordingStatus(k.meet_space);
     }),
   );
@@ -1255,7 +1255,7 @@ export async function suggestProfileWording(
   w: { headline: string; summary: string; highlights: string; role: string },
 ): Promise<{ wording?: { headline: string; summary: string; highlights: string }; error?: string }> {
   const me = await requireStaff();
-  if (candidateId && !(await canSeeCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
+  if (candidateId && !(await canEditCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
   if (!(await allow(`wording:${me.id ?? me.email}`, 10, 60))) return { error: SLOW_DOWN };
   const { suggestWording } = await import("@/lib/polishWording");
   try {
@@ -1273,7 +1273,7 @@ export async function suggestProfileWording(
 
 export async function draftProfileFromCall(candidateId: string): Promise<{ ok?: boolean; error?: string }> {
   const me = await requireStaff();
-  if (!(await canSeeCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
+  if (!(await canEditCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
   if (!(await allow(`draft:${candidateId}`, 5, 60))) return { error: SLOW_DOWN };
   const { draftFromCall } = await import("@/lib/callDraft");
   const r = await draftFromCall(candidateId);
@@ -1434,7 +1434,7 @@ async function keepOriginalResume(candidateId: string) {
 
 export async function makeCleanResumeAction(candidateId: string): Promise<{ error?: string }> {
   const me = await requireStaff();
-  if (!(await canSeeCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
+  if (!(await canEditCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
   const { makeCleanResume } = await import("@/lib/cleanResume");
   const r = await makeCleanResume(candidateId, me.name);
   if (!r.ok) return { error: r.error };
@@ -1444,7 +1444,7 @@ export async function makeCleanResumeAction(candidateId: string): Promise<{ erro
 
 export async function saveCleanResumeAction(candidateId: string, text: string): Promise<{ error?: string }> {
   const me = await requireStaff();
-  if (!(await canSeeCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
+  if (!(await canEditCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
   if (!String(text ?? "").trim().startsWith("#")) return { error: "Start with the name line, like: # Full Name" };
   const { saveCleanResumeText } = await import("@/lib/cleanResume");
   await saveCleanResumeText(candidateId, String(text), me.name);
@@ -1455,7 +1455,7 @@ export async function saveCleanResumeAction(candidateId: string, text: string): 
 // Which resume business owners get: the file they sent, or our clean version.
 export async function setOwnerResumeAction(candidateId: string, which: "clean" | "original"): Promise<{ error?: string }> {
   const me = await requireStaff();
-  if (!(await canSeeCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
+  if (!(await canEditCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
   const { data: c } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
   const app = (c?.application ?? {}) as Record<string, string>;
   if (which === "clean" && !app.clean_resume) return { error: "Make the clean version first." };
@@ -1532,7 +1532,7 @@ export async function convertEarlierResult(logId: number) {
 export async function startCallNow(candidateId: string, emailThem: boolean): Promise<{ link?: string; error?: string; first?: string; emailed?: boolean }> {
   const me = await requireStaff();
   if (!me.id) return { error: "Sign in with your own team account to start a call." };
-  if (!(await canSeeCandidate(me, candidateId))) return { error: "Not found." };
+  if (!(await canEditCandidate(me, candidateId))) return { error: "Not found." };
   const { data: c } = await db().from("candidates").select("id, full_name, email, added_by").eq("id", candidateId).maybeSingle();
   if (!c) return { error: "Not found." };
   const { newRecordedMeeting } = await import("@/lib/googleCalls");
@@ -1587,7 +1587,7 @@ export async function startCallWithSomeone(
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Add their email, so the call and their profile go to the right person." };
   const { data: found } = await db().from("candidates").select("id").ilike("email", email.replace(/[%_]/g, "")).neq("status", "archived").limit(1);
   let id = (found?.[0]?.id as string | undefined) ?? null;
-  if (id && !(await canSeeCandidate(me, id))) return { error: "They're already with another rep. Ask Heshy to move them to you." };
+  if (id && !(await canEditCandidate(me, id))) return { error: "They're already with another rep. Ask Heshy to move them to you." };
   if (!id) {
     const { data, error } = await db()
       .from("candidates")

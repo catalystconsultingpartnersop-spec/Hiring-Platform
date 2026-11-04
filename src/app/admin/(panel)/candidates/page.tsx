@@ -53,16 +53,18 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
     .select("id, status, full_name, email, headline, role_category, created_at, listed_at, updated_at, added_by, working_genius, assessment_path, application, staff(full_name, email)")
     .order("created_at", { ascending: false });
   let cands = (data ?? []) as unknown as CandRow[];
-  // Regular reps see only their own candidates (Heshy, admins and partners see everyone).
-  if (!me.manager) {
-    const owner = await effectiveReps(cands);
-    cands = cands.filter((c) => owner.get(c.id)?.id === me.id);
-  }
+  // Everyone can see every candidate. Reps start on their own ("Mine") and can switch to Everyone.
+  const who = !me.manager && sp.who !== "all" ? "mine" : "all";
+  const owner = await effectiveReps(cands);
+  if (who === "mine") cands = cands.filter((c) => owner.get(c.id)?.id === me.id);
   const count = (s: string) => cands.filter((c) => c.status === s).length;
   const shown = cands.filter((c) =>
     q ? [c.full_name, c.email, c.headline, c.role_category, refCode(c.id)].join(" ").toLowerCase().includes(q) : c.status === view,
   );
-  const [options, reps] = admin ? await Promise.all([repOptions(), effectiveReps(shown)]) : [[], new Map()];
+  const options = await repOptions();
+  const reps = owner;
+  const repName = (id: string | undefined) => options.find(([x]) => x === id)?.[1]?.split(" (")[0];
+  const withWho = (href: string) => (who === "all" && !me.manager ? `${href}${href.includes("?") ? "&" : "?"}who=all` : href);
   // Reports uploaded before results were read automatically: catch up a few at a time.
   after(() => backfillWorkingGenius(3).catch(() => null));
   after(() => backfillStrengths().catch(() => null));
@@ -70,9 +72,22 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
   return (
     <>
       <div className="page-head" style={{ paddingBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "end", gap: 16, flexWrap: "wrap" }}>
-        <h1>Candidates</h1>
+        <div>
+          <h1>Candidates</h1>
+          {!me.manager && (
+            <div className={styles.tabs} style={{ marginTop: 8 }}>
+              <Link href={`/admin/candidates?view=${view}`} aria-current={who === "mine" ? "page" : undefined}>
+                Mine
+              </Link>
+              <Link href={`/admin/candidates?view=${view}&who=all`} aria-current={who === "all" ? "page" : undefined}>
+                Everyone
+              </Link>
+            </div>
+          )}
+        </div>
         <form style={{ display: "flex", gap: 8 }}>
           <input className="input" name="q" defaultValue={q} placeholder="Search name, email, ref…" style={{ minWidth: 240 }} />
+          {who === "all" && !me.manager && <input type="hidden" name="who" value="all" />}
           <button className="btn btn-small" type="submit">
             Search
           </button>
@@ -95,7 +110,7 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
       )}
       <div className={styles.tabs}>
         {VIEWS.map(([v, label]) => (
-          <Link key={v} href={`/admin/candidates?view=${v}`} aria-current={!q && v === view ? "page" : undefined}>
+          <Link key={v} href={withWho(`/admin/candidates?view=${v}`)} aria-current={!q && v === view ? "page" : undefined}>
             {label} ({count(v)})
           </Link>
         ))}
@@ -148,10 +163,10 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
                         options={options}
                         note={reps.get(c.id)?.viaCall ? "from their call" : undefined}
                       />
-                    ) : c.staff ? (
-                      c.staff.full_name || c.staff.email
+                    ) : reps.get(c.id) ? (
+                      reps.get(c.id)?.id === me.id ? <b>You</b> : (repName(reps.get(c.id)?.id) ?? "Another rep")
                     ) : (
-                      <span className="muted">Applied online</span>
+                      <span className="muted">Not assigned</span>
                     )}
                   </td>
                   <td>{dateShort(view === "listed" && !q ? c.listed_at : view === "hired" && !q ? c.updated_at : c.created_at)}</td>

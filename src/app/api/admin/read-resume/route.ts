@@ -3,7 +3,7 @@ import { gatherSources } from "@/lib/cleanResume";
 import { logActivity } from "@/lib/db";
 import { resumeBasics, resumeKind, resumeText } from "@/lib/resume";
 import { draftFromResume } from "@/lib/resumeDraft";
-import { canSeeCandidate } from "@/lib/reps";
+import { canEditCandidate } from "@/lib/reps";
 import { currentStaff } from "@/lib/session";
 import { allow } from "@/lib/throttle";
 
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       text = await resumeText(buf, kind).catch(() => "");
       file = { buf, kind, text };
     }
-  } else if (/^[0-9a-f-]{36}$/i.test(candidateId) && (await canSeeCandidate(me, candidateId))) {
+  } else if (/^[0-9a-f-]{36}$/i.test(candidateId) && (await canEditCandidate(me, candidateId))) {
     // No new file: use the resume we already have for them.
     const g = await gatherSources(candidateId);
     if (g?.pdf) file = { buf: Buffer.from(g.pdf, "base64"), kind: "pdf" };

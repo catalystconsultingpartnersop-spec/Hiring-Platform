@@ -33,9 +33,13 @@ export async function effectiveReps(cands: { id: string; added_by: string | null
   return out;
 }
 
-// Regular reps work only with their own candidates. Heshy, admins and
-// partners see everyone.
-export async function canSeeCandidate(me: { id: string | null; manager: boolean }, candidateId: string): Promise<boolean> {
+// Everyone on the team can see every candidate: we're coworkers. Changing one is for
+// that candidate's own rep (and Heshy, admins and partners).
+export async function canViewCandidate(me: { id: string | null; manager: boolean } | null): Promise<boolean> {
+  return !!me;
+}
+
+export async function canEditCandidate(me: { id: string | null; manager: boolean }, candidateId: string): Promise<boolean> {
   if (me.manager) return true;
   if (!me.id) return false;
   const { data } = await db().from("candidates").select("id, added_by").eq("id", candidateId).maybeSingle();
