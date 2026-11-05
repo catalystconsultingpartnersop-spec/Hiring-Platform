@@ -1,4 +1,4 @@
-import { assessmentWeight, repTakeBlock } from "./repTake";
+import { sourceOrder } from "./repTake";
 import { db, logActivity } from "./db";
 import { ANONYMITY_RULES } from "./anonymity";
 import { gatherSources } from "./cleanResume";
@@ -82,9 +82,9 @@ export async function draftOwnerPage(candidateId: string, over: OwnerDraftOverri
     c.work_mode && `Work setting: ${WORK_MODE_LABEL[c.work_mode as keyof typeof WORK_MODE_LABEL] ?? c.work_mode}`,
     salaryRange(c.salary_min, c.salary_max) && `Salary they're looking for: ${salaryRange(c.salary_min, c.salary_max)}`,
     languagesText(c.languages) && `Languages: ${languagesText(c.languages)}`,
-    p.primary.length && `Natural strengths (from their Strengths Assessment, ${assessmentWeight(app.rep_take)}): ${p.primary.map((l) => TRAITS[l].label.toLowerCase()).join(", ")}`,
-    !take && p.secondary.length && `Also good at: ${p.secondary.map((l) => TRAITS[l].label.toLowerCase()).join(", ")}`,
-    !take && d && `How they work: ${d.thrives} ${d.alsoBrings ?? ""}`,
+    p.primary.length && `Natural strengths (from their Strengths Assessment): ${p.primary.map((l) => TRAITS[l].label.toLowerCase()).join(", ")}`,
+    p.secondary.length && `Also good at: ${p.secondary.map((l) => TRAITS[l].label.toLowerCase()).join(", ")}`,
+    d && `How they work: ${d.thrives} ${d.alsoBrings ?? ""}`,
     // Older wording may have come from the assessment: with a rep take, it doesn't lead.
     c.headline && `Current headline${take ? " (older wording; the rep's take replaces it)" : ""}: ${c.headline}`,
     c.summary && `Our current summary${take ? " (older wording; the rep's take replaces it)" : ""}: ${c.summary}`,
@@ -99,12 +99,12 @@ export async function draftOwnerPage(candidateId: string, over: OwnerDraftOverri
 
   const prompt = `You write the candidate page that business owners read on a hiring site. Owners browse anonymous, vetted candidates and decide whether to meet one.
 
-${repTakeBlock(take)}
+${sourceOrder({ take, call: !!call, notes: !call && !!notes, strengths: p.primary.length > 0, resume: !!(pdf || text || photo) })}
 ${pdf || photo ? "Their resume is attached." : text ? `Their resume:\n${text.slice(0, 25000)}` : "No resume on file."}
 
 ${call ? `What they told our team on their call:\n${call.slice(0, 40000)}` : notes ? `Our team's notes from talking with them:\n${notes.slice(0, 6000)}` : ""}
 
-${take ? "Reminder: the rep's take above leads. Most of the page comes from it.\n" : ""}What we know:
+What we know:
 ${facts}
 
 Write to the business owner. The goal: an owner reads it and thinks "yes, I need this person". Make the candidate sound like a real, capable person.

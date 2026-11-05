@@ -278,8 +278,8 @@ export function CandidateForm({
             </span>
           </label>
           <small style={{ display: "block", margin: "0 0 6px" }}>
-            Type or speak: who are they, and what do they want next? What you write here leads the profile; their resume, call and
-            Strengths Assessment only back it up. Skip it and we&rsquo;ll go from those.
+            Type or speak: who are they, and what do they want next? What you write here leads the profile. After you: their call, then
+            their Strengths Assessment, then their resume. Skip it and we&rsquo;ll go from those.
           </small>
           <textarea
             id="rep_take"

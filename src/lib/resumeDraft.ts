@@ -2,7 +2,7 @@ import { cleanLanguages } from "./languages";
 import { ANONYMITY_RULES } from "./anonymity";
 import { TRAITS, describe, parseResult } from "./strengths";
 import { INDUSTRY_LIST, ROLE_LIST } from "./writingHelp";
-import { assessmentWeight, repTakeBlock } from "./repTake";
+import { sourceOrder } from "./repTake";
 
 // Reads a whole resume (PDF, Word or a photo) and drafts the candidate's profile, so
 // the rep checks and fixes instead of filling in a form. Uses their Strengths
@@ -28,12 +28,12 @@ export type ResumeDraft = {
 
 const MODELS = ["claude-sonnet-5-5", "claude-sonnet-4-5"];
 
-function prompt(opts: { letters: string; lookingFor: string; repTake: string; text: string | null; noResume?: boolean }) {
+function prompt(opts: { letters: string; lookingFor: string; repTake: string; text: string | null; noResume?: boolean; call?: string | null; notes?: string | null }) {
   const l = parseResult(opts.letters);
   const d = describe(opts.letters);
   const strengths =
     l.length >= 2
-      ? `Their Strengths Assessment result (${assessmentWeight(opts.repTake)}; in these exact plain words, never naming the assessment): natural strengths: ${l
+      ? `Their Strengths Assessment result (in these exact plain words, never naming the assessment): natural strengths: ${l
           .slice(0, 2)
           .map((x) => TRAITS[x].label.toLowerCase())
           .join(" and ")}${d ? ` ("${d.name}": ${d.line})` : ""}${l.length >= 4 ? `; also good at ${l.slice(2, 4).map((x) => TRAITS[x].label.toLowerCase()).join(" and ")}` : ""}.`
@@ -41,7 +41,8 @@ function prompt(opts: { letters: string; lookingFor: string; repTake: string; te
   const drains = l.length === 6 ? `Never describe them as strong at ${l.slice(4).map((x) => TRAITS[x].label.toLowerCase()).join(" or ")}: that's the work that wears them down.` : "";
   return `You help a hiring platform turn a candidate's resume into their profile. Business owners browse these profiles BEFORE they know who the person is, then sign to see the full details.
 
-${repTakeBlock(opts.repTake)}
+${sourceOrder({ take: opts.repTake, call: !!opts.call, notes: !opts.call && !!opts.notes, strengths: l.length >= 2, resume: !opts.noResume })}
+${opts.call ? `What they said on their call with us:\n${opts.call.slice(0, 40000)}\n` : opts.notes ? `Our team's notes from talking with them:\n${opts.notes.slice(0, 6000)}\n` : ""}
 ${strengths}
 ${drains}
 What they said they're looking for: ${opts.lookingFor || "not given"}
@@ -55,7 +56,7 @@ ${ANONYMITY_RULES}
 - "summary": 2 to 3 sentences: what they are great at and the kind of work they have done, in general terms, and where they would shine.
 - "highlights": 3 to 5 short, concrete lines about what they can do, following the anonymity rules above.
 - "full_profile": one or two paragraphs, shown only after an owner signs; specifics are fine here.
-- "role_category": the single best fit from this list, for the work they'd thrive in next (from the rep's take if there is one, then what they want and their natural strengths, not just their last title): ${ROLE_LIST.join(", ")}.
+- "role_category": the single best fit from this list, for the work they'd thrive in next (following the order of importance above, not just their last title): ${ROLE_LIST.join(", ")}.
 - "also_roles": up to 3 more from the same list where they'd thrive.
 - "level": "beginner", "experienced" or "senior", judged from their years and scope.
 - "location_region": broad area only, like "Brooklyn, NY" or "Northern New Jersey". Never a street.
@@ -70,10 +71,10 @@ Answer with JSON only:
 
 // The resume goes to the AI as the file itself when it's a PDF or a photo (so scanned
 // resumes work too), or as text for Word files.
-export async function draftFromResume(file: { buf: Buffer; kind: "pdf" | "docx" | "jpg" | "png"; text?: string } | null, opts: { letters?: string | null; lookingFor?: string | null; repTake?: string | null } = {}): Promise<ResumeDraft> {
+export async function draftFromResume(file: { buf: Buffer; kind: "pdf" | "docx" | "jpg" | "png"; text?: string } | null, opts: { letters?: string | null; lookingFor?: string | null; repTake?: string | null; call?: string | null; notes?: string | null } = {}): Promise<ResumeDraft> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("The AI key isn't set up yet.");
-  const p = prompt({ letters: opts.letters ?? "", lookingFor: opts.lookingFor ?? "", repTake: opts.repTake ?? "", text: file?.kind === "docx" ? file.text ?? "" : null, noResume: !file });
+  const p = prompt({ letters: opts.letters ?? "", lookingFor: opts.lookingFor ?? "", repTake: opts.repTake ?? "", text: file?.kind === "docx" ? file.text ?? "" : null, noResume: !file, call: opts.call, notes: opts.notes });
   const content =
     !file || file.kind === "docx"
       ? [{ type: "text", text: p }]

@@ -5,7 +5,7 @@ import { escapeHtml, sendEmail } from "./email";
 import { teamUrl } from "./format";
 import { roomTranscript } from "./googleCalls";
 import { ROLE_LIST } from "./writingHelp";
-import { repTakeBlock } from "./repTake";
+import { sourceOrder } from "./repTake";
 
 // After an onboarding call: read the transcript Google made, have AI draft the
 // candidate's profile, and fill in whatever the rep hasn't written yet. The rep
@@ -49,7 +49,7 @@ async function askAI(prompt: string): Promise<{ text: string; stop: string }> {
 function promptFor(name: string, lookingFor: string, transcript: string, repTake = "") {
   return `You help a hiring platform write candidate profiles. A rep just had an onboarding call with a job seeker named ${name}. Below is the transcript.
 
-${repTakeBlock(repTake)}
+${repTake.trim() ? sourceOrder({ take: repTake, call: true }) : ""}
 Write a draft profile from what was actually said. Don't invent facts. Warm, specific, plain English; written for business owners deciding whether to meet this person.
 
 Rules:

@@ -24,6 +24,9 @@ export async function POST(req: Request) {
   const candidateId = String(form.get("candidate_id") ?? "");
 
   let file: { buf: Buffer; kind: "pdf" | "docx" | "jpg" | "png"; text?: string } | null = null;
+  // Their call (recording, or our notes) ranks above the resume, so bring it in too.
+  const mine = /^[0-9a-f-]{36}$/i.test(candidateId) && (await canEditCandidate(me, candidateId));
+  const g = mine ? await gatherSources(candidateId).catch(() => null) : null;
   let text = "";
   let note: string | undefined;
   if (upload instanceof File && upload.size > 0) {
@@ -35,20 +38,19 @@ export async function POST(req: Request) {
       text = await resumeText(buf, kind).catch(() => "");
       file = { buf, kind, text };
     }
-  } else if (/^[0-9a-f-]{36}$/i.test(candidateId) && (await canEditCandidate(me, candidateId))) {
+  } else if (g) {
     // No new file: use the resume we already have for them.
-    const g = await gatherSources(candidateId);
     if (g?.pdf) file = { buf: Buffer.from(g.pdf, "base64"), kind: "pdf" };
     else if (g?.photo) file = { buf: Buffer.from(g.photo.data, "base64"), kind: g.photo.type === "image/png" ? "png" : "jpg" };
     else if (g?.text) file = { buf: Buffer.alloc(0), kind: "docx", text: g.text };
   }
-  if (!file && !repTake.trim() && letters.length < 2)
+  if (!file && !repTake.trim() && letters.length < 2 && !g?.call && !g?.notes)
     return NextResponse.json({ found: {}, note: note ?? "Add their resume, a few words about them, or their Strengths Assessment result, and we'll write the profile." });
 
   if (!(await allow(`resume:${me.id ?? me.email}`, 30, 60)))
     return NextResponse.json({ found: text ? resumeBasics(text) : {}, note: "That's a lot of drafts in an hour. Try again in a little while." });
   try {
-    const draft = await draftFromResume(file, { letters, lookingFor, repTake });
+    const draft = await draftFromResume(file, { letters, lookingFor, repTake, call: g?.call ?? null, notes: g?.notes ?? null });
     return NextResponse.json({ found: draft, drafted: true, note });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
