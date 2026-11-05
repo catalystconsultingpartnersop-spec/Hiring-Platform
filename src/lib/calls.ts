@@ -151,8 +151,8 @@ export async function sendBookingEmails(callId: string, cancelled: boolean, hand
   const app = c.application ?? {};
   await sendEmail({
     to: rep.email,
-    subject: `New onboarding call: ${c.full_name}, ${whenRep}`,
-    html: `<p><strong>${escapeHtml(c.full_name)}</strong> booked a call with you for <strong>${escapeHtml(whenRep)}</strong>.</p>
+    subject: handedOver ? `Now yours: call with ${c.full_name}, ${whenRep}` : `New onboarding call: ${c.full_name}, ${whenRep}`,
+    html: `${handedOver ? `<p>The onboarding call with <strong>${escapeHtml(c.full_name)}</strong> on <strong>${escapeHtml(whenRep)}</strong> is now yours. Same time, same link: ${escapeHtml(String(c.full_name).split(" ")[0])} already has it, so just join.</p>` : `<p><strong>${escapeHtml(c.full_name)}</strong> booked a call with you for <strong>${escapeHtml(whenRep)}</strong>.</p>`}
 <p>${escapeHtml(c.email)}${c.phone ? `, ${escapeHtml(c.phone)}` : ""}</p>
 ${app.looking_for ? `<p>Looking for: ${escapeHtml(app.looking_for)}</p>` : ""}
 ${app.no_resume ? `<p style="padding:10px 12px;background:#fde8e2;border-radius:8px"><strong>No resume yet.</strong> They told us they don't have one. Use the call to go through their work history; afterwards, click <strong>Make a clean version</strong> in the Resume box on their profile to build one from the call.</p>` : ""}
