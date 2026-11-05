@@ -1,4 +1,3 @@
-import { MyBookingLink } from "../MyBookingLink";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -31,7 +30,6 @@ export default async function Team() {
           {totals.attention ? `${totals.attention} ${totals.attention === 1 ? "thing needs" : "things need"} attention` : "nothing needs attention"}
         </p>
       </div>
-      {me.id && <MyBookingLink staffId={me.id} name={me.name} />}
       {loose.length > 0 && (
         <section className={styles.floaters}>
           <h2>No floaters: {loose.length} {loose.length === 1 ? "candidate needs" : "candidates need"} a rep or a call</h2>

@@ -17,9 +17,9 @@ export function BookingLink({ link, first, hasHours }: { link: string; first: st
   };
   return (
     <section className="card" style={{ marginTop: 18, padding: "16px 18px" }} id="booking-link">
-      <h2 style={{ fontSize: 19, margin: "0 0 4px" }}>📅 Your booking link</h2>
+      <h2 style={{ fontSize: 19, margin: "0 0 4px" }}>Send it to anyone</h2>
       <p className="small muted" style={{ margin: "0 0 10px" }}>
-        Send it to anyone. They fill in a short form, see only your open times, and the call is booked with you, video link and all.
+        They fill in a short form, see only your open times, and the call is booked with you, video link and all.
       </p>
       {!hasHours && (
         <p className="notice notice-gold" style={{ margin: "0 0 10px" }}>

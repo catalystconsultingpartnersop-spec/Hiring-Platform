@@ -39,6 +39,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </Link>
         {admin && <Link href="/admin/reps">Reps</Link>}
         <Link href="/admin/calls">{me.manager ? "Calls" : "My calls"}</Link>
+        {me.id && <Link href="/admin/booking-link">📅 My booking link</Link>}
         {admin && <Link href="/admin/team">Team</Link>}
         <Link href="/admin/candidates/new" className={styles.addLink}>
           + Add candidate

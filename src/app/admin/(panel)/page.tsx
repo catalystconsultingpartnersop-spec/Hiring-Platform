@@ -1,4 +1,3 @@
-import { MyBookingLink } from "./MyBookingLink";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { commissionOf, earnsCommission, finderSharesFor, latest, loadAgreements, stageOf } from "@/lib/adminData";
@@ -123,7 +122,6 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
         </p>
       )}
       <EmailCheck problem={emailProblem} settings={emailSettings} />
-      {me.id && <MyBookingLink staffId={me.id} name={me.name} />}
 
       <div className="panel" style={{ marginTop: 16 }}>
         <h2 className={styles.h3}>Needs your attention</h2>

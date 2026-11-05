@@ -1,4 +1,3 @@
-import { MyBookingLink } from "./MyBookingLink";
 import { hiddenStaffIds } from "@/lib/hiddenStaff";
 import { isCheckAccount } from "@/lib/session";
 import Link from "next/link";
@@ -80,7 +79,6 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
         </p>
       )}
 
-      {self && <MyBookingLink staffId={staffId} name={name} />}
 
       {work && <RepWork r={work} self={self} reps={staffList} canMove={!self} owed={money(owed)} />}
 
