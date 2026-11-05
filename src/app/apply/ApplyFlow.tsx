@@ -196,17 +196,17 @@ export function ApplyFlow({
       {reps.length > 0 && (
         <label className="field">
           <span>
-            Who told you about us? <span className="opt">(optional)</span>
+            Choose your rep <span className="opt">(optional)</span>
           </span>
           <select className="select" name="rep" defaultValue={v("rep") || referred || ""}>
-            <option value="">Someone else, or not sure</option>
+            <option value="">No preference, match me with someone</option>
             {reps.map(([id, name]) => (
               <option key={id} value={id}>
                 {name}
               </option>
             ))}
           </select>
-          <small>If one of our team sent you, you&rsquo;ll have your call with them.</small>
+          <small>Your rep has your call with you and helps you the whole way. If one of our team sent you, pick them.</small>
         </label>
       )}
       <label className="field">
