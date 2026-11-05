@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { siteUrl } from "@/lib/format";
+import { SIDE_COOKIE } from "@/lib/candidateMode";
 
 // Short links to a listed candidate's profile, e.g. /c/C-6C8762 (their reference code).
 export async function GET(req: Request, ctx: RouteContext<"/c/[code]">) {
@@ -13,5 +14,9 @@ export async function GET(req: Request, ctx: RouteContext<"/c/[code]">) {
   // Keep "?r=" (who sent the link), so the business owner is credited to that rep.
   const r = (new URL(req.url).searchParams.get("r") ?? "").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30);
   const q = r ? `?r=${r}` : "";
-  return NextResponse.redirect(hits.length === 1 ? `${siteUrl()}/candidates/${hits[0].id}${q}` : `${siteUrl()}/candidates${q}`);
+  const res = NextResponse.redirect(hits.length === 1 ? `${siteUrl()}/candidates/${hits[0].id}${q}` : `${siteUrl()}/candidates${q}`);
+  // This link is for business owners: always open the profile, even on a phone that
+  // once opened a candidate link (and was set to show only the candidate side).
+  res.cookies.delete(SIDE_COOKIE);
+  return res;
 }
