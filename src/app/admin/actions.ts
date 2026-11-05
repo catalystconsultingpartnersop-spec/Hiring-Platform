@@ -1671,3 +1671,21 @@ export async function remindToPick(meetingId: string) {
   await sendPickReminder(meetingId, { name: me.name || null, email: me.email });
   revalidatePath(`/admin/candidates/${cid}`);
 }
+
+// ---------- Gold standard (internal badge) ----------
+
+export async function setGold(candidateId: string, on: boolean, form?: FormData) {
+  const me = await requireStaff();
+  if (!(await canEditCandidate(me, candidateId))) return;
+  const { data: c } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
+  if (!c) return;
+  const app = { ...((c.application as Record<string, unknown> | null) ?? {}) };
+  if (on) {
+    const why = String(form?.get("why") ?? "").trim().slice(0, 140) || null;
+    app.gold = { by: me.id ?? "admin", by_name: me.name || me.email, at: new Date().toISOString(), why };
+  } else delete app.gold;
+  await db().from("candidates").update({ application: app }).eq("id", candidateId);
+  await logActivity(staffActor(me), on ? "gold_on" : "gold_off", { candidate_id: candidateId });
+  revalidatePath(`/admin/candidates/${candidateId}`);
+  revalidatePath("/admin/candidates");
+}

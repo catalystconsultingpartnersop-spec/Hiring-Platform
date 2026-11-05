@@ -6,7 +6,7 @@ import { pointCandidate } from "@/app/admin/actions";
 type Channel = "whatsapp" | "text" | "email";
 
 // "Know someone who'd want to meet them?" A ready, personal message to a business owner.
-export function PointToOwner({ candidateId, headline, link, repFirst, mine, first }: { candidateId: string; headline: string; link: string; repFirst: string; mine: boolean; first: string }) {
+export function PointToOwner({ candidateId, headline, link, repFirst, mine, first, gold = false }: { candidateId: string; headline: string; link: string; repFirst: string; mine: boolean; first: string; gold?: boolean }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
@@ -58,6 +58,11 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
             🤝
           </span>
           <div>
+            {gold && (
+              <div style={{ display: "inline-block", background: "var(--marigold)", color: "var(--ink)", fontWeight: 800, fontSize: 12.5, borderRadius: 999, padding: "2px 10px", marginBottom: 6 }}>
+                ⭐ Gold standard: a great one to suggest
+              </div>
+            )}
             <div style={{ fontWeight: 800, fontSize: 19 }}>{repFirst ? `${repFirst}, know` : "Know"} someone who&rsquo;d want to meet {first}?</div>
             <div style={{ fontSize: 14.5, color: "rgba(255,255,255,0.78)", marginTop: 2 }}>
               A business owner, a friend who&rsquo;s hiring. One message, 30 seconds. They see the anonymous profile.

@@ -1,6 +1,8 @@
 import { refSlug } from "@/lib/shareKit";
 import { requireStaff } from "@/lib/session";
 import { PointToOwner } from "./PointToOwner";
+import { GoldBadge } from "./GoldBadge";
+import { goldOf } from "@/lib/gold";
 import { pathCtx, phoneLinks, pickNudgeText } from "@/lib/pathEmails";
 import { remindToPick } from "@/app/admin/actions";
 import { siteUrl } from "@/lib/format";
@@ -71,6 +73,13 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         </p>
         <h1>{c.full_name}</h1>
         {!canEdit && <ViewOnly candidateId={c.id} addedBy={(c as unknown as { added_by: string | null }).added_by ?? null} />}
+        <GoldBadge
+          candidateId={c.id}
+          first={c.full_name.split(" ")[0]}
+          gold={goldOf(c as unknown as { status: string; application: Record<string, unknown> | null })}
+          canEdit={canEdit}
+          myGoldCount={me.id ? ((await db().from("candidates").select("id", { count: "exact", head: true }).eq("application->gold->>by", me.id).not("status", "in", "(hired,archived)")).count ?? 0) : 0}
+        />
         <RO edit={canEdit}>
           <EmailProblemFlag email={c.email} p={await problemFor(c.email)} />
         </RO>
@@ -124,7 +133,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         )}
       </div>
       {c.status === "listed" && c.headline && (
-        <PointToOwner candidateId={c.id} headline={c.headline} link={`${siteUrl().replace(/^https?:\/\//, "")}/c/${refCode(c.id)}${me.name ? `?r=${refSlug(me.name.split(" ")[0])}` : ""}`} repFirst={(me.name || "").split(" ")[0]} mine={canEdit && !me.manager} first={c.full_name.split(" ")[0]} />
+        <PointToOwner candidateId={c.id} headline={c.headline} link={`${siteUrl().replace(/^https?:\/\//, "")}/c/${refCode(c.id)}${me.name ? `?r=${refSlug(me.name.split(" ")[0])}` : ""}`} repFirst={(me.name || "").split(" ")[0]} mine={canEdit && !me.manager} first={c.full_name.split(" ")[0]} gold={!!goldOf(c as unknown as { status: string; application: Record<string, unknown> | null })} />
       )}
       <PointedLog candidateId={c.id} />
       {callRows.some((k) => (k as { meet_space?: string | null }).meet_space && k.status !== "cancelled") && (() => {

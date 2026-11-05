@@ -1,3 +1,4 @@
+import { goldOf } from "@/lib/gold";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { dateShort, refCode } from "@/lib/format";
@@ -56,11 +57,16 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
   // Everyone can see every candidate. Reps start on their own ("Mine") and can switch to Everyone.
   const who = !me.manager && sp.who !== "all" ? "mine" : "all";
   const owner = await effectiveReps(cands);
+  // Gold standard: everyone's, whatever "Mine / Everyone" says.
+  const goldView = sp.gold === "1";
+  const goldAll = cands.filter((c) => goldOf(c));
   if (who === "mine") cands = cands.filter((c) => owner.get(c.id)?.id === me.id);
   const count = (s: string) => cands.filter((c) => c.status === s).length;
-  const shown = cands.filter((c) =>
-    q ? [c.full_name, c.email, c.headline, c.role_category, refCode(c.id)].join(" ").toLowerCase().includes(q) : c.status === view,
-  );
+  const shown = goldView && !q
+    ? goldAll
+    : cands.filter((c) =>
+        q ? [c.full_name, c.email, c.headline, c.role_category, refCode(c.id)].join(" ").toLowerCase().includes(q) : c.status === view,
+      );
   const options = await repOptions();
   const reps = owner;
   const repName = (id: string | undefined) => options.find(([x]) => x === id)?.[1]?.split(" (")[0];
@@ -110,11 +116,15 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
       )}
       <div className={styles.tabs}>
         {VIEWS.map(([v, label]) => (
-          <Link key={v} href={withWho(`/admin/candidates?view=${v}`)} aria-current={!q && v === view ? "page" : undefined}>
+          <Link key={v} href={withWho(`/admin/candidates?view=${v}`)} aria-current={!q && !goldView && v === view ? "page" : undefined}>
             {label} ({count(v)})
           </Link>
         ))}
+        <Link href="/admin/candidates?gold=1" aria-current={goldView && !q ? "page" : undefined}>
+          ⭐ Gold standard ({goldAll.length})
+        </Link>
       </div>
+      {goldView && !q && <p className="small muted">Candidates the rep who met them marked as worth placing. Only our team sees this, never business owners.</p>}
       {q && <p className="small muted">Search results for &ldquo;{q}&rdquo; across all statuses. <Link href="/admin/candidates">Clear</Link></p>}
       {shown.length === 0 ? (
         <p className="panel panel-wash">
@@ -138,6 +148,11 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
                 <tr key={c.id}>
                   <td>
                     <Link prefetch={false} href={`/admin/candidates/${c.id}`}>{c.full_name}</Link>
+                    {goldOf(c) && (
+                      <span title={`Gold standard, says ${goldOf(c)!.by_name}`} style={{ marginLeft: 6, background: "#ffe08a", border: "1px solid #e2a800", borderRadius: 999, padding: "1px 7px", fontSize: 12, fontWeight: 800 }}>
+                        ⭐ Gold
+                      </span>
+                    )}
                     <div className="small muted">{c.email}</div>
                   </td>
                   <td>
