@@ -83,6 +83,33 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
     return m && spec[m.id] ? SPECIALTY_LABEL[spec[m.id]] : null;
   };
 
+  const callCard = next ? (
+<div className={s.call}>
+            <span className={s.callLab}>{Date.parse(next.starts_at) <= now ? "Happening now" : "Next team call"}</span>
+            <h3>{formatInZone(next.starts_at, COMPANY_TZ, { month: undefined, day: undefined })}</h3>
+            <p>
+              {next.title} · {next.minutes} min{next.space ? " · recorded, notes sent after" : ""}
+              <br />
+              {formatInZone(next.starts_at, COMPANY_TZ, { weekday: undefined, hour: undefined, minute: undefined, timeZoneName: undefined })} · set up by {next.by_name.split(" ")[0]}
+            </p>
+            <span className={s.callRow}>
+              <a className="btn btn-gold btn-small" href={next.link} target="_blank" rel="noreferrer">
+                Join the call
+              </a>
+              <a href={googleCalendarLink(next)} target="_blank" rel="noreferrer">
+                Add to calendar
+              </a>
+            </span>
+            {(me.manager || next.by_name === me.name) && (
+              <form action={cancelTeamCall.bind(null, next.id)} style={{ marginTop: 8 }}>
+                <button type="submit" className={s.callCancel}>
+                  Cancel this call
+                </button>
+              </form>
+            )}
+          </div>
+  ) : null;
+
   const post = (p: RoomPost & { notes?: (typeof notes)[number] }) => {
     if (p.kind === "auto_notes" && p.notes) {
       const n = p.notes;
@@ -229,36 +256,12 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
           <h1>Team Room</h1>
           <p>Spotlight great candidates, ask who has someone, and celebrate the wins. Only our team sees this.</p>
         </div>
+        {next ? <div className={s.mobileOnly}>{callCard}</div> : null}
         <Composer cands={cands} meId={me.id} spot={spot} />
         {feed.length === 0 ? <p className="panel panel-wash">Nothing here yet. Be the first: spotlight someone great you met.</p> : feed.map(post)}
       </div>
       <aside className={s.side}>
-        {next ? (
-          <div className={s.call}>
-            <span className={s.callLab}>{Date.parse(next.starts_at) <= now ? "Happening now" : "Next team call"}</span>
-            <h3>{formatInZone(next.starts_at, COMPANY_TZ, { month: undefined, day: undefined })}</h3>
-            <p>
-              {next.title} · {next.minutes} min{next.space ? " · recorded, notes sent after" : ""}
-              <br />
-              {formatInZone(next.starts_at, COMPANY_TZ, { weekday: undefined, hour: undefined, minute: undefined, timeZoneName: undefined })} · set up by {next.by_name.split(" ")[0]}
-            </p>
-            <span className={s.callRow}>
-              <a className="btn btn-gold btn-small" href={next.link} target="_blank" rel="noreferrer">
-                Join the call
-              </a>
-              <a href={googleCalendarLink(next)} target="_blank" rel="noreferrer">
-                Add to calendar
-              </a>
-            </span>
-            {(me.manager || next.by_name === me.name) && (
-              <form action={cancelTeamCall.bind(null, next.id)} style={{ marginTop: 8 }}>
-                <button type="submit" className={s.callCancel}>
-                  Cancel this call
-                </button>
-              </form>
-            )}
-          </div>
-        ) : null}
+        {next ? <div className={s.desktopOnly}>{callCard}</div> : null}
         {last && (
           <div className={s.card}>
             <h3>📝 Last call&rsquo;s notes</h3>

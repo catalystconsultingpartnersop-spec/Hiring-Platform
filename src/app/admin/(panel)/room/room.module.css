@@ -65,3 +65,5 @@
 .invites { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; }
 .invites legend { margin-bottom: 4px; font-weight: 700; }
 .invites label { display: inline-flex; gap: 5px; align-items: center; font-size: 14px; }
+.mobileOnly { display: none; }
+@media (max-width: 900px) { .mobileOnly { display: block; } .desktopOnly { display: none; } }
