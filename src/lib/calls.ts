@@ -260,3 +260,43 @@ export async function confirmedCallIds(ids: string[]): Promise<Set<string>> {
   const want = new Set(ids);
   return new Set(((data ?? []) as { details: { call_id?: string } }[]).map((r) => r.details?.call_id ?? "").filter((x) => want.has(x)));
 }
+
+// Moves a booked call to another rep, quietly for the candidate (same link): the new
+// rep gets the booking with the recorded link and is made co-host; the old rep is told.
+export async function takeOverCall(callId: string, toStaffId: string) {
+  const { db } = await import("./db");
+  const { sendEmail, escapeHtml } = await import("./email");
+  const { data: k } = await db().from("onboarding_calls").select("id, staff_id, starts_at, candidates(full_name), staff(email)").eq("id", callId).maybeSingle();
+  if (!k || k.staff_id === toStaffId) return false;
+  const { data: to } = await db().from("staff").select("email, full_name").eq("id", toStaffId).maybeSingle();
+  await db().from("onboarding_calls").update({ staff_id: toStaffId }).eq("id", callId);
+  await cohostForCall(callId).catch(() => null);
+  await sendBookingEmails(callId, false, true, false);
+  const was = (k.staff as unknown as { email: string } | null)?.email;
+  const name = (k.candidates as unknown as { full_name: string } | null)?.full_name ?? "your candidate";
+  if (was && to && was.toLowerCase() !== to.email.toLowerCase())
+    await sendEmail({
+      to: was,
+      subject: `Your call with ${name} moved to ${to.full_name || "another rep"}`,
+      html: `<p>The onboarding call with <strong>${escapeHtml(name)}</strong> on ${escapeHtml(new Date(k.starts_at).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" }))} now belongs to ${escapeHtml(to.full_name || to.email)}. They have the link. You can remove it from your calendar.</p>`,
+    }).catch(() => null);
+  return true;
+}
+
+// Other booked calls for the same candidate around the same time are duplicates:
+// close them quietly (no emails), so there's always one call, one link.
+export async function closeDuplicateCalls(keepId: string) {
+  const { db } = await import("./db");
+  const { data: k } = await db().from("onboarding_calls").select("candidate_id, starts_at").eq("id", keepId).maybeSingle();
+  if (!k) return 0;
+  const t = Date.parse(k.starts_at);
+  const { data: dups } = await db()
+    .from("onboarding_calls")
+    .select("id, starts_at")
+    .eq("candidate_id", k.candidate_id)
+    .eq("status", "booked")
+    .neq("id", keepId);
+  const close = ((dups ?? []) as { id: string; starts_at: string }[]).filter((d) => Math.abs(Date.parse(d.starts_at) - t) < 3 * 3600e3);
+  for (const d of close) await db().from("onboarding_calls").update({ status: "cancelled" }).eq("id", d.id);
+  return close.length;
+}

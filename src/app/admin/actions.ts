@@ -1054,18 +1054,11 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
       .eq("candidate_id", candidateId)
       .eq("status", "booked")
       .gt("ends_at", new Date().toISOString());
-    const { cohostForCall, sendBookingEmails } = await import("@/lib/calls");
+    const { takeOverCall, closeDuplicateCalls } = await import("@/lib/calls");
     for (const k of (calls ?? []) as unknown as { id: string; staff_id: string; starts_at: string; staff: { email: string } | null }[]) {
       if (k.staff_id === rep.id) continue;
-      await db().from("onboarding_calls").update({ staff_id: rep.id }).eq("id", k.id);
-      await cohostForCall(k.id).catch(() => null);
-      await sendBookingEmails(k.id, false, true, false);
-      if (k.staff?.email && k.staff.email.toLowerCase() !== rep.email.toLowerCase())
-        await sendEmail({
-          to: k.staff.email,
-          subject: `Your call with ${c.full_name} moved to ${rep.full_name || "another rep"}`,
-          html: `<p>The onboarding call with <strong>${escapeHtml(c.full_name)}</strong> on ${escapeHtml(new Date(k.starts_at).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" }))} now belongs to ${escapeHtml(rep.full_name || rep.email)}. They have the link. You can remove it from your calendar.</p>`,
-        }).catch(() => null);
+      if (!(await takeOverCall(k.id, rep.id))) continue;
+      await closeDuplicateCalls(k.id);
       await logActivity(staffActor(me), "call_moved_with_rep", { call_id: k.id, to: rep.id });
       moved++;
     }
@@ -1409,6 +1402,7 @@ export async function handCallToOwner(callId: string) {
     .select("id", { count: "exact", head: true })
     .eq("staff_id", owner)
     .eq("status", "booked")
+    .neq("candidate_id", k.candidate_id)
     .lt("starts_at", k.ends_at)
     .gt("ends_at", k.starts_at);
   const { withinHours } = await import("@/lib/slots");
@@ -1416,6 +1410,7 @@ export async function handCallToOwner(callId: string) {
   const { data: was } = await db().from("staff").select("email, full_name").eq("id", k.staff_id).maybeSingle();
   await db().from("onboarding_calls").update({ staff_id: owner }).eq("id", callId);
   await (await import("@/lib/calls")).cohostForCall(callId);
+  await (await import("@/lib/calls")).closeDuplicateCalls(callId);
   const { sendBookingEmails } = await import("@/lib/calls");
   await sendBookingEmails(callId, false, true, true);
   if (was?.email)
@@ -1445,6 +1440,7 @@ export async function moveCall(callId: string, form: FormData) {
     .select("id", { count: "exact", head: true })
     .eq("staff_id", to)
     .eq("status", "booked")
+    .neq("candidate_id", k.candidate_id)
     .lt("starts_at", k.ends_at)
     .gt("ends_at", k.starts_at);
   if (count) redirect("/admin/calls?move=busy");
@@ -1453,6 +1449,7 @@ export async function moveCall(callId: string, form: FormData) {
   const { data: was } = await db().from("staff").select("email").eq("id", k.staff_id).maybeSingle();
   await db().from("onboarding_calls").update({ staff_id: to }).eq("id", callId);
   await (await import("@/lib/calls")).cohostForCall(callId);
+  await (await import("@/lib/calls")).closeDuplicateCalls(callId);
   const { sendBookingEmails } = await import("@/lib/calls");
   await sendBookingEmails(callId, false, true, tell);
   if (was?.email)
@@ -1580,6 +1577,29 @@ export async function startCallNow(candidateId: string, emailThem: boolean): Pro
   if (!(await canEditCandidate(me, candidateId))) return { error: "Not found." };
   const { data: c } = await db().from("candidates").select("id, full_name, email, added_by").eq("id", candidateId).maybeSingle();
   if (!c) return { error: "Not found." };
+  // Already booked around now? Use that call (same link the candidate has) instead of a second one.
+  {
+    const now = Date.now();
+    const { data: near } = await db()
+      .from("onboarding_calls")
+      .select("id, staff_id, meet_link")
+      .eq("candidate_id", candidateId)
+      .eq("status", "booked")
+      .gte("starts_at", new Date(now - 90 * 60e3).toISOString())
+      .lte("starts_at", new Date(now + 3 * 3600e3).toISOString())
+      .not("meet_link", "is", null)
+      .order("starts_at", { ascending: true })
+      .limit(1);
+    const k = near?.[0] as { id: string; staff_id: string; meet_link: string } | undefined;
+    if (k) {
+      const { takeOverCall } = await import("@/lib/calls");
+      if (k.staff_id !== me.id) await takeOverCall(k.id, me.id);
+      await logActivity(staffActor(me), "call_started_now", { candidate_id: candidateId, reused: k.id });
+      revalidatePath(`/admin/candidates/${candidateId}`);
+      revalidatePath("/admin/calls");
+      return { link: k.meet_link, first: String(c.full_name).split(" ")[0], emailed: false };
+    }
+  }
   const { newRecordedMeeting } = await import("@/lib/googleCalls");
   const { callEmailFor } = await import("@/lib/callAccounts");
   let room: { link: string; space: string } | null = null;
