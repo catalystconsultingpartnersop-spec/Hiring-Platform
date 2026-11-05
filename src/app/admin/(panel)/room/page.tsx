@@ -3,7 +3,10 @@ import { requireStaff } from "@/lib/session";
 import { nowMs } from "@/lib/time";
 import { loadRoom, roomCandidates, SPECIALTY_LABEL, specialties, teamMembers, codesIn, type RoomCand, type RoomPost } from "@/lib/teamRoom";
 import { Composer, ReplyBox } from "./Composer";
-import { removePost, setSpecialty } from "./actions";
+import { CallBox } from "./CallBox";
+import { allNotes, googleCalendarLink, nextCall, teamCalls } from "@/lib/teamCalls";
+import { COMPANY_TZ, formatInZone } from "@/lib/time";
+import { cancelTeamCall, removePost, setSpecialty } from "./actions";
 import s from "./room.module.css";
 
 export const metadata = { title: "Team Room" };
@@ -57,7 +60,7 @@ const KIND_TAG: Record<string, [string, string]> = {
 export default async function TeamRoom({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const me = await requireStaff();
   const sp = await searchParams;
-  const [posts, cands, spec, team] = await Promise.all([loadRoom(), roomCandidates(), specialties(), teamMembers()]);
+  const [posts, cands, spec, team, calls, notes] = await Promise.all([loadRoom(), roomCandidates(), specialties(), teamMembers(), teamCalls(), allNotes()]);
   const byId = new Map(cands.map((c) => [c.id, c]));
   const cardsFor = (ids: string[], text: string) => {
     const codes = codesIn(text);
@@ -65,6 +68,14 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
     return [...new Set([...ids, ...extra])].map((id) => byId.get(id)).filter((c): c is RoomCand => !!c);
   };
   const now = nowMs();
+  const next = nextCall(calls, now);
+  const goodNotes = notes.filter((n) => !n.failed);
+  const last = goodNotes[0] ?? null;
+  // Call notes go in the feed too.
+  const feed: RoomPost[] = [
+    ...posts,
+    ...goodNotes.map((n) => ({ id: -2e12 - n.id, at: n.at, kind: "auto_notes" as RoomPost["kind"], byName: "", byEmail: "", text: n.title, cands: n.cands, replies: [], notes: n })),
+  ].sort((a, b) => b.at.localeCompare(a.at));
   const spot = typeof sp.spot === "string" && byId.has(sp.spot) ? sp.spot : null;
   const nameOf = (email: string) => team.find((t) => t.email === email);
   const specOf = (email: string) => {
@@ -72,7 +83,48 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
     return m && spec[m.id] ? SPECIALTY_LABEL[spec[m.id]] : null;
   };
 
-  const post = (p: RoomPost) => {
+  const post = (p: RoomPost & { notes?: (typeof notes)[number] }) => {
+    if (p.kind === "auto_notes" && p.notes) {
+      const n = p.notes;
+      return (
+        <article key={p.id} id={`n${n.id}`} className={s.card}>
+          <div className={s.who}>
+            <span className={s.av} style={{ background: "var(--ink)" }}>
+              📝
+            </span>
+            <div>
+              <b>Notes from the team call: {n.title}</b>
+              <small>Written automatically · {ago(p.at, now)}</small>
+            </div>
+            <span className={`${s.kind} ${s.kTalk}`}>Notes</span>
+          </div>
+          <ul className={s.notes}>
+            {n.bullets.map((b, i) => (
+              <li key={i}>{b}</li>
+            ))}
+          </ul>
+          {n.actions.length > 0 && (
+            <>
+              <p className="small" style={{ margin: "8px 0 4px", fontWeight: 700 }}>
+                Who&rsquo;s doing what
+              </p>
+              <ul className={s.notes}>
+                {n.actions.map((a, i) => (
+                  <li key={i}>
+                    <b>{a.who}:</b> {a.what}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          <div className={s.cards}>
+            {n.cands.map((id) => byId.get(id)).filter((c): c is RoomCand => !!c).map((c) => (
+              <Card key={c.id} c={c} />
+            ))}
+          </div>
+        </article>
+      );
+    }
     if (p.kind === "auto_hire") {
       const c = byId.get(p.cands[0]);
       return (
@@ -178,9 +230,51 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
           <p>Spotlight great candidates, ask who has someone, and celebrate the wins. Only our team sees this.</p>
         </div>
         <Composer cands={cands} meId={me.id} spot={spot} />
-        {posts.length === 0 ? <p className="panel panel-wash">Nothing here yet. Be the first: spotlight someone great you met.</p> : posts.map(post)}
+        {feed.length === 0 ? <p className="panel panel-wash">Nothing here yet. Be the first: spotlight someone great you met.</p> : feed.map(post)}
       </div>
       <aside className={s.side}>
+        {next ? (
+          <div className={s.call}>
+            <span className={s.callLab}>{Date.parse(next.starts_at) <= now ? "Happening now" : "Next team call"}</span>
+            <h3>{formatInZone(next.starts_at, COMPANY_TZ, { month: undefined, day: undefined })}</h3>
+            <p>
+              {next.title} · {next.minutes} min{next.space ? " · recorded, notes sent after" : ""}
+              <br />
+              {formatInZone(next.starts_at, COMPANY_TZ, { weekday: undefined, hour: undefined, minute: undefined, timeZoneName: undefined })} · set up by {next.by_name.split(" ")[0]}
+            </p>
+            <span className={s.callRow}>
+              <a className="btn btn-gold btn-small" href={next.link} target="_blank" rel="noreferrer">
+                Join the call
+              </a>
+              <a href={googleCalendarLink(next)} target="_blank" rel="noreferrer">
+                Add to calendar
+              </a>
+            </span>
+            {(me.manager || next.by_name === me.name) && (
+              <form action={cancelTeamCall.bind(null, next.id)} style={{ marginTop: 8 }}>
+                <button type="submit" className={s.callCancel}>
+                  Cancel this call
+                </button>
+              </form>
+            )}
+          </div>
+        ) : null}
+        {last && (
+          <div className={s.card}>
+            <h3>📝 Last call&rsquo;s notes</h3>
+            <p className="small muted" style={{ margin: "0 0 8px" }}>
+              {last.title} · made automatically
+            </p>
+            <ul className={s.notes}>
+              {last.bullets.slice(0, 4).map((b, i) => (
+                <li key={i}>{b}</li>
+              ))}
+            </ul>
+            <a className="small" href={`#n${last.id}`} style={{ fontWeight: 700 }}>
+              Read the full notes
+            </a>
+          </div>
+        )}
         <div className={s.card}>
           <h3>The team</h3>
           {team.map((t) => (
@@ -192,6 +286,9 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
               {spec[t.id] && <span className={`${s.spec} ${s["sp_" + spec[t.id]]}`}>{SPECIALTY_LABEL[spec[t.id]]}</span>}
             </div>
           ))}
+          <div style={{ marginTop: 12 }}>
+            <CallBox team={team} meId={me.id} />
+          </div>
           {me.id && (
             <form action={setSpecialty} className={s.specForm}>
               <label className="small" htmlFor="spec">
@@ -210,12 +307,6 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
               </span>
             </form>
           )}
-        </div>
-        <div className={s.card}>
-          <h3>📅 Team calls</h3>
-          <p className="small muted" style={{ margin: 0 }}>
-            Coming next: schedule a team call here, with a link that records itself and sends everyone the notes.
-          </p>
         </div>
         <p className="small muted">You&rsquo;ll get an email when someone replies to your post or tags you, plus one short summary a day.</p>
       </aside>

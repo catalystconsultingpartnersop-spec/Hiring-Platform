@@ -14,7 +14,7 @@ export type RoomReply = { id: number; at: string; byName: string; byEmail: strin
 export type RoomPost = {
   id: number;
   at: string;
-  kind: Kind | "auto_hire" | "auto_gold";
+  kind: Kind | "auto_hire" | "auto_gold" | "auto_notes";
   byName: string;
   byEmail: string;
   text: string;

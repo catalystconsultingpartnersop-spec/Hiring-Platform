@@ -51,3 +51,17 @@
 .sp_owners { background: #e6edff; color: #2d5bd7; }
 .sp_both { background: var(--moss-soft); color: var(--moss); }
 .specForm { margin-top: 12px; display: grid; gap: 4px; }
+.call { background: var(--ink); color: #fff; border-radius: 16px; padding: 16px 18px; margin-bottom: 14px; }
+.call h3 { color: #fff; font-size: 21px; margin: 4px 0; }
+.call p { color: rgba(255, 255, 255, 0.82); font-size: 14px; margin: 0 0 12px; line-height: 1.45; }
+.callLab { font-size: 11.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--marigold); }
+.callRow { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.callRow a:last-child { color: #fff; font-weight: 700; font-size: 14px; }
+.callCancel { font: inherit; font-size: 12.5px; color: rgba(255, 255, 255, 0.6); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+.notes { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14.5px; color: var(--ink-2); }
+.darkBtn { background: var(--ink); color: #fff; border-color: var(--ink); }
+.callForm { display: grid; gap: 8px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.invites { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.invites legend { margin-bottom: 4px; font-weight: 700; }
+.invites label { display: inline-flex; gap: 5px; align-items: center; font-size: 14px; }

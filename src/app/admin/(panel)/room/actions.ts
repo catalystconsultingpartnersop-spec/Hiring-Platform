@@ -89,3 +89,36 @@ export async function setSpecialty(form: FormData) {
   await setSetting("rep_specialty", cur);
   revalidatePath("/admin/room");
 }
+
+// ---------- Team calls ----------
+
+export async function scheduleCall(_prev: RoomState, form: FormData): Promise<RoomState> {
+  const me = await requireStaff();
+  const { zonedToUtc, validTimeZone } = await import("@/lib/time");
+  const tz = validTimeZone(String(form.get("tz") ?? ""));
+  const day = String(form.get("day") ?? "");
+  const time = String(form.get("time") ?? "");
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+  const t = /^(\d{2}):(\d{2})$/.exec(time);
+  if (!m || !t) return { error: "Pick the day and time." };
+  const starts = new Date(zonedToUtc(+m[1], +m[2], +m[3], +t[1] * 60 + +t[2], tz)).toISOString();
+  if (Date.parse(starts) < Date.now() - 5 * 60e3) return { error: "That time has passed." };
+  const minutes = Math.min(120, Math.max(15, Number(form.get("minutes")) || 30));
+  const title = String(form.get("title") ?? "").trim().slice(0, 80) || "Team call";
+  const invitees = form.getAll("invite").map(String);
+  if (!(await allow(`teamcall:${me.email}`, 10, 60))) return { error: SLOW_DOWN };
+  const { scheduleTeamCall } = await import("@/lib/teamCalls");
+  const r = await scheduleTeamCall(me, { title, starts_at: starts, minutes, invitees });
+  if ("error" in r && r.error) return { error: r.error };
+  revalidatePath("/admin/room");
+  return { ok: true };
+}
+
+export async function cancelTeamCall(callId: number) {
+  const me = await requireStaff();
+  const { data } = await db().from("activity_log").select("actor").eq("id", callId).eq("action", "team_call").maybeSingle();
+  if (!data) return;
+  if (!me.manager && String(data.actor) !== staffActor(me)) return;
+  await logActivity(staffActor(me), "team_call_cancelled", { call_id: callId });
+  revalidatePath("/admin/room");
+}
