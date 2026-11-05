@@ -150,11 +150,24 @@ export async function draftFromCall(candidateId: string, opts: { notifyRep?: boo
       subject: `${c.full_name}'s profile is drafted from your call`,
       html: `<p>Hi ${escapeHtml((call.staff.full_name ?? "").split(" ")[0] || "there")},</p>
 <p>We turned your call with <strong>${escapeHtml(c.full_name)}</strong> into a first draft of their profile, plus private notes for the team.</p>
-<p>Give it a read, make it yours, and click <strong>List now</strong>.</p>
-<p><a href="${teamUrl()}/admin/candidates/${candidateId}">Open their profile</a></p>`,
+${notesHtml(draft.private_notes)}
+${draft.headline ? `<p style="margin:16px 0 4px;font-weight:700">Draft headline</p><p style="margin:0">${escapeHtml(draft.headline)}</p>` : ""}
+<p style="margin-top:16px">Give the profile a read, make it yours, and click <strong>List now</strong>.</p>
+<p><a href="${teamUrl()}/admin/candidates/${candidateId}" style="display:inline-block;padding:11px 20px;border-radius:999px;background:#17213a;color:#fff;text-decoration:none;font-weight:700">Open their profile</a></p>`,
     });
   }
   return { ok: true, draft };
+}
+
+// The private notes as an easy-to-read list, for the rep's email.
+function notesHtml(notes: string) {
+  const lines = notes
+    .split("\n")
+    .map((l) => l.replace(/^\s*[-•*]\s*/, "").trim())
+    .filter(Boolean)
+    .slice(0, 14);
+  if (!lines.length) return "";
+  return `<div style="margin:16px 0;padding:14px 16px;border-radius:12px;background:#fff8e1;border:1px solid #f3d27a"><p style="margin:0 0 8px;font-weight:700">Your notes from the call (team only)</p><ul style="margin:0;padding-left:20px">${lines.map((l) => `<li style="margin:0 0 4px">${escapeHtml(l)}</li>`).join("")}</ul></div>`;
 }
 
 // From the daily run (last 7 days) and the every-10-minutes run (last few hours):
