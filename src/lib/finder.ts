@@ -4,10 +4,11 @@ import { refSlug } from "./shareKit";
 import { getSetting, setSetting } from "./settings";
 
 // The finder's share: on every hire, 5% of the fee goes to whoever found the
-// business owner. A rep who passed the candidate to that owner, or whose share
-// link the owner came through. If the owner found us on their own, it goes to the
-// partner who runs the owner side (Shloimy). The candidate's own rep still earns
-// their normal commission, and the company keeps its half either way.
+// business owner: a rep who passed the candidate to that owner, or whose share
+// link the owner came through. The candidate's own rep still earns their normal
+// commission. If nobody found the owner (they came in on their own), the company
+// keeps the 5%, except on the partner's own candidates: the partner (Shloimy) is
+// at 45% plus this 5%, so he stays at 50% unless another rep brought the owner.
 
 export const FINDER_PCT = 5;
 
@@ -38,7 +39,7 @@ const digits = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "").sl
 
 // Works out the finder for each paid hire. One pass, few queries.
 export async function finderShares(
-  hires: { id: string; amount_cents: number; status: string; unlock_id: string; candidate_id: string; signed_at: string; owner: { email: string; phone: string | null; referred_by?: string | null } }[],
+  hires: { id: string; amount_cents: number; status: string; unlock_id: string; candidate_id: string; signed_at: string; repId: string | null; owner: { email: string; phone: string | null; referred_by?: string | null } }[],
 ): Promise<Map<string, FinderShare>> {
   const out = new Map<string, FinderShare>();
   const live = hires.filter((h) => h.status === "paid" || h.status === "hired");
@@ -75,8 +76,9 @@ export async function finderShares(
       who = bySlug.get(refSlug(h.owner.referred_by)) ?? null;
       if (who) how = "link";
     }
-    // 3. Otherwise: the partner who runs the owner side.
+    // 3. Nobody found them: only the partner's own candidates earn it (back to him).
     if (!who) {
+      if (!partner || h.repId !== partner.id) continue;
       who = partner;
       how = "came_in";
     }
@@ -90,5 +92,5 @@ export async function finderShares(
 export const HOW_LABEL: Record<FinderShare["how"], string> = {
   passed: "passed the candidate to this owner",
   link: "the owner came through their link",
-  came_in: "the owner came in on their own",
+  came_in: "their own candidate, and the owner came in on their own",
 };
