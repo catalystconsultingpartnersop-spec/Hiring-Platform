@@ -26,7 +26,7 @@ export function BookingLink({ link, first, hasHours }: { link: string; first: st
           <strong>Add your call hours first</strong> so people see your times. <a href="/admin/hours">Set your hours</a>
         </p>
       )}
-      <p style={{ margin: "0 0 10px", fontWeight: 700, wordBreak: "break-all" }}>{link.replace(/^https?:\/\//, "")}</p>
+      <p style={{ margin: "0 0 10px", fontWeight: 700, fontSize: 15, overflowWrap: "anywhere" }}>{link.replace(/^https?:\/\//, "")}</p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button type="button" className="btn btn-small" onClick={copy}>
           {done ? "Copied ✓" : "Copy link"}
