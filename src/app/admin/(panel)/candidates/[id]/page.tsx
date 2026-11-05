@@ -1,3 +1,4 @@
+import { refSlug } from "@/lib/shareKit";
 import { requireStaff } from "@/lib/session";
 import { PointToOwner } from "./PointToOwner";
 import { pathCtx, phoneLinks, pickNudgeText } from "@/lib/pathEmails";
@@ -123,7 +124,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         )}
       </div>
       {c.status === "listed" && c.headline && (
-        <PointToOwner candidateId={c.id} headline={c.headline} link={`${siteUrl().replace(/^https?:\/\//, "")}/c/${refCode(c.id)}`} repFirst={(me.name || "").split(" ")[0]} mine={canEdit && !me.manager} first={c.full_name.split(" ")[0]} />
+        <PointToOwner candidateId={c.id} headline={c.headline} link={`${siteUrl().replace(/^https?:\/\//, "")}/c/${refCode(c.id)}${me.name ? `?r=${refSlug(me.name.split(" ")[0])}` : ""}`} repFirst={(me.name || "").split(" ")[0]} mine={canEdit && !me.manager} first={c.full_name.split(" ")[0]} />
       )}
       <PointedLog candidateId={c.id} />
       {callRows.some((k) => (k as { meet_space?: string | null }).meet_space && k.status !== "cancelled") && (() => {

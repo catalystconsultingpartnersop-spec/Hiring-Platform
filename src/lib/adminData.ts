@@ -1,5 +1,6 @@
 import { db, Hire } from "./db";
 import { isOwnerEmail } from "./session";
+import { finderShares, type FinderShare } from "./finder";
 
 export type StaffLite = {
   id: string;
@@ -27,7 +28,7 @@ export type AgreementRow = {
   passed_at?: string | null;
   pass_reason?: string | null;
   candidates: { full_name: string; added_by: string | null; role_category: string | null; industry: string | null; status: string };
-  owners: { email: string; full_name: string | null; company: string | null; phone: string | null };
+  owners: { email: string; full_name: string | null; company: string | null; phone: string | null; referred_by?: string | null };
   hires: HireRow[];
 };
 
@@ -36,13 +37,24 @@ export async function loadAgreements() {
     db()
       .from("unlocks")
       .select(
-        "*, candidates(full_name, added_by, role_category, industry, status), owners(email, full_name, company, phone), hires(*)",
+        "*, candidates(full_name, added_by, role_category, industry, status), owners(email, full_name, company, phone, referred_by), hires(*)",
       )
       .order("signed_at", { ascending: false }),
     db().from("staff").select("*"),
   ]);
   const people = new Map<string, StaffLite>(((staff ?? []) as StaffLite[]).map((s) => [s.id, s]));
   return { rows: (data ?? []) as unknown as AgreementRow[], error, people };
+}
+
+// The finder's share on every paid hire (who found the business owner).
+export async function finderSharesFor(rows: AgreementRow[]): Promise<Map<string, FinderShare>> {
+  return finderShares(
+    rows.flatMap((a) =>
+      a.hires
+        .filter((h) => h.paid_at)
+        .map((h) => ({ id: h.id, amount_cents: h.amount_cents, status: h.status, unlock_id: a.id, candidate_id: a.candidate_id, signed_at: a.signed_at, owner: a.owners })),
+    ),
+  );
 }
 
 export function latest(hires: HireRow[]) {

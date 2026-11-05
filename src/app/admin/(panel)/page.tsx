@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { commissionOf, earnsCommission, latest, loadAgreements, stageOf } from "@/lib/adminData";
+import { commissionOf, earnsCommission, finderSharesFor, latest, loadAgreements, stageOf } from "@/lib/adminData";
 import { db, dbConfigProblem } from "@/lib/db";
 import { lastEmailProblem } from "@/lib/email";
 import { money } from "@/lib/format";
@@ -79,7 +79,8 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
   const live = hires.filter(({ h }) => h.status === "paid" || h.status === "hired");
   const net = live.reduce((s, { h }) => s + h.amount_cents, 0);
   const owed = live.filter(({ h, rep }) => earnsCommission(h, rep) && !h.commission_paid_at);
-  const owedTotal = owed.reduce((s, { h, rep }) => s + commissionOf(h, pct, rep), 0);
+  const finderOwed = [...(await finderSharesFor(agreements)).values()].filter((f) => !f.paidAt);
+  const owedTotal = owed.reduce((s, { h, rep }) => s + commissionOf(h, pct, rep), 0) + finderOwed.reduce((s, f) => s + f.cents, 0);
   const thisMonth = live.filter(({ h }) => (h.paid_at ?? "").slice(0, 7) === now.toISOString().slice(0, 7));
   const needFee = active.filter((a) => a.fee_cents == null && stageOf(a) === "considering");
   const toConfirm = agreements.filter((a) => stageOf(a) === "paid" && NOW - new Date(latest(a.hires)!.paid_at!).getTime() > 14 * DAY);
@@ -93,7 +94,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
 
   const todo: { text: React.ReactNode; href: string; cta: string }[] = [];
   if (count("applied")) todo.push({ text: <>{count("applied")} new application{count("applied") > 1 ? "s" : ""} to review</>, href: "/admin/candidates?view=applied", cta: "Review" });
-  if (owed.length) todo.push({ text: <>{money(owedTotal)} in rep commission to pay out ({owed.length} hire{owed.length > 1 ? "s" : ""})</>, href: "/admin/payments?view=owed#payments", cta: "Pay out" });
+  if (owed.length + finderOwed.length) todo.push({ text: <>{money(owedTotal)} in rep commission to pay out ({owed.length + finderOwed.length} share{owed.length + finderOwed.length > 1 ? "s" : ""})</>, href: "/admin/payments?view=owed#payments", cta: "Pay out" });
   if (needFee.length) todo.push({ text: <>{needFee.length} agreement{needFee.length > 1 ? "s" : ""} need a fee set</>, href: "/admin/agreements?stage=considering", cta: "Set fee" });
   if (failedMail?.length)
     todo.push({

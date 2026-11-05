@@ -3,7 +3,8 @@ import { isCheckAccount } from "@/lib/session";
 import { logKnownExpenses } from "@/lib/knownExpenses";
 import Link from "next/link";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { commissionOf, commissionTerms, earnsCommission, HireRow, loadAgreements, repName, StaffLite, stageOf } from "@/lib/adminData";
+import { commissionOf, commissionTerms, earnsCommission, finderSharesFor, HireRow, loadAgreements, repName, StaffLite, stageOf } from "@/lib/adminData";
+import { FINDER_PCT, HOW_LABEL } from "@/lib/finder";
 import { db } from "@/lib/db";
 import { isOwnerEmail } from "@/lib/session";
 import { dateShort, money, refCode } from "@/lib/format";
@@ -72,6 +73,11 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
   const owed = earning.filter((h) => !h.commission_paid_at);
   const paidOut = earning.filter((h) => h.commission_paid_at);
   const sum = (rs: Row[]) => rs.reduce((s, h) => s + commissionOf(h, pct, h.rep), 0);
+  // The finder's share: 10% to whoever found the business owner.
+  const finders = await finderSharesFor(agreements);
+  const finderList = [...finders.values()];
+  const finderOwed = finderList.filter((f) => !f.paidAt);
+  const finderOwedTotal = finderOwed.reduce((s, f) => s + f.cents, 0);
 
   // Per-rep totals
   const reps = new Map<string, { rep: StaffLite; hires: number; owed: number; paid: number }>();
@@ -81,6 +87,14 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
     if (h.commission_paid_at) r.paid += commissionOf(h, pct, h.rep);
     else r.owed += commissionOf(h, pct, h.rep);
     reps.set(h.rep!.id, r);
+  }
+  for (const f of finderList) {
+    const rep = people.get(f.staffId);
+    if (!rep) continue;
+    const r = reps.get(f.staffId) ?? { rep, hires: 0, owed: 0, paid: 0 };
+    if (f.paidAt) r.paid += f.cents;
+    else r.owed += f.cents;
+    reps.set(f.staffId, r);
   }
 
   let shown = all;
@@ -99,7 +113,9 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
     const paid = all.filter((h) => match(h.paid_at));
     const gross = paid.reduce((s, h) => s + h.amount_cents, 0);
     const refunds = all.filter((h) => h.status === "refunded" && match(h.refunded_at ?? h.paid_at)).reduce((s, h) => s + h.amount_cents, 0);
-    const comm = paid.filter((h) => earnsCommission(h, h.rep)).reduce((s, h) => s + commissionOf(h, pct, h.rep), 0);
+    const comm =
+      paid.filter((h) => earnsCommission(h, h.rep)).reduce((s, h) => s + commissionOf(h, pct, h.rep), 0) +
+      paid.reduce((s, h) => s + (finders.get(h.id)?.cents ?? 0), 0);
     const exp = expenses.filter((e) => match(e.spent_on)).reduce((s, e) => s + e.amount_cents, 0);
     return { in: gross - refunds, refunds, comm, exp, net: gross - refunds - comm - exp };
   };
@@ -125,7 +141,10 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
     .filter((p) => !isOwnerEmail(p.email) && !isCheckAccount(p.email) && !hidden.has(p.id) && ((p as StaffLite & { active?: boolean }).active !== false || reps.has(p.id)))
     .map((p) => {
       const r = reps.get(p.id);
-      const owedIds = earning.filter((h) => h.rep?.id === p.id && !h.commission_paid_at).map((h) => h.id);
+      const owedIds = [
+        ...earning.filter((h) => h.rep?.id === p.id && !h.commission_paid_at).map((h) => h.id),
+        ...finderOwed.filter((f) => f.staffId === p.id).map((f) => `f:${f.hireId}`),
+      ];
       return { rep: p, hires: r?.hires ?? 0, owed: r?.owed ?? 0, paid: r?.paid ?? 0, owedIds };
     })
     .sort((a, b) => b.owed - a.owed || b.hires - a.hires);
@@ -190,8 +209,8 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
           <span>Left for the company</span>
         </div>
         <Link className={styles.stat} href={`${qs("owed", "")}#payments`}>
-          <strong>{money(sum(owed))}</strong>
-          <span>Owed to reps now ({owed.length} hire{owed.length === 1 ? "" : "s"})</span>
+          <strong>{money(sum(owed) + finderOwedTotal)}</strong>
+          <span>Owed to reps now ({owed.length + finderOwed.length} share{owed.length + finderOwed.length === 1 ? "" : "s"})</span>
         </Link>
         <Link className={styles.stat} href="/admin/agreements?stage=considering">
           <strong>{money(pipeline)}</strong>
@@ -396,7 +415,17 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
                         )}
                       </div>
                     </td>
-                    <td>{repName(h.rep) ?? <span className="muted">Applied online</span>}</td>
+                    <td>
+                      {repName(h.rep) ?? <span className="muted">Applied online</span>}
+                      {finders.get(h.id) && (
+                        <div className="small" style={{ marginTop: 6 }}>
+                          Finder&rsquo;s share ({FINDER_PCT}%): <strong>{repName(people.get(finders.get(h.id)!.staffId))}</strong>{" "}
+                          {money(finders.get(h.id)!.cents)}{" "}
+                          {finders.get(h.id)!.paidAt ? <span className="tag tag-good">Paid out</span> : <span className="tag tag-gold">Owed</span>}
+                          <div className="muted">{HOW_LABEL[finders.get(h.id)!.how]}</div>
+                        </div>
+                      )}
+                    </td>
                     <td>
                       {!earns ? (
                         <span className="muted small">{h.status === "refunded" ? "None (refunded)" : "None"}</span>

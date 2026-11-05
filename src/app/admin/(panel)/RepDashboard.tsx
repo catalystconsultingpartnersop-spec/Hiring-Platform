@@ -1,7 +1,8 @@
 import { hiddenStaffIds } from "@/lib/hiddenStaff";
 import { isCheckAccount } from "@/lib/session";
 import Link from "next/link";
-import { commissionOf, commissionTerms, loadAgreements } from "@/lib/adminData";
+import { commissionOf, commissionTerms, finderSharesFor, loadAgreements } from "@/lib/adminData";
+import { FINDER_PCT, HOW_LABEL } from "@/lib/finder";
 import { db } from "@/lib/db";
 import { dateShort, money, refCode } from "@/lib/format";
 
@@ -33,8 +34,13 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
     .sort((x, y) => (y.h.paid_at ?? "").localeCompare(x.h.paid_at ?? ""));
   const live = hires.filter(({ h }) => h.status === "paid" || h.status === "hired");
   const me = people.get(staffId);
-  const earned = live.reduce((s, { h }) => s + commissionOf(h, pct, me), 0);
-  const paidOut = live.filter(({ h }) => h.commission_paid_at).reduce((s, { h }) => s + commissionOf(h, pct, me), 0);
+  // Finder's shares: owners this rep found, on anyone's candidate.
+  const allShares = await finderSharesFor(agreements);
+  const found = agreements.flatMap((a) => a.hires.filter((h) => allShares.get(h.id)?.staffId === staffId).map((h) => ({ h, a, f: allShares.get(h.id)! })));
+  const earned = live.reduce((s, { h }) => s + commissionOf(h, pct, me), 0) + found.reduce((s, x) => s + x.f.cents, 0);
+  const paidOut =
+    live.filter(({ h }) => h.commission_paid_at).reduce((s, { h }) => s + commissionOf(h, pct, me), 0) +
+    found.filter((x) => x.f.paidAt).reduce((s, x) => s + x.f.cents, 0);
   const owed = earned - paidOut;
 
   return (
@@ -88,7 +94,7 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
             {hires.length ? `Every hire (${hires.length})` : "Hires"} · {money(paidOut)} paid out so far
           </summary>
           <div style={{ marginTop: 12 }}>
-          {hires.length === 0 ? (
+          {hires.length + found.length === 0 ? (
             <p className="small muted">
               No hires yet. When a client hires one of {self ? "your" : "their"} candidates, it shows up here with the
               commission.
@@ -130,11 +136,26 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
                     </td>
                   </tr>
                 ))}
+                {found.map(({ h, a, f }) => (
+                  <tr key={`f-${h.id}`}>
+                    <td>
+                      <Link prefetch={false} href={`/admin/candidates/${a.candidate_id}`}>{a.candidates.full_name}</Link>
+                      <div className="small muted">
+                        Finder&rsquo;s share: {HOW_LABEL[f.how]}
+                      </div>
+                    </td>
+                    <td>{a.owners.company}</td>
+                    <td>{money(h.amount_cents)}</td>
+                    <td>
+                      <strong>{money(f.cents)}</strong> {f.paidAt ? <span className="tag tag-good">Paid {dateShort(f.paidAt)}</span> : <span className="tag tag-gold">Owed</span>}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           )}
           <p className="small muted" style={{ margin: "12px 0 0" }}>
-            {self ? "Your" : "Their"} commission: {commissionTerms(me, pct)}, unless agreed otherwise for a hire.
+            {self ? "Your" : "Their"} commission: {commissionTerms(me, pct)}, unless agreed otherwise for a hire. Plus a {FINDER_PCT}% finder&rsquo;s share whenever {self ? "you find" : "they find"} the business owner who hires, on anyone&rsquo;s candidate.
           </p>
           </div>
         </details>

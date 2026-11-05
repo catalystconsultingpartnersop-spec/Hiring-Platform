@@ -874,6 +874,16 @@ export async function payRepAll(repId: string, hireIds: string, form: FormData) 
   const me = await requireAdmin();
   const note = String(form.get("note") ?? "").trim().slice(0, 200) || null;
   let total = 0;
+  // Finder's shares come in as "f:<hire id>".
+  const finderIds = hireIds.split(",").filter((x) => x.startsWith("f:")).map((x) => x.slice(2));
+  if (finderIds.length) {
+    const { loadAgreements, finderSharesFor } = await import("@/lib/adminData");
+    const { markFinderPaid } = await import("@/lib/finder");
+    const shares = await finderSharesFor((await loadAgreements()).rows);
+    const due = finderIds.map((id) => shares.get(id)).filter((f): f is NonNullable<typeof f> => !!f && f.staffId === repId && !f.paidAt);
+    await markFinderPaid(due.map((f) => ({ hireId: f.hireId, staffId: f.staffId, cents: f.cents, how: f.how })));
+    total += due.reduce((s, f) => s + f.cents, 0);
+  }
   for (const id of hireIds.split(",").filter((x) => /^[0-9a-f-]{36}$/i.test(x))) {
     const { data: h } = await db().from("hires").select("commission_paid_at").eq("id", id).single();
     if (!h || h.commission_paid_at) continue;
