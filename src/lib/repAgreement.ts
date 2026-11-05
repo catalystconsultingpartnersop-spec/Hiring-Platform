@@ -21,8 +21,9 @@ This Agreement is between ${us} ("we" or "us") and ${opts.repName || "the person
 1.2 You will treat every candidate, client and colleague with dignity and respect, be honest with them, and never pressure anyone. If what is right for a candidate and a quick fee ever conflict, you will choose what is right for the candidate.
 
 2. WHAT YOU DO
-2.1 You can focus on candidates (holding onboarding conversations, writing their profiles and supporting them through introductions and hires), on introducing business owners to candidates through our site, or both.
-2.2 You do this using our site and following our rep guide.
+2.1 Your main work is with candidates: holding onboarding conversations, writing their profiles and supporting them through introductions and hires.
+2.2 In addition, you may introduce business owners to candidates through our site.
+2.3 You do this using our site and following our rep guide.
 
 3. INDEPENDENT CONTRACTOR
 3.1 You are an independent contractor, not an employee, partner or agent. You choose your own hours and use your own phone, computer and internet.
@@ -31,7 +32,7 @@ This Agreement is between ${us} ("we" or "us") and ${opts.repName || "the person
 
 4. COMMISSION
 4.1 Your candidates: for each candidate you bring in, we pay you ${pay}, unless we agree a different amount in writing for a specific hire.
-4.2 Your introductions: when you introduce a business owner through our site, by passing a candidate's profile to them through the site or by the owner signing up through your personal link, and that owner hires any candidate on our site, we also pay you ${FINDER_PCT}% of the placement fee we actually collect for that hire. This applies to anyone's candidate, including your own. If more than one person introduced the same owner to the same candidate, the first introduction recorded on our site counts.
+4.2 Your introductions: when you introduce a business owner through our site, by passing a candidate's profile to them through the site or by the owner signing up through your personal link, and that owner hires any candidate on our site, we also pay you ${FINDER_PCT}% of the placement fee we actually collect for that hire. This applies to anyone's candidate, including your own. Only introductions recorded on our site count: a candidate you passed to the owner using the site, or an owner who signed up through your link. Introductions made outside the site (by phone, in person, a forwarded screenshot, or any other way the site cannot record) do not earn this share, and we do not review claims for them. If more than one person introduced the same owner to the same candidate, the first introduction recorded on our site counts.
 4.3 Commission is paid within 30 days after the later of (a) our receiving the fee and (b) the candidate's first day of work.
 4.4 If a fee is refunded, no commission is owed on it, and any commission already paid on it will be repaid or deducted from future commission.
 4.5 We may change your commission for future hires with 30 days' written notice. Changes never affect fees already collected.

@@ -435,10 +435,10 @@ export const team = {
         `<strong>Your terms</strong><br>` +
           (o.isAdmin
             ? "Admin access to the back office."
-            : `<strong>1. Your candidates:</strong> ${esc(o.terms)} when a candidate you brought in is hired.<br><strong>2. Your introductions:</strong> ${FINDER_PCT}% of the fee on any hire where you introduced the business owner through the site, on anyone&rsquo;s candidate.<br>Paid within 30 days after we collect the fee and the candidate starts work. Your commission is private. Independent contractor. Candidates never pay anything.`) +
+            : `<strong>1. Your candidates:</strong> ${esc(o.terms)} when a candidate you brought in is hired.<br><strong>2. Your introductions (extra):</strong> ${FINDER_PCT}% of the fee on any hire where you introduced the business owner through the site, on anyone&rsquo;s candidate. <span style="font-size:13px;color:#5b6475">Only introductions the site records count: Suggest, or your link. Offline introductions can&rsquo;t be credited.</span><br>Paid within 30 days after we collect the fee and the candidate starts work. Your commission is private. Independent contractor. Candidates never pay anything.`) +
           (o.note ? `<br>${esc(o.note)}` : ""),
       ) +
-      p(`<strong>Choose your focus.</strong> You can work with candidates, introduce business owners, or both. Whatever fits you.`) +
+      p(`<strong>Candidates come first.</strong> Your main work is with candidates. If you also know business owners, introducing them is a welcome extra, and it pays too.`) +
       `<p style="margin:0 0 8px;font-weight:700">How to start (about 20 minutes)</p>` +
       `<ol style="margin:0 0 16px;padding-left:20px">
 <li style="margin:6px 0"><strong>Press Get started</strong> below and choose a password. You&rsquo;re signed in right away.</li>

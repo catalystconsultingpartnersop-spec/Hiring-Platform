@@ -6,7 +6,8 @@ import { PrintButton } from "@/components/PrintButton";
 import { db } from "@/lib/db";
 import { brandName } from "@/lib/format";
 
-import { repAgreementText, repTerms } from "@/lib/repAgreement";
+import { REP_AGREEMENT_VERSION, repAgreementText, repTerms } from "@/lib/repAgreement";
+import { FINDER_PCT } from "@/lib/finder";
 import { requireStaff } from "@/lib/session";
 import { commissionPercent } from "@/lib/settings";
 import { SignRep } from "./SignRep";
@@ -52,6 +53,22 @@ export default async function RepAgreementPage({ searchParams }: PageProps<"/adm
             Welcome aboard. Thank you for caring about candidates. Next: <Link href="/admin/guide">read the rep guide</Link>{" "}
             and <Link href="/admin/hours">set your hours</Link>.
           </p>
+        )}
+        {(row.agreement_version ?? "") < REP_AGREEMENT_VERSION && (
+          <div className="panel" style={{ marginTop: 16, background: "#fff8e1", borderColor: "#f3d27a" }}>
+            <p style={{ margin: "0 0 6px", fontWeight: 800 }}>Added November 5, 2026: your introduction share</p>
+            <p style={{ margin: "0 0 6px" }}>
+              On top of your commission below, when you introduce a business owner through the site and they hire, you earn{" "}
+              <b>{FINDER_PCT}% of the fee we collect</b> for that hire, on anyone&rsquo;s candidate, yours included. Your main work
+              is still with candidates; this is an extra.
+            </p>
+            <p className="small muted" style={{ margin: 0 }}>
+              It counts only when the site records the introduction: you used Suggest on the candidate, or the owner signed up
+              through your link. Introductions made outside the site can&rsquo;t be tracked, so they aren&rsquo;t credited. If two
+              people introduced the same owner to the same candidate, the first one recorded counts. Paid on the same schedule as
+              your commission. Commissions are private.
+            </p>
+          </div>
         )}
         <div style={{ marginTop: 18 }}>
           <AgreementDoc

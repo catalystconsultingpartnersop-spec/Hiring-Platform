@@ -81,7 +81,7 @@ export default async function RepGuide() {
 
       <section id="pay" className={styles.mission} style={{ scrollMarginTop: 16 }}>
         <p className={styles.missionLabel}>How you earn</p>
-        <h2>Two simple ways.</h2>
+        <h2>Your candidates, plus an extra.</h2>
         <div className={styles.two}>
           <div>
             <p className={styles.label}>1. Your candidates</p>
@@ -91,7 +91,7 @@ export default async function RepGuide() {
             </p>
           </div>
           <div>
-            <p className={styles.label}>2. Your introductions</p>
+            <p className={styles.label}>2. Extra: your introductions</p>
             <p>
               When you introduce a business owner through the site and they hire, you earn <b>{FINDER_PCT}% of the fee</b>. On
               anyone&rsquo;s candidate, yours included. It counts when you tap <b>Suggest</b> on a candidate and send it to the
@@ -105,12 +105,19 @@ export default async function RepGuide() {
           candidate starts. It&rsquo;s private: other reps never see yours, and you never see theirs. Track it on your{" "}
           <Link href="/admin#earnings">dashboard</Link>.
         </p>
+        <p className="small muted" style={{ margin: "8px 0 0" }}>
+          Small print: the {FINDER_PCT}% counts only when the site records the introduction, meaning you used <b>Suggest</b> or the
+          owner came through your link. Introductions made outside the site (a phone call, in person, a forwarded screenshot)
+          can&rsquo;t be tracked, so they aren&rsquo;t credited, and we can&rsquo;t review claims for them. Use the site and
+          it&rsquo;s counted automatically.
+        </p>
         <p className={styles.missionLabel} style={{ marginTop: 18 }}>
-          Choose your focus
+          Candidates come first
         </p>
         <p style={{ margin: 0 }}>
-          Some reps love sitting with candidates. Some know lots of business owners. Some do both. Any of these works: pick yours
-          in the <Link href="/admin/room">Team Room</Link> so the team knows who to ask.
+          Your main work is with candidates: bringing them in, sitting with them, and getting them placed. If you also know
+          business owners, introducing them is a welcome extra. Mark it in the <Link href="/admin/room">Team Room</Link> so
+          the team knows who to ask.
         </p>
       </section>
 
