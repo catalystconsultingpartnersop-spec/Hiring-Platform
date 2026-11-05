@@ -73,7 +73,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
   const owed = earning.filter((h) => !h.commission_paid_at);
   const paidOut = earning.filter((h) => h.commission_paid_at);
   const sum = (rs: Row[]) => rs.reduce((s, h) => s + commissionOf(h, pct, h.rep), 0);
-  // The finder's share: 10% to whoever found the business owner.
+  // The finder's share: 5% to whoever found the business owner.
   const finders = await finderSharesFor(agreements);
   const finderList = [...finders.values()];
   const finderOwed = finderList.filter((f) => !f.paidAt);
