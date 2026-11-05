@@ -1044,13 +1044,43 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
       }),
     });
   }
+  // Their upcoming call goes with them, so the new rep has the recorded link
+  // and can start the recording. The old rep is told; the candidate's link stays the same.
+  let moved = 0;
+  if (rep && form.get("move_calls") === "on") {
+    const { data: calls } = await db()
+      .from("onboarding_calls")
+      .select("id, staff_id, starts_at, staff(email)")
+      .eq("candidate_id", candidateId)
+      .eq("status", "booked")
+      .gt("ends_at", new Date().toISOString());
+    const { cohostForCall, sendBookingEmails } = await import("@/lib/calls");
+    for (const k of (calls ?? []) as unknown as { id: string; staff_id: string; starts_at: string; staff: { email: string } | null }[]) {
+      if (k.staff_id === rep.id) continue;
+      await db().from("onboarding_calls").update({ staff_id: rep.id }).eq("id", k.id);
+      await cohostForCall(k.id).catch(() => null);
+      await sendBookingEmails(k.id, false, true, false);
+      if (k.staff?.email && k.staff.email.toLowerCase() !== rep.email.toLowerCase())
+        await sendEmail({
+          to: k.staff.email,
+          subject: `Your call with ${c.full_name} moved to ${rep.full_name || "another rep"}`,
+          html: `<p>The onboarding call with <strong>${escapeHtml(c.full_name)}</strong> on ${escapeHtml(new Date(k.starts_at).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" }))} now belongs to ${escapeHtml(rep.full_name || rep.email)}. They have the link. You can remove it from your calendar.</p>`,
+        }).catch(() => null);
+      await logActivity(staffActor(me), "call_moved_with_rep", { call_id: k.id, to: rep.id });
+      moved++;
+    }
+  }
   const tell = form.get("notify") === "on";
   if (rep && tell) {
     await sendEmail({ to: c.email, ...candMail.newRep({ name: c.full_name, rep: rep.full_name || "our team" }), replyTo: rep.email, fromName: rep.full_name ?? undefined });
   }
   revalidatePath("/admin/candidates");
   revalidatePath(`/admin/candidates/${candidateId}`);
-  return { ok: rep ? `Assigned to ${rep.full_name || rep.email}${tell ? ", and the candidate was told" : ". The candidate wasn't emailed"}.` : "Unassigned." };
+  return {
+    ok: rep
+      ? `Assigned to ${rep.full_name || rep.email}${moved ? `. Their upcoming call moved too, and ${(rep.full_name || "they").split(" ")[0]} has the link` : ""}${tell ? ". The candidate was told" : ". The candidate wasn't emailed"}.`
+      : "Unassigned.",
+  };
 }
 
 // ---------- Message all reps ----------

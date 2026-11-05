@@ -10,6 +10,7 @@ export function RepPicker(p: { candidateId: string; value: string; options: [str
   const [state, setState] = useState<FormState>({});
   const [pending, start] = useTransition();
   const [notify, setNotify] = useState(false);
+  const [moveCalls, setMoveCalls] = useState(true);
 
   function pick(next: string) {
     const before = value;
@@ -19,6 +20,7 @@ export function RepPicker(p: { candidateId: string; value: string; options: [str
       const fd = new FormData();
       fd.set("rep", next);
       if (notify) fd.set("notify", "on");
+      if (moveCalls) fd.set("move_calls", "on");
       try {
         const r = await assignRep(p.candidateId, {}, fd);
         if (r.error) setValue(before);
@@ -49,6 +51,9 @@ export function RepPicker(p: { candidateId: string; value: string; options: [str
       </select>
       <label className="small" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
         <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> Email the candidate about the change
+      </label>
+      <label className="small" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <input type="checkbox" checked={moveCalls} onChange={(e) => setMoveCalls(e.target.checked)} /> Move their upcoming call too
       </label>
       {pending ? (
         <span className="small muted">Saving…</span>
