@@ -1,3 +1,4 @@
+import { FINDER_PCT } from "./finder";
 import { Audience, kit } from "./emailKit";
 import { brandName, candidateUrl, contactPhone, money, siteUrl, teamUrl } from "./format";
 
@@ -432,18 +433,22 @@ export const team = {
       p(`<strong>Your job, in one line:</strong> help each candidate discover what they're naturally great at, and the kind of role they belong in. We use our own Strengths Assessment to put words to it. Every candidate is asked to take it before your call (it's free, about 8 minutes), and the result lands on their profile by itself. Then walk through it together.`) +
       box(
         `<strong>Your terms</strong><br>` +
-          (o.isAdmin ? "Admin access to the back office." : `Commission: <strong>${esc(o.terms)}</strong>, paid within 30 days after we collect the fee and the candidate starts work.<br>Independent contractor. Candidates never pay anything.`) +
+          (o.isAdmin
+            ? "Admin access to the back office."
+            : `<strong>1. Your candidates:</strong> ${esc(o.terms)} when a candidate you brought in is hired.<br><strong>2. Your introductions:</strong> ${FINDER_PCT}% of the fee on any hire where you introduced the business owner through the site, on anyone&rsquo;s candidate.<br>Paid within 30 days after we collect the fee and the candidate starts work. Your commission is private. Independent contractor. Candidates never pay anything.`) +
           (o.note ? `<br>${esc(o.note)}` : ""),
       ) +
+      p(`<strong>Choose your focus.</strong> You can work with candidates, introduce business owners, or both. Whatever fits you.`) +
       `<p style="margin:0 0 8px;font-weight:700">How to start (about 20 minutes)</p>` +
       `<ol style="margin:0 0 16px;padding-left:20px">
 <li style="margin:6px 0"><strong>Press Get started</strong> below and choose a password. You&rsquo;re signed in right away.</li>
 ${o.isAdmin ? "" : '<li style="margin:6px 0"><strong>Sign your rep agreement.</strong> It opens when you first sign in, one page, about three minutes.</li>'}
 <li style="margin:6px 0"><strong>Set your hours</strong> on <a href="${teamUrl()}/admin/hours" style="color:#17213a">My hours</a>. Candidates can then book calls with you. Every call gets its own Google Meet link automatically, so there&rsquo;s nothing else to set up.</li>
 <li style="margin:6px 0"><strong>Read the <a href="${teamUrl()}/admin/guide" style="color:#17213a">rep guide</a></strong>. A few minutes: what each part of your dashboard does, how to add a candidate, and how to run the call.</li>
+<li style="margin:6px 0"><strong>Say hi in the <a href="${teamUrl()}/admin/room" style="color:#17213a">Team Room</a></strong> and pick your focus there. It&rsquo;s where the team spotlights great candidates, asks &ldquo;who has someone?&rdquo; and holds team calls.</li>
 <li style="margin:6px 0"><strong>Find your first candidates.</strong> Send the &ldquo;looking for work&rdquo; picture from your <a href="${teamUrl()}/admin/share" style="color:#17213a">Share kit</a> to your network. Anyone who signs up through your link is added as yours. You can also add someone yourself with <a href="${teamUrl()}/admin/candidates/new" style="color:#17213a">+ Add candidate</a>.</li>
 </ol>` +
-      p(`<strong>Know business owners?</strong> Send them the owner picture from the same <a href="${teamUrl()}/admin/share" style="color:#17213a">Share kit</a>: one picture, one short message, your own link. Owners who join through it are credited to you, and the site does the rest.`) +
+      p(`<strong>Know business owners?</strong> Two easy ways, and both credit you: send them the owner picture from your <a href="${teamUrl()}/admin/share" style="color:#17213a">Share kit</a>, or open any candidate and tap <strong>Suggest</strong> to send that profile to an owner you know. If they hire, you earn your ${FINDER_PCT}% introduction share.`) +
       (o.workEmail
         ? box(`<strong>Your work email is on its way:</strong> ${esc(o.workEmail)}. Google will email you a link to sign in and choose a password. Until then, everything works with this email, so you can start today.`)
         : "") +

@@ -5,6 +5,7 @@ import { contactPhone, teamUrl } from "@/lib/format";
 import { requireStaff } from "@/lib/session";
 import { commissionPercent } from "@/lib/settings";
 import { commissionTerms } from "@/lib/adminData";
+import { FINDER_PCT } from "@/lib/finder";
 import { db } from "@/lib/db";
 import styles from "./guide.module.css";
 
@@ -68,13 +69,50 @@ export default async function RepGuide() {
         </div>
         <div>
           <strong>Your pay</strong>
-          <span>{commissionTerms(row, pct)} for candidates you bring in</span>
+          <span>
+            {commissionTerms(row, pct)} on your candidates, plus {FINDER_PCT}% on owners you introduce. <a href="#pay">How it works</a>
+          </span>
         </div>
         <div>
           <strong>Stuck?</strong>
           <span>Text Heshy at {contactPhone()}</span>
         </div>
       </div>
+
+      <section id="pay" className={styles.mission} style={{ scrollMarginTop: 16 }}>
+        <p className={styles.missionLabel}>How you earn</p>
+        <h2>Two simple ways.</h2>
+        <div className={styles.two}>
+          <div>
+            <p className={styles.label}>1. Your candidates</p>
+            <p>
+              When a candidate you brought in is hired, you earn <b>{commissionTerms(row, pct)}</b>. That&rsquo;s the rate set for
+              you, and it&rsquo;s the rate you get.
+            </p>
+          </div>
+          <div>
+            <p className={styles.label}>2. Your introductions</p>
+            <p>
+              When you introduce a business owner through the site and they hire, you earn <b>{FINDER_PCT}% of the fee</b>. On
+              anyone&rsquo;s candidate, yours included. It counts when you tap <b>Suggest</b> on a candidate and send it to the
+              owner, or when the owner signs up through your Share kit link.
+            </p>
+          </div>
+        </div>
+        <p className={styles.tip} style={{ marginTop: 10 }}>
+          Example, on a $5,000 fee: your own candidate is hired, you earn your rate (at 40%, that&rsquo;s $2,000). You also introduced the owner? Add $
+          {((5000 * FINDER_PCT) / 100).toLocaleString("en-US")}. Commission is paid within 30 days after we collect the fee and the
+          candidate starts. It&rsquo;s private: other reps never see yours, and you never see theirs. Track it on your{" "}
+          <Link href="/admin#earnings">dashboard</Link>.
+        </p>
+        <p className={styles.missionLabel} style={{ marginTop: 18 }}>
+          Choose your focus
+        </p>
+        <p style={{ margin: 0 }}>
+          Some reps love sitting with candidates. Some know lots of business owners. Some do both. Any of these works: pick yours
+          in the <Link href="/admin/room">Team Room</Link> so the team knows who to ask.
+        </p>
+      </section>
 
       <h2>Your dashboard, at a glance</h2>
       <div className={styles.two} style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
@@ -88,7 +126,22 @@ export default async function RepGuide() {
           <p className={styles.label}>
             <Link href="/admin/candidates">Candidates</Link>
           </p>
-          <p>Everyone in the system, by status. Search by name, email or ref, and open anyone to edit their profile.</p>
+          <p>
+            Your candidates, or switch to <b>Everyone</b> to see the whole team&rsquo;s. You can view anyone; you edit your own.
+            The <b>⭐ Gold standard</b> tab shows the ones reps marked as worth placing.
+          </p>
+        </div>
+        <div>
+          <p className={styles.label}>
+            <Link href="/admin/room">Team Room</Link>
+          </p>
+          <p>Spotlight great candidates, ask &ldquo;who has someone?&rdquo;, celebrate hires, and join team calls.</p>
+        </div>
+        <div>
+          <p className={styles.label}>
+            <Link href="/admin/assessments">Strengths Assessment</Link>
+          </p>
+          <p>Send our free Strengths Assessment to anyone and see the results.</p>
         </div>
         <div>
           <p className={styles.label}>
@@ -129,34 +182,41 @@ export default async function RepGuide() {
       </div>
 
       <section id="new" className={styles.mission} style={{ scrollMarginTop: 16 }}>
-        <p className={styles.missionLabel}>New this week</p>
-        <h2>Less busywork, more time with candidates.</h2>
+        <p className={styles.missionLabel}>What&rsquo;s new</p>
+        <h2>Built to make you faster.</h2>
         <ul style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 8 }}>
           <li>
-            <b>Your calls record and take notes for you.</b> Every call booked through the site gets its own Google Meet room.
-            Afterwards the site drafts the candidate&rsquo;s profile from the conversation and emails you.{" "}
-            <a href="#call">How it works</a>
+            <b>The Team Room.</b> One place for the team: spotlight a candidate, post &ldquo;looking for&hellip;&rdquo; when an owner
+            needs someone, attach candidates in one tap, and schedule team calls that record themselves and send everyone the
+            notes. <Link href="/admin/room">Open it</Link>
+          </li>
+          <li>
+            <b>See every candidate.</b> Candidates shows yours by default; switch to Everyone to browse the whole team&rsquo;s.
+            Other reps&rsquo; candidates are view-only.
+          </li>
+          <li>
+            <b>Suggest a candidate.</b> Know an owner who&rsquo;d want to meet someone? Tap <b>Suggest</b> on their page and send it
+            by WhatsApp, text or email. You earn the {FINDER_PCT}% introduction share if they hire. <a href="#owners">More</a>
+          </li>
+          <li>
+            <b>⭐ Gold standard.</b> Met someone great? Mark your candidate as gold so the team knows they&rsquo;re worth placing.
+            Only the team sees it.
+          </li>
+          <li>
+            <b>Start a call now.</b> On the phone with someone? Tap <b>Start a call now</b> on your dashboard or their profile for a
+            recorded video link right away, even before they&rsquo;re in the system.
+          </li>
+          <li>
+            <b>Your call notes, in your inbox.</b> After a recorded call, the site drafts the profile and emails you the notes
+            from the call, so you can read them on your phone.
+          </li>
+          <li>
+            <b>Your first take.</b> When adding a candidate, say or type a few lines about them. The site writes the whole
+            profile around it, from their resume, or without one.
           </li>
           <li>
             <b>One-click reminders.</b> On any candidate&rsquo;s profile, tap <b>Send a reminder</b> to nudge them about the
-            assessment, booking, their agreement or their resume. <a href="#call">More</a>
-          </li>
-          <li>
-            <b>More flexible hours.</b> Add several time blocks a day, in 15-minute steps. A block with room for one call is
-            one call that fills it, so 1:00 to 1:30 is a 30-minute call and 5:30 to 6:15 is a 45-minute call.{" "}
-            <a href="#hours">Set your hours</a>
-          </li>
-          <li>
-            <b>Nothing to sign after the call.</b> Candidates sign their agreement when they apply, so <b>List now</b> puts
-            them live right away. <a href="#profile">More</a>
-          </li>
-          <li>
-            <b>Our own Strengths Assessment.</b> Candidates are asked right after booking, and their result lands on their
-            profile by itself. They get a reminder the day before if they haven&rsquo;t taken it, and you get a heads-up.
-          </li>
-          <li>
-            <b>Your candidate link shows only the candidate side.</b> People who come in through it or the flyer don&rsquo;t
-            see Browse candidates or the business pages for now.
+            assessment, booking, their agreement or their resume.
           </li>
         </ul>
       </section>
@@ -257,9 +317,14 @@ export default async function RepGuide() {
         </li>
       </ol>
 
-      <section className={styles.mission} style={{ marginTop: 8 }}>
+      <section id="owners" className={styles.mission} style={{ marginTop: 8, scrollMarginTop: 16 }}>
         <p className={styles.missionLabel}>Know business owners?</p>
-        <h2>Send them the share kit. That&rsquo;s it.</h2>
+        <h2>Two easy ways to introduce them.</h2>
+        <p>
+          <b>Have a specific candidate in mind?</b> Open their page (yours or anyone&rsquo;s) and tap <b>Suggest</b>. Pick WhatsApp,
+          text or email, and a short, ready-made message goes out with a link to their anonymous profile. It&rsquo;s recorded as
+          your introduction.
+        </p>
         <p>
           Everyone has business owners in their contacts. Open <Link href="/admin/share#owners">Share kit</Link> in your menu.
           On your phone, tap <b>Share</b> and pick the person: the message goes out with your link, and WhatsApp shows our
@@ -267,9 +332,9 @@ export default async function RepGuide() {
           for you, so just paste it as the caption.
         </p>
         <p>
-          Your link carries your name, so every owner who joins through it is credited to you. You don&rsquo;t need to follow
-          up or explain anything. The page they land on does that, and the site takes it from there. Your time still goes to
-          candidates.
+          <b>Or send the share kit.</b> Your link carries your name, so every owner who joins through it is credited to you. You don&rsquo;t need to follow
+          up or explain anything. The page they land on does that, and the site takes it from there. Either way, if they hire, you
+          earn your {FINDER_PCT}% introduction share.
         </p>
       </section>
 
@@ -292,6 +357,8 @@ export default async function RepGuide() {
         <li>Never advise a client on how to run their business. We help them find vetted candidates.</li>
         <li>Speak positively about everyone: candidates, employers and other recruiters.</li>
         <li>Never share a candidate&rsquo;s details outside the site. Employers get them by signing.</li>
+        <li>You can view every candidate, but only change your own. To hand one off, change the Rep on their page.</li>
+        <li>Commissions are private. Never ask about or discuss another rep&rsquo;s pay.</li>
         <li>If a candidate finds a job, say congratulations, and set them to Hired or Paused.</li>
         <li>To take someone off the site, set their status to Archived.</li>
       </ul>

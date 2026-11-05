@@ -1,8 +1,9 @@
 import { legalEntity } from "./agreement";
+import { FINDER_PCT } from "./finder";
 
 // The short agreement every rep signs before using the back office. Each
 // signature stores the exact text and version signed. Have a lawyer review it.
-export const REP_AGREEMENT_VERSION = "2026-10-29";
+export const REP_AGREEMENT_VERSION = "2026-11-05";
 
 export function repAgreementText(opts: { brand: string; repName: string; percent: number; flat?: number | null }) {
   const pay =
@@ -20,7 +21,8 @@ This Agreement is between ${us} ("we" or "us") and ${opts.repName || "the person
 1.2 You will treat every candidate, client and colleague with dignity and respect, be honest with them, and never pressure anyone. If what is right for a candidate and a quick fee ever conflict, you will choose what is right for the candidate.
 
 2. WHAT YOU DO
-You hold onboarding conversations with candidates, write their profiles on our site, and support candidates and clients through introductions and hires, using our site and following our rep guide.
+2.1 You can focus on candidates (holding onboarding conversations, writing their profiles and supporting them through introductions and hires), on introducing business owners to candidates through our site, or both.
+2.2 You do this using our site and following our rep guide.
 
 3. INDEPENDENT CONTRACTOR
 3.1 You are an independent contractor, not an employee, partner or agent. You choose your own hours and use your own phone, computer and internet.
@@ -28,10 +30,12 @@ You hold onboarding conversations with candidates, write their profiles on our s
 3.3 You may not sign anything, make any promise, or agree any fee on our behalf.
 
 4. COMMISSION
-4.1 For each candidate you bring in, we pay you ${pay}, unless we agree a different amount in writing for a specific hire.
-4.2 Commission is paid within 30 days after the later of (a) our receiving the fee and (b) the candidate's first day of work.
-4.3 If a fee is refunded, no commission is owed on it, and any commission already paid on it will be repaid or deducted from future commission.
-4.4 We may change your commission for future hires with 30 days' written notice. Changes never affect fees already collected.
+4.1 Your candidates: for each candidate you bring in, we pay you ${pay}, unless we agree a different amount in writing for a specific hire.
+4.2 Your introductions: when you introduce a business owner through our site, by passing a candidate's profile to them through the site or by the owner signing up through your personal link, and that owner hires any candidate on our site, we also pay you ${FINDER_PCT}% of the placement fee we actually collect for that hire. This applies to anyone's candidate, including your own. If more than one person introduced the same owner to the same candidate, the first introduction recorded on our site counts.
+4.3 Commission is paid within 30 days after the later of (a) our receiving the fee and (b) the candidate's first day of work.
+4.4 If a fee is refunded, no commission is owed on it, and any commission already paid on it will be repaid or deducted from future commission.
+4.5 We may change your commission for future hires with 30 days' written notice. Changes never affect fees already collected.
+4.6 Commissions are private. Other reps never see yours, and you never see theirs.
 
 5. CANDIDATES COME FIRST, AND STAY FREE
 You will never ask for or accept money, gifts or favors from a candidate. Our service is always free for candidates.
@@ -48,8 +52,8 @@ You will not promise anyone a job, salary or result. You will speak positively a
 
 9. ENDING THIS AGREEMENT
 9.1 Either of us may end this Agreement at any time by email.
-9.2 After it ends, you still earn commission under section 4 on fees we collect within 90 days for candidates you brought in before it ended.
-9.3 Sections 4.3, 6 and 7 continue after it ends.
+9.2 After it ends, you still earn commission under section 4 on fees we collect within 90 days for candidates you brought in, and owners you introduced, before it ended.
+9.3 Sections 4.4, 6 and 7 continue after it ends.
 
 10. GENERAL
 This Agreement is governed by the laws of the State of New York. It is the entire agreement between us about this work, and changes must be in writing. Typing your name and confirming is your electronic signature and has the same effect as a handwritten one. We keep a record of the date, time and IP address.`;
