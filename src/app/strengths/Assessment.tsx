@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { Answers, ITEMS, MAX_EXTRA, nextExtra, PAIRS, Result, SCALE, SNIPPETS, TRAITS } from "@/lib/assessment";
 import { describe, type Letter } from "@/lib/strengths";
-import { submitAssessment } from "./actions";
+import { submitAssessment, type NextStep } from "./actions";
 import s from "./strengths.module.css";
 
 const SAVE = "tcc-strengths-v2";
@@ -25,6 +25,7 @@ export function Assessment({ token }: { token: string | null }) {
   const [email, setEmail] = useState("");
   const [a, setA] = useState<Answers>(empty);
   const [result, setResult] = useState<Result | null>(null);
+  const [after, setAfter] = useState<NextStep | null>(null);
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
 
@@ -69,6 +70,7 @@ export function Assessment({ token }: { token: string | null }) {
       const r = await submitAssessment(name, email, a, token).catch(() => ({ error: "Something went wrong. Try again." }) as { error: string });
       if ("result" in r && r.result) {
         setResult(r.result);
+        setAfter(r.next ?? null);
         try {
           localStorage.removeItem(SAVE);
         } catch {}
@@ -77,7 +79,7 @@ export function Assessment({ token }: { token: string | null }) {
     });
   }
 
-  if (result) return <Results name={name} r={result} />;
+  if (result) return <Results name={name} r={result} next={after} />;
 
   if (step < 0)
     return (
@@ -219,7 +221,7 @@ export function Assessment({ token }: { token: string | null }) {
   );
 }
 
-function Results({ name, r }: { name: string; r: Result }) {
+function Results({ name, r, next }: { name: string; r: Result; next: NextStep | null }) {
   const first = name.trim().split(/\s+/)[0];
   const top = r.order.slice(0, 2);
   const d = describe(r.letters);
@@ -239,6 +241,7 @@ function Results({ name, r }: { name: string; r: Result }) {
           <b>{d.name}.</b> {d.line}
         </p>
       )}
+      {next && <WhatsNext next={next} />}
       {tiers.map(([h, p, ks, cls]) => (
         <section key={h} className={`${s.tier} ${cls}`}>
           <h3>{h}</h3>
@@ -264,5 +267,64 @@ function Results({ name, r }: { name: string; r: Result }) {
         we want to hear.
       </p>
     </div>
+  );
+}
+
+// Right under their result: what happens now, so nobody is left wondering.
+function WhatsNext({ next }: { next: NextStep }) {
+  if (next.kind === "listed")
+    return (
+      <section className={s.next}>
+        <p className={s.nextLabel}>All set</p>
+        <p>We&rsquo;ve added this to your profile. Nothing for you to do.</p>
+      </section>
+    );
+  if (next.kind === "after_call")
+    return (
+      <section className={s.next}>
+        <p className={s.nextLabel}>What&rsquo;s next</p>
+        <h3>{next.rep} has your results</h3>
+        <p>They&rsquo;re using them for your profile. We&rsquo;ll be in touch soon. Nothing for you to do right now.</p>
+      </section>
+    );
+  if (next.kind === "call")
+    return (
+      <section className={s.next}>
+        <p className={s.nextLabel}>What&rsquo;s next</p>
+        <h3>Your call with {next.rep}</h3>
+        <p className={s.nextWhen}>{next.when}</p>
+        <p>{next.rep} already has your results and will go through them with you. Nothing else to do before then.</p>
+        <div className={s.nextRow}>
+          {next.join && (
+            <a className="btn btn-gold" href={next.join}>
+              Join link for the call
+            </a>
+          )}
+          <a className="small" href={next.manage}>
+            Need a different time?
+          </a>
+        </div>
+      </section>
+    );
+  if (next.kind === "book")
+    return (
+      <section className={s.next}>
+        <p className={s.nextLabel}>What&rsquo;s next</p>
+        <h3>Pick a time for your call</h3>
+        <p>A free call with one of our team. Together you&rsquo;ll go through these results and figure out what kind of work fits you best.</p>
+        <a className="btn btn-gold" href={next.url}>
+          Pick a time →
+        </a>
+      </section>
+    );
+  return (
+    <section className={s.next}>
+      <p className={s.nextLabel}>What&rsquo;s next</p>
+      <h3>Want help finding work that fits?</h3>
+      <p>Sign up (it takes two minutes) and book a free call with our team. Use the same email so we can match your results.</p>
+      <a className="btn btn-gold" href={next.url}>
+        Get started →
+      </a>
+    </section>
   );
 }

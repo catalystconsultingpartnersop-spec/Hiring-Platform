@@ -79,3 +79,10 @@
 .t3 { background: #fff; border: 1.5px dashed var(--line); }
 .t3 .tierGrid div { background: var(--wash); }
 @media (max-width: 600px) { .tierGrid { grid-template-columns: 1fr; } }
+.next { margin: 22px 0 8px; padding: 20px 22px; border-radius: var(--radius-lg); background: var(--ink); color: #fff; }
+.next h3 { color: #fff; font-size: 22px; margin: 2px 0 6px; }
+.next p { color: rgba(255,255,255,0.85); margin: 0 0 14px; line-height: 1.55; }
+.next a.small { color: #fff; }
+.nextLabel { text-transform: uppercase; letter-spacing: 0.08em; font-size: 13px; font-weight: 800; color: var(--marigold) !important; margin: 0 !important; }
+.nextWhen { font-size: 20px; font-weight: 800; color: #fff !important; }
+.nextRow { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
