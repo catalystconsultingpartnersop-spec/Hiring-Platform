@@ -215,6 +215,10 @@ export default async function RepGuide() {
             profile around it, from their resume, or without one.
           </li>
           <li>
+            <b>Your candidate link shows only the candidate side.</b> People who come in through it or the flyer don&rsquo;t
+            see Browse candidates or the business pages for now.
+          </li>
+          <li>
             <b>One-click reminders.</b> On any candidate&rsquo;s profile, tap <b>Send a reminder</b> to nudge them about the
             assessment, booking, their agreement or their resume.
           </li>
@@ -333,8 +337,8 @@ export default async function RepGuide() {
         </p>
         <p>
           <b>Or send the share kit.</b> Your link carries your name, so every owner who joins through it is credited to you. You don&rsquo;t need to follow
-          up or explain anything. The page they land on does that, and the site takes it from there. Either way, if they hire, you
-          earn your {FINDER_PCT}% introduction share.
+          up or explain anything. The page they land on does that, and the site takes it from there. Your time still goes to
+          candidates. Either way, if they hire, you earn your {FINDER_PCT}% introduction share.
         </p>
       </section>
 
