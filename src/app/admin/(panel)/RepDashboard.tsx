@@ -1,3 +1,6 @@
+import { BookingLink } from "./BookingLink";
+import { candidateUrl } from "@/lib/format";
+import { refSlug } from "@/lib/shareKit";
 import { hiddenStaffIds } from "@/lib/hiddenStaff";
 import { isCheckAccount } from "@/lib/session";
 import Link from "next/link";
@@ -77,6 +80,14 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
             See what&rsquo;s new
           </Link>
         </p>
+      )}
+
+      {self && (
+        <BookingLink
+          link={`${candidateUrl()}/book/${refSlug(name.split(" ")[0])}`}
+          first={name.split(" ")[0]}
+          hasHours={!!(await db().from("staff_availability").select("staff_id", { count: "exact", head: true }).eq("staff_id", staffId)).count}
+        />
       )}
 
       {work && <RepWork r={work} self={self} reps={staffList} canMove={!self} owed={money(owed)} />}
