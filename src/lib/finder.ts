@@ -3,13 +3,13 @@ import { isCheckAccount, isOwnerEmail } from "./session";
 import { refSlug } from "./shareKit";
 import { getSetting, setSetting } from "./settings";
 
-// The finder's share: on every hire, 10% of the fee goes to whoever found the
+// The finder's share: on every hire, 5% of the fee goes to whoever found the
 // business owner. A rep who passed the candidate to that owner, or whose share
 // link the owner came through. If the owner found us on their own, it goes to the
 // partner who runs the owner side (Shloimy). The candidate's own rep still earns
 // their normal commission, and the company keeps its half either way.
 
-export const FINDER_PCT = 10;
+export const FINDER_PCT = 5;
 
 type StaffRow = { id: string; email: string; full_name: string | null; is_partner?: boolean | null; active?: boolean | null };
 export type FinderShare = { hireId: string; staffId: string; cents: number; how: "passed" | "link" | "came_in"; paidAt: string | null };
