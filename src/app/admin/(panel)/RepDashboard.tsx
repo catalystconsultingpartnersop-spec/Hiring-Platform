@@ -42,6 +42,7 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
     live.filter(({ h }) => h.commission_paid_at).reduce((s, { h }) => s + commissionOf(h, pct, me), 0) +
     found.filter((x) => x.f.paidAt).reduce((s, x) => s + x.f.cents, 0);
   const owed = earned - paidOut;
+  const myPhone = self ? ((await (await import("@/lib/staffPhones")).staffPhones())[staffId] ?? null) : null;
 
   return (
     <>
@@ -57,11 +58,20 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
           )}
         </p>
       </div>
-      {self && (
+      {self && !myPhone && (
         <p className="notice notice-gold" style={{ marginTop: 14, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <span>
-            <strong>New:</strong> our own Strengths Assessment replaces Working Genius. Candidates get it automatically, and
-            their results land on their profile.
+            <strong>Add your mobile number</strong> so we can text you about bookings and your candidates.
+          </span>
+          <Link className="btn btn-small" href="/admin/hours#phone">
+            Add it
+          </Link>
+        </p>
+      )}
+      {self && myPhone && (
+        <p className="notice notice-gold" style={{ marginTop: 14, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <span>
+            <strong>New:</strong> the Team Room, Suggest a candidate, the ⭐ gold badge, and a 5% introduction share.
           </span>
           <Link className="btn btn-small" href="/admin/guide#new">
             See what&rsquo;s new

@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
 import { HoursForm } from "./HoursForm";
+import { PhoneForm } from "@/components/PhoneForm";
+import { staffPhones } from "@/lib/staffPhones";
 import { callMinutesByRep, lengthFor } from "@/lib/slots";
 
 export default async function HoursPage() {
@@ -16,10 +18,11 @@ export default async function HoursPage() {
       </div>
     );
   }
-  const [{ data: rows }, { data: profile }, lengths] = await Promise.all([
+  const [{ data: rows }, { data: profile }, lengths, phones] = await Promise.all([
     db().from("staff_availability").select("weekday, start_minute, end_minute").eq("staff_id", me.id),
     db().from("staff").select("meeting_link, time_zone").eq("id", me.id).maybeSingle(),
     callMinutesByRep(),
+    staffPhones(),
   ]);
   return (
     <div style={{ maxWidth: 760 }}>
@@ -30,6 +33,7 @@ export default async function HoursPage() {
           these times, skips any you&rsquo;re already booked, and needs at least 12 hours&rsquo; notice.
         </p>
       </div>
+      <PhoneForm staffId={me.id} phone={phones[me.id] ?? null} self />
       <HoursForm
         windows={(rows ?? []) as { weekday: number; start_minute: number; end_minute: number }[]}
         meetingLink={profile?.meeting_link ?? ""}

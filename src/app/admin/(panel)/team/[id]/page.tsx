@@ -7,6 +7,8 @@ import { commissionPercent } from "@/lib/settings";
 import { workEmailDomain } from "@/lib/format";
 import { RepDashboard } from "../../RepDashboard";
 import { RepTerms } from "./RepTerms";
+import { PhoneForm } from "@/components/PhoneForm";
+import { staffPhones } from "@/lib/staffPhones";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +19,7 @@ export default async function RepView({ params }: PageProps<"/admin/team/[id]">)
   const { data } = await db().from("staff").select("*").eq("id", id).maybeSingle();
   if (!data) notFound();
   const pct = await commissionPercent();
+  const phones = await staffPhones();
   return (
     <>
       <p style={{ marginTop: 16 }}>
@@ -37,6 +40,9 @@ export default async function RepView({ params }: PageProps<"/admin/team/[id]">)
         email={data.email}
         domain={workEmailDomain()}
       />
+      <div style={{ maxWidth: 520, marginTop: 16 }}>
+        <PhoneForm staffId={data.id} phone={phones[data.id] ?? null} self={false} />
+      </div>
       <RepDashboard staffId={data.id} name={data.full_name || data.email} self={false} nowIso={new Date(nowMs()).toISOString()} />
     </>
   );

@@ -657,6 +657,11 @@ export async function addStaff(_prev: FormState, form: FormData): Promise<FormSt
     .select("id")
     .single();
   if (error || !data) return { error: `Could not add them: ${error?.message}` };
+  {
+    const { cleanPhone, setStaffPhone } = await import("@/lib/staffPhones");
+    const ph = cleanPhone(String(form.get("phone") ?? ""));
+    if (ph) await setStaffPhone(data.id as string, ph);
+  }
   await logActivity(staffActor(me), "staff_added", { email, role });
   revalidatePath("/admin/team");
   if (form.get("send_package") === "on") {
@@ -1688,4 +1693,24 @@ export async function setGold(candidateId: string, on: boolean, form?: FormData)
   await logActivity(staffActor(me), on ? "gold_on" : "gold_off", { candidate_id: candidateId });
   revalidatePath(`/admin/candidates/${candidateId}`);
   revalidatePath("/admin/candidates");
+}
+
+// ---------- Reps' mobile numbers ----------
+
+export async function savePhone(staffId: string, _prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requireStaff();
+  if (me.id !== staffId && me.role !== "admin") return { error: "You can only change your own number." };
+  const { cleanPhone, setStaffPhone } = await import("@/lib/staffPhones");
+  const raw = String(form.get("phone") ?? "").trim();
+  if (!raw) {
+    await setStaffPhone(staffId, null);
+    revalidatePath("/admin/hours");
+    return { ok: "Removed." };
+  }
+  const phone = cleanPhone(raw);
+  if (!phone) return { error: "That doesn't look like a US mobile number. Use 10 digits, like 917 555 0123." };
+  await setStaffPhone(staffId, phone);
+  revalidatePath("/admin/hours");
+  revalidatePath(`/admin/team/${staffId}`);
+  return { ok: "Saved." };
 }

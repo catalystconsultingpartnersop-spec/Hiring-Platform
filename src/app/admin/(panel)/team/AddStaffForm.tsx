@@ -18,6 +18,10 @@ export function AddStaffForm({ canAddAdmin, defaultPercent }: { canAddAdmin: boo
           <span>Email</span>
           <input className="input" type="email" name="email" required />
         </label>
+        <label className="field">
+          <span>Mobile number (optional)</span>
+          <input className="input" type="tel" name="phone" placeholder="(917) 555-0123" />
+        </label>
       </div>
       <label className="field" style={{ marginTop: 14 }}>
         <span>Role</span>
