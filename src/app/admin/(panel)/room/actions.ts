@@ -1,0 +1,91 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { db, logActivity } from "@/lib/db";
+import { escapeHtml, sendEmail } from "@/lib/email";
+import { teamUrl } from "@/lib/format";
+import { requireStaff, staffActor } from "@/lib/session";
+import { setSetting } from "@/lib/settings";
+import { allow, SLOW_DOWN } from "@/lib/throttle";
+import { codesIn, roomCandidates, specialties, teamMembers, type Kind, type Specialty } from "@/lib/teamRoom";
+
+export type RoomState = { error?: string; ok?: boolean };
+
+const KINDS: Kind[] = ["spotlight", "looking", "talk"];
+
+async function candIds(form: FormData, text: string) {
+  const picked = String(form.get("cands") ?? "").split(",").filter((x) => /^[0-9a-f-]{36}$/i.test(x));
+  const codes = codesIn(text);
+  if (!codes.length) return [...new Set(picked)].slice(0, 6);
+  const all = await roomCandidates();
+  const fromCodes = all.filter((c) => codes.some((k) => c.id.replace(/-/g, "").endsWith(k))).map((c) => c.id);
+  return [...new Set([...picked, ...fromCodes])].slice(0, 6);
+}
+
+// @Name tags: a short email to whoever was tagged.
+async function notifyTagged(text: string, me: { email: string; name: string }, link: string) {
+  const team = await teamMembers();
+  const tagged = team.filter((t) => t.email !== me.email && new RegExp(`@${t.name.split(" ")[0]}\\b`, "i").test(text));
+  for (const t of tagged)
+    await sendEmail({
+      to: t.email,
+      subject: `${me.name.split(" ")[0]} mentioned you in the Team Room`,
+      html: `<p><strong>${escapeHtml(me.name)}</strong> mentioned you:</p><blockquote style="border-left:3px solid #f2b300;margin:0;padding:6px 12px">${escapeHtml(text.slice(0, 600))}</blockquote><p><a href="${link}">Open the Team Room</a></p>`,
+    }).catch(() => null);
+}
+
+export async function postToRoom(_prev: RoomState, form: FormData): Promise<RoomState> {
+  const me = await requireStaff();
+  const kind = KINDS.includes(form.get("kind") as Kind) ? (form.get("kind") as Kind) : "talk";
+  const text = String(form.get("text") ?? "").trim().slice(0, 2000);
+  if (!text) return { error: "Write a line or two first." };
+  if (!(await allow(`room:${me.email}`, 30, 60))) return { error: SLOW_DOWN };
+  const cands = await candIds(form, text);
+  if (kind === "spotlight" && !cands.length) return { error: "Attach the candidate you're spotlighting." };
+  await logActivity(staffActor(me), "team_post", { kind, text, cands, by_name: me.name, by_id: me.id });
+  await notifyTagged(text, me, `${teamUrl()}/admin/room`);
+  revalidatePath("/admin/room");
+  return { ok: true };
+}
+
+export async function replyToPost(postId: number, _prev: RoomState, form: FormData): Promise<RoomState> {
+  const me = await requireStaff();
+  const text = String(form.get("text") ?? "").trim().slice(0, 2000);
+  const cands = await candIds(form, text);
+  if (!text && !cands.length) return { error: "Write a reply or attach a candidate." };
+  if (!(await allow(`room:${me.email}`, 30, 60))) return { error: SLOW_DOWN };
+  const { data: post } = await db().from("activity_log").select("id, actor, details").eq("id", postId).eq("action", "team_post").maybeSingle();
+  if (!post) return { error: "That post isn't there anymore." };
+  await logActivity(staffActor(me), "team_reply", { post_id: postId, text, cands, by_name: me.name, by_id: me.id });
+  const author = String(post.actor).replace(/^staff:/, "");
+  const link = `${teamUrl()}/admin/room#p${postId}`;
+  if (author && author !== me.email && author.includes("@"))
+    await sendEmail({
+      to: author,
+      subject: `${me.name.split(" ")[0]} replied to your post`,
+      html: `<p><strong>${escapeHtml(me.name)}</strong> replied in the Team Room${cands.length ? ` and attached ${cands.length === 1 ? "a candidate" : `${cands.length} candidates`}` : ""}:</p>${text ? `<blockquote style="border-left:3px solid #f2b300;margin:0;padding:6px 12px">${escapeHtml(text.slice(0, 600))}</blockquote>` : ""}<p><a href="${link}">See the reply</a></p>`,
+    }).catch(() => null);
+  await notifyTagged(text, me, link);
+  revalidatePath("/admin/room");
+  return { ok: true };
+}
+
+export async function removePost(postId: number) {
+  const me = await requireStaff();
+  const { data: post } = await db().from("activity_log").select("actor").eq("id", postId).eq("action", "team_post").maybeSingle();
+  if (!post) return;
+  if (!me.manager && String(post.actor) !== staffActor(me)) return;
+  await logActivity(staffActor(me), "team_post_removed", { post_id: postId });
+  revalidatePath("/admin/room");
+}
+
+export async function setSpecialty(form: FormData) {
+  const me = await requireStaff();
+  if (!me.id) return;
+  const v = String(form.get("specialty") ?? "");
+  const cur = await specialties();
+  if (v === "candidates" || v === "owners" || v === "both") cur[me.id] = v as Specialty;
+  else delete cur[me.id];
+  await setSetting("rep_specialty", cur);
+  revalidatePath("/admin/room");
+}

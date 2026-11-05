@@ -136,6 +136,9 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         <PointToOwner candidateId={c.id} headline={c.headline} link={`${siteUrl().replace(/^https?:\/\//, "")}/c/${refCode(c.id)}${me.name ? `?r=${refSlug(me.name.split(" ")[0])}` : ""}`} repFirst={(me.name || "").split(" ")[0]} mine={canEdit && !me.manager} first={c.full_name.split(" ")[0]} gold={!!goldOf(c as unknown as { status: string; application: Record<string, unknown> | null })} />
       )}
       <PointedLog candidateId={c.id} />
+      <p className="small" style={{ margin: "6px 0 0" }}>
+        <Link href={`/admin/room?spot=${c.id}`}>⭐ Post {c.full_name.split(" ")[0]} to the Team Room</Link>
+      </p>
       {callRows.some((k) => (k as { meet_space?: string | null }).meet_space && k.status !== "cancelled") && (() => {
         let d: { made_at?: string; private_notes?: string } | null = null;
         try {
