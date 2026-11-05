@@ -146,7 +146,7 @@ export async function makeCleanResume(candidateId: string, by: string): Promise<
     c.location_region ? `Location: ${c.location_region}` : "",
     languagesText(c.languages) ? `Languages: ${languagesText(c.languages)}` : "",
     app.looking_for ? `What they're looking for: ${app.looking_for}` : "",
-    repTake ? `What their rep knows about them (who they are and what they want next):\n${repTake}` : "",
+    repTake ? `What their rep knows about them (who they are and what they want next). This leads: the headline and summary at the top follow it, and nothing on the resume should contradict it:\n${repTake}` : "",
     app.experience ? `Experience they told us about: ${app.experience}` : "",
     c.summary ? `Our profile summary of them: ${c.summary}` : "",
     (c.highlights ?? []).length ? `Our highlights: ${(c.highlights as string[]).join("; ")}` : "",

@@ -1,3 +1,4 @@
+import { assessmentWeight, repTakeBlock } from "./repTake";
 import { db, logActivity } from "./db";
 import { ANONYMITY_RULES } from "./anonymity";
 import { gatherSources } from "./cleanResume";
@@ -69,6 +70,7 @@ export async function draftOwnerPage(candidateId: string, over: OwnerDraftOverri
   const { rep_take, ...fields } = over;
   const c = { ...g.c, ...Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined)) };
   const app = rep_take !== undefined ? { ...g.app, rep_take } : g.app;
+  const take = String(app.rep_take ?? "").trim();
   const p = profileOf(c.working_genius);
   const d = describe(c.working_genius);
   const facts = [
@@ -80,12 +82,13 @@ export async function draftOwnerPage(candidateId: string, over: OwnerDraftOverri
     c.work_mode && `Work setting: ${WORK_MODE_LABEL[c.work_mode as keyof typeof WORK_MODE_LABEL] ?? c.work_mode}`,
     salaryRange(c.salary_min, c.salary_max) && `Salary they're looking for: ${salaryRange(c.salary_min, c.salary_max)}`,
     languagesText(c.languages) && `Languages: ${languagesText(c.languages)}`,
-    p.primary.length && `Natural strengths (from their Strengths Assessment): ${p.primary.map((l) => TRAITS[l].label.toLowerCase()).join(", ")}`,
-    p.secondary.length && `Also good at: ${p.secondary.map((l) => TRAITS[l].label.toLowerCase()).join(", ")}`,
-    d && `How they work: ${d.thrives} ${d.alsoBrings ?? ""}`,
-    c.headline && `Current headline: ${c.headline}`,
-    c.summary && `Our current summary: ${c.summary}`,
-    (c.highlights ?? []).length && `Our highlights: ${(c.highlights as string[]).join("; ")}`,
+    p.primary.length && `Natural strengths (from their Strengths Assessment, ${assessmentWeight(app.rep_take)}): ${p.primary.map((l) => TRAITS[l].label.toLowerCase()).join(", ")}`,
+    !take && p.secondary.length && `Also good at: ${p.secondary.map((l) => TRAITS[l].label.toLowerCase()).join(", ")}`,
+    !take && d && `How they work: ${d.thrives} ${d.alsoBrings ?? ""}`,
+    // Older wording may have come from the assessment: with a rep take, it doesn't lead.
+    c.headline && `Current headline${take ? " (older wording; the rep's take replaces it)" : ""}: ${c.headline}`,
+    c.summary && `Our current summary${take ? " (older wording; the rep's take replaces it)" : ""}: ${c.summary}`,
+    !take && (c.highlights ?? []).length && `Our highlights: ${(c.highlights as string[]).join("; ")}`,
     app.looking_for && `What they told us they want: ${app.looking_for}`,
     app.experience && `Experience they told us about: ${app.experience}`,
     app.about && `About them, in their words: ${app.about}`,
@@ -96,14 +99,12 @@ export async function draftOwnerPage(candidateId: string, over: OwnerDraftOverri
 
   const prompt = `You write the candidate page that business owners read on a hiring site. Owners browse anonymous, vetted candidates and decide whether to meet one.
 
+${repTakeBlock(take)}
 ${pdf || photo ? "Their resume is attached." : text ? `Their resume:\n${text.slice(0, 25000)}` : "No resume on file."}
 
 ${call ? `What they told our team on their call:\n${call.slice(0, 40000)}` : notes ? `Our team's notes from talking with them:\n${notes.slice(0, 6000)}` : ""}
 
-${app.rep_take ? `MOST IMPORTANT. Our rep knows this person. In the rep's words:
-"${app.rep_take}"
-Build the page around this: who they are, what they want next and where they'd thrive. Their past jobs and results are proof of what they can do, not a promise they want the same job again. Don't assume they want to stay in their past field. Never quote the rep or say a rep said it. Never quote the rep or say a rep said it.
-` : ""}What we know:
+${take ? "Reminder: the rep's take above leads. Most of the page comes from it.\n" : ""}What we know:
 ${facts}
 
 Write to the business owner. The goal: an owner reads it and thinks "yes, I need this person". Make the candidate sound like a real, capable person.

@@ -369,6 +369,8 @@ ${hireSummaryHtml(notice)}`,
     const { data: cur } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
     const app = { ...((cur?.application ?? {}) as Record<string, string>) };
     if ((app.rep_take ?? "") !== take) {
+      // A new take reshapes the owner page too (unless a rep wrote that page by hand).
+      detailsChanged = true;
       if (take) app.rep_take = take;
       else delete app.rep_take;
       await db().from("candidates").update({ application: app }).eq("id", candidateId);
@@ -1763,4 +1765,21 @@ export async function savePhone(staffId: string, _prev: FormState, form: FormDat
   revalidatePath("/admin/hours");
   revalidatePath(`/admin/team/${staffId}`);
   return { ok: "Saved." };
+}
+
+// The rep's first take saves by itself (when they leave the box or press Write), so
+// it's never lost and every profile the site writes is built on it.
+export async function saveRepTake(candidateId: string, take: string): Promise<{ ok?: boolean; error?: string }> {
+  const me = await requireStaff();
+  if (!(await canEditCandidate(me, candidateId))) return { error: "This candidate belongs to another rep." };
+  const t = String(take ?? "").trim().slice(0, 2000);
+  const { data: cur } = await db().from("candidates").select("application, status").eq("id", candidateId).maybeSingle();
+  if (!cur) return { error: "Couldn't find this candidate." };
+  const app = { ...((cur.application ?? {}) as Record<string, string>) };
+  if ((app.rep_take ?? "") === t) return { ok: true };
+  if (t) app.rep_take = t;
+  else delete app.rep_take;
+  await db().from("candidates").update({ application: app }).eq("id", candidateId);
+  await logActivity(staffActor(me), "rep_take_saved", { candidate_id: candidateId, chars: t.length });
+  return { ok: true };
 }

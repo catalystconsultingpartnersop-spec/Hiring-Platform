@@ -22,7 +22,7 @@ import {
   summaryDraft,
   WRITING_TIPS,
 } from "@/lib/writingHelp";
-import { FormState, saveCandidate } from "../../actions";
+import { FormState, saveCandidate, saveRepTake } from "../../actions";
 import styles from "./form.module.css";
 import { WordingHelp } from "./WordingHelp";
 import { AVAILABILITY } from "@/lib/availability";
@@ -122,6 +122,8 @@ export function CandidateForm({
   const [fullProfile, setFullProfile] = useState(v("full_profile"));
   // Fields the resume filled in, shown highlighted so the rep knows what to check.
   const [fromResume, setFromResume] = useState<Set<string>>(new Set());
+  // What the writing fields said before a rewrite, so the rep can put it back.
+  const [undo, setUndo] = useState<Record<string, string> | null>(null);
   const mark = (k: string) => (fromResume.has(k) ? styles.fromResume : "");
 
   const code = order.join("");
@@ -155,6 +157,8 @@ export function CandidateForm({
     }
     setReading("reading");
     setReadNote("");
+    setUndo(null);
+    if (c?.id) saveRepTake(c.id, repTake).catch(() => null);
     const body = new FormData();
     const picked = file ?? (document.querySelector("input[name=resume]") as HTMLInputElement | null)?.files?.[0];
     if (picked) body.append("resume", picked);
@@ -172,8 +176,14 @@ export function CandidateForm({
       const ld = lastDraft.current;
       // Empty, or still exactly what the site wrote last time: fine to (re)write.
       const free = (k: string, cur: string) => !cur.trim() || cur === ld[k];
+      // With a first take, the rep asked for a profile built on their words: the
+      // writing fields get rewritten even if filled, and "Put back" restores them.
+      const writing = ["headline", "summary", "highlights", "full_profile"];
+      const lead = !!repTake.trim();
+      const before: Record<string, string> = { headline, summary, highlights, full_profile: fullProfile };
       const fill = (k: string, cur: string, val: string, set: (v: string) => void) => {
-        if (val && free(k, cur)) {
+        if (val && (free(k, cur) || (lead && writing.includes(k) && val !== cur))) {
+          if (writing.includes(k) && cur.trim() && !free(k, cur)) setUndo((u) => ({ ...(u ?? {}), [k]: before[k] }));
           set(val);
           ld[k] = val;
           filled.add(k);
@@ -268,8 +278,8 @@ export function CandidateForm({
             </span>
           </label>
           <small style={{ display: "block", margin: "0 0 6px" }}>
-            Type or speak: who are they, and what do they want next? Skip it and we&rsquo;ll go from their resume and Strengths
-            Assessment.
+            Type or speak: who are they, and what do they want next? What you write here leads the profile; their resume, call and
+            Strengths Assessment only back it up. Skip it and we&rsquo;ll go from those.
           </small>
           <textarea
             id="rep_take"
@@ -278,6 +288,9 @@ export function CandidateForm({
             rows={3}
             value={repTake}
             onChange={(e) => setRepTake(e.target.value)}
+            onBlur={() => {
+              if (c?.id) saveRepTake(c.id, repTake).catch(() => null);
+            }}
             placeholder="e.g. Successful real estate agent, home for a few years, wants to get back to building something with people. Creative, helpful, gets things moving fast. Not sure which industry yet."
           />
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
@@ -296,6 +309,22 @@ export function CandidateForm({
                     : draftedWith
                       ? "✨ Write it again"
                       : "✨ Write the profile for me"}
+              </button>
+            )}
+            {undo && reading !== "reading" && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-small"
+                onClick={() => {
+                  if (undo.headline !== undefined) setHeadline(undo.headline);
+                  if (undo.summary !== undefined) setSummary(undo.summary);
+                  if (undo.highlights !== undefined) setHighlights(undo.highlights);
+                  if (undo.full_profile !== undefined) setFullProfile(undo.full_profile);
+                  setUndo(null);
+                  setReadNote("Put back. Nothing is saved until you press Save.");
+                }}
+              >
+                ↩ Put back the old wording
               </button>
             )}
           </div>

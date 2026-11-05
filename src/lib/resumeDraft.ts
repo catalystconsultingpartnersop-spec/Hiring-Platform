@@ -2,6 +2,7 @@ import { cleanLanguages } from "./languages";
 import { ANONYMITY_RULES } from "./anonymity";
 import { TRAITS, describe, parseResult } from "./strengths";
 import { INDUSTRY_LIST, ROLE_LIST } from "./writingHelp";
+import { assessmentWeight, repTakeBlock } from "./repTake";
 
 // Reads a whole resume (PDF, Word or a photo) and drafts the candidate's profile, so
 // the rep checks and fixes instead of filling in a form. Uses their Strengths
@@ -32,7 +33,7 @@ function prompt(opts: { letters: string; lookingFor: string; repTake: string; te
   const d = describe(opts.letters);
   const strengths =
     l.length >= 2
-      ? `Their Strengths Assessment result (use it to shape the headline and summary, in these exact plain words, never naming the assessment): natural strengths: ${l
+      ? `Their Strengths Assessment result (${assessmentWeight(opts.repTake)}; in these exact plain words, never naming the assessment): natural strengths: ${l
           .slice(0, 2)
           .map((x) => TRAITS[x].label.toLowerCase())
           .join(" and ")}${d ? ` ("${d.name}": ${d.line})` : ""}${l.length >= 4 ? `; also good at ${l.slice(2, 4).map((x) => TRAITS[x].label.toLowerCase()).join(" and ")}` : ""}.`
@@ -40,12 +41,10 @@ function prompt(opts: { letters: string; lookingFor: string; repTake: string; te
   const drains = l.length === 6 ? `Never describe them as strong at ${l.slice(4).map((x) => TRAITS[x].label.toLowerCase()).join(" or ")}: that's the work that wears them down.` : "";
   return `You help a hiring platform turn a candidate's resume into their profile. Business owners browse these profiles BEFORE they know who the person is, then sign to see the full details.
 
+${repTakeBlock(opts.repTake)}
 ${strengths}
 ${drains}
-${opts.repTake ? `MOST IMPORTANT. Our rep knows this person. In the rep's words:
-"${opts.repTake}"
-Write the whole profile around this: who they are, what they want next and where they'd thrive. Their past jobs are proof of what they can do, not necessarily what they want to do again. If the rep says they want something new, don't steer them back to their old field. Never quote the rep or say a rep said it; write it as plain fact.
-` : ""}What they said they're looking for: ${opts.lookingFor || "not given"}
+What they said they're looking for: ${opts.lookingFor || "not given"}
 
 ${opts.noResume ? "There's no resume yet: write only from what's above, keep it shorter, and leave contact fields and anything you can't support empty." : "Use the resume as evidence."} Don't invent facts, numbers or skills. Warm, specific, plain English, written so an owner thinks "I need that person".
 
@@ -56,7 +55,7 @@ ${ANONYMITY_RULES}
 - "summary": 2 to 3 sentences: what they are great at and the kind of work they have done, in general terms, and where they would shine.
 - "highlights": 3 to 5 short, concrete lines about what they can do, following the anonymity rules above.
 - "full_profile": one or two paragraphs, shown only after an owner signs; specifics are fine here.
-- "role_category": the single best fit from this list, for the work they'd thrive in next (from what they want and their natural strengths, not just their last title): ${ROLE_LIST.join(", ")}.
+- "role_category": the single best fit from this list, for the work they'd thrive in next (from the rep's take if there is one, then what they want and their natural strengths, not just their last title): ${ROLE_LIST.join(", ")}.
 - "also_roles": up to 3 more from the same list where they'd thrive.
 - "level": "beginner", "experienced" or "senior", judged from their years and scope.
 - "location_region": broad area only, like "Brooklyn, NY" or "Northern New Jersey". Never a street.

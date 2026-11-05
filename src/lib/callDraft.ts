@@ -5,6 +5,7 @@ import { escapeHtml, sendEmail } from "./email";
 import { teamUrl } from "./format";
 import { roomTranscript } from "./googleCalls";
 import { ROLE_LIST } from "./writingHelp";
+import { repTakeBlock } from "./repTake";
 
 // After an onboarding call: read the transcript Google made, have AI draft the
 // candidate's profile, and fill in whatever the rep hasn't written yet. The rep
@@ -45,9 +46,10 @@ async function askAI(prompt: string): Promise<{ text: string; stop: string }> {
   throw new Error(`The AI didn't answer (${last}).`);
 }
 
-function promptFor(name: string, lookingFor: string, transcript: string) {
+function promptFor(name: string, lookingFor: string, transcript: string, repTake = "") {
   return `You help a hiring platform write candidate profiles. A rep just had an onboarding call with a job seeker named ${name}. Below is the transcript.
 
+${repTakeBlock(repTake)}
 Write a draft profile from what was actually said. Don't invent facts. Warm, specific, plain English; written for business owners deciding whether to meet this person.
 
 Rules:
@@ -72,12 +74,12 @@ Transcript:
 ${transcript.slice(0, 120000)}`;
 }
 
-export async function draftText(name: string, lookingFor: string, transcript: string): Promise<CallDraft> {
+export async function draftText(name: string, lookingFor: string, transcript: string, repTake = ""): Promise<CallDraft> {
   // One quiet retry if the answer comes back cut off or garbled.
   let j: Record<string, unknown> | null = null;
   let why = "";
   for (let attempt = 0; attempt < 2 && !j; attempt++) {
-    const { text, stop } = await askAI(promptFor(name, lookingFor, transcript));
+    const { text, stop } = await askAI(promptFor(name, lookingFor, transcript, repTake));
     try {
       j = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
     } catch {
@@ -123,14 +125,19 @@ export async function draftFromCall(candidateId: string, opts: { notifyRep?: boo
 
   let draft: CallDraft;
   try {
-    draft = await draftText(c.full_name, c.application?.looking_for ?? "", transcript);
+    draft = await draftText(c.full_name, c.application?.looking_for ?? "", transcript, c.application?.rep_take ?? "");
   } catch (e) {
     const msg = (e as Error).message ?? String(e);
     await logActivity("system", "call_draft_failed", { candidate_id: candidateId, error: msg.slice(0, 300), transcript_chars: transcript.length });
     return { ok: false, error: msg.startsWith("The AI") ? msg : "The AI's answer didn't come through right. Try again." };
   }
 
-  // Fill in only what's still empty; never overwrite the rep's own words.
+  // Fill in only what's still empty; never overwrite the rep's own words. Re-read first:
+  // the AI takes a while, and the rep may have typed (or saved their take) meanwhile.
+  {
+    const { data: fresh } = await db().from("candidates").select("*").eq("id", candidateId).maybeSingle();
+    if (fresh) Object.assign(c, fresh);
+  }
   const update: Record<string, unknown> = {
     application: { ...(c.application ?? {}), call_draft: JSON.stringify(draft), ...(!c.application?.available && draft.available ? { available: draft.available } : {}) },
   };
