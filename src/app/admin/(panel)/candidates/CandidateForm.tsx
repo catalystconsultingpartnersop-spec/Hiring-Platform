@@ -4,6 +4,7 @@ import { cleanLanguages, LANGUAGES } from "@/lib/languages";
 import { UploadHelper } from "@/components/UploadHelper";
 import { startTransition, useActionState, useRef, useState } from "react";
 import { OwnerView } from "./OwnerView";
+import { parseOwnerPage } from "@/lib/ownerPageShared";
 import { SpeakButton } from "./SpeakButton";
 import type { PublicCandidate, Candidate } from "@/lib/db";
 import {
@@ -288,6 +289,7 @@ export function CandidateForm({
         setSummary={setSummary}
         setHighlights={setHighlights}
         feeLabel={tierFeeLabel}
+        ownerIntro={parseOwnerPage((c?.application as Record<string, string> | undefined)?.owner_page)?.intro ?? ""}
         pending={pending}
         saved={state.ok ?? null}
         error={state.error ?? null}

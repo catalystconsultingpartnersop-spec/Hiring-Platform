@@ -770,3 +770,29 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
   .owner-view-grid { grid-template-columns: 1fr; }
   .owner-view-btn { right: 12px; bottom: 12px; }
 }
+.owner-view-where { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-3); margin: 0 2px 8px; }
+.ov-n {
+  display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; flex: none;
+  border-radius: 50%; background: var(--marigold); color: var(--ink); font: 800 13px/1 var(--text); margin-right: 6px; vertical-align: 2px;
+}
+.ov-where { font-weight: 400; color: var(--ink-2); }
+.owner-view-card .card-body h3::before, .owner-view-card .card-own::before {
+  display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
+  border-radius: 50%; background: var(--marigold); color: var(--ink); font: 800 13px/1 var(--text); margin-right: 6px; vertical-align: 3px;
+}
+.owner-view-card .card-body h3::before { content: "1"; }
+.owner-view-card[data-own="highlights"] .card-own::before { content: "3"; }
+.owner-view-card[data-own="summary"] .card-own::before { content: "2"; }
+.owner-view-page { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px 18px; }
+.owner-view-page .ov-h { font-family: var(--display); font-size: 20px; margin: 0 0 8px; }
+.owner-view-page p { margin: 0 0 10px; color: var(--ink-2); }
+.owner-view-page .ov-intro-own { font-style: italic; }
+.owner-view-page .ov-hl { margin: 0; padding-left: 0; list-style: none; }
+.owner-view-page .ov-hl li { margin: 4px 0; padding-left: 14px; border-left: 3px solid var(--marigold); }
+/* The part being edited lights up in the preview */
+.owner-view-card[data-focus="headline"] .card-body h3,
+.owner-view-card[data-focus="highlights"][data-own="highlights"] .card-own,
+.owner-view-card[data-focus="summary"][data-own="summary"] .card-own,
+.owner-view-page[data-focus="headline"] .ov-h,
+.owner-view-page[data-focus="summary"] .ov-s,
+.owner-view-page[data-focus="highlights"] .ov-hl { background: var(--marigold-soft); border-radius: 6px; box-shadow: 0 0 0 4px var(--marigold-soft); }

@@ -13,6 +13,7 @@ type Props = {
   setSummary: (v: string) => void;
   setHighlights: (v: string) => void;
   feeLabel: string;
+  ownerIntro: string; // the owner page's own opening, which replaces the summary on the profile page
   pending: boolean;
   saved: string | null;
   error: string | null;
@@ -25,6 +26,7 @@ export function OwnerView(p: Props) {
   const [open, setOpen] = useState(false);
   const [salary, setSalary] = useState<{ min: number | null; max: number | null }>({ min: null, max: null });
   const [asked, setAsked] = useState(false);
+  const [focus, setFocus] = useState<"" | "headline" | "summary" | "highlights">("");
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -83,27 +85,66 @@ export function OwnerView(p: Props) {
               </button>
             </div>
             <div className="owner-view-grid">
-              <div className="owner-view-card">
-                <CandidateCard c={card} fee={null} hideFee example={false} />
+              <div>
+                <p className="owner-view-where">In the catalog, while owners browse</p>
+                <div className="owner-view-card" data-focus={focus} data-own={card.highlights.length ? "highlights" : "summary"}>
+                  <CandidateCard c={card} fee={null} hideFee example={false} />
+                </div>
                 <p className="small muted" style={{ margin: "8px 2px 0" }}>
                   Flat fee shown to owners: {p.feeLabel}
                 </p>
+                <p className="owner-view-where" style={{ marginTop: 18 }}>
+                  When they open the profile
+                </p>
+                <div className="owner-view-page" data-focus={focus}>
+                  <h3 className="ov-h">
+                    <span className="ov-n">1</span>
+                    {card.headline}
+                  </h3>
+                  {p.ownerIntro.trim() ? (
+                    <p className="ov-intro-own">{p.ownerIntro.trim().split("\n")[0]}</p>
+                  ) : (
+                    <p className="ov-s">
+                      <span className="ov-n">2</span>
+                      {p.summary.trim() || "Their short summary goes here."}
+                    </p>
+                  )}
+                  <ul className="ov-hl">
+                    {(card.highlights.length ? card.highlights : ["Their highlights go here."]).map((h, i) => (
+                      <li key={i}>
+                        {i === 0 && <span className="ov-n">3</span>}
+                        {h}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
               <div className="owner-view-edit">
                 <p className="small muted" style={{ margin: "0 0 10px" }}>
-                  Change the words here and the card updates as you type.
+                  The numbers show where each one appears. Change the words and the preview updates as you type.
                 </p>
                 <label className="field">
-                  <span>Headline</span>
-                  <input className="input" value={p.headline} onChange={(e) => p.setHeadline(e.target.value)} />
+                  <span>
+                    <span className="ov-n">1</span> Headline <span className="ov-where">· the title on the card and on the profile</span>
+                  </span>
+                  <input className="input" value={p.headline} onFocus={() => setFocus("headline")} onBlur={() => setFocus("")} onChange={(e) => p.setHeadline(e.target.value)} />
                 </label>
                 <label className="field">
-                  <span>Short summary</span>
-                  <textarea className="textarea" rows={4} value={p.summary} onChange={(e) => p.setSummary(e.target.value)} />
+                  <span>
+                    <span className="ov-n">2</span> Short summary{" "}
+                    <span className="ov-where">
+                      {p.ownerIntro.trim()
+                        ? "· shows in the catalog's quick look (their profile page opens with its own intro, set under “Their page for owners”)"
+                        : `· the opening paragraph of their profile${card.highlights.length ? "" : ", and its first sentence is the gold line on the card"}`}
+                    </span>
+                  </span>
+                  <textarea className="textarea" rows={4} value={p.summary} onFocus={() => setFocus("summary")} onBlur={() => setFocus("")} onChange={(e) => p.setSummary(e.target.value)} />
                 </label>
                 <label className="field">
-                  <span>Highlights (one per line; the first shows on the card)</span>
-                  <textarea className="textarea" rows={4} value={p.highlights} onChange={(e) => p.setHighlights(e.target.value)} />
+                  <span>
+                    <span className="ov-n">3</span> Highlights <span className="ov-where">· the bullet list on their profile, one per line. The first one is also the gold line on the card</span>
+                  </span>
+                  <textarea className="textarea" rows={4} value={p.highlights} onFocus={() => setFocus("highlights")} onBlur={() => setFocus("")} onChange={(e) => p.setHighlights(e.target.value)} />
                 </label>
                 <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                   <button type="button" className="btn btn-gold" onClick={save} disabled={p.pending}>
