@@ -796,3 +796,13 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 .owner-view-page[data-focus="headline"] .ov-h,
 .owner-view-page[data-focus="summary"] .ov-s,
 .owner-view-page[data-focus="highlights"] .ov-hl { background: var(--marigold-soft); border-radius: 6px; box-shadow: 0 0 0 4px var(--marigold-soft); }
+.ov-pair { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
+@media (max-width: 720px) { .ov-pair { grid-template-columns: 1fr; } }
+.owner-view-card .works-best::before {
+  content: "4"; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
+  border-radius: 50%; background: var(--marigold); color: var(--ink); font: 800 13px/1 var(--text); margin-right: 6px; vertical-align: middle;
+}
+.owner-view-card .works-best { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px 0; }
+.owner-view-card .works-best .works-main { flex-basis: 100%; margin: 0; }
+.ov-pair { margin-bottom: 12px; }
+.owner-view-card[data-focus="strengths"] .works-best { background: var(--marigold-soft); border-radius: 6px; box-shadow: 0 0 0 4px var(--marigold-soft); }

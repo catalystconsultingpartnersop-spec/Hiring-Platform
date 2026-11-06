@@ -13,7 +13,13 @@ type Props = {
   setSummary: (v: string) => void;
   setHighlights: (v: string) => void;
   feeLabel: string;
-  ownerIntro: string; // the owner page's own opening, which replaces the summary on the profile page
+  ownerIntro: string;
+  typeLabel: string;
+  bestLine: string;
+  setTypeLabel: (v: string) => void;
+  setBestLine: (v: string) => void;
+  autoType: string;
+  autoBest: string; // the owner page's own opening, which replaces the summary on the profile page
   pending: boolean;
   saved: string | null;
   error: string | null;
@@ -26,7 +32,7 @@ export function OwnerView(p: Props) {
   const [open, setOpen] = useState(false);
   const [salary, setSalary] = useState<{ min: number | null; max: number | null }>({ min: null, max: null });
   const [asked, setAsked] = useState(false);
-  const [focus, setFocus] = useState<"" | "headline" | "summary" | "highlights">("");
+  const [focus, setFocus] = useState<"" | "headline" | "summary" | "highlights" | "strengths">("");
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -146,6 +152,32 @@ export function OwnerView(p: Props) {
                   </span>
                   <textarea className="textarea" rows={4} value={p.highlights} onFocus={() => setFocus("highlights")} onBlur={() => setFocus("")} onChange={(e) => p.setHighlights(e.target.value)} />
                 </label>
+                <div className="field">
+                  <span>
+                    <span className="ov-n">4</span> Badge and the line under it{" "}
+                    <span className="ov-where">· on the card. Leave blank to use the wording from their Strengths Assessment</span>
+                  </span>
+                  <div className="ov-pair">
+                    <input
+                      className="input"
+                      maxLength={40}
+                      value={p.typeLabel}
+                      placeholder={p.autoType || "Badge"}
+                      onFocus={() => setFocus("strengths")}
+                      onBlur={() => setFocus("")}
+                      onChange={(e) => p.setTypeLabel(e.target.value)}
+                    />
+                    <input
+                      className="input"
+                      maxLength={160}
+                      value={p.bestLine}
+                      placeholder={p.autoBest || "Best at…"}
+                      onFocus={() => setFocus("strengths")}
+                      onBlur={() => setFocus("")}
+                      onChange={(e) => p.setBestLine(e.target.value)}
+                    />
+                  </div>
+                </div>
                 <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                   <button type="button" className="btn btn-gold" onClick={save} disabled={p.pending}>
                     {p.pending ? "Saving…" : "Save"}

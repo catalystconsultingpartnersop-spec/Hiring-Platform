@@ -4,11 +4,13 @@ import { cleanLanguages, LANGUAGES } from "@/lib/languages";
 import { UploadHelper } from "@/components/UploadHelper";
 import { startTransition, useActionState, useRef, useState } from "react";
 import { OwnerView } from "./OwnerView";
+import { bestAtText } from "@/components/CandidateCard";
 import { parseOwnerPage } from "@/lib/ownerPageShared";
 import { SpeakButton } from "./SpeakButton";
 import type { PublicCandidate, Candidate } from "@/lib/db";
 import {
   describe,
+  profileOf,
   parseResult,
   suggestedHeadline,
   TRAIT_LIST,
@@ -126,9 +128,13 @@ export function CandidateForm({
   const [fromResume, setFromResume] = useState<Set<string>>(new Set());
   // What the writing fields said before a rewrite, so the rep can put it back.
   const [undo, setUndo] = useState<Record<string, string> | null>(null);
+  const [typeLabel, setTypeLabel] = useState(String((c?.application as Record<string, string> | undefined)?.type_label ?? ""));
+  const [bestLine, setBestLine] = useState(String((c?.application as Record<string, string> | undefined)?.best_line ?? ""));
   const mark = (k: string) => (fromResume.has(k) ? styles.fromResume : "");
 
   const code = order.join("");
+  const autoType = profileOf(code).type?.name ?? "";
+  const autoBest = bestAtText({ working_genius: code } as PublicCandidate) ?? "";
   const d = describe(code);
   const autoHeadline = role ? suggestedHeadline(role, code) : "";
   const roleIdeas = suggestRoles(code);
@@ -281,7 +287,15 @@ export function CandidateForm({
           working_genius: code.length === 6 ? code : null,
           fee_override_cents: null,
           listed_at: null,
+          type_label: typeLabel,
+          best_line: bestLine,
         }}
+        typeLabel={typeLabel}
+        bestLine={bestLine}
+        setTypeLabel={setTypeLabel}
+        setBestLine={setBestLine}
+        autoType={autoType}
+        autoBest={autoBest}
         headline={headline}
         summary={summary}
         highlights={highlights}
@@ -563,6 +577,39 @@ export function CandidateForm({
             )}
           </div>
         )}
+      {/* The rep's own words for the badge and line owners see on the card */}
+        <div style={{ marginTop: 16 }}>
+          <p style={{ margin: "0 0 4px", fontWeight: 700 }}>
+            On the card, in your own words <span className="muted" style={{ fontWeight: 400 }}>(optional)</span>
+          </p>
+          <p className="small muted" style={{ margin: "0 0 8px" }}>
+            Leave blank to use the wording from their result. Whatever you write here is what owners read instead.
+          </p>
+          <div className="grid-2">
+            <label className="field">
+              <span>Badge</span>
+              <input
+                className="input"
+                name="type_label"
+                maxLength={40}
+                value={typeLabel}
+                onChange={(e) => setTypeLabel(e.target.value)}
+                placeholder={autoType || "e.g. Kitchen leader"}
+              />
+            </label>
+            <label className="field">
+              <span>The line under it</span>
+              <input
+                className="input"
+                name="best_line"
+                maxLength={160}
+                value={bestLine}
+                onChange={(e) => setBestLine(e.target.value)}
+                placeholder={autoBest || "e.g. Best at running a kitchen smoothly and on time."}
+              />
+            </label>
+          </div>
+        </div>
       </section>
 
       {/* 3. What they want */}

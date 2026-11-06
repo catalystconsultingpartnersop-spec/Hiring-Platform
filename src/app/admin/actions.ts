@@ -377,6 +377,21 @@ ${hireSummaryHtml(notice)}`,
     }
   }
 
+  // The rep's own wording for the strengths badge and the "Best at..." line (blank = automatic).
+  if (candidateId && form.has("type_label")) {
+    const { data: cur } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
+    const app = { ...((cur?.application ?? {}) as Record<string, string>) };
+    let changed = false;
+    for (const [k, max] of [["type_label", 40], ["best_line", 160]] as const) {
+      const val = String(form.get(k) ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+      if ((app[k] ?? "") === val) continue;
+      if (val) app[k] = val;
+      else delete app[k];
+      changed = true;
+    }
+    if (changed) await db().from("candidates").update({ application: app }).eq("id", candidateId);
+  }
+
   // When they can start: kept in their application, so it rides along without a new column.
   if (candidateId && form.has("available")) {
     const { cleanAvailability } = await import("@/lib/availability");

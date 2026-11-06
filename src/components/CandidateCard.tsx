@@ -29,7 +29,17 @@ const joinAnd = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")
 // "Works best as a Driver: getting people moving and finishing the job."
 export function WorksBest({ c, detail = false, compact = false }: { c: PublicCandidate; detail?: boolean; compact?: boolean }) {
   const p = profileOf(c.working_genius);
-  if (!p.primary.length) return null;
+  const ownType = (c.type_label ?? "").trim();
+  const ownLine = (c.best_line ?? "").trim();
+  if (!p.primary.length && !ownType && !ownLine) return null;
+  // The rep's own wording, when they wrote some, takes the place of the automatic one.
+  if (ownType || ownLine)
+    return (
+      <div className={detail ? "works-best works-best-lg" : "works-best"}>
+        {(ownType || p.type) && <span className="works-type">{ownType || p.type?.name}</span>}
+        {(ownLine || p.primary.length > 0) && <p className="works-main">{ownLine || bestAtText(c)}</p>}
+      </div>
+    );
   const main = p.primary.map((l) => lower(TRAITS[l].label));
   const also = p.secondary.map((l) => lower(TRAITS[l].label));
   return (
@@ -64,6 +74,8 @@ export function isNew(c: PublicCandidate) {
 
 // "Best at sound judgment and finishing the job." as plain text.
 export function bestAtText(c: PublicCandidate) {
+  const own = (c.best_line ?? "").trim();
+  if (own) return own;
   const p = profileOf(c.working_genius);
   if (!p.primary.length) return null;
   return `Best at ${joinAnd(p.primary.map((l) => lower(TRAITS[l].label)))}.`;
