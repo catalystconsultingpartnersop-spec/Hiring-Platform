@@ -742,3 +742,31 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 .owner-fit li a { font-weight: 700; color: var(--ink); text-decoration: none; }
 .owner-fit li span { display: block; font-size: 13px; color: var(--moss); font-weight: 600; margin-top: 2px; }
 .owner-fit-close { position: absolute; top: 8px; right: 10px; border: 0; background: transparent; font-size: 22px; line-height: 1; cursor: pointer; color: var(--ink-2); padding: 6px; }
+
+/* "See it as an owner" while editing a profile */
+.owner-view-btn {
+  position: fixed; right: 18px; bottom: 18px; z-index: 40;
+  background: var(--ink); color: #fff; border: 0; border-radius: 999px;
+  padding: 12px 18px; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer;
+  box-shadow: 0 6px 20px rgba(23, 33, 58, 0.28);
+}
+.owner-view-btn:hover { filter: brightness(1.15); }
+.owner-view {
+  position: fixed; inset: 0; z-index: 60; background: rgba(23, 33, 58, 0.55);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.owner-view-box {
+  background: var(--shelf); border-radius: 20px; width: min(920px, 100%);
+  max-height: calc(100vh - 32px); overflow: auto; padding: 18px 20px 22px;
+}
+.owner-view-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-size: 18px; }
+.owner-view-x { border: 0; background: none; font-size: 20px; cursor: pointer; color: inherit; padding: 4px 8px; }
+.owner-view-grid { display: grid; grid-template-columns: 340px 1fr; gap: 22px; align-items: start; }
+.owner-view-card { pointer-events: none; }
+.owner-view-card .card { margin: 0; }
+@media (max-width: 720px) {
+  .owner-view { padding: 0; align-items: stretch; }
+  .owner-view-box { border-radius: 0; max-height: 100vh; height: 100vh; }
+  .owner-view-grid { grid-template-columns: 1fr; }
+  .owner-view-btn { right: 12px; bottom: 12px; }
+}

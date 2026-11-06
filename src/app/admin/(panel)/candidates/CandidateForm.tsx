@@ -3,8 +3,9 @@
 import { cleanLanguages, LANGUAGES } from "@/lib/languages";
 import { UploadHelper } from "@/components/UploadHelper";
 import { startTransition, useActionState, useRef, useState } from "react";
+import { OwnerView } from "./OwnerView";
 import { SpeakButton } from "./SpeakButton";
-import type { Candidate } from "@/lib/db";
+import type { PublicCandidate, Candidate } from "@/lib/db";
 import {
   describe,
   parseResult,
@@ -260,6 +261,37 @@ export function CandidateForm({
       }}
     >
       <UploadHelper />
+      <OwnerView
+        c={{
+          id: c?.id ?? "preview",
+          status: "listed",
+          available: avail || null,
+          role_category: role || null,
+          industry: industry || null,
+          also_roles: alsoRoles,
+          also_industries: alsoIndustries,
+          level: (level || null) as PublicCandidate["level"],
+          location_region: locationRegion || null,
+          work_mode: (mode || null) as PublicCandidate["work_mode"],
+          languages: langs,
+          salary_min: null,
+          salary_max: null,
+          strengths: [],
+          working_genius: code.length === 6 ? code : null,
+          fee_override_cents: null,
+          listed_at: null,
+        }}
+        headline={headline}
+        summary={summary}
+        highlights={highlights}
+        setHeadline={setHeadline}
+        setSummary={setSummary}
+        setHighlights={setHighlights}
+        feeLabel={tierFeeLabel}
+        pending={pending}
+        saved={state.ok ?? null}
+        error={state.error ?? null}
+      />
       <input type="hidden" name="working_genius" value={code} />
       <p className="small muted">
         Fields marked <span className="req">*</span> are needed to list someone.
