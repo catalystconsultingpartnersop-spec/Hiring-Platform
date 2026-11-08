@@ -147,7 +147,8 @@ export async function draftFromCall(candidateId: string, opts: { notifyRep?: boo
   if (!c.full_profile && draft.full_profile) update.full_profile = draft.full_profile;
   if (!(c.languages ?? []).length && draft.languages?.length) update.languages = draft.languages;
   if (!c.role_category && draft.roles[0]) update.role_category = draft.roles[0];
-  if (draft.private_notes) update.admin_notes = [c.admin_notes, `From the call (${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}):\n${draft.private_notes}`].filter(Boolean).join("\n\n");
+  // Call notes go in once: a second draft (pressing "Draft it again") doesn't stack another copy.
+  if (draft.private_notes && !String(c.admin_notes ?? "").includes("From the call (")) update.admin_notes = [c.admin_notes, `From the call (${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}):\n${draft.private_notes}`].filter(Boolean).join("\n\n");
   await db().from("candidates").update(update).eq("id", candidateId);
   await logActivity("system", "call_draft_made", { candidate_id: candidateId, call_id: call.id });
 
@@ -193,6 +194,15 @@ export async function draftFinishedCalls(opts: { withinHours?: number } = {}) {
     if (!k.meet_space) continue;
     const { count } = await db().from("activity_log").select("id", { count: "exact", head: true }).eq("action", "call_draft_made").eq("details->>call_id", k.id);
     if (count) continue;
+    // A candidate with two rooms (a duplicate call) gets one draft, not one a day:
+    // skip if this candidate already got a draft after this call ended.
+    const { count: later } = await db()
+      .from("activity_log")
+      .select("id", { count: "exact", head: true })
+      .eq("action", "call_draft_made")
+      .eq("details->>candidate_id", k.candidate_id)
+      .gte("at", (k as { ends_at?: string }).ends_at ?? since);
+    if (later) continue;
     const r = await draftFromCall(k.candidate_id, { notifyRep: true }).catch(() => null);
     if (r?.ok) drafted++;
   }

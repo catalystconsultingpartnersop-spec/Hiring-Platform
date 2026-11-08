@@ -183,3 +183,22 @@ export async function setOwnTime(candidateId: string, _prev: OfferState, form: F
   }
   redirect(`/candidates/${candidateId}?step=set#next`);
 }
+
+// Every step can be skipped: "skip the call, straight to a meeting", or
+// "skip the meeting, straight to deciding". The rep is told; the candidate isn't bothered.
+export async function skipStep(candidateId: string, kind: "call" | "meeting") {
+  const { owner, unlock } = await myUnlock(candidateId);
+  await clearOpen(unlock.id);
+  const at = new Date(Date.now() - 2 * 60e3).toISOString();
+  await db()
+    .from("meetings")
+    .insert({ unlock_id: unlock.id, kind, mode: kind === "call" ? "phone" : "in_person", place: null, slots: [at], minutes: 1, time_zone: null, status: "booked", starts_at: at, owner_verdict: "yes", note: "Skipped by the client" });
+  await logActivity(`owner:${owner.email}`, kind === "call" ? "owner_skipped_call" : "owner_skipped_meeting", { candidate: refCode(candidateId) });
+  try {
+    const { emailSkipped } = await import("@/lib/pathEmails");
+    await emailSkipped(unlock.id, kind);
+  } catch (e) {
+    console.error(e);
+  }
+  redirect(`/candidates/${candidateId}?step=${kind === "call" ? "skipcall" : "skipmeeting"}#next`);
+}

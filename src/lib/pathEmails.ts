@@ -281,3 +281,16 @@ export async function stallAlerts() {
   }
   return { stalls };
 }
+
+// The client skipped a step: just a heads-up for the rep.
+export async function emailSkipped(unlockId: string, kind: "call" | "meeting") {
+  const c = await pathCtx(unlockId);
+  if (!c) return;
+  await toRep(
+    c,
+    `${company(c)} ${kind === "call" ? "skipped the first call with" : "skipped the meeting with"} ${c.cand.full_name}`,
+    kind === "call"
+      ? `<strong>${e(company(c))}</strong> skipped the first call and is going straight to a meeting with <strong>${e(c.cand.full_name)}</strong>.`
+      : `<strong>${e(company(c))}</strong> skipped the meeting with <strong>${e(c.cand.full_name)}</strong> and is moving on to deciding.`,
+  );
+}

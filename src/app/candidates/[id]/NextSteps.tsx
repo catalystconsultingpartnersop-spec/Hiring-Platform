@@ -6,7 +6,7 @@ import { COMPANY_TZ, formatInZone } from "@/lib/time";
 import { passOnCandidate } from "./actions";
 import { AlreadyAhead } from "./AlreadyAhead";
 import { OfferTimes } from "./OfferTimes";
-import { askReferences, ownerKeepGoing, withdrawOffer } from "./pathActions";
+import { askReferences, ownerKeepGoing, skipStep, withdrawOffer } from "./pathActions";
 import styles from "./path.module.css";
 
 // The client's guide from "unlocked" to "hired". A nudge, never a requirement.
@@ -19,6 +19,14 @@ export function NextSteps({ c, path, again, step }: { c: Candidate; path: PathSt
   const what = m?.kind === "meeting" ? "meeting" : "first call";
   // Anywhere before the decision, the client can say they're already further along.
   const ahead = !again && ["offer_call", "call_proposed", "call_retime", "call_booked", "offer_meeting", "meeting_proposed", "meeting_retime", "meeting_booked"].includes(stage);
+
+  // Skip ahead: before anything is booked, the call or the meeting can be skipped.
+  const skip =
+    !again && ["offer_call", "call_proposed", "call_retime"].includes(stage)
+      ? ("call" as const)
+      : !again && ["offer_meeting", "meeting_proposed", "meeting_retime"].includes(stage)
+        ? ("meeting" as const)
+        : null;
 
   let body: React.ReactNode;
   if (stage === "declined") {
@@ -188,7 +196,16 @@ export function NextSteps({ c, path, again, step }: { c: Candidate; path: PathSt
       {step === "refs" && <p className={`notice notice-good ${styles.flash}`}>Asked. We&rsquo;ll email you {first}&rsquo;s references.</p>}
       {step === "spoke" && <p className={`notice notice-good ${styles.flash}`}>Got it. Next: a proper meeting with {first}.</p>}
       {step === "set" && <p className={`notice notice-good ${styles.flash}`}>Saved. We sent you and {first} a confirmation with calendar buttons.</p>}
+      {step === "skipcall" && <p className={`notice notice-good ${styles.flash}`}>Skipped. Set up a meeting with {first} below.</p>}
+      {step === "skipmeeting" && <p className={`notice notice-good ${styles.flash}`}>Skipped. Here&rsquo;s what&rsquo;s next with {first}.</p>}
       {step === "met" && <p className={`notice notice-good ${styles.flash}`}>Got it. Here&rsquo;s what&rsquo;s next with {first}.</p>}
+      {skip && (
+        <form action={skipStep.bind(null, c.id, skip)} className={styles.skip}>
+          <PendingButton className={styles.skipBtn} pendingText="One moment…">
+            {skip === "call" ? `Skip the call, go straight to a meeting →` : `Skip the meeting, go straight to deciding →`}
+          </PendingButton>
+        </form>
+      )}
       {body}
       {ahead && <AlreadyAhead candidateId={c.id} first={first} callDone={!stage.startsWith("call") && stage !== "offer_call"} />}
       <p className={styles.phone}>
