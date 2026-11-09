@@ -5,8 +5,7 @@ import { describe, profileOf, TRAITS } from "@/lib/strengths";
 import { isAnyIndustry, LEVEL_LABEL, WORK_MODE_LABEL, money, salaryRange } from "@/lib/format";
 
 import { ShortlistButton } from "./Shortlist";
-import { QuickLook, QuickData } from "./QuickLook";
-import { CompareToggle } from "./Compare";
+import type { QuickData } from "./QuickLook";
 
 export function Strengths({ items, strong = false }: { items: string[]; strong?: boolean }) {
   if (!items.length) return null;
@@ -138,21 +137,13 @@ export function CandidateCard({
   // human line, the rep's word, and whether they're free.
   return (
     <div className="card card-intro">
-      <div className="ci-top">
-        <span className="ci-role">{role}</span>
-        {store && href && <QuickLook d={quickData(c, fee)} />}
-      </div>
-      {(example || interviewing) && (
-        <span className="ci-flags">
-          {example ? <span className="badge">Example</span> : <span className="badge badge-busy">Interviewing now</span>}
-        </span>
-      )}
+      <span className="ci-role">{role}</span>
       {facts.length > 0 && (
         <p className="ci-facts">
           {facts.map((f, i) => (
-            <span key={f}>
-              {i > 0 && <span className="ci-dot"> · </span>}
+            <span key={f} className="ci-fact">
               {f}
+              {i < facts.length - 1 && <span className="ci-dot">·</span>}
             </span>
           ))}
         </p>
@@ -174,11 +165,14 @@ export function CandidateCard({
         </div>
       )}
       <div className="ci-foot">
-        <span className={`ci-avail ${avail && !/now/i.test(avail) ? "ci-later" : ""}`}>{avail ? `● ${avail}` : ""}</span>
-        {href && <span className="ci-go" aria-hidden="true">View →</span>}
+        <span className={`ci-avail ${(avail && !/now/i.test(avail)) || interviewing ? "ci-later" : ""}`}>
+          {example ? "Example" : interviewing ? "● Interviewing now" : avail ? `● ${avail}` : ""}
+        </span>
+        <span className="ci-actions">
+          {href && <ShortlistButton id={c.id} />}
+          {href && <span className="ci-go" aria-hidden="true">View →</span>}
+        </span>
       </div>
-      {store && href && <CompareToggle id={c.id} />}
-      {href && <ShortlistButton id={c.id} />}
     </div>
   );
 }
