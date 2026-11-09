@@ -17,6 +17,7 @@ export async function generateMetadata({ params }: PageProps<"/hiring-help/templ
 export default async function TemplatePage({ params, searchParams }: PageProps<"/hiring-help/templates/[slug]">) {
   const { slug } = await params;
   const sp = await searchParams;
+  if (slug === "interview-scorecard") redirect("/hiring-help");
   const t = getTemplate(slug);
   if (!t) notFound();
   const owner = await requireOwner(`/hiring-help/templates/${slug}`);

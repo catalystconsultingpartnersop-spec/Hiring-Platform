@@ -165,50 +165,6 @@ SIGN: {{contractor}}, Contractor
 SIGN: {{signer}}, for {{company}}`,
   },
   {
-    slug: "interview-scorecard",
-    title: "Interview scorecard",
-    blurb: "Score every candidate the same way, so the decision is fair and easy.",
-    when: "Print one per interview. Fill it in right after, before you compare notes.",
-    fields: [
-      { key: "candidate", label: "Candidate", prefill: "candidate" },
-      { key: "job_title", label: "Role", prefill: "jobTitle" },
-      { key: "interviewer", label: "Interviewer", prefill: "owner" },
-      { key: "date", label: "Date", type: "date", prefill: "today" },
-      { key: "must1", label: "Must-have #1", placeholder: "e.g. Keeps a schedule of 30+ jobs organized" },
-      { key: "must2", label: "Must-have #2", placeholder: "e.g. Calm and clear with upset customers" },
-      { key: "must3", label: "Must-have #3", placeholder: "e.g. Comfortable with QuickBooks" },
-    ],
-    body: `# Interview Scorecard
-Candidate: {{candidate}}
-Role: {{job_title}}
-Interviewer: {{interviewer}}, {{date}}
-
-Score each line 1 to 4: 1 = no evidence, 2 = some, 3 = solid, 4 = outstanding. Write down what they said that earned the score.
-
-## The must-haves for this role
-[ ] {{must1}}   Score: ___   Evidence: ______________________
-[ ] {{must2}}   Score: ___   Evidence: ______________________
-[ ] {{must3}}   Score: ___   Evidence: ______________________
-
-## How they work
-[ ] Fit with the work this role really involves (their profile shows their natural strengths)   Score: ___
-[ ] Takes ownership: examples of following through without being chased   Score: ___
-[ ] Communication: clear, honest, listens   Score: ___
-[ ] Learns fast: examples of picking up something new   Score: ___
-
-## Questions that work well
-- Walk me through a typical week in your last job. What did you enjoy most, and what drained you?
-- Tell me about a time something went wrong. What did you do first?
-- What would your last manager say you're best at? And what would they want you to work on?
-- What would make this job a great fit for you a year from now?
-
-## Decision
-[ ] Strong yes   [ ] Yes   [ ] Not sure   [ ] No
-
-Biggest strength: ______________________
-Biggest concern: ______________________`,
-  },
-  {
     slug: "reference-check",
     title: "Reference check questions",
     blurb: "A 10-minute call script that gets you real answers, not polite ones.",

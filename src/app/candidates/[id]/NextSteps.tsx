@@ -310,9 +310,9 @@ const ADVICE: Partial<Record<PathState["stage"], string>> = {
   offer_meeting: "Meet in person if you can, and bring whoever they'd work with most.",
   meeting_proposed: "Nothing to do yet. We'll remind them if they haven't picked in two days.",
   meeting_retime: "Offer a wider spread this time: one morning, one afternoon, one evening.",
-  meeting_booked: "Ask about real situations from their past, then score them on the scorecard right after.",
+  meeting_booked: "Ask about real situations from their past, and bring whoever they'd work with most.",
   meeting_feedback: "Tell us how it went while it's fresh. A quick yes or no is kinder to everyone.",
-  decide: "Look over your notes and the scorecard. Not sure yet? Meet again or ask for references. There's no rush.",
+  decide: "Go with your gut and your notes. Not sure yet? Meet again or ask for references. There's no rush.",
   refs_waiting: "You can decide now, or wait a day or two for the references.",
 };
 
@@ -348,11 +348,6 @@ function Questions({ kind, first }: { kind: "call" | "meeting"; first: string })
           <li key={q}>{q}</li>
         ))}
       </ol>
-      {kind === "meeting" && (
-        <p className="small" style={{ margin: "8px 0 0" }}>
-          <Link href="/hiring-help/templates/interview-scorecard">Open the interview scorecard</Link>
-        </p>
-      )}
     </details>
   );
 }

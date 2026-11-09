@@ -38,7 +38,7 @@ Three to five business days is fair. Long deadlines invite shopping around.`,
     title: "Interviewing for how someone works, not just what they've done",
     blurb: "Use the candidate's strengths profile to ask better questions and avoid a bad fit.",
     minutes: 5,
-    related: ["interview-scorecard"],
+    related: ["reference-check"],
     body: `Most hiring mistakes aren't about skills. They're about fit with the actual work: someone who loves big-picture thinking stuck in detailed follow-through, or the reverse. Every candidate on our site has been assessed for exactly this, so use it.
 
 ## Start with the work, not the job title
@@ -53,8 +53,8 @@ Each profile tells you what the candidate is naturally wired for. If the role is
 - "What part of your last job did you look forward to? What did you put off?"
 - "Tell me about something you started that someone else finished, or the other way around."
 
-## Score everyone the same way
-Use the same questions and the same scorecard for every candidate, and fill it in before you talk it over with anyone. It makes the decision fairer and much easier.
+## Ask everyone the same questions
+Use the same few questions with every candidate, and jot down your impressions right after. It makes comparing much easier.
 
 ## Ask what they need from you
 "What does a great manager do for you?" Their answer tells you how to set them up to succeed.`,

@@ -133,7 +133,7 @@ export const owner = {
       quiet("Their resume and a one-page summary are attached.") +
       (o.m.kind === "call"
         ? box("<strong>Good first questions:</strong> What kind of work gives you energy? What are you looking for next? What would you like to know about us?")
-        : box(`Use the <a href="${siteUrl()}/hiring-help/templates/interview-scorecard" style="color:#17213a">interview scorecard</a> to keep it fair and easy to decide.`)) +
+        : box("<strong>Good questions:</strong> Tell me about a time you had to fix something that was falling apart. What would your last manager say you're best at? What would a great first month here look like to you?")) +
       "",
   }),
 
@@ -146,8 +146,7 @@ export const owner = {
       p(`${esc(o.host)} from ${esc(o.company)} invited you to join the ${what(o.m)} with <strong>${esc(o.candidate)}</strong>.`) +
       big(esc(o.when)) +
       p(o.how) +
-      p("Their resume and a one-page summary of who they are are attached, so you can read up before you meet.") +
-      box(`Use the <a href="${siteUrl()}/hiring-help/templates/interview-scorecard" style="color:#17213a">interview scorecard</a> to compare notes afterward.`),
+      p("Their resume and a one-page summary of who they are are attached, so you can read up before you meet."),
   }),
 
   needOtherTimes: (o: { name: string | null; candidate: string; candidateId: string; note: string | null; phone: string | null }): Mail => ({
