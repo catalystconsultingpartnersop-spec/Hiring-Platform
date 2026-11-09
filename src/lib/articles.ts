@@ -54,7 +54,7 @@ Each profile tells you what the candidate is naturally wired for. If the role is
 - "Tell me about something you started that someone else finished, or the other way around."
 
 ## Score everyone the same way
-Use the same questions and the same scorecard for every candidate, and fill it in before you talk it over with anyone. It makes the decision fairer and much easier.
+Meeting more than one person? Use the one-page interview sheet for each. It comes filled in with what we told you about them, so you only check whether it held up. Fill it in before you talk it over with anyone, then lay the sheets side by side.
 
 ## Ask what they need from you
 "What does a great manager do for you?" Their answer tells you how to set them up to succeed.`,

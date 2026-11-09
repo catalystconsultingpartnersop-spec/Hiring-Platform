@@ -3,6 +3,14 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireOwner } from "@/lib/session";
 import { getTemplate } from "@/lib/templates";
+import { bestAtText } from "@/components/CandidateCard";
+import type { PublicCandidate } from "@/lib/db";
+
+// One line each on the sheet.
+const short = (t: string | null | undefined) => {
+  const s = (t ?? "").replace(/\s+/g, " ").trim().replace(/[.]$/, "");
+  return s.length > 90 ? `${s.slice(0, 87).replace(/\s+\S*$/, "")}…` : s || undefined;
+};
 import { TemplateFiller } from "./TemplateFiller";
 import styles from "../../help.module.css";
 
@@ -24,11 +32,14 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
   // Candidates this owner has unlocked, to fill in names automatically.
   const { data } = await db()
     .from("unlocks")
-    .select("candidate_id, candidates(full_name, role_category)")
+    .select("candidate_id, candidates(full_name, role_category, headline, summary, highlights, working_genius, best_line:application->>best_line)")
     .eq("owner_id", owner.id)
     .not("confirmed_at", "is", null)
     .order("signed_at", { ascending: false });
-  const mine = (data ?? []) as unknown as { candidate_id: string; candidates: { full_name: string; role_category: string | null } }[];
+  const mine = (data ?? []) as unknown as {
+    candidate_id: string;
+    candidates: { full_name: string; role_category: string | null; headline: string | null; summary: string | null; highlights: string[] | null; working_genius: string | null; best_line: string | null };
+  }[];
   // The hiring documents come with your first unlocked candidate.
   if (!mine.length) redirect("/hiring-help?locked=1#documents");
   const picked = mine.find((m) => m.candidate_id === sp.c) ?? (mine.length === 1 ? mine[0] : undefined);
@@ -43,6 +54,9 @@ export default async function TemplatePage({ params, searchParams }: PageProps<"
       : f.prefill === "today" ? today
       : f.prefill === "candidate" ? picked?.candidates.full_name
       : f.prefill === "jobTitle" ? picked?.candidates.role_category
+      : f.prefill === "point1" ? short(picked?.candidates.highlights?.[0] || picked?.candidates.headline)
+      : f.prefill === "point2" ? short(picked?.candidates.highlights?.[1] || (picked?.candidates.highlights?.[0] ? null : picked?.candidates.summary?.split(/(?<=[.!?])\s/)[0]))
+      : f.prefill === "bestAt" && picked ? short(bestAtText(picked.candidates as unknown as PublicCandidate))
       : undefined;
     if (v) initial[f.key] = v;
   }

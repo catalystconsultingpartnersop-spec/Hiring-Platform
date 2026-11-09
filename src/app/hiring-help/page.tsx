@@ -46,7 +46,7 @@ export default async function HiringHelp({ searchParams }: PageProps<"/hiring-he
         <div className={`panel ${sp.locked === "1" ? "notice-gold" : "panel-wash"}`} style={{ marginBottom: 16 }}>
           <strong>Included when you unlock your first candidate.</strong>
           <p className="small" style={{ margin: "6px 0 12px" }}>
-            Offer letter, confidentiality agreement, contractor agreement, interview scorecard, reference questions and a
+            Offer letter, confidentiality agreement, contractor agreement, one-page interview sheet, reference questions and a
             first-90-days plan. Filled in with your details and your candidate&rsquo;s, ready to print or download.
           </p>
           <Link className="btn btn-gold btn-small" href="/candidates">

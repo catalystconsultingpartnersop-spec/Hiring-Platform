@@ -7,7 +7,7 @@ export type Field = {
   label: string;
   placeholder?: string;
   type?: "text" | "date" | "textarea";
-  prefill?: "company" | "owner" | "ownerEmail" | "today" | "candidate" | "jobTitle" | "startDate";
+  prefill?: "company" | "owner" | "ownerEmail" | "today" | "candidate" | "jobTitle" | "startDate" | "point1" | "point2" | "point3" | "bestAt";
 };
 
 export type Template = {
@@ -166,47 +166,43 @@ SIGN: {{signer}}, for {{company}}`,
   },
   {
     slug: "interview-scorecard",
-    title: "Interview scorecard",
-    blurb: "Score every candidate the same way, so the decision is fair and easy.",
-    when: "Print one per interview. Fill it in right after, before you compare notes.",
+    title: "One-page interview sheet",
+    blurb: "For when you're meeting more than one person for the same job, or bringing a partner along. Already filled in with what we know about them, so you just check it in person.",
+    when: "Print one per person. Five minutes after the meeting, circle your answers while it's fresh, then lay the sheets side by side.",
     fields: [
       { key: "candidate", label: "Candidate", prefill: "candidate" },
-      { key: "job_title", label: "Role", prefill: "jobTitle" },
-      { key: "interviewer", label: "Interviewer", prefill: "owner" },
       { key: "date", label: "Date", type: "date", prefill: "today" },
-      { key: "must1", label: "Must-have #1", placeholder: "e.g. Keeps a schedule of 30+ jobs organized" },
-      { key: "must2", label: "Must-have #2", placeholder: "e.g. Calm and clear with upset customers" },
-      { key: "must3", label: "Must-have #3", placeholder: "e.g. Comfortable with QuickBooks" },
+      { key: "need1", label: "This job can't work without… (1)", placeholder: "e.g. Keeps 30 jobs on schedule without me chasing" },
+      { key: "need2", label: "This job can't work without… (2)", placeholder: "e.g. Calm with upset customers" },
+      { key: "point1", label: "What we told you about them (1)", prefill: "point1" },
+      { key: "point2", label: "What we told you about them (2)", prefill: "point2" },
+      { key: "best", label: "What they're best at", prefill: "bestAt" },
     ],
-    body: `# Interview Scorecard
-Candidate: {{candidate}}
-Role: {{job_title}}
-Interviewer: {{interviewer}}, {{date}}
+    body: `# {{candidate}}
+Met on {{date}}
 
-Score each line 1 to 4: 1 = no evidence, 2 = some, 3 = solid, 4 = outstanding. Write down what they said that earned the score.
+## What you need. Did you see it?
+[ ] {{need1}}   Yes / Not sure / No
+[ ] {{need2}}   Yes / Not sure / No
 
-## The must-haves for this role
-[ ] {{must1}}   Score: ___   Evidence: ______________________
-[ ] {{must2}}   Score: ___   Evidence: ______________________
-[ ] {{must3}}   Score: ___   Evidence: ______________________
+## What we told you. Did it hold up?
+[ ] {{point1}}   Yes / Not sure / No
+[ ] {{point2}}   Yes / Not sure / No
+[ ] {{best}}   Yes / Not sure / No
 
-## How they work
-[ ] Fit with the work this role really involves (their profile shows their natural strengths)   Score: ___
-[ ] Takes ownership: examples of following through without being chased   Score: ___
-[ ] Communication: clear, honest, listens   Score: ___
-[ ] Learns fast: examples of picking up something new   Score: ___
+## Ask these, write one line each
+- Tell me about a time you had to fix something that was falling apart.
+- What would your last manager say you're best at?
+- What would a great first month here look like to you?
 
-## Questions that work well
-- Walk me through a typical week in your last job. What did you enjoy most, and what drained you?
-- Tell me about a time something went wrong. What did you do first?
-- What would your last manager say you're best at? And what would they want you to work on?
-- What would make this job a great fit for you a year from now?
+## Your gut
+[ ] Would I be glad to see them walk in on a Monday morning?   Yes / Maybe / No
+[ ] Is there anything that bothered me?   ______________________
 
-## Decision
-[ ] Strong yes   [ ] Yes   [ ] Not sure   [ ] No
+## So? Circle one
+Hire   /   Meet again   /   Not a fit
 
-Biggest strength: ______________________
-Biggest concern: ______________________`,
+Not sure about something? Message the rep who met them. It's on their page.`,
   },
   {
     slug: "reference-check",

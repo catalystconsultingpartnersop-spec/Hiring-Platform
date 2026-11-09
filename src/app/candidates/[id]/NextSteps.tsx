@@ -118,7 +118,7 @@ export function NextSteps({ c, path, again, step, guests = [], busy = [] }: { c:
           It&rsquo;s in your calendar invite too.
         </p>
         <Advice stage={stage} />
-        <Questions kind={m.kind} first={first} />
+        <Questions kind={m.kind} first={first} c={c.id} />
         <BringSomeone candidateId={c.id} meetingId={m.id} guests={guests} what={what} />
       </div>
     );
@@ -310,9 +310,9 @@ const ADVICE: Partial<Record<PathState["stage"], string>> = {
   offer_meeting: "Meet in person if you can, and bring whoever they'd work with most.",
   meeting_proposed: "Nothing to do yet. We'll remind them if they haven't picked in two days.",
   meeting_retime: "Offer a wider spread this time: one morning, one afternoon, one evening.",
-  meeting_booked: "Ask about real situations from their past, then score them on the scorecard right after.",
+  meeting_booked: "Ask about real situations from their past. Meeting more than one person for this job? The one-page sheet makes comparing easy.",
   meeting_feedback: "Tell us how it went while it's fresh. A quick yes or no is kinder to everyone.",
-  decide: "Look over your notes and the scorecard. Not sure yet? Meet again or ask for references. There's no rush.",
+  decide: "Go with your gut and your notes. Not sure yet? Meet again or ask for references. There's no rush.",
   refs_waiting: "You can decide now, or wait a day or two for the references.",
 };
 
@@ -339,7 +339,7 @@ function Advice({ stage }: { stage: PathState["stage"] }) {
   );
 }
 
-function Questions({ kind, first }: { kind: "call" | "meeting"; first: string }) {
+function Questions({ kind, first, c }: { kind: "call" | "meeting"; first: string; c: string }) {
   return (
     <details className={styles.questions}>
       <summary>🗒️ 3 questions to ask {first}</summary>
@@ -350,7 +350,7 @@ function Questions({ kind, first }: { kind: "call" | "meeting"; first: string })
       </ol>
       {kind === "meeting" && (
         <p className="small" style={{ margin: "8px 0 0" }}>
-          <Link href="/hiring-help/templates/interview-scorecard">Open the interview scorecard</Link>
+          <Link href={`/hiring-help/templates/interview-scorecard?c=${c}`}>Meeting more than one person? Print the one-page sheet</Link>
         </p>
       )}
     </details>
