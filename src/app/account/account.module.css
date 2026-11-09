@@ -17,3 +17,33 @@
   .actions :global(.btn) { width: 100%; justify-content: center; }
   .actions form { display: contents; }
 }
+.yours { display: flex; align-items: center; gap: 8px; font-weight: 700; margin: 0 0 14px; }
+.dotYou { width: 10px; height: 10px; border-radius: 50%; background: var(--marigold); display: inline-block; }
+.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.col { background: var(--shelf); border-radius: 16px; padding: 12px; display: grid; gap: 8px; }
+.colHead { font-size: 15px; margin: 2px 4px 4px; display: flex; justify-content: space-between; align-items: center; }
+.colHead span { font-size: 13px; background: #fff; border-radius: 999px; padding: 1px 9px; color: var(--ink-2); }
+.empty { margin: 0 4px 4px; font-size: 13.5px; color: var(--ink-3); }
+.card { display: grid; gap: 4px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; color: var(--ink); text-decoration: none; }
+.card:hover { border-color: var(--ink); }
+.cardYou { border-left: 4px solid var(--marigold); }
+.cardName { font-family: var(--display); font-weight: 700; font-size: 16.5px; line-height: 1.2; }
+.cardLine { font-size: 13.5px; color: var(--ink-2); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.next { font-size: 13.5px; color: var(--ink-2); margin-top: 2px; }
+.next::first-letter { text-transform: uppercase; }
+.nextYou { color: var(--ink); font-weight: 700; }
+.nextSet { color: #2f6b3a; font-weight: 600; }
+.cardSmall { font-size: 12.5px; color: var(--ink-3); }
+.closed { margin-top: 14px; border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; background: #fff; }
+.closed summary { cursor: pointer; font-weight: 700; }
+.closed ul { list-style: none; margin: 10px 0 2px; padding: 0; display: grid; gap: 8px; font-size: 14.5px; }
+.closed li span { color: var(--ink-2); }
+.closed li a { font-weight: 600; }
+@media (max-width: 860px) {
+  .board { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .board { grid-template-columns: 1fr; }
+  .col:has(.empty) { padding: 8px 12px; }
+  .col:has(.empty) .empty { display: none; }
+}
