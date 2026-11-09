@@ -110,6 +110,19 @@ export const owner = {
       "",
   }),
 
+  // Someone the client brought along to a call or meeting (a partner, a manager).
+  guestInvite: (o: { guest: string; host: string; company: string; candidate: string; when: string; how: string; m: MeetingInfo }): Mail => ({
+    audience: "owner",
+    subject: `You're invited: ${what(o.m)} with ${o.candidate}, ${o.when}`,
+    html:
+      hi(o.guest) +
+      p(`${esc(o.host)} from ${esc(o.company)} invited you to join the ${what(o.m)} with <strong>${esc(o.candidate)}</strong>.`) +
+      big(esc(o.when)) +
+      p(o.how) +
+      p("Their resume and a one-page summary of who they are are attached, so you can read up before you meet.") +
+      box(`Use the <a href="${siteUrl()}/hiring-help/templates/interview-scorecard" style="color:#17213a">interview scorecard</a> to compare notes afterward.`),
+  }),
+
   needOtherTimes: (o: { name: string | null; candidate: string; candidateId: string; note: string | null; phone: string | null }): Mail => ({
     audience: "owner",
     subject: `${first(o.candidate)} needs different times`,
