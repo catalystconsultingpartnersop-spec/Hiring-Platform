@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { db, logActivity, Unlock } from "@/lib/db";
 import { refCode } from "@/lib/format";
 
@@ -201,4 +202,28 @@ export async function skipStep(candidateId: string, kind: "call" | "meeting") {
     console.error(e);
   }
   redirect(`/candidates/${candidateId}?step=${kind === "call" ? "skipcall" : "skipmeeting"}#next`);
+}
+
+// Bring someone along (a partner, a manager): they get the time, the calendar invite,
+// the resume and the one-page summary.
+export async function inviteGuest(candidateId: string, meetingId: string, _prev: { ok?: string; error?: string }, form: FormData): Promise<{ ok?: string; error?: string }> {
+  const { owner, unlock } = await myUnlock(candidateId);
+  const name = String(form.get("name") ?? "").trim().slice(0, 80);
+  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  if (!name) return { error: "Add their name." };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "That email doesn't look right." };
+  const { data: m } = await db().from("meetings").select("*").eq("id", meetingId).eq("unlock_id", unlock.id).maybeSingle();
+  if (!m || m.status !== "booked") return { error: "This meeting isn't booked yet." };
+  const { addGuest } = await import("@/lib/meetingGuests");
+  await addGuest(meetingId, { name, email });
+  try {
+    const { emailGuest } = await import("@/lib/pathEmails");
+    await emailGuest(m as Meeting, { name, email });
+  } catch (e) {
+    console.error(e);
+    return { error: "We couldn't send it just now. Try again in a minute." };
+  }
+  await logActivity(`owner:${owner.email}`, "owner_invited_guest", { candidate: refCode(candidateId), guest: email });
+  revalidatePath(`/candidates/${candidateId}`);
+  return { ok: `Sent to ${name.split(" ")[0]}.` };
 }

@@ -84,6 +84,7 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
         paidNotice={paidNotice}
         hireNote={typeof sp.hire === "string" ? sp.hire : ""}
         cameBack={sp.back === "1"}
+        guests={path.meeting ? (await (await import("@/lib/meetingGuests")).guestsFor(path.meeting.id)).map(({ name, email }) => ({ name, email })) : []}
       />
     );
   }
@@ -312,7 +313,9 @@ function Unlocked({
   path,
   again,
   step,
+  guests,
 }: {
+  guests: { name: string; email: string }[];
   path: PathState;
   again: boolean;
   step: string;
@@ -400,7 +403,7 @@ function Unlocked({
               </li>
             </ul>
           </div>
-          <NextSteps c={c} path={path} again={again} step={step} />
+          <NextSteps c={c} path={path} again={again} step={step} guests={guests} />
           <Profile c={c} page={parseOwnerPage((c as { application?: Record<string, string> }).application?.owner_page)} />
           {c.full_profile && (
             <section className={styles.full}>

@@ -298,3 +298,25 @@ export async function emailSkipped(unlockId: string, kind: "call" | "meeting") {
       : `<strong>${e(company(c))}</strong> skipped the meeting with <strong>${e(c.cand.full_name)}</strong> and is moving on to deciding.`,
   );
 }
+
+// The client brought someone along: send them the time, a calendar invite, the resume and summary.
+export async function emailGuest(m: Meeting, guest: { name: string; email: string }) {
+  const c = await pathCtx(m.unlock_id);
+  if (!c || !m.starts_at) return;
+  const end = new Date(Date.parse(m.starts_at) + m.minutes * 60e3).toISOString();
+  const label = m.kind === "call" ? "First call" : "Meeting";
+  const how =
+    m.mode === "phone"
+      ? `${e(c.owner.full_name ?? company(c))} will call ${e(first(c.cand.full_name))}${c.cand.phone ? ` at <strong>${e(c.cand.phone)}</strong>` : ""}. Join them for it.`
+      : howLine(m, c, false);
+  const { packetAttachments } = await import("./ownerPacket");
+  await sendEmail({
+    to: guest.email,
+    ...toOwner.guestInvite({ guest: guest.name, host: c.owner.full_name ?? company(c), company: company(c), candidate: c.cand.full_name, when: formatInZone(m.starts_at, m.time_zone || COMPANY_TZ), how, m }),
+    replyTo: c.owner.email,
+    attachments: [
+      { filename: `${m.kind}.ics`, content: callIcs({ uid: `${m.id}-${guest.email}@candidate-collection`, start: m.starts_at, end, title: `${label}: ${c.cand.full_name}`, description: `${MODE_LABEL[m.mode]}. ${m.place ?? ""}`, location: m.place }) },
+      ...(await packetAttachments(c.cand.id).catch(() => [])),
+    ],
+  });
+}

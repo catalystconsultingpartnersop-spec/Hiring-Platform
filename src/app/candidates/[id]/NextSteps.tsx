@@ -5,12 +5,13 @@ import { BIG_STEPS, bigStepIndex, MODE_LABEL, PathState } from "@/lib/path";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 import { passOnCandidate } from "./actions";
 import { AlreadyAhead } from "./AlreadyAhead";
+import { BringSomeone } from "./BringSomeone";
 import { OfferTimes } from "./OfferTimes";
 import { askReferences, ownerKeepGoing, skipStep, withdrawOffer } from "./pathActions";
 import styles from "./path.module.css";
 
 // The client's guide from "unlocked" to "hired". A nudge, never a requirement.
-export function NextSteps({ c, path, again, step }: { c: Candidate; path: PathState; again: boolean; step: string }) {
+export function NextSteps({ c, path, again, step, guests = [] }: { c: Candidate; path: PathState; again: boolean; step: string; guests?: { name: string; email: string }[] }) {
   const { stage, meeting: m, refs } = path;
   if (stage === "passed" || stage === "taken" || stage === "hired") return null;
   const first = c.full_name.split(" ")[0];
@@ -122,6 +123,7 @@ export function NextSteps({ c, path, again, step }: { c: Candidate; path: PathSt
             Use the <Link href="/hiring-help/templates/interview-scorecard">interview scorecard</Link> to keep it fair and easy to decide.
           </p>
         )}
+        <BringSomeone candidateId={c.id} meetingId={m.id} guests={guests} what={what} />
       </div>
     );
   } else if ((stage === "call_feedback" || stage === "meeting_feedback") && m) {

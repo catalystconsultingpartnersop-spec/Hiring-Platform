@@ -33,7 +33,7 @@ export async function sendEmail(opts: {
   const key = process.env.RESEND_API_KEY?.trim();
   const from = process.env.EMAIL_FROM?.trim();
   if (!key || !from) {
-    console.log(`[email not sent: RESEND_API_KEY/EMAIL_FROM missing] to=${opts.to} subject=${opts.subject}\n${body}`);
+    console.log(`[email not sent: RESEND_API_KEY/EMAIL_FROM missing] to=${opts.to} subject=${opts.subject} attachments=${(opts.attachments ?? []).map((a) => `${a.filename}(${a.content.length})`).join(",")}\n${body}`);
     const missing = [!key && "RESEND_API_KEY", !from && "EMAIL_FROM"].filter(Boolean).join(" and ");
     await logActivity("system", "email_failed", { to: opts.to, subject: opts.subject, error: `${missing} is missing in Vercel` });
     return { ok: false, error: `${missing} is missing in Vercel` };
