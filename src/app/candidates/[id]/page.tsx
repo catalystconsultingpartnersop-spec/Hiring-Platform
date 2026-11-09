@@ -440,6 +440,7 @@ function Unlocked({
         </article>
 
         <aside className={styles.side}>
+          {!passed && !taken && (!status || status === "pending") && repCall && <div className={styles.talkSide}>{repCall}</div>}
           <div className="panel">
             {passed ? (
               <>

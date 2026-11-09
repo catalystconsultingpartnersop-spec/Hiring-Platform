@@ -180,3 +180,9 @@
 .perkBio { display: block; font-size: 13.5px; opacity: .8; margin-top: 2px; }
 .talkSlot { margin: 0 0 28px; }
 .talkSlot :global(.rep-call) { margin-top: 0; }
+
+/* The rep box: under the next step on phones, top of the side column on wider screens. */
+.talkSide { margin-bottom: 16px; }
+.talkSide :global(.rep-call) { margin-top: 0; }
+@media (min-width: 861px) { .talkSlot { display: none; } }
+@media (max-width: 860px) { .talkSide { display: none; } }

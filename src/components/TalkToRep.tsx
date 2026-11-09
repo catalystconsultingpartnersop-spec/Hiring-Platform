@@ -58,7 +58,13 @@ export function TalkToRep({
   if (thread && !kind)
     return (
       <div className="rep-call">
-        <p className="rep-call-k">Your conversation with {who}</p>
+        <div className="rep-call-top">
+          <span className="rep-call-av" aria-hidden="true">{who === "our team" ? "★" : who.charAt(0)}</span>
+          <div>
+            <p className="rep-call-k">Your conversation with {who}</p>
+            <p className="rep-call-t">{thread.lastFromRep ? "New answer" : "Waiting for an answer"}</p>
+          </div>
+        </div>
         <p className="small">{thread.lastFromRep ? `${he.charAt(0).toUpperCase() + he.slice(1)} answered you.` : "Sent. We'll email you when there's an answer."}</p>
         <a className="btn btn-ghost rep-call-btn" href={thread.link}>
           Open the conversation
@@ -68,7 +74,13 @@ export function TalkToRep({
 
   return (
     <div className="rep-call">
-      <p className="rep-call-k">Talk to {who}</p>
+      <div className="rep-call-top">
+        <span className="rep-call-av" aria-hidden="true">{who === "our team" ? "★" : who.charAt(0)}</span>
+        <div>
+          <p className="rep-call-k">Talk to {who}</p>
+          <p className="rep-call-t">Included with your unlock</p>
+        </div>
+      </div>
       <p className="rep-call-h">
         {who === "our team" ? "We" : who} met {candidate} in person. Ask {who === "our team" ? "us" : who} for an honest read before you meet.
       </p>
