@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { NavProgress } from "./NavProgress";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { listThreads } from "@/lib/ownerMessages";
 import { requireStaff } from "@/lib/session";
 import { adminLogout } from "../actions";
 import styles from "./admin.module.css";
@@ -16,6 +17,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   let q = db().from("contact_requests").select("id", { count: "exact", head: true }).eq("status", "new");
   if (!admin && me.id) q = q.contains("routed_to", [me.id]);
   const { count: openRequests } = await q;
+  const waiting = (await listThreads(admin || me.manager ? null : me.id).catch(() => [])).filter((t) => t.waiting).length;
   // Reps sign the rep agreement once before using the back office.
   if (!admin && me.id) {
     const { data, error } = await db().from("staff").select("*").eq("id", me.id).maybeSingle();
@@ -40,6 +42,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {admin && <Link href="/admin/reps">Reps</Link>}
         <Link href="/admin/calls">{me.manager ? "Calls" : "My calls"}</Link>
         {me.id && <Link href="/admin/booking-link">📅 My booking link</Link>}
+        <Link href="/admin/messages">
+          💬 Messages{waiting ? <span className={styles.badge}>{waiting}</span> : null}
+        </Link>
         {admin && <Link href="/admin/team">Team</Link>}
         <Link href="/admin/candidates/new" className={styles.addLink}>
           + Add candidate

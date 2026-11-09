@@ -863,3 +863,30 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 .rep-call-form .field { margin: 0; }
 .rep-call-done { border-left-color: #2f6b3a; }
 .rep-call-done .rep-call-k { color: #2f6b3a; }
+.rep-call-kinds { display: grid; gap: 8px; margin-top: 4px; }
+.rep-call-kind { text-align: left; background: #fff; border: 1.5px solid #ddd8ca; border-radius: 12px; padding: 11px 14px; font: 700 15px/1.2 var(--text); color: var(--ink); cursor: pointer; }
+.rep-call-kind:hover { border-color: var(--ink); }
+.rep-call-kind.on { border-color: var(--ink); background: #fff8e1; }
+.talk-page { padding: 28px 0 48px; }
+.thread { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.thread li { display: flex; flex-direction: column; max-width: 82%; }
+.thread-mine { margin-left: auto; align-items: flex-end; }
+.thread-theirs { align-items: flex-start; }
+.thread-bubble { padding: 11px 15px; border-radius: 16px; font-size: 15.5px; line-height: 1.5; }
+.thread-bubble p { margin: 0 0 6px; }
+.thread-bubble p:last-child { margin: 0; }
+.thread-mine .thread-bubble { background: var(--ink); color: #fff; border-bottom-right-radius: 4px; }
+.thread-theirs .thread-bubble { background: #fff; border: 1px solid #e3dfd3; border-bottom-left-radius: 4px; }
+.thread-meta { font-size: 12.5px; color: #8a8f9c; margin-top: 4px; }
+.talk-reply { display: grid; gap: 10px; margin-top: 18px; }
+.talk-reply .btn { justify-self: end; }
+.msg-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.msg-list a { display: grid; gap: 3px; padding: 14px 16px; background: #fff; border: 1px solid var(--line); border-radius: 14px; text-decoration: none; color: inherit; }
+.msg-list a:hover { border-color: var(--ink); }
+.msg-waiting a { border-left: 4px solid var(--marigold); }
+.msg-who { font-weight: 800; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.msg-dot { font-size: 12px; font-weight: 800; background: #fff1c2; color: #7a5b00; border-radius: 999px; padding: 2px 8px; }
+.msg-closed { font-size: 12px; font-weight: 700; background: #eceae3; color: #5b6475; border-radius: 999px; padding: 2px 8px; }
+.msg-last { color: #4b5568; font-size: 14.5px; }
+.wrapup { margin-top: 22px; }
+.wrapup summary { cursor: pointer; color: #5b6475; font-size: 14px; }

@@ -11,7 +11,7 @@ import { commissionPercent } from "@/lib/settings";
 import { EmailCheck } from "./EmailCheck";
 import { Introductions } from "./Introductions";
 import { RepDashboard } from "./RepDashboard";
-import { RepCallsWaiting } from "./RepCallsWaiting";
+import { MessagesWaiting } from "./MessagesWaiting";
 import styles from "./admin.module.css";
 
 export const dynamic = "force-dynamic";
@@ -123,7 +123,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
         </p>
       )}
       <EmailCheck problem={emailProblem} settings={emailSettings} />
-      <RepCallsWaiting staffId={null} all />
+      <MessagesWaiting staffId={null} />
 
       <div className="panel" style={{ marginTop: 16 }}>
         <h2 className={styles.h3}>Needs your attention</h2>

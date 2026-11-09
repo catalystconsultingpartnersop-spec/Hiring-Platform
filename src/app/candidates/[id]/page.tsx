@@ -19,8 +19,10 @@ import { loadPath, PathState, pathState } from "@/lib/path";
 import { currentOwner, currentStaff } from "@/lib/session";
 import { nowMs } from "@/lib/time";
 import { NextSteps } from "./NextSteps";
-import { RepCall } from "@/components/RepCall";
-import { repFor } from "@/lib/repCalls";
+import { TalkToRep } from "@/components/TalkToRep";
+import { getThread, isCutOff, ownerLink, repFor } from "@/lib/ownerMessages";
+import { cookies } from "next/headers";
+import { readSignedToken } from "@/lib/session";
 import { passOnCandidate, reconsiderCandidate } from "./actions";
 import styles from "./detail.module.css";
 
@@ -45,12 +47,22 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
   }
   // A free 10-minute call with the rep who met them (2 per owner).
   const rep = await repFor(id).catch(() => null);
+  // Their conversation about this candidate: remembered in this browser, or found by their account email.
+  const remembered = readSignedToken((await cookies()).get(`tcc_talk_${id.slice(0, 8)}`)?.value, "thr_");
+  let th = remembered ? await getThread(remembered).catch(() => null) : null;
+  if (!th && owner) {
+    const { data } = await db().from("activity_log").select("details").eq("action", "msg_thread").eq("details->>email", owner.email.toLowerCase()).eq("details->>candidate_id", id).limit(1);
+    const tid = (data?.[0]?.details as { thread?: string } | undefined)?.thread;
+    th = tid ? await getThread(tid).catch(() => null) : null;
+  }
   const repCall = rep ? (
-    <RepCall
+    <TalkToRep
       candidateId={id}
       rep={rep.id ? rep.first : "our team"}
       signedIn={!!owner}
       defaults={{ name: owner?.full_name ?? "", company: owner?.company ?? "", phone: owner?.phone ?? "" }}
+      thread={th ? { link: ownerLink(th.t.id), count: th.msgs.length, lastFromRep: th.msgs.at(-1)?.from === "rep" } : null}
+      cutOff={th?.cutOff || (owner ? await isCutOff(owner.email).catch(() => false) : false)}
     />
   ) : null;
   let unlock: Unlock | null = null;
