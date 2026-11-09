@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 import "@fontsource-variable/bricolage-grotesque";
 import "@fontsource-variable/instrument-sans";
 import "./globals.css";
@@ -33,6 +34,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   let signedIn = false;
   let candidate = false;
   let onlyCandidate = false;
+  // On the back-office address (team.…) public pages live on the main site, so link
+  // there directly instead of through a redirect the browser can't prefetch.
+  const host = ((await headers()).get("host") ?? "").toLowerCase();
+  const site = host.startsWith("team.") ? siteUrl().replace(/\/$/, "") : "";
+  const P = (p: string) => site + p;
   try {
     onlyCandidate = await candidateOnly();
     signedIn = !!(await currentOwner());
@@ -58,42 +64,42 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         />
         <header className="site-header">
           <div className="wrap">
-            <Link href={onlyCandidate ? "/join" : "/"} className="brand" aria-label={`${brandName()} home`}>
+            <Link href={site ? "/admin" : onlyCandidate ? "/join" : "/"} className="brand" aria-label={`${brandName()} home`}>
               <Logo tagline />
             </Link>
             {onlyCandidate ? (
               <nav className="nav" aria-label="Main">
-                <Link href="/join" className="hide-sm">
+                <Link href={P("/join")} className="hide-sm">
                   Looking for work?
                 </Link>
-                <Link href="/mission" className="hide-sm">
+                <Link href={P("/mission")} className="hide-sm">
                   Our mission
                 </Link>
-                <Link href="/me">Your page</Link>
+                <Link href={P("/me")}>Your page</Link>
               </nav>
             ) : (
             <nav className="nav" aria-label="Main">
-              <Link href="/candidates">
+              <Link href={P("/candidates")}>
                 <span className="hide-sm">Browse candidates</span>
                 <span className="show-sm">Browse</span>
               </Link>
-              <ShortlistLink />
+              <ShortlistLink base={site} />
               {signedIn && <ShortlistSync />}
-              <Link href="/join" className="hide-sm">
+              <Link href={P("/join")} className="hide-sm">
                 Looking for work?
               </Link>
-              <Link href="/hiring-help" className="hide-sm">
+              <Link href={P("/hiring-help")} className="hide-sm">
                 Hiring help
               </Link>
               {signedIn ? (
-                <Link href="/account">
+                <Link href={P("/account")}>
                   <span className="hide-sm">Your account</span>
                   <span className="show-sm">Account</span>
                 </Link>
               ) : candidate ? (
-                <Link href="/me">Your page</Link>
+                <Link href={P("/me")}>Your page</Link>
               ) : (
-                <Link href="/login">Sign in</Link>
+                <Link href={P("/login")}>Sign in</Link>
               )}
             </nav>
             )}
@@ -112,22 +118,22 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             {!onlyCandidate && (
             <nav aria-label="For businesses">
               <h3>For businesses</h3>
-              <Link href="/candidates">Browse candidates</Link>
-              <Link href="/hiring-help">Hiring help</Link>
-              <Link href="/why">Why we started</Link>
-              <Link href={signedIn ? "/account" : "/login"}>{signedIn ? "Your account" : "Sign in"}</Link>
+              <Link href={P("/candidates")}>Browse candidates</Link>
+              <Link href={P("/hiring-help")}>Hiring help</Link>
+              <Link href={P("/why")}>Why we started</Link>
+              <Link href={P(signedIn ? "/account" : "/login")}>{signedIn ? "Your account" : "Sign in"}</Link>
             </nav>
             )}
             <nav aria-label="For candidates">
               <h3>For candidates</h3>
-              <Link href="/join">Looking for work?</Link>
-              <Link href="/join#career-help">Career help</Link>
-              <Link href="/me">Your page</Link>
-              <Link href="/mission">Our mission</Link>
+              <Link href={P("/join")}>Looking for work?</Link>
+              <Link href={P("/join#career-help")}>Career help</Link>
+              <Link href={P("/me")}>Your page</Link>
+              <Link href={P("/mission")}>Our mission</Link>
             </nav>
             <div>
               <h3>Questions?</h3>
-              <Link href="/contact">Contact us</Link>
+              <Link href={P("/contact")}>Contact us</Link>
             </div>
           </div>
           <div className="wrap footer-bottom">
@@ -136,8 +142,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             </span>
             <span style={{ display: "inline-flex", gap: 16 }}>
               {/* Someone hiring who arrived through a candidate link can always get to the business side. */}
-              {onlyCandidate && <Link href="/candidates?for=business">Hiring? Browse candidates</Link>}
-              <Link href="/privacy">Privacy</Link>
+              {onlyCandidate && <Link href={P("/candidates?for=business")}>Hiring? Browse candidates</Link>}
+              <Link href={P("/privacy")}>Privacy</Link>
             </span>
           </div>
         </footer>

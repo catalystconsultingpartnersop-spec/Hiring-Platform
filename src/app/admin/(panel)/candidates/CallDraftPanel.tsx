@@ -67,6 +67,7 @@ export function CallDraftPanel({
             {new Date(madeAt).toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
+              timeZone: "America/New_York",
             })}
             . Anything you hadn&rsquo;t written yet (headline, summary,
             highlights, full profile) was filled in below. Read it, make it

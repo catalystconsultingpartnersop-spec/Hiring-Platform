@@ -5,7 +5,7 @@ import { makeCleanResumeAction, saveCleanResumeAction, setOwnerResumeAction } fr
 
 type Clean = { text: string; at: string; by: string; sources: string; notes: string } | null;
 
-const day = (iso: string) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "");
+const day = (iso: string) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York" }) : "");
 
 // Their resume as they sent it, and the clean version we made from it (and their call).
 // The original is never changed.

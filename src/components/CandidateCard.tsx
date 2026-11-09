@@ -126,7 +126,7 @@ export function CandidateCard({
 }) {
   void store;
   const salary = salaryRange(c.salary_min, c.salary_max);
-  const facts = [salary, c.location_region, c.level ? LEVEL_LABEL[c.level] : null].filter(Boolean) as string[];
+  const facts = [salary, placeName(c.location_region), c.level ? LEVEL_LABEL[c.level] : null].filter(Boolean) as string[];
   const role = [c.role_category, ...(c.also_roles ?? [])].filter(Boolean).slice(0, 2).join(" / ") || "Candidate";
   const repName = (c.rep?.full_name ?? "").trim().split(" ")[0];
   const word = (c.rep_word ?? "").trim() || ownLine(c);
@@ -191,4 +191,11 @@ function ownLine(c: PublicCandidate): string | null {
   if (t.length > 120) t = `${t.slice(0, 117).replace(/\s+\S*$/, "")}…`;
   t = t.charAt(0).toUpperCase() + t.slice(1);
   return /[.!?…]$/.test(t) ? t : `${t}.`;
+}
+
+// "New jersey" → "New Jersey": tidy place names typed in lower case, leave the rest alone.
+function placeName(p: string | null | undefined) {
+  const t = (p ?? "").trim();
+  if (!t) return null;
+  return t.replace(/\b([a-z])([a-z]{2,})\b/g, (w, a: string, b: string) => (/^(and|of|the|area)$/.test(w) ? w : a.toUpperCase() + b));
 }

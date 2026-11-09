@@ -492,6 +492,7 @@ export function CandidateForm({
             {new Date(ours.at).toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
+              timeZone: "America/New_York",
             })}
             {ours.converted ? " (converted from the earlier version)" : ""}:{" "}
             <b>{`${ours.letters.slice(0, 2)} ${ours.letters.slice(2, 4)} ${ours.letters.slice(4)}`}</b>
