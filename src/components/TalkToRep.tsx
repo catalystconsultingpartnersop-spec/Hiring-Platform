@@ -13,14 +13,16 @@ const KINDS = [
 export function TalkToRep({
   candidateId,
   rep,
-  signedIn,
+  bio,
+  candidate,
   defaults,
   thread,
   cutOff,
 }: {
   candidateId: string;
   rep: string; // the rep's first name, or "our team"
-  signedIn: boolean;
+  bio: { line: string; bio: string } | null;
+  candidate: string; // the candidate's first name
   defaults: { name: string; company: string; phone: string };
   thread: { link: string; count: number; lastFromRep: boolean } | null;
   cutOff: boolean;
@@ -35,7 +37,7 @@ export function TalkToRep({
       <div className="rep-call">
         <p className="rep-call-k">Talk to {who}</p>
         <p className="small">
-          You&rsquo;ve reached the limit of free conversation with our team. When you&rsquo;re ready, see who this candidate is and talk to them directly. <Link href="/hiring-help">Hiring help</Link> covers how it works.
+          You&rsquo;ve reached the limit of free time with our reps. You have everything you need to reach out to {candidate} directly. <Link href="/hiring-help">Hiring help</Link> covers interviewing, references and making an offer.
         </p>
       </div>
     );
@@ -68,8 +70,14 @@ export function TalkToRep({
     <div className="rep-call">
       <p className="rep-call-k">Talk to {who}</p>
       <p className="rep-call-h">
-        {who === "our team" ? "We" : who} met them in person. Ask {who === "our team" ? "us" : who} anything about them, free, before you decide.
+        {who === "our team" ? "We" : who} met {candidate} in person. Ask {who === "our team" ? "us" : who} for an honest read before you meet.
       </p>
+      {bio && (
+        <div className="rep-bio">
+          {bio.line && <strong>{bio.line}</strong>}
+          {bio.bio && <p>{bio.bio}</p>}
+        </div>
+      )}
       <div className="rep-call-kinds" role="radiogroup" aria-label="What would you like?">
         {KINDS.map(([v, l]) => (
           <button key={v} type="button" role="radio" aria-checked={kind === v} className={`rep-call-kind ${kind === v ? "on" : ""}`} onClick={() => setKind(v)}>
@@ -84,7 +92,7 @@ export function TalkToRep({
           {kind === "question" ? (
             <label className="field">
               <span>Your question</span>
-              <textarea className="textarea" name="text" rows={3} required placeholder="e.g. How are they with customers?" />
+              <textarea className="textarea" name="text" rows={3} required placeholder={`e.g. How is ${candidate} with customers?`} />
             </label>
           ) : (
             <>
@@ -102,25 +110,15 @@ export function TalkToRep({
               </label>
             </>
           )}
-          <label className="field">
-            <span>Your name</span>
-            <input className="input" name="name" defaultValue={defaults.name} required autoComplete="name" />
-          </label>
-          {!signedIn && (
+          {!defaults.name && (
             <label className="field">
-              <span>Email (for the answer)</span>
-              <input className="input" name="email" type="email" required autoComplete="email" />
+              <span>Your name</span>
+              <input className="input" name="name" required autoComplete="name" />
             </label>
           )}
-          <label className="field">
-            <span>
-              Business <span className="muted">(optional)</span>
-            </span>
-            <input className="input" name="company" defaultValue={defaults.company} autoComplete="organization" />
-          </label>
           {state && !state.ok && (
             <p className="notice notice-bad" role="alert">
-              {state.error === "cutoff" ? "You've reached the limit of free conversation." : state.error}
+              {state.error === "cutoff" ? "You've reached the limit of free time with our reps." : state.error}
             </p>
           )}
           <button className="btn btn-gold" type="submit" disabled={pending} style={{ width: "100%" }}>

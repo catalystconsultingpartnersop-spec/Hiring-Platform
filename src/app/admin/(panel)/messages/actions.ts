@@ -33,3 +33,13 @@ export async function reopenOwner(threadId: string) {
   await reopen(a.th.t.email, a.me.name);
   revalidatePath(`/admin/messages/${threadId}`);
 }
+
+export async function saveBio(staffId: string, _prev: { ok: boolean; error?: string } | null, fd: FormData) {
+  const me = await requireStaff();
+  if (me.id !== staffId && me.role !== "admin") return { ok: false, error: "You can only change your own bio." };
+  const { setBio } = await import("@/lib/staffBios");
+  await setBio(staffId, { line: String(fd.get("line") ?? "").trim(), bio: String(fd.get("bio") ?? "").trim() });
+  revalidatePath("/admin/messages");
+  revalidatePath(`/admin/team/${staffId}`);
+  return { ok: true };
+}

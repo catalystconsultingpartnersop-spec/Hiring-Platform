@@ -21,8 +21,8 @@ import { nowMs } from "@/lib/time";
 import { NextSteps } from "./NextSteps";
 import { TalkToRep } from "@/components/TalkToRep";
 import { getThread, isCutOff, ownerLink, repFor } from "@/lib/ownerMessages";
-import { cookies } from "next/headers";
-import { readSignedToken } from "@/lib/session";
+import { bioFor, type Bio } from "@/lib/staffBios";
+import type { Owner } from "@/lib/db";
 import { passOnCandidate, reconsiderCandidate } from "./actions";
 import styles from "./detail.module.css";
 
@@ -46,25 +46,10 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
     owner = null;
   }
   // A free 10-minute call with the rep who met them (2 per owner).
+  // The rep who met them, and their bio: a perk of unlocking.
   const rep = await repFor(id).catch(() => null);
-  // Their conversation about this candidate: remembered in this browser, or found by their account email.
-  const remembered = readSignedToken((await cookies()).get(`tcc_talk_${id.slice(0, 8)}`)?.value, "thr_");
-  let th = remembered ? await getThread(remembered).catch(() => null) : null;
-  if (!th && owner) {
-    const { data } = await db().from("activity_log").select("details").eq("action", "msg_thread").eq("details->>email", owner.email.toLowerCase()).eq("details->>candidate_id", id).limit(1);
-    const tid = (data?.[0]?.details as { thread?: string } | undefined)?.thread;
-    th = tid ? await getThread(tid).catch(() => null) : null;
-  }
-  const repCall = rep ? (
-    <TalkToRep
-      candidateId={id}
-      rep={rep.id ? rep.first : "our team"}
-      signedIn={!!owner}
-      defaults={{ name: owner?.full_name ?? "", company: owner?.company ?? "", phone: owner?.phone ?? "" }}
-      thread={th ? { link: ownerLink(th.t.id), count: th.msgs.length, lastFromRep: th.msgs.at(-1)?.from === "rep" } : null}
-      cutOff={th?.cutOff || (owner ? await isCutOff(owner.email).catch(() => false) : false)}
-    />
-  ) : null;
+  const repBio = rep?.id ? await bioFor(rep.id).catch(() => null) : null;
+  const repInfo = rep ? { first: rep.id ? rep.first : "our team", bio: repBio } : null;
   let unlock: Unlock | null = null;
   if (owner) {
     const { data } = await db()
@@ -98,7 +83,7 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
     });
     return (
       <Unlocked
-        repCall={repCall}
+        repCall={await talkBox(id, (data as Candidate).full_name.split(" ")[0], owner!, repInfo)}
         path={path}
         again={sp.again === "1"}
         step={typeof sp.step === "string" ? sp.step : ""}
@@ -126,7 +111,7 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
   }
   const [tiers, { rows }, page] = await Promise.all([getTiers(), allListed(), loadOwnerPage(id)]);
   const similar = similarTo(c, rows).map((s) => ({ c: s, fee: feeFor(s, tiers), reason: similarReason(c, s) }));
-  return <Teaser c={c} page={page} fee={feeFor(c, tiers)} similar={similar} repCall={repCall} />;
+  return <Teaser c={c} page={page} fee={feeFor(c, tiers)} similar={similar} rep={repInfo} />;
 }
 
 // The few facts an owner checks first, as tiles.
@@ -265,9 +250,9 @@ function Teaser({
   page,
   fee,
   similar,
-  repCall,
+  rep,
 }: {
-  repCall: React.ReactNode;
+  rep: { first: string; bio: Bio | null } | null;
   c: PublicCandidate;
   page: OwnerPage | null;
   fee: number | null;
@@ -285,9 +270,17 @@ function Teaser({
         <aside className={styles.side}>
           <div className={styles.deal}>
             <h2>Like what you see?</h2>
-            <p className={styles.dealSub}>
-              See their name, resume and phone number, and reach out to them directly. Talking and interviewing are free.
-            </p>
+            <p className={styles.dealSub}>Unlock them and you get:</p>
+            <ul className={styles.perks}>
+              <li>Their name, resume and phone number, to reach out directly</li>
+              {rep && (
+                <li>
+                  {rep.first === "our team" ? "Our team, who met them in person, for an honest read" : <>Access to <b>{rep.first}</b>, who met them in person, for an honest read</>}
+                  {rep.bio?.line && <span className={styles.perkBio}>{rep.bio.line}</span>}
+                </li>
+              )}
+              <li>Talking and interviewing are free</li>
+            </ul>
             <div className={styles.dealNums}>
               <div>
                 <b>$0</b>
@@ -305,11 +298,11 @@ function Teaser({
               <ShortlistButton id={c.id} label />
             </div>
             <p className={styles.dealNote}>
-              You&rsquo;ll sign a short agreement and keep a card on file. Nothing is charged unless you hire.{" "}
+              You&rsquo;ll sign a short agreement and keep a card on file. Nothing is charged unless you hire.
+              {rep ? ` Time with ${rep.first === "our team" ? "our team" : rep.first} is limited to questions about this candidate.` : ""}{" "}
               <Link href={`/contact?c=${c.id}`}>Questions about this candidate?</Link>
             </p>
           </div>
-          {repCall}
         </aside>
       </div>
       {similar.length > 0 && (
@@ -550,5 +543,24 @@ function Unlocked({
         </MobileBar>
       )}
     </div>
+  );
+}
+
+// "Talk to Dovid": only once the owner has unlocked the candidate.
+async function talkBox(id: string, candidateFirst: string, owner: Owner, rep: { first: string; bio: Bio | null } | null) {
+  if (!rep) return null;
+  const { data } = await db().from("activity_log").select("details").eq("action", "msg_thread").eq("details->>email", owner.email.toLowerCase()).eq("details->>candidate_id", id).limit(1);
+  const tid = (data?.[0]?.details as { thread?: string } | undefined)?.thread;
+  const th = tid ? await getThread(tid).catch(() => null) : null;
+  return (
+    <TalkToRep
+      candidateId={id}
+      rep={rep.first}
+      bio={rep.bio}
+      candidate={candidateFirst}
+      defaults={{ name: owner.full_name ?? "", company: owner.company ?? "", phone: owner.phone ?? "" }}
+      thread={th ? { link: ownerLink(th.t.id), count: th.msgs.length, lastFromRep: th.msgs.at(-1)?.from === "rep" } : null}
+      cutOff={th?.cutOff || (await isCutOff(owner.email).catch(() => false))}
+    />
   );
 }

@@ -6,14 +6,16 @@ import { currentOwner, readSignedToken, signedToken } from "@/lib/session";
 
 export async function sendToRep(_prev: SendResult | null, fd: FormData): Promise<SendResult> {
   const owner = await currentOwner().catch(() => null);
+  if (!owner) return { ok: false, error: "Sign in to message the rep." };
   const s = (k: string) => String(fd.get(k) ?? "");
   const r = await ownerWrites({
+    ownerId: owner.id,
     candidateId: s("candidate_id"),
     kind: s("kind") as MsgKind,
     name: s("name") || owner?.full_name || "",
     company: s("company") || owner?.company || "",
     phone: s("phone") || owner?.phone || "",
-    email: owner?.email || s("email"),
+    email: owner.email,
     when: s("when"),
     text: s("text"),
   });

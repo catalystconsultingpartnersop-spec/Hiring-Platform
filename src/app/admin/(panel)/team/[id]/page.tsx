@@ -9,6 +9,8 @@ import { RepDashboard } from "../../RepDashboard";
 import { RepTerms } from "./RepTerms";
 import { PhoneForm } from "@/components/PhoneForm";
 import { staffPhones } from "@/lib/staffPhones";
+import { BioForm } from "@/components/BioForm";
+import { bioFor } from "@/lib/staffBios";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +22,7 @@ export default async function RepView({ params }: PageProps<"/admin/team/[id]">)
   if (!data) notFound();
   const pct = await commissionPercent();
   const phones = await staffPhones();
+  const bio = await bioFor(data.id);
   return (
     <>
       <p style={{ marginTop: 16 }}>
@@ -42,6 +45,7 @@ export default async function RepView({ params }: PageProps<"/admin/team/[id]">)
       />
       <div style={{ maxWidth: 520, marginTop: 16 }}>
         <PhoneForm staffId={data.id} phone={phones[data.id] ?? null} self={false} />
+        <BioForm staffId={data.id} line={bio?.line ?? ""} bio={bio?.bio ?? ""} self={false} name={data.full_name || data.email} />
       </div>
       <RepDashboard staffId={data.id} name={data.full_name || data.email} self={false} nowIso={new Date(nowMs()).toISOString()} />
     </>

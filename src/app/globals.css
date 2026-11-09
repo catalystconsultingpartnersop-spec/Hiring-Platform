@@ -890,3 +890,6 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 .msg-last { color: #4b5568; font-size: 14.5px; }
 .wrapup { margin-top: 22px; }
 .wrapup summary { cursor: pointer; color: #5b6475; font-size: 14px; }
+.rep-bio { margin: 0 0 12px; padding: 10px 12px; background: #faf8f2; border-radius: 10px; font-size: 14px; line-height: 1.45; }
+.rep-bio strong { display: block; margin-bottom: 2px; }
+.rep-bio p { margin: 0; color: #4b5568; }

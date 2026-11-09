@@ -25,15 +25,19 @@ export type Thread = {
   staff_id: string | null;
   headline: string | null;
   role: string | null;
+  candidate_name: string | null;
 };
 export type Msg = { id: string; at: string; from: "owner" | "rep"; by: string; text: string; kind?: MsgKind };
 
 export const ownerLink = (threadId: string) => `${siteUrl()}/talk/${signedToken(`thr_${threadId}`, 180)}`;
 export const repLink = (threadId: string) => `${teamUrl()}/admin/messages/${threadId}`;
 
-export function limitText(name: string) {
+// Only ever sent to an owner who is taking advantage. They've already unlocked the
+// candidate, so it points them to reach out to the candidate directly.
+export function limitText(name: string, candidateFirst: string) {
   const first = name.split(" ")[0] || "there";
-  return `Thanks for all your questions, ${first}. You've reached the limit of the free conversation we can offer. We're here to give business owners the information they need to decide on a candidate, but we're limited in how much ongoing consulting and coaching we can do. When you're ready, you can see who this candidate is and talk to them directly. And Hiring help covers how everything works.`;
+  const them = candidateFirst || "the candidate";
+  return `Thanks for all your questions, ${first}. You've reached the limit of the free time our reps can give to each business. Our reps are here to give you their honest read on a candidate, but we're limited in how much ongoing consulting and coaching we can do. You have everything you need to reach out to ${them} directly: their phone number, email and resume are on their page. And Hiring help covers interviewing, references and making an offer.`;
 }
 
 // Who answers: the rep who met the candidate, if they're still on the team.
@@ -77,6 +81,7 @@ const toThread = (row: { id: number | string; at: string; details: unknown }): T
     staff_id: (d.staff_id as string) ?? null,
     headline: (d.headline as string) ?? null,
     role: (d.role as string) ?? null,
+    candidate_name: (d.candidate_name as string) ?? null,
   };
 };
 
@@ -118,6 +123,7 @@ export type SendResult = { ok: true; rep: string; link: string; threadId: string
 // An owner's message from the candidate page: a new conversation, or the next
 // message in the one they already have about this candidate.
 export async function ownerWrites(input: {
+  ownerId: string;
   candidateId: string;
   kind: MsgKind;
   name: string;
@@ -137,8 +143,17 @@ export async function ownerWrites(input: {
   if (kind === "call" && !phone) return { ok: false, error: "Add a phone number to call." };
   if (kind !== "call" && !note) return { ok: false, error: "Write your question." };
   if (await isCutOff(email)) return { ok: false, error: "cutoff" };
+  // Talking to the rep comes with unlocking the candidate.
+  const { data: unlocked } = await db()
+    .from("unlocks")
+    .select("id")
+    .eq("owner_id", input.ownerId)
+    .eq("candidate_id", input.candidateId)
+    .not("confirmed_at", "is", null)
+    .maybeSingle();
+  if (!unlocked) return { ok: false, error: "Unlock this candidate to talk to the rep who met them." };
 
-  const { data: cand } = await db().from("candidates").select("id, headline, role_category").eq("id", input.candidateId).maybeSingle();
+  const { data: cand } = await db().from("candidates").select("id, headline, role_category, full_name").eq("id", input.candidateId).maybeSingle();
   if (!cand) return { ok: false, error: "We couldn't find that candidate. Refresh and try again." };
 
   let t = await findThread(email, cand.id);
@@ -157,8 +172,9 @@ export async function ownerWrites(input: {
       staff_id: rep.id,
       headline: cand.headline,
       role: cand.role_category,
+      candidate_name: cand.full_name,
     });
-    t = { id, at: new Date().toISOString(), email, name, company, phone, candidate_id: cand.id, staff_id: rep.id, headline: cand.headline, role: cand.role_category };
+    t = { id, at: new Date().toISOString(), email, name, company, phone, candidate_id: cand.id, staff_id: rep.id, headline: cand.headline, role: cand.role_category, candidate_name: cand.full_name };
   }
   const when = input.when.trim().slice(0, 40);
   const text =
@@ -210,18 +226,17 @@ export async function repReplies(threadId: string, by: { id: string | null; name
 export async function setLimit(threadId: string, by: { id: string | null; name: string }) {
   const th = await getThread(threadId);
   if (!th || th.cutOff) return;
-  const text = limitText(th.t.name);
+  const text = limitText(th.t.name, (th.t.candidate_name ?? "").split(" ")[0]);
   await logActivity(by.id ?? "admin", "msg", { thread: threadId, from: "rep", by: by.name.split(" ")[0], text });
   await logActivity(by.id ?? "admin", "msg_cutoff", { thread: threadId, email: th.t.email, by: by.name });
   const k = kit;
   await sendEmail({
     to: th.t.email,
-    subject: `About the ${th.t.role ?? "candidate"} you asked about`,
+    subject: `About your conversation with ${by.name.split(" ")[0]}`,
     audience: "owner",
     html: layout(
-      k.hi(th.t.name) +
-        k.p(k.esc(text)) +
-        k.button(`${siteUrl()}/candidates/${th.t.candidate_id}/unlock`, "See who this is") +
+      k.p(k.esc(text)) +
+        k.button(`${siteUrl()}/candidates/${th.t.candidate_id}`, `Open ${(th.t.candidate_name ?? "").split(" ")[0] || "their"}'s page`) +
         k.quiet(`<a href="${siteUrl()}/hiring-help">Hiring help</a>`),
       "owner",
     ),
@@ -234,7 +249,7 @@ export async function reopen(email: string, by: string) {
 }
 
 function about(t: Thread) {
-  return `“${kit.esc(t.headline ?? t.role ?? "the candidate")}” (${refCode(t.candidate_id)})`;
+  return `${t.candidate_name ? `${kit.esc(t.candidate_name)}, ` : ""}“${kit.esc(t.headline ?? t.role ?? "the candidate")}” (${refCode(t.candidate_id)})`;
 }
 
 async function notifyRep(t: Thread, text: string, kind: MsgKind, isNew: boolean) {
@@ -256,11 +271,11 @@ async function notifyRep(t: Thread, text: string, kind: MsgKind, isNew: boolean)
         ["Email", k.esc(t.email)],
       ]) +
       k.button(repLink(t.id), "Open the conversation") +
-      k.quiet("Answer in the conversation and the owner gets an email. Don't share the candidate's name or contact details yet. If an owner starts taking advantage, “Set a limit” sends them a polite note and stops further messages."),
+      k.quiet("They've unlocked this candidate, so they already have their name, phone and resume. Answer in the conversation and the owner gets an email. If an owner starts taking advantage, “Set a limit” sends them a polite note and stops further messages."),
     "team",
   );
   const whoPlain = `${t.name}${t.company ? ` (${t.company})` : ""}`;
-  const yourRole = `your ${t.role ?? "candidate"} (${refCode(t.candidate_id)})`;
+  const yourRole = t.candidate_name ? `${t.candidate_name} (${t.role ?? "your candidate"})` : `your ${t.role ?? "candidate"} (${refCode(t.candidate_id)})`;
   const subject =
     kind === "call" ? `${whoPlain} wants you to call about ${yourRole}` : kind === "question" && isNew ? `${whoPlain} has a question about ${yourRole}` : `New message from ${whoPlain} about ${yourRole}`;
   if (rep.email) await sendEmail({ to: rep.email, subject, html, audience: "team", replyTo: t.email });

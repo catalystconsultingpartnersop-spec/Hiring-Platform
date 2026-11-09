@@ -9,6 +9,8 @@ import { db } from "@/lib/db";
 import { brandName, feeFor, LEVEL_LABEL, money, refCode, salaryRange } from "@/lib/format";
 import { requireOwner } from "@/lib/session";
 import { SignForm } from "./SignForm";
+import { repFor } from "@/lib/ownerMessages";
+import { bioFor } from "@/lib/staffBios";
 import styles from "./unlock.module.css";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +43,8 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
   const first = (owner.full_name ?? "").split(" ")[0];
 
   const candidateFee = fee != null ? money(fee) : "one flat fee";
+  const rep = await repFor(id).catch(() => null);
+  const repBio = rep?.id ? await bioFor(rep.id).catch(() => null) : null;
   return (
     <div className={`wrap ${styles.page}`}>
       <Link href={`/candidates/${id}`} className="small muted">
@@ -51,7 +55,13 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
         <h1 className={styles.title}>{first ? `${first}, here’s` : "Here’s"} how to meet them</h1>
         <p className={styles.lede}>
           Sign a short agreement and add a card. <strong>Nothing is charged today.</strong> You&rsquo;ll see their name,
-          resume and phone number right away, and we&rsquo;ll help you set up a first call.
+          resume and phone number right away
+          {rep?.id ? (
+            <>
+              , and you can talk to <strong>{rep.first}</strong>, who met them in person
+            </>
+          ) : null}
+          . We&rsquo;ll help you set up a first call.
         </p>
         <ol className={styles.flow} aria-label="Steps">
           <li>Sign</li>
@@ -133,6 +143,17 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
             </ul>
             <p className={styles.coached}>We sat down with them and learned how they work best.</p>
           </div>
+          {rep?.id && (
+            <div className={styles.who} style={{ marginTop: 14 }}>
+              <p className={styles.ref}>Included: talk to {rep.first}</p>
+              <p style={{ margin: "4px 0 0", fontSize: 15 }}>
+                {rep.first} met them in person. Once you unlock, message {rep.first} for an honest read before you meet.
+              </p>
+              {repBio?.line && <p style={{ margin: "8px 0 0", fontWeight: 700, fontSize: 14 }}>{repBio.line}</p>}
+              {repBio?.bio && <p style={{ margin: "4px 0 0", fontSize: 14, opacity: 0.85 }}>{repBio.bio}</p>}
+              <p style={{ margin: "8px 0 0", fontSize: 13, opacity: 0.75 }}>Time with {rep.first} is limited to questions about this candidate.</p>
+            </div>
+          )}
           <p className="small muted" style={{ marginTop: 14 }}>
             Questions first? <Link href={`/contact?c=${id}`}>Contact us</Link>.
           </p>
