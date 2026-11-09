@@ -115,7 +115,7 @@ export default async function Home() {
         <section className={styles.feed}>
           <div className="wrap">
             <div className={styles.feedHead}>
-              <h2>{fresh.length ? "Fresh this week, and more" : "People ready to work"}</h2>
+              <h2>Candidates we&rsquo;ve met and vouch for</h2>
               <Link href="/candidates">See everyone ({all.length})</Link>
             </div>
             <div className={styles.grid}>{feed.map(card)}</div>

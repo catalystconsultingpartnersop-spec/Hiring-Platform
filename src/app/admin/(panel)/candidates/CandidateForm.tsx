@@ -130,6 +130,7 @@ export function CandidateForm({
   const [undo, setUndo] = useState<Record<string, string> | null>(null);
   const [typeLabel, setTypeLabel] = useState(String((c?.application as Record<string, string> | undefined)?.type_label ?? ""));
   const [bestLine, setBestLine] = useState(String((c?.application as Record<string, string> | undefined)?.best_line ?? ""));
+  const [repWord, setRepWord] = useState(String((c?.application as Record<string, string> | undefined)?.rep_word ?? ""));
   const mark = (k: string) => (fromResume.has(k) ? styles.fromResume : "");
 
   const code = order.join("");
@@ -289,6 +290,7 @@ export function CandidateForm({
           listed_at: null,
           type_label: typeLabel,
           best_line: bestLine,
+          rep_word: repWord,
         }}
         typeLabel={typeLabel}
         bestLine={bestLine}
@@ -610,6 +612,20 @@ export function CandidateForm({
             </label>
           </div>
         </div>
+        <label className="field" style={{ marginTop: 14 }}>
+          <span>
+            Your word on them <span className="muted" style={{ fontWeight: 400 }}>(one line, owners see it on the card under &ldquo;[your first name] met them&rdquo;)</span>
+          </span>
+          <input
+            className="input"
+            name="rep_word"
+            maxLength={160}
+            value={repWord}
+            onChange={(e) => setRepWord(e.target.value)}
+            placeholder={(highlights.split("\n").find((h) => h.trim()) ?? "e.g. The most organized person I've met this year.").trim()}
+          />
+          <span className="small muted">Leave blank and the card shows their first highlight instead.</span>
+        </label>
       </section>
 
       {/* 3. What they want */}

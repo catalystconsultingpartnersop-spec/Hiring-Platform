@@ -186,7 +186,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
           {owner && !shortlistView && !Object.keys(f).length && <OwnerMatchNote ownerId={owner.id} />}
           <div className={styles.resultsHead}>
             <h1>
-              {shortlistView ? "Your shortlist" : f.role ?? "All candidates"}
+              {shortlistView ? "Your shortlist" : f.role ?? "Candidates we\u2019ve met and vouch for"}
               <span>
                 {rows.length} {rows.length === 1 ? "candidate" : "candidates"}
               </span>
@@ -195,6 +195,11 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
               <SortBy value={f.sort ?? ""} />
             </div>
           </div>
+          {!shortlistView && (
+            <p className="small muted" style={{ margin: "-6px 0 14px" }}>
+              Every person here sat down one-on-one with our team. One flat fee, <strong>$5,000</strong>, only if you hire.
+            </p>
+          )}
           {active.length > 0 && (
             <div className={styles.chips}>
               {active.map(([k, label]) => (

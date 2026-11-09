@@ -5,7 +5,6 @@ import { describe, profileOf, TRAITS } from "@/lib/strengths";
 import { isAnyIndustry, LEVEL_LABEL, WORK_MODE_LABEL, money, salaryRange } from "@/lib/format";
 
 import { ShortlistButton } from "./Shortlist";
-import { RoleCover } from "./RoleCover";
 import { QuickLook, QuickData } from "./QuickLook";
 import { CompareToggle } from "./Compare";
 
@@ -127,70 +126,58 @@ export function CandidateCard({
   interviewing?: boolean; // in an introduction with an employer right now
   reason?: string | null; // why it's shown as similar ("Similar: office management, brooklyn")
 }) {
+  void hideFee;
   const salary = salaryRange(c.salary_min, c.salary_max);
-  const meta = [
-    c.level ? LEVEL_LABEL[c.level] : null,
-    c.location_region,
-    c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null,
-    salary,
-  ].filter(Boolean) as string[];
-  const label = roleLine(c);
-  const own = ownLine(c);
+  const facts = [salary, c.location_region, c.level ? LEVEL_LABEL[c.level] : null].filter(Boolean) as string[];
+  const role = [c.role_category, ...(c.also_roles ?? [])].filter(Boolean).slice(0, 2).join(" / ") || "Candidate";
+  const repName = (c.rep?.full_name ?? "").trim().split(" ")[0];
+  const word = (c.rep_word ?? "").trim() || ownLine(c);
+  const avail = availabilityTag(c.available);
 
+  // An introduction, not a product listing: role, the facts owners screen on, one
+  // human line, the rep's word, and whether they're free.
   return (
-    <div className="card card-store">
-      <RoleCover role={c.role_category} label={label || null}>
-        <span className="cover-badges">
-          {example ? (
-            <span className="badge">Example</span>
-          ) : (
-            <>
-              {isNew(c) && <span className="badge badge-new">New this week</span>}
-              {interviewing && <span className="badge badge-busy">Interviewing now</span>}
-            </>
-          )}
-        </span>
+    <div className="card card-intro">
+      <div className="ci-top">
+        <span className="ci-role">{role}</span>
         {store && href && <QuickLook d={quickData(c, fee)} />}
-      </RoleCover>
-      <div className="card-body">
-        <h3>
-          {href ? (
-            <Link href={href} className="card-link">
-              {c.headline}
-            </Link>
-          ) : (
-            c.headline
-          )}
-        </h3>
-        {reason && <p className="card-similar">{reason}</p>}
-        <WorksBest c={c} compact />
-        {own && <p className="card-own">{own}</p>}
-        {meta.length > 0 && (
-          <div className="card-meta">
-            {meta.map((m) => (
-              <span key={m}>{m}</span>
-            ))}
-          </div>
-        )}
-        {availabilityTag(c.available) && <span className="card-available">✓ {availabilityTag(c.available)}</span>}
-        {!example && (
-          <p className="card-vetted">
-            <span aria-hidden="true">✓</span> Vetted one-on-one by our team
-          </p>
-        )}
-        {!hideFee && (
-          <div className="card-foot">
-            <span className="card-fee-label">Flat fee if you hire</span>
-            <strong>{fee != null ? money(fee) : "Ask"}</strong>
-          </div>
-        )}
-        {href && (
-          <span className="view-profile" aria-hidden="true">
-            View profile
-          </span>
-        )}
-        {store && href && <CompareToggle id={c.id} />}
       </div>
+      {(example || interviewing) && (
+        <span className="ci-flags">
+          {example ? <span className="badge">Example</span> : <span className="badge badge-busy">Interviewing now</span>}
+        </span>
+      )}
+      {facts.length > 0 && (
+        <p className="ci-facts">
+          {facts.map((f, i) => (
+            <span key={f}>
+              {i > 0 && <span className="ci-dot"> · </span>}
+              {f}
+            </span>
+          ))}
+        </p>
+      )}
+      {reason && <p className="card-similar">{reason}</p>}
+      <h3 className="ci-line">
+        {href ? (
+          <Link href={href} className="card-link">
+            {c.headline}
+          </Link>
+        ) : (
+          c.headline
+        )}
+      </h3>
+      {word && (
+        <div className="ci-rep">
+          <span className="ci-rep-who">{repName ? `${repName} met them` : "Our team met them"}</span>
+          {c.rep_word?.trim() ? <>&ldquo;{word}&rdquo;</> : word}
+        </div>
+      )}
+      <div className="ci-foot">
+        <span className={`ci-avail ${avail && !/now/i.test(avail) ? "ci-later" : ""}`}>{avail ? `● ${avail}` : ""}</span>
+        {href && <span className="ci-go" aria-hidden="true">View →</span>}
+      </div>
+      {store && href && <CompareToggle id={c.id} />}
       {href && <ShortlistButton id={c.id} />}
     </div>
   );

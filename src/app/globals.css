@@ -806,3 +806,27 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 .owner-view-card .works-best .works-main { flex-basis: 100%; margin: 0; }
 .ov-pair { margin-bottom: 12px; }
 .owner-view-card[data-focus="strengths"] .works-best { background: var(--marigold-soft); border-radius: 6px; box-shadow: 0 0 0 4px var(--marigold-soft); }
+
+/* The candidate card: an introduction, not a product listing. */
+.card.card-intro {
+  padding: 22px 22px 16px; gap: 10px; background: #fff;
+  border: 1.5px solid #d3cdbd; border-radius: 18px; box-shadow: 0 2px 0 #e2dccd;
+}
+.card.card-intro:has(.card-link:hover) { border-color: var(--ink); }
+.ci-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding-right: 36px; }
+.ci-role { font-family: var(--display); font-weight: 800; font-size: 24px; line-height: 1.1; letter-spacing: -0.01em; }
+.ci-flags { display: flex; gap: 6px; margin-top: -4px; }
+.ci-facts { margin: 0; font-weight: 700; font-size: 15.5px; color: var(--ink); }
+.ci-dot { color: #8a8f9c; font-weight: 400; }
+.card-intro .ci-line { margin: 0; font-family: var(--text); font-weight: 400; font-size: 16px; line-height: 1.45; color: #2b3550; }
+.ci-rep { border-left: 3px solid var(--marigold); padding: 2px 0 2px 12px; font-size: 15px; line-height: 1.45; color: #2b3550; }
+.ci-rep-who { display: block; font-size: 12.5px; font-weight: 700; color: #8a6a00; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 2px; }
+.ci-foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eceae2; }
+.ci-avail { font-size: 14px; font-weight: 700; color: #2f6b3a; }
+.ci-avail.ci-later { color: #8a6a00; }
+.ci-go { font-weight: 800; font-size: 15px; color: var(--ink); }
+.card.card-intro:has(.card-link:hover) .ci-go { text-decoration: underline; }
+.card-intro .shortlist-btn { top: 16px; right: 16px; background: var(--paper); }
+.card-intro .quick-btn { position: relative; right: auto; bottom: auto; opacity: 1; flex: none; display: none; }
+.card-intro .compare-toggle { margin-top: -2px; }
+.card.card-intro h3.ci-line { display: block; -webkit-line-clamp: unset; overflow: visible; font-size: 16px; font-weight: 400; }

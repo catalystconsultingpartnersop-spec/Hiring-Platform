@@ -382,7 +382,7 @@ ${hireSummaryHtml(notice)}`,
     const { data: cur } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
     const app = { ...((cur?.application ?? {}) as Record<string, string>) };
     let changed = false;
-    for (const [k, max] of [["type_label", 40], ["best_line", 160]] as const) {
+    for (const [k, max] of [["type_label", 40], ["best_line", 160], ["rep_word", 160]] as const) {
       const val = String(form.get(k) ?? "").replace(/\s+/g, " ").trim().slice(0, max);
       if ((app[k] ?? "") === val) continue;
       if (val) app[k] = val;
