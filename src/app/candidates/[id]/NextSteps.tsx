@@ -302,18 +302,18 @@ function PassForm({ candidateId, first, asOption = false }: { candidateId: strin
 
 // One line of real advice for each step, so it feels like someone is guiding them.
 const ADVICE: Partial<Record<PathState["stage"], string>> = {
-  offer_call: "Keep it short. You're only answering one question: do I want to meet this person?",
-  call_proposed: "Most people pick within a day. Meanwhile, read their one-page summary so you know who you're talking to.",
+  offer_call: "Offer 3 times for a short call. You're only answering one question: do I want to meet this person?",
+  call_proposed: "While you wait, read their one-page summary so you know who you're talking to.",
   call_retime: "Offer a wider spread this time: one morning, one afternoon, one evening.",
-  call_booked: "Have the one-page summary open, and spend most of the call listening.",
-  call_feedback: "Decide while it's fresh. A quick yes or no is kinder to everyone.",
+  call_booked: "Open the one-page summary before the call, and spend most of it listening.",
+  call_feedback: "Tell us how it went while it's fresh. A quick yes or no is kinder to everyone.",
   offer_meeting: "Meet in person if you can, and bring whoever they'd work with most.",
-  meeting_proposed: "Waiting is normal. We remind them if they haven't picked in two days.",
+  meeting_proposed: "Nothing to do yet. We'll remind them if they haven't picked in two days.",
   meeting_retime: "Offer a wider spread this time: one morning, one afternoon, one evening.",
-  meeting_booked: "Ask about real situations from their past, not what-ifs. Score them right after, while it's fresh.",
-  meeting_feedback: "Decide while it's fresh. A quick yes or no is kinder to everyone.",
-  decide: "Good people don't stay available long. If you're 80% sure, make the offer.",
-  refs_waiting: "References usually come in within a day or two. You can decide without them.",
+  meeting_booked: "Ask about real situations from their past, then score them on the scorecard right after.",
+  meeting_feedback: "Tell us how it went while it's fresh. A quick yes or no is kinder to everyone.",
+  decide: "If you're 80% sure, make the offer. Good people don't stay available long.",
+  refs_waiting: "You can decide now, or wait a day or two for the references.",
 };
 
 const QUESTIONS: Record<"call" | "meeting", string[]> = {
@@ -332,7 +332,7 @@ function Advice({ stage }: { stage: PathState["stage"] }) {
     <div className={styles.tip}>
       <span aria-hidden>💡</span>
       <p>
-        <strong>Our advice</strong>
+        <strong>Suggested next step</strong>
         {a}
       </p>
     </div>
