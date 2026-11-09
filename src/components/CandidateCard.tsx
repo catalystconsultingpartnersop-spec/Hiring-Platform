@@ -124,7 +124,6 @@ export function CandidateCard({
   interviewing?: boolean; // in an introduction with an employer right now
   reason?: string | null; // why it's shown as similar ("Similar: office management, brooklyn")
 }) {
-  void hideFee;
   const salary = salaryRange(c.salary_min, c.salary_max);
   const facts = [salary, c.location_region, c.level ? LEVEL_LABEL[c.level] : null].filter(Boolean) as string[];
   const role = [c.role_category, ...(c.also_roles ?? [])].filter(Boolean).slice(0, 2).join(" / ") || "Candidate";
@@ -136,7 +135,14 @@ export function CandidateCard({
   // human line, the rep's word, and whether they're free.
   return (
     <div className="card card-intro">
-      <span className="ci-role">{role}</span>
+      <div className="ci-top">
+        <span className="ci-role">{role}</span>
+        {(example || interviewing || avail) && (
+          <span className={`ci-avail ${(avail && !/now/i.test(avail)) || interviewing ? "ci-later" : ""}`}>
+            {example ? "Example" : interviewing ? "● Interviewing now" : `● ${avail}`}
+          </span>
+        )}
+      </div>
       {facts.length > 0 && (
         <p className="ci-facts">
           {facts.map((f, i) => (
@@ -164,12 +170,12 @@ export function CandidateCard({
         </div>
       )}
       <div className="ci-foot">
-        <span className={`ci-avail ${(avail && !/now/i.test(avail)) || interviewing ? "ci-later" : ""}`}>
-          {example ? "Example" : interviewing ? "● Interviewing now" : avail ? `● ${avail}` : ""}
-        </span>
-        <span className="ci-actions">
-          {href && <span className="ci-go" aria-hidden="true">View →</span>}
-        </span>
+        {!hideFee && (
+          <span className="ci-fee">
+            <strong>{fee != null ? money(fee) : "$5,000"}</strong> flat fee, only if you hire
+          </span>
+        )}
+        {href && <span className="ci-go" aria-hidden="true">View →</span>}
       </div>
     </div>
   );

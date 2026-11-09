@@ -196,9 +196,14 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
             </div>
           </div>
           {!shortlistView && (
-            <p className="small muted" style={{ margin: "-6px 0 14px" }}>
-              Every person here sat down one-on-one with our team. One flat fee, <strong>$5,000</strong>, only if you hire.
-            </p>
+            <>
+              <p className="small muted" style={{ margin: "-6px 0 10px" }}>
+                Every person here sat down one-on-one with our team.
+              </p>
+              <p className="fee-strip" style={{ marginBottom: 16 }}>
+                <strong>$5,000 flat fee</strong>, only if you hire. Never a percentage of salary.
+              </p>
+            </>
           )}
           {active.length > 0 && (
             <div className={styles.chips}>
