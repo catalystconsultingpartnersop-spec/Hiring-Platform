@@ -32,18 +32,45 @@ export const owner = {
       quiet("The link works once and expires in 30 minutes. Didn't ask for it? You can ignore this email."),
   }),
 
-  agreementSigned: (o: { name: string | null; candidate: string; candidateId: string; unlockId: string; card: string; agreementHtml: string }): Mail => ({
-    audience: "owner",
-    subject: `You can meet ${o.candidate} now`,
-    html:
-      hi(o.name) +
-      p(`You're in. You can now see <strong>${esc(o.candidate)}</strong>'s name, resume and phone number.`) +
-      p(`Their resume and a one-page summary of who they are are attached.`) +
-      p(`The easiest next step is a short first call: offer a few times on their page and ${esc(first(o.candidate))} picks one.`) +
-      button(`${siteUrl()}/candidates/${o.candidateId}#next`, `Meet ${first(o.candidate)}`) +
-      box(`<strong>Nothing has been charged.</strong> Your ${esc(o.card)} is on file and is only charged if you hire ${esc(first(o.candidate))}. Your signed agreement is below, and <a href="${siteUrl()}/account/agreements/${o.unlockId}" style="color:#17213a">here to print</a>.<br>Your hiring documents (offer letter, NDA and more) are now open in <a href="${siteUrl()}/hiring-help#documents" style="color:#17213a">Hiring help</a>.`) +
-      o.agreementHtml,
-  }),
+  agreementSigned: (o: {
+    name: string | null;
+    candidate: string;
+    candidateId: string;
+    unlockId: string;
+    card: string;
+    headline?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    looking?: string | null;
+    pay?: string | null;
+    start?: string | null;
+    type?: string | null;
+    fee?: string | null;
+  }): Mail => {
+    const f = first(o.candidate);
+    return {
+      audience: "owner",
+      subject: `You can meet ${o.candidate} now`,
+      html:
+        hi(o.name) +
+        p(`Meet <strong>${esc(o.candidate)}</strong>.${o.headline ? ` ${esc(o.headline)}.` : ""}`) +
+        kit.facts([
+          ["Phone", o.phone ? `<a href="tel:${esc(o.phone)}" style="color:#17213a;font-weight:bold">${esc(o.phone)}</a>` : null],
+          ["Email", o.email ? `<a href="mailto:${esc(o.email)}" style="color:#17213a">${esc(o.email)}</a>` : null],
+          ["Looking for", o.looking ? esc(o.looking) : null],
+          ["Pay", o.pay ? esc(o.pay) : null],
+          ["Can start", o.start ? esc(o.start) : null],
+          ["Who they are", o.type ? esc(o.type) : null],
+        ]) +
+        p(`📎 <strong>Attached:</strong> ${esc(f)}&rsquo;s resume and a one-page summary.`) +
+        box(`<strong>Suggested next step:</strong> book a short first call. Offer 3 times and ${esc(f)} picks one. It takes 10 seconds.`) +
+        button(`${siteUrl()}/candidates/${o.candidateId}#next`, `Book a call with ${f}`) +
+        quiet(
+          `Nothing has been charged. You pay ${o.fee ? esc(o.fee) : "the flat fee"} only if you hire ${esc(f)}.<br>` +
+            `Your signed agreement is attached, and you can <a href="${siteUrl()}/account/agreements/${o.unlockId}" style="color:#5b667e">view or print it here</a>. Offer letter, NDA and more are in <a href="${siteUrl()}/hiring-help#documents" style="color:#5b667e">Hiring help</a>.`,
+        ),
+    };
+  },
 
   receipt: (o: { name: string | null; candidate: string; candidateId: string; receiptHtml: string }): Mail => ({
     audience: "owner",

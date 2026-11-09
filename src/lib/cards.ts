@@ -1,8 +1,7 @@
 import type Stripe from "stripe";
 import { db, logActivity, Owner, Unlock } from "./db";
-import { agreementEmailHtml } from "./agreementView";
 import { emailAdmin, escapeHtml, sendEmail } from "./email";
-import { money, refCode, siteUrl, teamUrl } from "./format";
+import { money, refCode, salaryRange, siteUrl, teamUrl } from "./format";
 import { HireDetails, markHirePaid } from "./hires";
 import { emailIntroStarted } from "./pathEmails";
 import { owner as ownerMail } from "./emails";
@@ -106,8 +105,23 @@ async function activate(unlock: Unlock, owner: Owner, pmId: string, label: strin
   if (!done) return; // already unlocked
 
   const ref = refCode(unlock.candidate_id);
-  const { data: cand } = await db().from("candidates").select("full_name").eq("id", unlock.candidate_id).single();
+  const { data: cand } = await db()
+    .from("candidates")
+    .select("full_name, headline, phone, email, role_category, salary_min, salary_max, working_genius, application")
+    .eq("id", unlock.candidate_id)
+    .single();
   await logActivity(`owner:${owner.email}`, "agreement_signed", { candidate: ref, fee_cents: unlock.fee_cents, card: label });
+  const sig = { name: unlock.signed_name, company: owner.company ?? "", email: owner.email, signedAt: unlock.signed_at, ip: unlock.ip };
+  const app = ((cand?.application ?? {}) as Record<string, string>);
+  const { describe } = await import("./strengths");
+  const { availabilityLabel } = await import("./availability");
+  const d = describe(cand?.working_genius);
+  const typeName = (app.type_label ?? "").trim() || d?.name;
+  const typeLine = (app.best_line ?? "").trim() || d?.line;
+  const agreementFile = await (await import("./agreementPdf"))
+    .agreementPdf(unlock.agreement_text, sig)
+    .then((content) => [{ filename: "Signed agreement.pdf", content }])
+    .catch(() => []);
   await sendEmail({
     to: owner.email,
     ...ownerMail.agreementSigned({
@@ -116,16 +130,17 @@ async function activate(unlock: Unlock, owner: Owner, pmId: string, label: strin
       candidateId: unlock.candidate_id,
       unlockId: unlock.id,
       card: label,
-      agreementHtml: agreementEmailHtml(unlock.agreement_text, {
-        name: unlock.signed_name,
-        company: owner.company ?? "",
-        email: owner.email,
-        signedAt: unlock.signed_at,
-        ip: unlock.ip,
-      }),
+      headline: cand?.headline,
+      phone: cand?.phone,
+      email: cand?.email,
+      looking: cand?.role_category,
+      pay: cand ? salaryRange(cand.salary_min, cand.salary_max) : null,
+      start: app.available ? availabilityLabel(app.available) : null,
+      type: typeName ? `${typeName}${typeLine ? `: ${typeLine}` : ""}` : null,
+      fee: unlock.fee_cents ? money(unlock.fee_cents) : null,
     }),
-    // Their resume and a one-page summary, so the owner has them in their inbox.
-    attachments: await (await import("./ownerPacket")).packetAttachments(unlock.candidate_id).catch(() => []),
+    // Their resume and one-page summary up front; the signed agreement as a PDF for their records.
+    attachments: [...(await (await import("./ownerPacket")).packetAttachments(unlock.candidate_id).catch(() => [])), ...agreementFile],
   });
 
   await emailAdmin(
