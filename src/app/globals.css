@@ -776,13 +776,15 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
   border-radius: 50%; background: var(--marigold); color: var(--ink); font: 800 13px/1 var(--text); margin-right: 6px; vertical-align: 2px;
 }
 .ov-where { font-weight: 400; color: var(--ink-2); }
-.owner-view-card .card-body h3::before, .owner-view-card .card-own::before {
+.owner-view-card .ci-line::before, .owner-view-card .ci-rep::before {
   display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
   border-radius: 50%; background: var(--marigold); color: var(--ink); font: 800 13px/1 var(--text); margin-right: 6px; vertical-align: 3px;
 }
-.owner-view-card .card-body h3::before { content: "1"; }
-.owner-view-card[data-own="highlights"] .card-own::before { content: "3"; }
-.owner-view-card[data-own="summary"] .card-own::before { content: "2"; }
+.owner-view-card .ci-line::before { content: "1"; }
+.owner-view-card .ci-rep::before { float: right; margin: 0; }
+.owner-view-card[data-own="highlights"] .ci-rep::before { content: "3"; }
+.owner-view-card[data-own="summary"] .ci-rep::before { content: "2"; }
+.owner-view-card[data-own="word"] .ci-rep::before { content: "4"; }
 .owner-view-page { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px 18px; }
 .owner-view-page .ov-h { font-family: var(--display); font-size: 20px; margin: 0 0 8px; }
 .owner-view-page p { margin: 0 0 10px; color: var(--ink-2); }
@@ -790,9 +792,10 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 .owner-view-page .ov-hl { margin: 0; padding-left: 0; list-style: none; }
 .owner-view-page .ov-hl li { margin: 4px 0; padding-left: 14px; border-left: 3px solid var(--marigold); }
 /* The part being edited lights up in the preview */
-.owner-view-card[data-focus="headline"] .card-body h3,
-.owner-view-card[data-focus="highlights"][data-own="highlights"] .card-own,
-.owner-view-card[data-focus="summary"][data-own="summary"] .card-own,
+.owner-view-card[data-focus="headline"] .ci-line,
+.owner-view-card[data-focus="highlights"][data-own="highlights"] .ci-rep,
+.owner-view-card[data-focus="summary"][data-own="summary"] .ci-rep,
+.owner-view-card[data-focus="word"][data-own="word"] .ci-rep,
 .owner-view-page[data-focus="headline"] .ov-h,
 .owner-view-page[data-focus="summary"] .ov-s,
 .owner-view-page[data-focus="highlights"] .ov-hl { background: var(--marigold-soft); border-radius: 6px; box-shadow: 0 0 0 4px var(--marigold-soft); }
@@ -841,19 +844,6 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 .shelf-warm { background: #f4f3ee; }
 .card.card-intro { border: 1px solid #ebe7dc; box-shadow: 0 1px 2px rgba(23, 33, 58, 0.05); border-radius: 18px; }
 .card.card-intro:has(.card-link:hover) { border-color: #cfc8b6; box-shadow: 0 4px 14px rgba(23, 33, 58, 0.08); }
-.pill-wrap { position: relative; }
-.pill { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 17px; border-radius: 999px; border: 1.5px solid #ddd8ca; background: var(--paper); color: var(--ink); font: 700 15.5px/1 var(--text); cursor: pointer; text-decoration: none; white-space: nowrap; }
-.pill:hover { border-color: var(--ink); }
-.pill-on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-.pill-caret { font-size: 13px; position: relative; top: -3px; }
-.pill-menu { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; min-width: 220px; max-width: calc(100vw - 32px); max-height: 60vh; overflow-y: auto; background: var(--paper); border: 1px solid #e3dfd3; border-radius: 14px; box-shadow: 0 12px 30px rgba(23, 33, 58, 0.14); padding: 6px; }
-.pill-menu-wide { display: grid; grid-template-columns: repeat(2, minmax(190px, 1fr)); gap: 4px 10px; min-width: 420px; padding: 10px; }
-@media (max-width: 700px) { .pill-menu-wide { grid-template-columns: 1fr; min-width: 260px; } }
-.pill-item { display: flex; justify-content: space-between; gap: 14px; padding: 9px 12px; border-radius: 9px; color: var(--ink); text-decoration: none; font-size: 15px; }
-.pill-item span { color: #8a8f9c; font-size: 13.5px; }
-.pill-item:hover { background: #f4f3ee; }
-.pill-item-on { font-weight: 700; background: #f4f3ee; }
-.pill-group p { margin: 4px 12px 4px; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #8a8f9c; }
 
 .ci-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .ci-top .ci-avail { font-size: 13px; text-align: right; }

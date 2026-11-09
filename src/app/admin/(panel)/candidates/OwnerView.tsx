@@ -18,6 +18,8 @@ type Props = {
   bestLine: string;
   setTypeLabel: (v: string) => void;
   setBestLine: (v: string) => void;
+  repWord: string;
+  setRepWord: (v: string) => void;
   autoType: string;
   autoBest: string; // the owner page's own opening, which replaces the summary on the profile page
   pending: boolean;
@@ -32,7 +34,7 @@ export function OwnerView(p: Props) {
   const [open, setOpen] = useState(false);
   const [salary, setSalary] = useState<{ min: number | null; max: number | null }>({ min: null, max: null });
   const [asked, setAsked] = useState(false);
-  const [focus, setFocus] = useState<"" | "headline" | "summary" | "highlights" | "strengths">("");
+  const [focus, setFocus] = useState<"" | "headline" | "summary" | "highlights" | "strengths" | "word">("");
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -74,7 +76,10 @@ export function OwnerView(p: Props) {
     highlights: p.highlights.split("\n").map((h) => h.trim()).filter(Boolean),
     salary_min: salary.min,
     salary_max: salary.max,
+    rep_word: p.repWord,
   };
+  // What fills the gold box on the card: the rep's word, else the first highlight, else the summary.
+  const own = p.repWord.trim() ? "word" : card.highlights.length ? "highlights" : "summary";
 
   return (
     <div ref={ref}>
@@ -93,8 +98,8 @@ export function OwnerView(p: Props) {
             <div className="owner-view-grid">
               <div>
                 <p className="owner-view-where">In the catalog, while owners browse</p>
-                <div className="owner-view-card" data-focus={focus} data-own={card.highlights.length ? "highlights" : "summary"}>
-                  <CandidateCard c={card} fee={null} hideFee example={false} />
+                <div className="owner-view-card" data-focus={focus} data-own={own}>
+                  <CandidateCard c={card} fee={null} example={false} />
                 </div>
                 <p className="small muted" style={{ margin: "8px 2px 0" }}>
                   Flat fee shown to owners: {p.feeLabel}
@@ -141,21 +146,34 @@ export function OwnerView(p: Props) {
                     <span className="ov-where">
                       {p.ownerIntro.trim()
                         ? "· shows in the catalog's quick look (their profile page opens with its own intro, set under “Their page for owners”)"
-                        : `· the opening paragraph of their profile${card.highlights.length ? "" : ", and its first sentence is the gold line on the card"}`}
+                        : `· the opening paragraph of their profile${own === "summary" ? ", and its first sentence fills the gold box on the card" : ""}`}
                     </span>
                   </span>
                   <textarea className="textarea" rows={4} value={p.summary} onFocus={() => setFocus("summary")} onBlur={() => setFocus("")} onChange={(e) => p.setSummary(e.target.value)} />
                 </label>
                 <label className="field">
                   <span>
-                    <span className="ov-n">3</span> Highlights <span className="ov-where">· the bullet list on their profile, one per line. The first one is also the gold line on the card</span>
+                    <span className="ov-n">3</span> Highlights <span className="ov-where">· the bullet list on their profile, one per line.{own === "highlights" ? " The first one fills the gold box on the card" : ""}</span>
                   </span>
                   <textarea className="textarea" rows={4} value={p.highlights} onFocus={() => setFocus("highlights")} onBlur={() => setFocus("")} onChange={(e) => p.setHighlights(e.target.value)} />
                 </label>
+                <label className="field">
+                  <span>
+                    <span className="ov-n">4</span> Your word on them <span className="ov-where">· the gold box on the card, under “[your name] met them”. Leave blank to use their first highlight</span>
+                  </span>
+                  <input
+                    className="input"
+                    maxLength={160}
+                    value={p.repWord}
+                    onFocus={() => setFocus("word")}
+                    onBlur={() => setFocus("")}
+                    onChange={(e) => p.setRepWord(e.target.value)}
+                  />
+                </label>
                 <div className="field">
                   <span>
-                    <span className="ov-n">4</span> Badge and the line under it{" "}
-                    <span className="ov-where">· on the card. Leave blank to use the wording from their Strengths Assessment</span>
+                    <span className="ov-n">5</span> Badge and the line under it{" "}
+                    <span className="ov-where">· shown once an owner unlocks them, and in the one-page summary. Leave blank to use the wording from their Strengths Assessment</span>
                   </span>
                   <div className="ov-pair">
                     <input

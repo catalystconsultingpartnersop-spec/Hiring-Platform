@@ -124,6 +124,7 @@ export function CandidateCard({
   interviewing?: boolean; // in an introduction with an employer right now
   reason?: string | null; // why it's shown as similar ("Similar: office management, brooklyn")
 }) {
+  void store;
   const salary = salaryRange(c.salary_min, c.salary_max);
   const facts = [salary, c.location_region, c.level ? LEVEL_LABEL[c.level] : null].filter(Boolean) as string[];
   const role = [c.role_category, ...(c.also_roles ?? [])].filter(Boolean).slice(0, 2).join(" / ") || "Candidate";

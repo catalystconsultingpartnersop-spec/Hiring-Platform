@@ -296,6 +296,8 @@ export function CandidateForm({
         bestLine={bestLine}
         setTypeLabel={setTypeLabel}
         setBestLine={setBestLine}
+        repWord={repWord}
+        setRepWord={setRepWord}
         autoType={autoType}
         autoBest={autoBest}
         headline={headline}
@@ -582,7 +584,7 @@ export function CandidateForm({
       {/* The rep's own words for the badge and line owners see on the card */}
         <div style={{ marginTop: 16 }}>
           <p style={{ margin: "0 0 4px", fontWeight: 700 }}>
-            On the card, in your own words <span className="muted" style={{ fontWeight: 400 }}>(optional)</span>
+            Badge and best-at line, in your own words <span className="muted" style={{ fontWeight: 400 }}>(optional, shown once an owner unlocks them and in the one-page summary)</span>
           </p>
           <p className="small muted" style={{ margin: "0 0 8px" }}>
             Leave blank to use the wording from their result. Whatever you write here is what owners read instead.
