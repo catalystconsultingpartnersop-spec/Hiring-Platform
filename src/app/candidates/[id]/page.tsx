@@ -426,6 +426,8 @@ function Unlocked({
             </div>
           </div>
           <NextSteps c={c} path={path} again={again} step={step} guests={guests} busy={busy} />
+          {/* Right under the next step, so owners on a phone see it without scrolling past the whole profile. */}
+          {!passed && !taken && (!status || status === "pending") && repCall && <div className={styles.talkSlot}>{repCall}</div>}
           <Profile c={c} page={parseOwnerPage((c as { application?: Record<string, string> }).application?.owner_page)} />
           {c.full_profile && (
             <section className={styles.full}>
@@ -532,7 +534,6 @@ function Unlocked({
               {unlock.card_label ? ` ${unlock.card_label.charAt(0).toUpperCase()}${unlock.card_label.slice(1)}${/on file/i.test(unlock.card_label) ? "" : " on file"}.` : ""}
             </p>
           </div>
-          {!passed && !taken && (!status || status === "pending") && repCall}
         </aside>
       </div>
       {!passed && !taken && (!status || status === "pending") && (

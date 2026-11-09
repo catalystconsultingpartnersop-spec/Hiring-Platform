@@ -178,3 +178,5 @@
 .perks li { position: relative; padding-left: 24px; }
 .perks li::before { content: "✓"; position: absolute; left: 0; color: var(--marigold); font-weight: 800; }
 .perkBio { display: block; font-size: 13.5px; opacity: .8; margin-top: 2px; }
+.talkSlot { margin: 0 0 28px; }
+.talkSlot :global(.rep-call) { margin-top: 0; }

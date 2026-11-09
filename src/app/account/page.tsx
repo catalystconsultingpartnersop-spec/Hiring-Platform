@@ -53,6 +53,12 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
           {owner.full_name}, {owner.company}. Everyone you&rsquo;ve signed for is here.
           {owner.card_label && owner.card_label !== "card on file" ? ` Card on file: ${owner.card_label}.` : owner.card_pm ? " Your card is on file." : ""}
         </p>
+        {cards.length > 0 && (
+          <p className="notice notice-gold" style={{ marginTop: 12 }}>
+            <strong>New:</strong> you can now message the rep who met each of your candidates, for an honest read before you meet. Open any
+            candidate and look for &ldquo;Talk to&nbsp;…&rdquo;.
+          </p>
+        )}
       </div>
       {sp.hiring === "saved" && (
         <p className="notice notice-good" role="status" style={{ marginBottom: 20 }}>
