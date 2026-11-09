@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { NavProgress } from "./NavProgress";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { listThreads } from "@/lib/ownerMessages";
+import { isMine, listThreads } from "@/lib/ownerMessages";
 import { requireStaff } from "@/lib/session";
 import { adminLogout } from "../actions";
 import styles from "./admin.module.css";
@@ -17,7 +17,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   let q = db().from("contact_requests").select("id", { count: "exact", head: true }).eq("status", "new");
   if (!admin && me.id) q = q.contains("routed_to", [me.id]);
   const { count: openRequests } = await q;
-  const waiting = (await listThreads(admin || me.manager ? null : me.id).catch(() => [])).filter((t) => t.waiting).length;
+  // Only conversations that are theirs to answer.
+  const waiting = (await listThreads(admin ? null : me.id).catch(() => [])).filter((t) => t.waiting && isMine(t, me)).length;
   // Reps sign the rep agreement once before using the back office.
   if (!admin && me.id) {
     const { data, error } = await db().from("staff").select("*").eq("id", me.id).maybeSingle();

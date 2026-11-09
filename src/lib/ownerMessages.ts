@@ -198,13 +198,13 @@ export async function ownerReplies(threadId: string, text: string): Promise<{ ok
   return { ok: true };
 }
 
-export async function repReplies(threadId: string, by: { id: string | null; name: string }, text: string) {
+export async function repReplies(threadId: string, by: { id: string | null; name: string }, text: string, steppingInFor?: string) {
   const th = await getThread(threadId);
   if (!th) return { ok: false, error: "Not found." };
   const body = text.trim().slice(0, 2000);
   if (!body) return { ok: false, error: "Write an answer first." };
   const first = by.name.split(" ")[0];
-  await logActivity(by.id ?? "admin", "msg", { thread: threadId, from: "rep", by: first, text: body });
+  await logActivity(by.id ?? "admin", "msg", { thread: threadId, from: "rep", by: steppingInFor ? `${first}, for ${steppingInFor}` : first, text: body });
   const k = kit;
   await sendEmail({
     to: th.t.email,
@@ -278,8 +278,9 @@ async function notifyRep(t: Thread, text: string, kind: MsgKind, isNew: boolean)
   const yourRole = t.candidate_name ? `${t.candidate_name} (${t.role ?? "your candidate"})` : `your ${t.role ?? "candidate"} (${refCode(t.candidate_id)})`;
   const subject =
     kind === "call" ? `${whoPlain} wants you to call about ${yourRole}` : kind === "question" && isNew ? `${whoPlain} has a question about ${yourRole}` : `New message from ${whoPlain} about ${yourRole}`;
+  // Only the rep it belongs to. Heshy and partners hear about it only if it sits unanswered (see overdueAlerts).
   if (rep.email) await sendEmail({ to: rep.email, subject, html, audience: "team", replyTo: t.email });
-  if (isNew || !rep.email) await emailAdmin(rep.email ? `[Copy] ${subject} · for ${rep.first}` : subject, html, { replyTo: t.email });
+  else await emailAdmin(subject, html, { replyTo: t.email });
 }
 
 export type ThreadRow = Thread & { last: Msg | null; waiting: boolean; cutOff: boolean; count: number };
@@ -311,4 +312,43 @@ export async function listThreads(staffId: string | null): Promise<ThreadRow[]> 
       return { ...t, last, count: list.length, cutOff, waiting: !cutOff && last?.from === "owner" };
     })
     .sort((a, b) => (b.last?.at ?? b.at).localeCompare(a.last?.at ?? a.at));
+}
+
+export const OVERDUE_HOURS = 24;
+
+// Whose conversation this is: the rep it was sent to, or Heshy's own (no rep).
+export function isMine(t: { staff_id: string | null }, me: { id: string | null; role: string }) {
+  return t.staff_id ? t.staff_id === me.id : me.role === "admin";
+}
+
+export function waitingHours(t: ThreadRow, now: number) {
+  return t.waiting && t.last ? (now - Date.parse(t.last.at)) / 36e5 : 0;
+}
+
+// An owner waiting more than a day: tell Heshy and the partners once per unanswered message.
+export async function overdueAlerts(now = Date.now()) {
+  const rows = (await listThreads(null)).filter((t) => t.staff_id && waitingHours(t, now) >= OVERDUE_HOURS);
+  if (!rows.length) return { overdue: 0 };
+  const { data: sent } = await db().from("activity_log").select("details").eq("action", "msg_overdue").gte("at", new Date(now - 30 * 864e5).toISOString());
+  const done = new Set((sent ?? []).map((r) => String((r.details as Record<string, unknown>).msg ?? "")));
+  const { data: partners } = await db().from("staff").select("email, is_partner, active").eq("is_partner", true).eq("active", true);
+  let n = 0;
+  for (const t of rows) {
+    if (!t.last || done.has(t.last.id)) continue;
+    const rep = await staffName(t.staff_id);
+    const k = kit;
+    const html = layout(
+      k.big(`${k.esc(t.name)} has been waiting over a day for ${k.esc(rep.first)}`) +
+        k.p(`About ${about(t)}. Their last message:`) +
+        k.quote(t.last.text) +
+        k.button(repLink(t.id), "See the conversation") +
+        k.quiet(`It's ${k.esc(rep.first)}'s conversation. Check in with ${k.esc(rep.first)} first, or step in from the conversation page if needed.`),
+    );
+    const subject = `${t.name} has been waiting a day for ${rep.first}`;
+    await emailAdmin(subject, html);
+    for (const p of partners ?? []) if (p.email) await sendEmail({ to: p.email, subject, html, audience: "team" });
+    await logActivity("system", "msg_overdue", { thread: t.id, msg: t.last.id });
+    n++;
+  }
+  return { overdue: n };
 }

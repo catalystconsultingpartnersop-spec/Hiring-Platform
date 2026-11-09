@@ -17,6 +17,8 @@ export async function GET(req: NextRequest) {
   await writeTeamCallNotes().catch(() => 0);
   const { stallAlerts } = await import("@/lib/pathEmails");
   const stalls = await stallAlerts().catch(() => ({ stalls: 0 }));
+  const { overdueAlerts } = await import("@/lib/ownerMessages");
+  await overdueAlerts().catch(() => null);
   const r = await draftFinishedCalls({ withinHours: 6 }).catch(() => ({ drafted: 0 }));
   return NextResponse.json({ ...r, ...reminders, ...stalls });
 }

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getThread } from "@/lib/ownerMessages";
+import { getThread, isMine, OVERDUE_HOURS } from "@/lib/ownerMessages";
+import { db } from "@/lib/db";
+import { nowMs } from "@/lib/time";
 import { requireStaff } from "@/lib/session";
 import { refCode } from "@/lib/format";
 import { Thread } from "@/components/Thread";
@@ -18,6 +20,12 @@ export default async function Conversation({ params }: PageProps<"/admin/message
   if (!th) notFound();
   if (me.role !== "admin" && !me.manager && th.t.staff_id !== me.id) notFound();
   const { t } = th;
+  const mine = isMine(t, me);
+  const { data: rep } = t.staff_id ? await db().from("staff").select("full_name").eq("id", t.staff_id).maybeSingle() : { data: null };
+  const repFirst = ((rep?.full_name as string | null) ?? "Heshy").split(" ")[0];
+  const last = th.msgs.at(-1);
+  const waitedH = last?.from === "owner" ? Math.floor((nowMs() - Date.parse(last.at)) / 36e5) : 0;
+  const late = waitedH >= OVERDUE_HOURS;
   return (
     <div style={{ maxWidth: 760, paddingBottom: 48 }}>
       <p className="small" style={{ marginTop: 18 }}>
@@ -29,7 +37,7 @@ export default async function Conversation({ params }: PageProps<"/admin/message
           {t.company ? `, ${t.company}` : ""}
         </h1>
         <p>
-          About <Link href={`/admin/candidates/${t.candidate_id}`}>{t.headline ?? t.role ?? "the candidate"}</Link> ({refCode(t.candidate_id)})
+          About <Link href={`/admin/candidates/${t.candidate_id}`}>{t.candidate_name ? `${t.candidate_name}, ` : ""}{t.headline ?? t.role ?? "the candidate"}</Link> ({refCode(t.candidate_id)})
           {t.phone && (
             <>
               {" "}
@@ -39,6 +47,12 @@ export default async function Conversation({ params }: PageProps<"/admin/message
           · {t.email}
         </p>
       </div>
+      {!mine && (
+        <p className="other-banner">
+          <strong>This is {repFirst}&rsquo;s conversation.</strong> {repFirst} answers it.
+          {late ? ` The owner has been waiting ${Math.round(waitedH / 24) || 1} day${waitedH >= 48 ? "s" : ""}.` : " You're seeing it to keep track."}
+        </p>
+      )}
       <Thread msgs={th.msgs} me="rep" />
       {th.cutOff ? (
         <div className="panel" style={{ marginTop: 18 }}>
@@ -53,7 +67,7 @@ export default async function Conversation({ params }: PageProps<"/admin/message
             </form>
           )}
         </div>
-      ) : (
+      ) : mine ? (
         <>
           <RepAnswer threadId={id} />
           <details className="wrapup">
@@ -70,7 +84,13 @@ export default async function Conversation({ params }: PageProps<"/admin/message
             </form>
           </details>
         </>
-      )}
+      ) : late || me.role === "admin" ? (
+        <details className="wrapup" open={late}>
+          <summary>{late ? `Step in for ${repFirst}` : `Step in for ${repFirst} (only if needed)`}</summary>
+          <p className="small muted">The owner will see your answer as &ldquo;{me.name.split(" ")[0]}, for {repFirst}.&rdquo; Let {repFirst} know you stepped in.</p>
+          <RepAnswer threadId={id} />
+        </details>
+      ) : null}
     </div>
   );
 }
