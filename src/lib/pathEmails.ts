@@ -68,7 +68,7 @@ function howLine(m: Meeting, c: Ctx, forCandidate: boolean) {
       ? `${e(c.owner.full_name ?? "They")} will call you${c.cand.phone ? ` at ${e(c.cand.phone)}` : ""}.`
       : `You call ${e(first(c.cand.full_name))}${c.cand.phone ? ` at <strong>${e(c.cand.phone)}</strong>` : ""}.`;
   if (m.mode === "video") return `Video call: <a href="${e(m.place ?? "")}" style="color:#17213a">${e(m.place ?? "")}</a>`;
-  return `In person at <strong>${e(m.place ?? "")}</strong>.`;
+  return m.place?.trim() ? `In person at <strong>${e(m.place)}</strong>.` : "In person.";
 }
 
 // 1. A client unlocked the candidate.
@@ -319,4 +319,58 @@ export async function emailGuest(m: Meeting, guest: { name: string; email: strin
       ...(await packetAttachments(c.cand.id).catch(() => [])),
     ],
   });
+}
+
+// Each morning (from 7 AM New York time): an owner with calls or meetings today gets
+// one email with their day, in time order. Nothing is sent on days with nothing booked.
+export async function ownerDayEmails(now = Date.now()) {
+  const tz = COMPANY_TZ;
+  const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", hourCycle: "h23" }).format(now));
+  if (hour < 7) return { ownerDays: 0 };
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(now); // yyyy-mm-dd
+  const [y, mo, d] = day.split("-").map(Number);
+  const { zonedToUtc } = await import("./time");
+  const start = new Date(zonedToUtc(y, mo, d, 0, tz)).toISOString();
+  const end = new Date(zonedToUtc(y, mo, d, 24 * 60, tz)).toISOString();
+  const { data: ms } = await db().from("meetings").select("*").eq("status", "booked").gte("starts_at", start).lt("starts_at", end).order("starts_at");
+  if (!ms?.length) return { ownerDays: 0 };
+  const { data: sent } = await db().from("activity_log").select("details").eq("action", "owner_day_email").eq("details->>day", day);
+  const done = new Set((sent ?? []).map((r) => String((r.details as Record<string, unknown>).owner ?? "")));
+  const byOwner = new Map<string, { c: Ctx; m: Meeting }[]>();
+  for (const m of ms as Meeting[]) {
+    if (Date.parse(m.starts_at!) + m.minutes * 60e3 < now) continue; // already over
+    const c = await pathCtx(m.unlock_id);
+    if (!c || done.has(c.owner.id)) continue;
+    const list = byOwner.get(c.owner.id) ?? [];
+    list.push({ c, m });
+    byOwner.set(c.owner.id, list);
+  }
+  let n = 0;
+  for (const [ownerId, items] of byOwner) {
+    const o = items[0].c.owner;
+    const rows = items
+      .map(({ c, m }) => {
+        const t = new Intl.DateTimeFormat("en-US", { timeZone: m.time_zone || tz, hour: "numeric", minute: "2-digit" }).format(new Date(m.starts_at!));
+        const label = m.kind === "call" ? "First call" : "Meeting";
+        return `<tr><td style="padding:10px 14px 10px 0;vertical-align:top;font-weight:bold;white-space:nowrap">${e(t)}</td><td style="padding:10px 0;border-bottom:1px solid #eef1f6">${label} with <strong>${e(c.cand.full_name)}</strong><br><span style="color:#5b667e;font-size:14px">${howLine(m, c, false)}</span><br><a href="${siteUrl()}/candidates/${c.cand.id}" style="color:#17213a;font-size:14px">Their page, resume and one-page summary</a></td></tr>`;
+      })
+      .join("");
+    const count = items.length === 1 ? "one candidate" : `${items.length} candidates`;
+    const { layout, kit } = await import("./emailKit");
+    await sendEmail({
+      to: o.email,
+      audience: "owner",
+      subject: items.length === 1 ? `Today: ${items[0].m.kind === "call" ? "a call" : "a meeting"} with ${items[0].c.cand.full_name}` : `Your day: ${items.length} candidates to meet`,
+      html: layout(
+        kit.hi(o.full_name) +
+          kit.p(`Here's your day, ${e(new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "long", month: "long", day: "numeric" }).format(now))}. You're meeting ${count}.`) +
+          `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:4px 0 16px;font-size:15px">${rows}</table>` +
+          kit.quiet(`Need to move something? Open the candidate's page. <a href="${siteUrl()}/account">All your candidates</a>`),
+        "owner",
+      ),
+    });
+    await logActivity("system", "owner_day_email", { owner: ownerId, day, count: items.length });
+    n++;
+  }
+  return { ownerDays: n };
 }
