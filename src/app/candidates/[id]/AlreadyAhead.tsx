@@ -79,6 +79,13 @@ function OwnTime({ candidateId, first, kind }: { candidateId: string; first: str
 // steps never hold them back.
 export function AlreadyAhead({ candidateId, first, callDone }: { candidateId: string; first: string; callDone: boolean }) {
   const [open, setOpen] = useState<"" | "set">("");
+  const [shown, setShown] = useState(false);
+  if (!shown)
+    return (
+      <button type="button" className={styles.moreLink} onClick={() => setShown(true)}>
+        {callDone ? "Already met?" : "Already spoke or met?"}
+      </button>
+    );
   return (
     <div className={styles.ahead}>
       <p className={styles.aheadTitle}>Already further along with {first}? Just tell us:</p>

@@ -117,13 +117,13 @@ export function OfferTimes({
   const modes: [typeof mode, string][] =
     kind === "call"
       ? [
-          ["phone", "Phone call"],
-          ["video", "Video call"],
+          ["phone", "📞 Phone"],
+          ["video", "🎥 Video"],
         ]
       : [
-          ["in_person", "In person"],
-          ["video", "Video call"],
-          ["phone", "Phone call"],
+          ["in_person", "🤝 In person"],
+          ["video", "🎥 Video"],
+          ["phone", "📞 Phone"],
         ];
 
   return (
@@ -141,8 +141,8 @@ export function OfferTimes({
           {first} said: <em>&ldquo;{retimeNote}&rdquo;</em>
         </p>
       )}
-      <fieldset className={styles.modes}>
-        <legend>How?</legend>
+      <p className={styles.howLabel}>How?</p>
+      <fieldset className={styles.modes} aria-label="How">
         {modes.map(([v, label]) => (
           <label key={v} className={mode === v ? styles.modeOn : undefined}>
             <input type="radio" name="mode" value={v} checked={mode === v} onChange={() => setMode(v)} />
@@ -178,7 +178,7 @@ export function OfferTimes({
       )}
       {inBrowser && busy.length > 0 && <Schedule busy={busy} />}
       <div className={styles.slotsHead}>
-        <span>Offer up to three times</span>
+        <span>Your 3 times</span>
         <label>
           Length{" "}
           <select className="select" name="minutes" value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>
@@ -194,20 +194,20 @@ export function OfferTimes({
         {/* Days depend on the visitor's own date, so they're filled in the browser. */}
         {inBrowser ? <Slots busy={busy} minutes={minutes} /> : <div style={{ minHeight: 140 }} />}
       </div>
-      <label className="field">
-        <span>A short note to {first} (optional)</span>
+      <details className={styles.noteBox}>
+        <summary>+ Add a note to {first}</summary>
         <input className="input" name="note" maxLength={500} placeholder={kind === "call" ? "Looking forward to talking!" : "Ask for Sarah at the front desk."} />
-      </label>
+      </details>
       {state.error && (
         <p className="notice notice-bad" role="alert" style={{ marginTop: 12 }}>
           {state.error}
         </p>
       )}
-      <button className="btn btn-gold" type="submit" disabled={pending} style={{ marginTop: 16 }}>
-        {pending ? "Sending…" : `Send times to ${first}`}
+      <button className={`btn btn-gold ${styles.sendBtn}`} type="submit" disabled={pending} style={{ marginTop: 14 }}>
+        {pending ? "Sending…" : `Send times to ${first} →`}
       </button>
-      <p className="small muted" style={{ margin: "10px 0 0" }}>
-        {first} picks one, and you both get a calendar invite.
+      <p className="small muted" style={{ margin: "8px 0 0" }}>
+        We&rsquo;ll email you the moment {first} picks.
       </p>
     </form>
   );
@@ -222,7 +222,7 @@ function Schedule({ busy }: { busy: Busy[] }) {
   const byWho = [...new Set(offered.map((b) => b.who))];
   return (
     <div className={styles.schedule}>
-      <strong>Already on your schedule</strong>
+      <strong>📅 Already on your schedule</strong>
       <ul>
         {booked.map((b, i) => (
           <li key={i}>
@@ -239,7 +239,7 @@ function Schedule({ busy }: { busy: Busy[] }) {
           </li>
         ))}
       </ul>
-      <p className="small muted" style={{ margin: "6px 0 0" }}>Booked times are marked busy below so you won&rsquo;t double-book.</p>
+      <p className="small muted" style={{ margin: "6px 0 0" }}>We&rsquo;ve blocked these below.</p>
     </div>
   );
 }

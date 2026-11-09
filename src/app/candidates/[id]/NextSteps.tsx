@@ -2,7 +2,7 @@ import { PendingButton } from "@/components/PendingButton";
 import Link from "next/link";
 import type { Candidate } from "@/lib/db";
 import type { Busy } from "@/lib/ownerSchedule";
-import { BIG_STEPS, bigStepIndex, MODE_LABEL, PathState } from "@/lib/path";
+import { bigStepIndex, MODE_LABEL, PathState } from "@/lib/path";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 import { passOnCandidate } from "./actions";
 import { AlreadyAhead } from "./AlreadyAhead";
@@ -44,19 +44,19 @@ export function NextSteps({ c, path, again, step, guests = [], busy = [] }: { c:
   } else if (again || stage === "offer_meeting") {
     body = (
       <div className={styles.body}>
-        <h3>{again ? `Meet ${first} again` : `Next: a proper meeting with ${first}`}</h3>
+        <h3>{again ? `Meet ${first} again` : `Set up a meeting with ${first}`}</h3>
         {m?.candidate_verdict === "yes" && !again && <p className={styles.good}>{first} enjoyed the call and wants to keep going too.</p>}
-        <p className="muted">In person is best if you can. Offer a few times and {first} picks one.</p>
+        <p className={styles.sub}>Pick 3 times. {first} chooses one. You both get it in your calendar.</p>
+        <Advice stage="offer_meeting" />
         <OfferTimes candidateId={c.id} kind="meeting" first={first} phone={c.phone} busy={busy} />
       </div>
     );
   } else if (stage === "offer_call") {
     body = (
       <div className={styles.body}>
-        <h3>Start with a short first call</h3>
-        <p className="muted">
-          Fifteen or twenty minutes to say hello and see if it&rsquo;s worth meeting. Offer a few times and {first} picks one.
-        </p>
+        <h3>Book a short first call</h3>
+        <p className={styles.sub}>Pick 3 times. {first} chooses one. You both get it in your calendar.</p>
+        <Advice stage="offer_call" />
         <OfferTimes candidateId={c.id} kind="call" first={first} phone={c.phone} busy={busy} />
       </div>
     );
@@ -64,7 +64,8 @@ export function NextSteps({ c, path, again, step, guests = [], busy = [] }: { c:
     body = (
       <div className={styles.body}>
         <h3>Those times didn&rsquo;t work for {first}</h3>
-        <p className="muted">Offer a few new ones.</p>
+        <p className={styles.sub}>Offer a few new ones.</p>
+        <Advice stage={stage} />
         <OfferTimes candidateId={c.id} kind={m.kind} first={first} phone={c.phone} retimeNote={m.candidate_note} busy={busy} />
       </div>
     );
@@ -72,6 +73,7 @@ export function NextSteps({ c, path, again, step, guests = [], busy = [] }: { c:
     body = (
       <div className={styles.body}>
         <h3>Waiting for {first} to pick a time</h3>
+        <Advice stage={stage} />
         <ul className={styles.times}>
           {m.slots.map((s) => (
             <li key={s}>{formatInZone(s, tz)}</li>
@@ -115,15 +117,8 @@ export function NextSteps({ c, path, again, step, guests = [], busy = [] }: { c:
           )}{" "}
           It&rsquo;s in your calendar invite too.
         </p>
-        {m.kind === "call" ? (
-          <p className="small muted">
-            Good first questions: What kind of work gives you energy? What are you looking for next? What would you like to know about us?
-          </p>
-        ) : (
-          <p className="small muted">
-            Use the <Link href="/hiring-help/templates/interview-scorecard">interview scorecard</Link> to keep it fair and easy to decide.
-          </p>
-        )}
+        <Advice stage={stage} />
+        <Questions kind={m.kind} first={first} />
         <BringSomeone candidateId={c.id} meetingId={m.id} guests={guests} what={what} />
       </div>
     );
@@ -131,6 +126,7 @@ export function NextSteps({ c, path, again, step, guests = [], busy = [] }: { c:
     body = (
       <div className={styles.body}>
         <h3>How did your {what} with {first} go?</h3>
+        <Advice stage={stage} />
         <div className={styles.choices}>
           <form action={ownerKeepGoing.bind(null, c.id, m.id)}>
             <button className="btn btn-gold" type="submit">
@@ -145,7 +141,7 @@ export function NextSteps({ c, path, again, step, guests = [], busy = [] }: { c:
     body = (
       <div className={styles.body}>
         <h3>Waiting for {first}&rsquo;s references</h3>
-        <p className="muted">We asked {first} for two or three people they&rsquo;ve worked with. We&rsquo;ll email them to you as soon as they&rsquo;re in.</p>
+        <Advice stage={stage} />
         <Decide c={c} first={first} withRefs={false} />
       </div>
     );
@@ -153,7 +149,8 @@ export function NextSteps({ c, path, again, step, guests = [], busy = [] }: { c:
     // decide
     body = (
       <div className={styles.body}>
-        <h3>What&rsquo;s next with {first}?</h3>
+        <h3>Your decision on {first}</h3>
+        <Advice stage="decide" />
         {refs?.given_at && refs.refs && (
           <div className={styles.refs}>
             <p className={styles.refsTitle}>{first}&rsquo;s references</p>
@@ -183,45 +180,75 @@ export function NextSteps({ c, path, again, step, guests = [], busy = [] }: { c:
 
   return (
     <section className={styles.panel} id="next" aria-label={`Next steps with ${first}`}>
-      <div className={styles.head}>
-        <p className={styles.eyebrow}>Next steps with {first}</p>
-        {big >= 0 && (
-          <ol className={styles.dots}>
-            {BIG_STEPS.map((s, i) => (
-              <li key={s} className={i < big ? styles.dotDone : i === big ? styles.dotNow : undefined}>
-                {s}
-              </li>
-            ))}
-          </ol>
+      <div className={styles.band}>
+        <p className={styles.eyebrow}>Your next step with {first}</p>
+        {big >= 0 && <Stepper candidateId={c.id} big={big} canSkip={skip} />}
+      </div>
+      <div className={styles.inner}>
+        {step === "offered" && <p className={`notice notice-good ${styles.flash}`}>Sent. We&rsquo;ll email you when {first} picks a time.</p>}
+        {step === "refs" && <p className={`notice notice-good ${styles.flash}`}>Asked. We&rsquo;ll email you {first}&rsquo;s references.</p>}
+        {step === "spoke" && <p className={`notice notice-good ${styles.flash}`}>Got it. Next: a proper meeting with {first}.</p>}
+        {step === "set" && <p className={`notice notice-good ${styles.flash}`}>Saved. We sent you and {first} a confirmation with calendar buttons.</p>}
+        {step === "skipcall" && <p className={`notice notice-good ${styles.flash}`}>Skipped. Set up a meeting with {first} below.</p>}
+        {(step === "skipmeeting" || step === "skipboth") && <p className={`notice notice-good ${styles.flash}`}>Skipped. Here&rsquo;s your decision on {first}.</p>}
+        {step === "met" && <p className={`notice notice-good ${styles.flash}`}>Got it. Here&rsquo;s what&rsquo;s next with {first}.</p>}
+        {body}
+      </div>
+      <div className={styles.more}>
+        {skip && (
+          <form action={skipStep.bind(null, c.id, skip)}>
+            <PendingButton className={styles.moreLink} pendingText="One moment…">
+              {skip === "call" ? "Skip the call" : "Skip the meeting"}
+            </PendingButton>
+          </form>
+        )}
+        {ahead && <AlreadyAhead candidateId={c.id} first={first} callDone={!stage.startsWith("call") && stage !== "offer_call"} />}
+        {!again && !["declined", "decide", "refs_waiting", "call_feedback", "meeting_feedback"].includes(stage) && <PassForm candidateId={c.id} first={first} />}
+        {c.phone && (
+          <a className={styles.moreLink} href={`tel:${c.phone}`}>
+            Rather just call? {c.phone}
+          </a>
         )}
       </div>
-      {step === "offered" && <p className={`notice notice-good ${styles.flash}`}>Sent. We&rsquo;ll email you when {first} picks a time.</p>}
-      {step === "refs" && <p className={`notice notice-good ${styles.flash}`}>Asked. We&rsquo;ll email you {first}&rsquo;s references.</p>}
-      {step === "spoke" && <p className={`notice notice-good ${styles.flash}`}>Got it. Next: a proper meeting with {first}.</p>}
-      {step === "set" && <p className={`notice notice-good ${styles.flash}`}>Saved. We sent you and {first} a confirmation with calendar buttons.</p>}
-      {step === "skipcall" && <p className={`notice notice-good ${styles.flash}`}>Skipped. Set up a meeting with {first} below.</p>}
-      {step === "skipmeeting" && <p className={`notice notice-good ${styles.flash}`}>Skipped. Here&rsquo;s what&rsquo;s next with {first}.</p>}
-      {step === "met" && <p className={`notice notice-good ${styles.flash}`}>Got it. Here&rsquo;s what&rsquo;s next with {first}.</p>}
-      {skip && (
-        <form action={skipStep.bind(null, c.id, skip)} className={styles.skip}>
-          <PendingButton className={styles.skipBtn} pendingText="One moment…">
-            {skip === "call" ? `Skip the call, go straight to a meeting →` : `Skip the meeting, go straight to deciding →`}
-          </PendingButton>
-        </form>
-      )}
-      {body}
-      {ahead && <AlreadyAhead candidateId={c.id} first={first} callDone={!stage.startsWith("call") && stage !== "offer_call"} />}
-      <p className={styles.phone}>
-        Prefer to just pick up the phone? Call {first}
-        {c.phone ? (
-          <>
-            {" "}
-            at <a href={`tel:${c.phone}`}>{c.phone}</a>
-          </>
-        ) : null}
-        . These steps are here to help, not required.
-      </p>
     </section>
+  );
+}
+
+// 1-2-3-4 steps. A later step can be tapped to jump straight to it (skipping what's before).
+function Stepper({ candidateId, big, canSkip }: { candidateId: string; big: number; canSkip: "call" | "meeting" | null }) {
+  const labels = ["First call", "Meeting", "Decide", "Hire"];
+  return (
+    <ol className={styles.stepper}>
+      {labels.map((l, i) => {
+        const state = i < big ? styles.stepDone : i === big ? styles.stepNow : "";
+        const inner = (
+          <>
+            <b>{i < big ? "✓" : i + 1}</b>
+            <span className={styles.stepLabel}>{l}</span>
+          </>
+        );
+        let el: React.ReactNode = <span className={`${styles.step} ${state}`}>{inner}</span>;
+        if (i > big) {
+          if (i === 3) el = <Link className={`${styles.step} ${styles.stepGo}`} href={`/candidates/${candidateId}/hire`} title="Go straight to hiring">{inner}</Link>;
+          else if (canSkip) {
+            const kind = i === 1 ? "call" : canSkip === "call" ? "both" : "meeting";
+            el = (
+              <form action={skipStep.bind(null, candidateId, kind)}>
+                <button type="submit" className={`${styles.step} ${styles.stepGo}`} title={`Skip ahead to ${l.toLowerCase()}`}>
+                  {inner}
+                </button>
+              </form>
+            );
+          }
+        }
+        return (
+          <li key={l}>
+            {i > 0 && <span className={styles.line} aria-hidden />}
+            {el}
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -259,7 +286,7 @@ function PassForm({ candidateId, first, asOption = false }: { candidateId: strin
   return (
     <details className={asOption ? styles.option : styles.passInline}>
       <summary>
-        <strong>Not a fit</strong>
+        <strong>{asOption ? "Not a fit" : "Not a fit?"}</strong>
         {asOption && <span>We&rsquo;ll let {first} know kindly.</span>}
       </summary>
       <form action={passOnCandidate.bind(null, candidateId)}>
@@ -269,6 +296,63 @@ function PassForm({ candidateId, first, asOption = false }: { candidateId: strin
           Take {first} off my list
         </PendingButton>
       </form>
+    </details>
+  );
+}
+
+// One line of real advice for each step, so it feels like someone is guiding them.
+const ADVICE: Partial<Record<PathState["stage"], string>> = {
+  offer_call: "Keep it short. You're only answering one question: do I want to meet this person?",
+  call_proposed: "Most people pick within a day. Meanwhile, read their one-page summary so you know who you're talking to.",
+  call_retime: "Offer a wider spread this time: one morning, one afternoon, one evening.",
+  call_booked: "Have the one-page summary open, and spend most of the call listening.",
+  call_feedback: "Decide while it's fresh. A quick yes or no is kinder to everyone.",
+  offer_meeting: "Meet in person if you can, and bring whoever they'd work with most.",
+  meeting_proposed: "Waiting is normal. We remind them if they haven't picked in two days.",
+  meeting_retime: "Offer a wider spread this time: one morning, one afternoon, one evening.",
+  meeting_booked: "Ask about real situations from their past, not what-ifs. Score them right after, while it's fresh.",
+  meeting_feedback: "Decide while it's fresh. A quick yes or no is kinder to everyone.",
+  decide: "Good people don't stay available long. If you're 80% sure, make the offer.",
+  refs_waiting: "References usually come in within a day or two. You can decide without them.",
+};
+
+const QUESTIONS: Record<"call" | "meeting", string[]> = {
+  call: ["What kind of work gives you energy?", "What are you looking for next?", "What would you like to know about us?"],
+  meeting: [
+    "Tell me about a time you had to fix something that was falling apart.",
+    "What would your last manager say you're best at?",
+    "What would a great first month here look like to you?",
+  ],
+};
+
+function Advice({ stage }: { stage: PathState["stage"] }) {
+  const a = ADVICE[stage];
+  if (!a) return null;
+  return (
+    <div className={styles.tip}>
+      <span aria-hidden>💡</span>
+      <p>
+        <strong>Our advice</strong>
+        {a}
+      </p>
+    </div>
+  );
+}
+
+function Questions({ kind, first }: { kind: "call" | "meeting"; first: string }) {
+  return (
+    <details className={styles.questions}>
+      <summary>🗒️ 3 questions to ask {first}</summary>
+      <ol>
+        {QUESTIONS[kind].map((q) => (
+          <li key={q}>{q}</li>
+        ))}
+      </ol>
+      {kind === "meeting" && (
+        <p className="small" style={{ margin: "8px 0 0" }}>
+          <Link href="/hiring-help/templates/interview-scorecard">Open the interview scorecard</Link>
+        </p>
+      )}
     </details>
   );
 }

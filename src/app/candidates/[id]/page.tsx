@@ -378,33 +378,29 @@ function Unlocked({
           <div className={styles.identity}>
             <p className="muted small">Candidate {refCode(c.id)}</p>
             <h1>{c.full_name}</h1>
-            <ul className={styles.contact}>
-              <li>
-                <a href={`mailto:${c.email}`}>{c.email}</a>
-              </li>
-              {c.phone && (
-                <li>
-                  <a href={`tel:${c.phone}`}>{c.phone}</a>
-                </li>
-              )}
-              {c.linkedin_url && (
-                <li>
-                  <a href={c.linkedin_url} target="_blank" rel="noopener noreferrer">
-                    LinkedIn profile
-                  </a>
-                </li>
-              )}
+            <div className={styles.quick}>
+              <a className={`${styles.qbtn} ${styles.qgold}`} href={`/api/summary/${c.id}`} target="_blank" rel="noopener">
+                🧾 1-page summary
+              </a>
               {(c.resume_path || ((c as { application?: Record<string, string> }).application?.owner_resume === "clean" && (c as { application?: Record<string, string> }).application?.clean_resume)) && (
-                <li>
-                  <a href={`/api/resume/${c.id}`}>Download resume</a>
-                </li>
-              )}
-              <li>
-                <a href={`/api/summary/${c.id}`} target="_blank" rel="noopener">
-                  One-page summary
+                <a className={styles.qbtn} href={`/api/resume/${c.id}`}>
+                  📄 Resume
                 </a>
-              </li>
-            </ul>
+              )}
+              {c.phone && (
+                <a className={styles.qbtn} href={`tel:${c.phone}`}>
+                  📞 {c.phone}
+                </a>
+              )}
+              <a className={styles.qbtn} href={`mailto:${c.email}`}>
+                ✉️ Email
+              </a>
+              {c.linkedin_url && (
+                <a className={styles.qbtn} href={c.linkedin_url} target="_blank" rel="noopener noreferrer">
+                  LinkedIn
+                </a>
+              )}
+            </div>
           </div>
           <NextSteps c={c} path={path} again={again} step={step} guests={guests} busy={busy} />
           <Profile c={c} page={parseOwnerPage((c as { application?: Record<string, string> }).application?.owner_page)} />
