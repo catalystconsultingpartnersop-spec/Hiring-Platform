@@ -40,10 +40,8 @@ export async function offerTimes(candidateId: string, kind: "call" | "meeting", 
   const mode = String(form.get("mode") ?? "phone") as Meeting["mode"];
   if (!["phone", "video", "in_person"].includes(mode)) return { error: "Pick how you'd like to meet." };
   let place = String(form.get("place") ?? "").trim().slice(0, 500);
-  // Video with no link of their own: we make a Google Meet link for them.
-  if (mode === "video" && !place) place = (await (await import("@/lib/googleCalls")).newMeetingRoom().catch(() => null)) ?? "";
-  if (mode === "video" && !/^https?:\/\/\S+$/i.test(place)) return { error: "We couldn't make a video link just now. Tap “Use my own link” and paste yours, or try again." };
   if (mode === "in_person" && place.length < 4) return { error: "Add the address where you'll meet." };
+  if (mode === "video" && place && !/^https?:\/\/\S+$/i.test(place)) return { error: "That video link doesn't look right. It should start with https://" };
   const minutes = Math.min(120, Math.max(10, Number(form.get("minutes")) || 30));
   const note = String(form.get("note") ?? "").trim().slice(0, 500) || null;
 
@@ -52,6 +50,18 @@ export async function offerTimes(candidateId: string, kind: "call" | "meeting", 
     .filter((iso) => Date.parse(iso) > now + 30 * 60e3)
     .sort();
   if (!slots.length) return { error: "Add at least one time, later than the next half hour." };
+  // Don't double-book them with another candidate.
+  {
+    const { ownerSchedule, clash } = await import("@/lib/ownerSchedule");
+    const busy = await ownerSchedule(owner.id, unlock.id);
+    for (const s of slots) {
+      const hit = clash(busy, s, minutes);
+      if (hit) return { error: `One of those times runs into your ${hit.kind === "call" ? "call" : "meeting"} with ${hit.who}. Pick another time.` };
+    }
+  }
+  // Video with no link of their own: we make a Google Meet link for them.
+  if (mode === "video" && !place) place = (await (await import("@/lib/googleCalls")).newMeetingRoom().catch(() => null)) ?? "";
+  if (mode === "video" && !place) return { error: "We couldn't make a video link just now. Tap “Use my own link” and paste yours, or try again." };
 
   // A new offer replaces any open one.
   await db()

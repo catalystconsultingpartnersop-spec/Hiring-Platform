@@ -1,6 +1,7 @@
 import { PendingButton } from "@/components/PendingButton";
 import Link from "next/link";
 import type { Candidate } from "@/lib/db";
+import type { Busy } from "@/lib/ownerSchedule";
 import { BIG_STEPS, bigStepIndex, MODE_LABEL, PathState } from "@/lib/path";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 import { passOnCandidate } from "./actions";
@@ -11,7 +12,7 @@ import { askReferences, ownerKeepGoing, skipStep, withdrawOffer } from "./pathAc
 import styles from "./path.module.css";
 
 // The client's guide from "unlocked" to "hired". A nudge, never a requirement.
-export function NextSteps({ c, path, again, step, guests = [] }: { c: Candidate; path: PathState; again: boolean; step: string; guests?: { name: string; email: string }[] }) {
+export function NextSteps({ c, path, again, step, guests = [], busy = [] }: { c: Candidate; path: PathState; again: boolean; step: string; guests?: { name: string; email: string }[]; busy?: Busy[] }) {
   const { stage, meeting: m, refs } = path;
   if (stage === "passed" || stage === "taken" || stage === "hired") return null;
   const first = c.full_name.split(" ")[0];
@@ -46,7 +47,7 @@ export function NextSteps({ c, path, again, step, guests = [] }: { c: Candidate;
         <h3>{again ? `Meet ${first} again` : `Next: a proper meeting with ${first}`}</h3>
         {m?.candidate_verdict === "yes" && !again && <p className={styles.good}>{first} enjoyed the call and wants to keep going too.</p>}
         <p className="muted">In person is best if you can. Offer a few times and {first} picks one.</p>
-        <OfferTimes candidateId={c.id} kind="meeting" first={first} phone={c.phone} />
+        <OfferTimes candidateId={c.id} kind="meeting" first={first} phone={c.phone} busy={busy} />
       </div>
     );
   } else if (stage === "offer_call") {
@@ -56,7 +57,7 @@ export function NextSteps({ c, path, again, step, guests = [] }: { c: Candidate;
         <p className="muted">
           Fifteen or twenty minutes to say hello and see if it&rsquo;s worth meeting. Offer a few times and {first} picks one.
         </p>
-        <OfferTimes candidateId={c.id} kind="call" first={first} phone={c.phone} />
+        <OfferTimes candidateId={c.id} kind="call" first={first} phone={c.phone} busy={busy} />
       </div>
     );
   } else if ((stage === "call_retime" || stage === "meeting_retime") && m) {
@@ -64,7 +65,7 @@ export function NextSteps({ c, path, again, step, guests = [] }: { c: Candidate;
       <div className={styles.body}>
         <h3>Those times didn&rsquo;t work for {first}</h3>
         <p className="muted">Offer a few new ones.</p>
-        <OfferTimes candidateId={c.id} kind={m.kind} first={first} phone={c.phone} retimeNote={m.candidate_note} />
+        <OfferTimes candidateId={c.id} kind={m.kind} first={first} phone={c.phone} retimeNote={m.candidate_note} busy={busy} />
       </div>
     );
   } else if ((stage === "call_proposed" || stage === "meeting_proposed") && m) {

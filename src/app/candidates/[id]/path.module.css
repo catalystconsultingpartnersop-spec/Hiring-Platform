@@ -73,3 +73,10 @@
 @media (max-width: 560px) { .guestRow { grid-template-columns: 1fr; } }
 .meetReady { display: grid; gap: 6px; background: #eef7f0; border: 1px solid #cfe6d5; border-radius: 12px; padding: 12px 14px; margin: 0 0 12px; font-size: 15px; color: #1f4d2b; }
 .linkBtn { justify-self: start; background: none; border: 0; padding: 0; font: inherit; font-size: 14px; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; margin-top: 4px; }
+.schedule { background: var(--shelf); border-radius: 12px; padding: 12px 14px; margin: 4px 0 14px; font-size: 15px; }
+.schedule ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 5px; }
+.schedWhen { font-weight: 700; }
+.schedHeld { color: var(--ink-2); font-size: 14px; }
+.slotBusy, .slotHeld { grid-column: 2 / -1; font-size: 13px; margin-top: -2px; }
+.slotBusy { color: #a33a2a; font-weight: 600; }
+.slotHeld { color: var(--ink-2); }
