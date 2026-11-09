@@ -393,6 +393,11 @@ function Unlocked({
                   <a href={`/api/resume/${c.id}`}>Download resume</a>
                 </li>
               )}
+              <li>
+                <a href={`/api/summary/${c.id}`} target="_blank" rel="noopener">
+                  One-page summary
+                </a>
+              </li>
             </ul>
           </div>
           <NextSteps c={c} path={path} again={again} step={step} />

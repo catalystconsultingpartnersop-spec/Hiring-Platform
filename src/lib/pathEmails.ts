@@ -108,7 +108,11 @@ export async function emailBooked(m: Meeting) {
   await sendEmail({
     to: c.owner.email,
     ...toOwner.booked({ name: c.owner.full_name, candidate: c.cand.full_name, candidateId: c.cand.id, when: formatInZone(m.starts_at, m.time_zone || COMPANY_TZ), how: howLine(m, c, false), m }),
-    attachments: [{ filename: `${m.kind}.ics`, content: ics(`${label}: ${c.cand.full_name}`, `${MODE_LABEL[m.mode]}. ${m.mode === "phone" ? `Call ${c.cand.full_name} at ${c.cand.phone ?? ""}` : (m.place ?? "")}\n${siteUrl()}/candidates/${c.cand.id}`) }],
+    attachments: [
+      { filename: `${m.kind}.ics`, content: ics(`${label}: ${c.cand.full_name}`, `${MODE_LABEL[m.mode]}. ${m.mode === "phone" ? `Call ${c.cand.full_name} at ${c.cand.phone ?? ""}` : (m.place ?? "")}\n${siteUrl()}/candidates/${c.cand.id}`) },
+      // Resume and one-page summary, to read before (or bring to) the meeting.
+      ...(await (await import("./ownerPacket")).packetAttachments(c.cand.id).catch(() => [])),
+    ],
   });
   await sendEmail({
     to: c.cand.email,

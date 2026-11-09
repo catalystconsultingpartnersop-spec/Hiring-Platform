@@ -124,6 +124,8 @@ async function activate(unlock: Unlock, owner: Owner, pmId: string, label: strin
         ip: unlock.ip,
       }),
     }),
+    // Their resume and a one-page summary, so the owner has them in their inbox.
+    attachments: await (await import("./ownerPacket")).packetAttachments(unlock.candidate_id).catch(() => []),
   });
 
   await emailAdmin(

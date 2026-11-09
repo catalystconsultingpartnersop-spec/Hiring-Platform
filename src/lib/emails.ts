@@ -38,6 +38,7 @@ export const owner = {
     html:
       hi(o.name) +
       p(`You're in. You can now see <strong>${esc(o.candidate)}</strong>'s name, resume and phone number.`) +
+      p(`Their resume and a one-page summary of who they are are attached.`) +
       p(`The easiest next step is a short first call: offer a few times on their page and ${esc(first(o.candidate))} picks one.`) +
       button(`${siteUrl()}/candidates/${o.candidateId}#next`, `Meet ${first(o.candidate)}`) +
       box(`<strong>Nothing has been charged.</strong> Your ${esc(o.card)} is on file and is only charged if you hire ${esc(first(o.candidate))}. Your signed agreement is below, and <a href="${siteUrl()}/account/agreements/${o.unlockId}" style="color:#17213a">here to print</a>.<br>Your hiring documents (offer letter, NDA and more) are now open in <a href="${siteUrl()}/hiring-help#documents" style="color:#17213a">Hiring help</a>.`) +
@@ -102,6 +103,7 @@ export const owner = {
       p(`<strong>${esc(o.candidate)}</strong> picked a time for your ${what(o.m)}.`) +
       big(esc(o.when)) +
       p(o.how) +
+      quiet("Their resume and a one-page summary are attached.") +
       (o.m.kind === "call"
         ? box("<strong>Good first questions:</strong> What kind of work gives you energy? What are you looking for next? What would you like to know about us?")
         : box(`Use the <a href="${siteUrl()}/hiring-help/templates/interview-scorecard" style="color:#17213a">interview scorecard</a> to keep it fair and easy to decide.`)) +
