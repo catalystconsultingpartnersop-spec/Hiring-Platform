@@ -112,10 +112,10 @@ export default async function Home() {
       </section>
 
       {feed.length > 0 && (
-        <section className={styles.feed}>
+        <section className={`${styles.feed} shelf-warm`}>
           <div className="wrap">
             <div className={styles.feedHead}>
-              <h2>Candidates we&rsquo;ve met and vouch for</h2>
+              <h2>Candidates we&rsquo;ve met and gotten to know</h2>
               <Link href="/candidates">See everyone ({all.length})</Link>
             </div>
             <div className={styles.grid}>{feed.map(card)}</div>
