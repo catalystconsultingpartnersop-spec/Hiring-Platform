@@ -99,11 +99,6 @@ export default async function Home() {
               <Link className="btn btn-gold" href="/candidates">
                 Start browsing
               </Link>
-              <span className={styles.heroFee}>
-                Free to browse and meet.
-                <br />
-                <b>$5,000</b> only if you hire.
-              </span>
             </div>
           </div>
           <div className={styles.stack} aria-hidden="true">
