@@ -117,6 +117,20 @@ export async function newRecordedMeeting(cohost?: string | null): Promise<{ link
   return { link: s.meetingUri, space: s.name, cohost: added };
 }
 
+// A plain Google Meet room (no recording) for a client and candidate, made from the
+// company account so the client never has to find a link themselves.
+export async function newMeetingRoom(): Promise<string | null> {
+  const token = await accessToken();
+  if (!token) return null;
+  const res = await fetch("https://meet.googleapis.com/v2/spaces", {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify({ config: { accessType: "OPEN", entryPointAccess: "ALL" } }),
+  });
+  if (!res.ok) return null;
+  return ((await res.json()) as { meetingUri: string }).meetingUri ?? null;
+}
+
 // What Google saved for a Meet room: recordings, transcripts and notes.
 export async function roomArtifacts(space: string) {
   const token = await accessToken();

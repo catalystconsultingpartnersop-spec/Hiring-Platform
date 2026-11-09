@@ -62,7 +62,7 @@ function OwnTime({ candidateId, first, kind }: { candidateId: string; first: str
         ))}
       </div>
       {mode !== "phone" && (
-        <input className="input" name="place" placeholder={mode === "video" ? "Video link (optional)" : "Address (optional)"} style={{ marginTop: 8 }} />
+        <input className="input" name="place" placeholder={mode === "video" ? "Your video link (optional: leave empty and we'll make one)" : "Address (optional)"} style={{ marginTop: 8 }} />
       )}
       {state.error && <p className="notice notice-bad small">{state.error}</p>}
       <button className="btn btn-gold btn-small" type="submit" disabled={pending} style={{ marginTop: 10 }}>

@@ -71,3 +71,5 @@
 .guestForm { display: grid; gap: 8px; }
 .guestRow { display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 8px; }
 @media (max-width: 560px) { .guestRow { grid-template-columns: 1fr; } }
+.meetReady { display: grid; gap: 6px; background: #eef7f0; border: 1px solid #cfe6d5; border-radius: 12px; padding: 12px 14px; margin: 0 0 12px; font-size: 15px; color: #1f4d2b; }
+.linkBtn { justify-self: start; background: none; border: 0; padding: 0; font: inherit; font-size: 14px; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; margin-top: 4px; }

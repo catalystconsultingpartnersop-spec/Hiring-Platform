@@ -39,8 +39,10 @@ export async function offerTimes(candidateId: string, kind: "call" | "meeting", 
   const tz = validTimeZone(String(form.get("tz") ?? ""));
   const mode = String(form.get("mode") ?? "phone") as Meeting["mode"];
   if (!["phone", "video", "in_person"].includes(mode)) return { error: "Pick how you'd like to meet." };
-  const place = String(form.get("place") ?? "").trim().slice(0, 500);
-  if (mode === "video" && !/^https?:\/\/\S+$/i.test(place)) return { error: "Paste your video link (Zoom, Google Meet or Teams)." };
+  let place = String(form.get("place") ?? "").trim().slice(0, 500);
+  // Video with no link of their own: we make a Google Meet link for them.
+  if (mode === "video" && !place) place = (await (await import("@/lib/googleCalls")).newMeetingRoom().catch(() => null)) ?? "";
+  if (mode === "video" && !/^https?:\/\/\S+$/i.test(place)) return { error: "We couldn't make a video link just now. Tap “Use my own link” and paste yours, or try again." };
   if (mode === "in_person" && place.length < 4) return { error: "Add the address where you'll meet." };
   const minutes = Math.min(120, Math.max(10, Number(form.get("minutes")) || 30));
   const note = String(form.get("note") ?? "").trim().slice(0, 500) || null;
@@ -164,7 +166,8 @@ export async function setOwnTime(candidateId: string, _prev: OfferState, form: F
   const kind = form.get("kind") === "call" ? "call" : "meeting";
   const mode = String(form.get("mode") ?? "in_person") as Meeting["mode"];
   if (!["phone", "video", "in_person"].includes(mode)) return { error: "Pick how you're meeting." };
-  const place = String(form.get("place") ?? "").trim().slice(0, 500);
+  let place = String(form.get("place") ?? "").trim().slice(0, 500);
+  if (mode === "video" && !place) place = (await (await import("@/lib/googleCalls")).newMeetingRoom().catch(() => null)) ?? "";
   const iso = toIso(`${form.get("day")}T${form.get("time")}`, tz);
   if (!iso) return { error: "Pick the day and time." };
   if (Date.parse(iso) < Date.now() - 60 * 60e3) return { error: "That time has passed. If you already met, tap “We already met” instead." };

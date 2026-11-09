@@ -109,7 +109,7 @@ export async function emailBooked(m: Meeting) {
     to: c.owner.email,
     ...toOwner.booked({ name: c.owner.full_name, candidate: c.cand.full_name, candidateId: c.cand.id, when: formatInZone(m.starts_at, m.time_zone || COMPANY_TZ), how: howLine(m, c, false), m }),
     attachments: [
-      { filename: `${m.kind}.ics`, content: ics(`${label}: ${c.cand.full_name}`, `${MODE_LABEL[m.mode]}. ${m.mode === "phone" ? `Call ${c.cand.full_name} at ${c.cand.phone ?? ""}` : (m.place ?? "")}\n${siteUrl()}/candidates/${c.cand.id}`) },
+      { filename: `${m.kind}.ics`, content: ics(`${label}: ${c.cand.full_name}`, `${MODE_LABEL[m.mode]}. ${m.mode === "phone" ? `Call ${c.cand.full_name} at ${c.cand.phone ?? ""}` : (m.place ?? "")}\n\nResume and one-page summary (for anyone you add to this invite):\n${(await import("./packetLink")).packetLink(c.cand.id)}`) },
       // Resume and one-page summary, to read before (or bring to) the meeting.
       ...(await (await import("./ownerPacket")).packetAttachments(c.cand.id).catch(() => [])),
     ],
@@ -315,7 +315,7 @@ export async function emailGuest(m: Meeting, guest: { name: string; email: strin
     ...toOwner.guestInvite({ guest: guest.name, host: c.owner.full_name ?? company(c), company: company(c), candidate: c.cand.full_name, when: formatInZone(m.starts_at, m.time_zone || COMPANY_TZ), how, m }),
     replyTo: c.owner.email,
     attachments: [
-      { filename: `${m.kind}.ics`, content: callIcs({ uid: `${m.id}-${guest.email}@candidate-collection`, start: m.starts_at, end, title: `${label}: ${c.cand.full_name}`, description: `${MODE_LABEL[m.mode]}. ${m.place ?? ""}`, location: m.place }) },
+      { filename: `${m.kind}.ics`, content: callIcs({ uid: `${m.id}-${guest.email}@candidate-collection`, start: m.starts_at, end, title: `${label}: ${c.cand.full_name}`, description: `${MODE_LABEL[m.mode]}. ${m.place ?? ""}\n\nResume and one-page summary:\n${(await import("./packetLink")).packetLink(c.cand.id)}`, location: m.place }) },
       ...(await packetAttachments(c.cand.id).catch(() => [])),
     ],
   });

@@ -79,6 +79,7 @@ export function OfferTimes({
 }) {
   const [state, action, pending] = useActionState<OfferState, FormData>(offerTimes.bind(null, candidateId, kind), {});
   const [mode, setMode] = useState<"phone" | "video" | "in_person">(kind === "call" ? "phone" : "in_person");
+  const [ownLink, setOwnLink] = useState(false);
   const inBrowser = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -121,12 +122,25 @@ export function OfferTimes({
         ))}
       </fieldset>
       {mode === "phone" && <p className="small muted" style={{ margin: "0 0 12px" }}>You call {first}{phone ? ` at ${phone}` : ""} at the time they pick.</p>}
-      {mode === "video" && (
-        <label className="field" style={{ marginTop: 0 }}>
-          <span>Your video link</span>
-          <input className="input" name="place" placeholder="https://meet.google.com/… or Zoom link" required />
-        </label>
-      )}
+      {mode === "video" &&
+        (ownLink ? (
+          <label className="field" style={{ marginTop: 0 }}>
+            <span>Your video link</span>
+            <input className="input" name="place" placeholder="https://meet.google.com/… or Zoom link" required />
+            <button type="button" className={styles.linkBtn} onClick={() => setOwnLink(false)}>
+              Never mind, make one for me
+            </button>
+          </label>
+        ) : (
+          <div className={styles.meetReady}>
+            <span>
+              ✓ <strong>We&rsquo;ll make a Google Meet link for you.</strong> {first} gets it with the invite. Just click it at the time.
+            </span>
+            <button type="button" className={styles.linkBtn} onClick={() => setOwnLink(true)}>
+              Use my own link instead
+            </button>
+          </div>
+        ))}
       {mode === "in_person" && (
         <label className="field" style={{ marginTop: 0 }}>
           <span>Where</span>
