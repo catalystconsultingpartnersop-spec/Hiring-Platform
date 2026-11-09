@@ -12,6 +12,7 @@ import { RepWork } from "./reps/RepWork";
 import repStyles from "./reps/reps.module.css";
 import styles from "./admin.module.css";
 import { Introductions } from "./Introductions";
+import { RepCallsWaiting } from "./RepCallsWaiting";
 
 // A rep's home: today's work and to-do first, then their candidates, then what they've earned.
 export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: string; name: string; self: boolean; nowIso: string }) {
@@ -79,6 +80,8 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
         </p>
       )}
 
+
+      <RepCallsWaiting staffId={staffId} />
 
       {work && <RepWork r={work} self={self} reps={staffList} canMove={!self} owed={money(owed)} />}
 

@@ -852,3 +852,14 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 .ci-fee strong { color: var(--ink); font-size: 16px; font-weight: 800; }
 .fee-strip { display: inline-block; margin: 0 0 18px; padding: 9px 14px; border-radius: 10px; background: #fff6d6; border: 1px solid #f0d77a; color: var(--ink); font-size: 15px; }
 .fee-strip strong { font-weight: 800; }
+
+/* Free 10-minute call with the rep who met the candidate */
+.rep-call { margin-top: 16px; background: #fff; border: 1px solid #ebe7dc; border-left: 4px solid var(--marigold); border-radius: 16px; padding: 18px 20px; }
+.rep-call p { margin: 0 0 10px; }
+.rep-call-k { font-size: 12.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #8a6a00; }
+.rep-call-h { font-size: 15.5px; line-height: 1.45; color: var(--ink); }
+.rep-call-btn { width: 100%; margin-top: 4px; }
+.rep-call-form { display: grid; gap: 10px; margin-top: 6px; }
+.rep-call-form .field { margin: 0; }
+.rep-call-done { border-left-color: #2f6b3a; }
+.rep-call-done .rep-call-k { color: #2f6b3a; }

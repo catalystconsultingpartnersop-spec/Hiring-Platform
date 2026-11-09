@@ -19,6 +19,8 @@ import { loadPath, PathState, pathState } from "@/lib/path";
 import { currentOwner, currentStaff } from "@/lib/session";
 import { nowMs } from "@/lib/time";
 import { NextSteps } from "./NextSteps";
+import { RepCall } from "@/components/RepCall";
+import { callsUsed, FREE_REP_CALLS, repFor } from "@/lib/repCalls";
 import { passOnCandidate, reconsiderCandidate } from "./actions";
 import styles from "./detail.module.css";
 
@@ -41,6 +43,17 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
   } catch {
     owner = null;
   }
+  // A free 10-minute call with the rep who met them (2 per owner).
+  const [rep, used] = await Promise.all([repFor(id).catch(() => null), owner ? callsUsed(owner.email).catch(() => 0) : Promise.resolve(0)]);
+  const repCall = rep ? (
+    <RepCall
+      candidateId={id}
+      rep={rep.id ? rep.first : "our team"}
+      left={owner ? Math.max(0, FREE_REP_CALLS - used) : null}
+      signedIn={!!owner}
+      defaults={{ name: owner?.full_name ?? "", company: owner?.company ?? "", phone: owner?.phone ?? "" }}
+    />
+  ) : null;
   let unlock: Unlock | null = null;
   if (owner) {
     const { data } = await db()
@@ -74,6 +87,7 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
     });
     return (
       <Unlocked
+        repCall={repCall}
         path={path}
         again={sp.again === "1"}
         step={typeof sp.step === "string" ? sp.step : ""}
@@ -101,7 +115,7 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
   }
   const [tiers, { rows }, page] = await Promise.all([getTiers(), allListed(), loadOwnerPage(id)]);
   const similar = similarTo(c, rows).map((s) => ({ c: s, fee: feeFor(s, tiers), reason: similarReason(c, s) }));
-  return <Teaser c={c} page={page} fee={feeFor(c, tiers)} similar={similar} />;
+  return <Teaser c={c} page={page} fee={feeFor(c, tiers)} similar={similar} repCall={repCall} />;
 }
 
 // The few facts an owner checks first, as tiles.
@@ -240,7 +254,9 @@ function Teaser({
   page,
   fee,
   similar,
+  repCall,
 }: {
+  repCall: React.ReactNode;
   c: PublicCandidate;
   page: OwnerPage | null;
   fee: number | null;
@@ -282,6 +298,7 @@ function Teaser({
               <Link href={`/contact?c=${c.id}`}>Questions about this candidate?</Link>
             </p>
           </div>
+          {repCall}
         </aside>
       </div>
       {similar.length > 0 && (
@@ -304,6 +321,7 @@ function Teaser({
 }
 
 function Unlocked({
+  repCall,
   c,
   unlock,
   hire,
@@ -317,6 +335,7 @@ function Unlocked({
   guests,
   busy,
 }: {
+  repCall: React.ReactNode;
   guests: { name: string; email: string }[];
   busy: import("@/lib/ownerSchedule").Busy[];
   path: PathState;
@@ -509,6 +528,7 @@ function Unlocked({
               {unlock.card_label ? ` ${unlock.card_label.charAt(0).toUpperCase()}${unlock.card_label.slice(1)}${/on file/i.test(unlock.card_label) ? "" : " on file"}.` : ""}
             </p>
           </div>
+          {!passed && !taken && (!status || status === "pending") && repCall}
         </aside>
       </div>
       {!passed && !taken && (!status || status === "pending") && (
