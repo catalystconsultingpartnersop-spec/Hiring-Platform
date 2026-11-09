@@ -38,7 +38,10 @@ export async function saveBio(staffId: string, _prev: { ok: boolean; error?: str
   const me = await requireStaff();
   if (me.id !== staffId && me.role !== "admin") return { ok: false, error: "You can only change your own bio." };
   const { setBio } = await import("@/lib/staffBios");
-  await setBio(staffId, { line: String(fd.get("line") ?? "").trim(), bio: String(fd.get("bio") ?? "").trim() });
+  const b = { line: String(fd.get("line") ?? "").trim(), bio: String(fd.get("bio") ?? "").trim() };
+  await setBio(staffId, b);
+  // Heshy's bio covers both his own candidates and the ones whose rep has left.
+  if (staffId === "heshy" && me.id) await setBio(me.id, b);
   revalidatePath("/admin/messages");
   revalidatePath(`/admin/team/${staffId}`);
   return { ok: true };

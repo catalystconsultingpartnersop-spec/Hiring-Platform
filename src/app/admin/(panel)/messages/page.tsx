@@ -14,6 +14,7 @@ export default async function Messages() {
   const all = me.role === "admin" || me.manager;
   const rows = await listThreads(all ? null : me.id);
   const myBio = me.id ? await bioFor(me.id) : null;
+  const heshyBio = me.role === "admin" ? await bioFor("heshy") : null;
   const now = nowMs();
   const ago = (iso: string) => {
     const h = Math.round((now - Date.parse(iso)) / 36e5);
@@ -25,7 +26,11 @@ export default async function Messages() {
         <h1>Messages from owners</h1>
         <p>Owners who unlocked {all ? "our" : "your"} candidates can ask {all ? "the rep" : "you"} about them. Answer here and they get an email.</p>
       </div>
-      {me.id && <BioForm staffId={me.id} line={myBio?.line ?? ""} bio={myBio?.bio ?? ""} self name={me.name} />}
+      {me.role === "admin" ? (
+        <BioForm staffId="heshy" line={heshyBio?.line ?? ""} bio={heshyBio?.bio ?? ""} self name="Heshy" />
+      ) : (
+        me.id && <BioForm staffId={me.id} line={myBio?.line ?? ""} bio={myBio?.bio ?? ""} self name={me.name} />
+      )}
       {rows.length === 0 ? (
         <p className="panel small muted">No messages yet. Once an owner unlocks one of your candidates, they can write to you from the candidate&rsquo;s page, it shows up here and in your email.</p>
       ) : (

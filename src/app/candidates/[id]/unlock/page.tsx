@@ -44,7 +44,7 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
 
   const candidateFee = fee != null ? money(fee) : "one flat fee";
   const rep = await repFor(id).catch(() => null);
-  const repBio = rep?.id ? await bioFor(rep.id).catch(() => null) : null;
+  const repBio = rep ? await bioFor(rep.id ?? "heshy").catch(() => null) : null;
   return (
     <div className={`wrap ${styles.page}`}>
       <Link href={`/candidates/${id}`} className="small muted">
@@ -56,9 +56,9 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
         <p className={styles.lede}>
           Sign a short agreement and add a card. <strong>Nothing is charged today.</strong> You&rsquo;ll see their name,
           resume and phone number right away
-          {rep?.id ? (
+          {rep ? (
             <>
-              , and you can talk to <strong>{rep.first}</strong>, who met them in person
+              , and you can talk to <strong>{rep.first}</strong>{rep.id ? ", who met them in person" : ", who leads our team"}
             </>
           ) : null}
           . We&rsquo;ll help you set up a first call.
@@ -143,11 +143,11 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
             </ul>
             <p className={styles.coached}>We sat down with them and learned how they work best.</p>
           </div>
-          {rep?.id && (
+          {rep && (
             <div className={styles.who} style={{ marginTop: 14 }}>
               <p className={styles.ref}>Included: talk to {rep.first}</p>
               <p style={{ margin: "4px 0 0", fontSize: 15 }}>
-                {rep.first} met them in person. Once you unlock, message {rep.first} for an honest read before you meet.
+                {rep.id ? `${rep.first} met them in person.` : `${rep.first} leads our team.`} Once you unlock, message {rep.first} for an honest read before you meet.
               </p>
               {repBio?.line && <p style={{ margin: "8px 0 0", fontWeight: 700, fontSize: 14 }}>{repBio.line}</p>}
               {repBio?.bio && <p style={{ margin: "4px 0 0", fontSize: 14, opacity: 0.85 }}>{repBio.bio}</p>}

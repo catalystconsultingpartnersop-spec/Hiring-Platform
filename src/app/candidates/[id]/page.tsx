@@ -48,8 +48,9 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
   // A free 10-minute call with the rep who met them (2 per owner).
   // The rep who met them, and their bio: a perk of unlocking.
   const rep = await repFor(id).catch(() => null);
-  const repBio = rep?.id ? await bioFor(rep.id).catch(() => null) : null;
-  const repInfo = rep ? { first: rep.id ? rep.first : "our team", bio: repBio } : null;
+  // No rep on the team any more? Heshy answers (his bio is kept under "heshy").
+  const repBio = rep ? await bioFor(rep.id ?? "heshy").catch(() => null) : null;
+  const repInfo = rep ? { first: rep.first, met: !!rep.id, bio: repBio } : null;
   let unlock: Unlock | null = null;
   if (owner) {
     const { data } = await db()
@@ -252,7 +253,7 @@ function Teaser({
   similar,
   rep,
 }: {
-  rep: { first: string; bio: Bio | null } | null;
+  rep: { first: string; met: boolean; bio: Bio | null } | null;
   c: PublicCandidate;
   page: OwnerPage | null;
   fee: number | null;
@@ -275,7 +276,7 @@ function Teaser({
               <li>Their name, resume and phone number, to reach out directly</li>
               {rep && (
                 <li>
-                  {rep.first === "our team" ? "Our team, who met them in person, for an honest read" : <>Access to <b>{rep.first}</b>, who met them in person, for an honest read</>}
+                  Access to <b>{rep.first}</b>{rep.met ? ", who met them in person," : ", who leads our team,"} for an honest read
                   {rep.bio?.line && <span className={styles.perkBio}>{rep.bio.line}</span>}
                 </li>
               )}
@@ -299,7 +300,7 @@ function Teaser({
             </div>
             <p className={styles.dealNote}>
               You&rsquo;ll sign a short agreement and keep a card on file. Nothing is charged unless you hire.
-              {rep ? ` Time with ${rep.first === "our team" ? "our team" : rep.first} is limited to questions about this candidate.` : ""}{" "}
+              {rep ? ` Time with ${rep.first} is limited to questions about this candidate.` : ""}{" "}
               <Link href={`/contact?c=${c.id}`}>Questions about this candidate?</Link>
             </p>
           </div>
@@ -549,7 +550,7 @@ function Unlocked({
 }
 
 // "Talk to Dovid": only once the owner has unlocked the candidate.
-async function talkBox(id: string, candidateFirst: string, owner: Owner, rep: { first: string; bio: Bio | null } | null) {
+async function talkBox(id: string, candidateFirst: string, owner: Owner, rep: { first: string; met: boolean; bio: Bio | null } | null) {
   if (!rep) return null;
   const { data } = await db().from("activity_log").select("details").eq("action", "msg_thread").eq("details->>email", owner.email.toLowerCase()).eq("details->>candidate_id", id).limit(1);
   const tid = (data?.[0]?.details as { thread?: string } | undefined)?.thread;
@@ -558,6 +559,7 @@ async function talkBox(id: string, candidateFirst: string, owner: Owner, rep: { 
     <TalkToRep
       candidateId={id}
       rep={rep.first}
+      met={rep.met}
       bio={rep.bio}
       candidate={candidateFirst}
       defaults={{ name: owner.full_name ?? "", company: owner.company ?? "", phone: owner.phone ?? "" }}

@@ -13,6 +13,7 @@ const KINDS = [
 export function TalkToRep({
   candidateId,
   rep,
+  met,
   bio,
   candidate,
   defaults,
@@ -20,7 +21,8 @@ export function TalkToRep({
   cutOff,
 }: {
   candidateId: string;
-  rep: string; // the rep's first name, or "our team"
+  rep: string; // the first name of whoever answers: the rep, or Heshy
+  met: boolean; // the rep met the candidate (false when Heshy answers for a rep who left)
   bio: { line: string; bio: string } | null;
   candidate: string; // the candidate's first name
   defaults: { name: string; company: string; phone: string };
@@ -29,8 +31,8 @@ export function TalkToRep({
 }) {
   const [kind, setKind] = useState<"" | "call" | "question">("");
   const [state, action, pending] = useActionState(sendToRep, null);
-  const who = rep === "our team" ? "our team" : rep;
-  const he = rep === "our team" ? "we" : rep;
+  const who = rep;
+  const he = rep;
 
   if (cutOff)
     return (
@@ -59,12 +61,13 @@ export function TalkToRep({
     return (
       <div className="rep-call">
         <div className="rep-call-top">
-          <span className="rep-call-av" aria-hidden="true">{who === "our team" ? "★" : who.charAt(0)}</span>
+          <span className="rep-call-av" aria-hidden="true">{who.charAt(0)}</span>
           <div>
             <p className="rep-call-k">Your conversation with {who}</p>
             <p className="rep-call-t">{thread.lastFromRep ? "New answer" : "Waiting for an answer"}</p>
           </div>
         </div>
+        <RepBio who={who} bio={bio} />
         <p className="small">{thread.lastFromRep ? `${he.charAt(0).toUpperCase() + he.slice(1)} answered you.` : "Sent. We'll email you when there's an answer."}</p>
         <a className="btn btn-ghost rep-call-btn" href={thread.link}>
           Open the conversation
@@ -75,21 +78,16 @@ export function TalkToRep({
   return (
     <div className="rep-call">
       <div className="rep-call-top">
-        <span className="rep-call-av" aria-hidden="true">{who === "our team" ? "★" : who.charAt(0)}</span>
+        <span className="rep-call-av" aria-hidden="true">{who.charAt(0)}</span>
         <div>
           <p className="rep-call-k">Talk to {who}</p>
           <p className="rep-call-t">Included with your unlock</p>
         </div>
       </div>
       <p className="rep-call-h">
-        {who === "our team" ? "We" : who} met {candidate} in person. Ask {who === "our team" ? "us" : who} for an honest read before you meet.
+        {met ? `${who} met ${candidate} in person.` : `${who} leads our team.`} Ask {who} for an honest read before you meet.
       </p>
-      {bio && (
-        <div className="rep-bio">
-          {bio.line && <strong>{bio.line}</strong>}
-          {bio.bio && <p>{bio.bio}</p>}
-        </div>
-      )}
+      <RepBio who={who} bio={bio} />
       <div className="rep-call-kinds" role="radiogroup" aria-label="What would you like?">
         {KINDS.map(([v, l]) => (
           <button key={v} type="button" role="radio" aria-checked={kind === v} className={`rep-call-kind ${kind === v ? "on" : ""}`} onClick={() => setKind(v)}>
@@ -134,10 +132,24 @@ export function TalkToRep({
             </p>
           )}
           <button className="btn btn-gold" type="submit" disabled={pending} style={{ width: "100%" }}>
-            {pending ? "Sending…" : `Send to ${who === "our team" ? "us" : who}`}
+            {pending ? "Sending…" : `Send to ${who}`}
           </button>
         </form>
       )}
     </div>
+  );
+}
+
+// Who the owner is talking to: the bio's one line, and the rest a tap away.
+function RepBio({ who, bio }: { who: string; bio: { line: string; bio: string } | null }) {
+  if (!bio) return null;
+  return (
+    <details className="rep-bio">
+      <summary>
+        {bio.line ? <strong>{bio.line}</strong> : <strong>Who is {who}?</strong>}
+        <span className="rep-bio-more">About {who}</span>
+      </summary>
+      {bio.bio && <p>{bio.bio}</p>}
+    </details>
   );
 }
