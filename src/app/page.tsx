@@ -95,13 +95,15 @@ export default async function Home() {
               Scroll through our collection of vetted candidates. Look around, take your time, and see the talent
               that&rsquo;s available to you.
             </p>
-            <p className="fee-strip">
-              <strong>$5,000 flat fee</strong>, only if you hire. Never a percentage of salary.
-            </p>
             <div className={styles.cta}>
               <Link className="btn btn-gold" href="/candidates">
                 Start browsing
               </Link>
+              <span className={styles.heroFee}>
+                Free to browse and meet.
+                <br />
+                <b>$5,000</b> only if you hire.
+              </span>
             </div>
           </div>
           <div className={styles.stack} aria-hidden="true">
