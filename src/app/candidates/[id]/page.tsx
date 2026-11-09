@@ -20,7 +20,7 @@ import { currentOwner, currentStaff } from "@/lib/session";
 import { nowMs } from "@/lib/time";
 import { NextSteps } from "./NextSteps";
 import { RepCall } from "@/components/RepCall";
-import { callsUsed, FREE_REP_CALLS, repFor } from "@/lib/repCalls";
+import { repFor } from "@/lib/repCalls";
 import { passOnCandidate, reconsiderCandidate } from "./actions";
 import styles from "./detail.module.css";
 
@@ -44,12 +44,11 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
     owner = null;
   }
   // A free 10-minute call with the rep who met them (2 per owner).
-  const [rep, used] = await Promise.all([repFor(id).catch(() => null), owner ? callsUsed(owner.email).catch(() => 0) : Promise.resolve(0)]);
+  const rep = await repFor(id).catch(() => null);
   const repCall = rep ? (
     <RepCall
       candidateId={id}
       rep={rep.id ? rep.first : "our team"}
-      left={owner ? Math.max(0, FREE_REP_CALLS - used) : null}
       signedIn={!!owner}
       defaults={{ name: owner?.full_name ?? "", company: owner?.company ?? "", phone: owner?.phone ?? "" }}
     />

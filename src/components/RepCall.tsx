@@ -8,13 +8,11 @@ import { WHEN_OPTIONS } from "@/lib/repCallOptions";
 export function RepCall({
   candidateId,
   rep,
-  left,
   signedIn,
   defaults,
 }: {
   candidateId: string;
   rep: string; // first name, or "our team"
-  left: number | null; // free calls left, when we know who's asking
   signedIn: boolean;
   defaults: { name: string; company: string; phone: string };
 }) {
@@ -29,17 +27,6 @@ export function RepCall({
         <p>
           <strong>{state.rep}</strong> will call you {state.when.toLowerCase()} for a free 10-minute call about this candidate. We
           emailed you a confirmation.
-        </p>
-        {state.left > 0 && <p className="small muted">You have {state.left} more free call{state.left === 1 ? "" : "s"}, for any candidate.</p>}
-      </div>
-    );
-
-  if (left === 0)
-    return (
-      <div className="rep-call">
-        <p className="rep-call-k">Talk to {who}</p>
-        <p className="small">
-          You&rsquo;ve used your 2 free calls. Questions about this candidate? <a href={`/contact?c=${candidateId}`}>Send us a note</a>.
         </p>
       </div>
     );
@@ -99,9 +86,6 @@ export function RepCall({
           <button className="btn btn-gold" type="submit" disabled={pending} style={{ width: "100%" }}>
             {pending ? "Sending…" : `Have ${who === "our team" ? "us" : who} call me`}
           </button>
-          <p className="small muted" style={{ margin: 0 }}>
-            Free. Every business gets 2 free calls with our team{left != null ? `, and you have ${left} left` : ""}.
-          </p>
         </form>
       )}
     </div>

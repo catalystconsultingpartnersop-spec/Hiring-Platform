@@ -74,13 +74,14 @@ export async function askForRepCall(input: {
   const when = WHEN_OPTIONS.find(([v]) => v === input.when)?.[1] ?? WHEN_OPTIONS[0][1];
   const note = input.note.trim().slice(0, 600) || null;
 
+  // Nobody is turned away. After an owner's first two calls, the next ones go to
+  // Heshy instead of the rep, so reps aren't overloaded.
   const used = await callsUsed(email);
-  if (used >= FREE_REP_CALLS)
-    return { ok: false, error: `You've used your ${FREE_REP_CALLS} free calls. Send us a note on the Contact us page and we'll get back to you.` };
+  const overLimit = used >= FREE_REP_CALLS;
 
   const { data: cand } = await db().from("candidates").select("id, headline, role_category, status").eq("id", input.candidateId).maybeSingle();
   if (!cand) return { ok: false, error: "We couldn't find that candidate. Refresh and try again." };
-  const rep = await repFor(cand.id);
+  const rep = overLimit ? { id: null, name: "Heshy", first: "Heshy", email: null } : await repFor(cand.id);
   const company = input.company.trim().slice(0, 80) || null;
   const details = {
     key: keyFor(email),
@@ -93,6 +94,7 @@ export async function askForRepCall(input: {
     when,
     note,
     headline: cand.headline,
+    over_limit: overLimit,
   };
   await logActivity("owner", "rep_call_request", details);
 
@@ -115,26 +117,27 @@ export async function askForRepCall(input: {
   );
   const subject = `Call ${name}${company ? ` (${company})` : ""}: free ${REP_CALL_MINUTES}-min call about ${cand.role_category ?? "your candidate"}`;
   if (rep.email) await sendEmail({ to: rep.email, subject, html: repHtml, audience: "team", replyTo: email });
-  await emailAdmin(rep.email ? `[Copy] ${subject} · for ${rep.name}` : subject, repHtml, { replyTo: email });
+  await emailAdmin(
+    rep.email ? `[Copy] ${subject} · for ${rep.name}` : overLimit ? `${subject} · call #${used + 1} for this owner, so it came to you` : subject,
+    repHtml,
+    { replyTo: email },
+  );
 
-  const left = FREE_REP_CALLS - used - 1;
+  const caller = rep.id ? rep.first : "Someone from our team";
   await sendEmail({
     to: email,
-    subject: `${rep.first} will call you about the ${cand.role_category ?? "candidate"}`,
+    subject: `${rep.id ? rep.first : "We"} will call you about the ${cand.role_category ?? "candidate"}`,
     audience: "owner",
     html: layout(
       k.hi(name) +
-        k.p(`Thanks for reaching out. ${k.esc(rep.first)} met this candidate in person and will call you at ${k.esc(phone)} (${k.esc(when.toLowerCase())}) for a free ${REP_CALL_MINUTES}-minute call.`) +
-        k.box(`About: <a href="${siteUrl()}/candidates/${cand.id}">${about}</a>`) +
-        k.quiet(
-          left > 0
-            ? `You have ${left} more free call${left === 1 ? "" : "s"} with our team, for any candidate.`
-            : `That was your last free call. You can always reach us through the Contact us page.`,
-        ),
+        k.p(
+          `Thanks for reaching out. ${rep.id ? `${k.esc(rep.first)} met this candidate in person and` : "Someone from our team"} will call you at ${k.esc(phone)} (${k.esc(when.toLowerCase())}) for a free ${REP_CALL_MINUTES}-minute call.`,
+        ) +
+        k.box(`About: <a href="${siteUrl()}/candidates/${cand.id}">${about}</a>`),
       "owner",
     ),
   });
-  return { ok: true, rep: rep.first, left, when };
+  return { ok: true, rep: caller, left: Math.max(0, FREE_REP_CALLS - used - 1), when };
 }
 
 // Open requests: for one rep, or (null) all of them, for the admin.
