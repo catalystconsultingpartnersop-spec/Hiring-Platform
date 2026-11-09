@@ -19,7 +19,7 @@ export function OwnerReply({ token, rep }: { token: string; rep: string }) {
       <textarea className="textarea" name="text" rows={3} required placeholder={`Write to ${rep}…`} />
       {state && !state.ok && (
         <p className="notice notice-bad" role="alert">
-          {state.error === "cutoff" ? "This conversation has wrapped up." : state.error}
+          {state.error === "cutoff" ? "You've reached the limit of free conversation." : state.error}
         </p>
       )}
       <button className="btn btn-gold" type="submit" disabled={pending}>

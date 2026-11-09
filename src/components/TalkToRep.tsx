@@ -35,7 +35,7 @@ export function TalkToRep({
       <div className="rep-call">
         <p className="rep-call-k">Talk to {who}</p>
         <p className="small">
-          You&rsquo;ve used the free conversation time we can offer. When you&rsquo;re ready, see who this candidate is and talk to them directly. <Link href="/hiring-help">Hiring help</Link> covers how it works.
+          You&rsquo;ve reached the limit of free conversation with our team. When you&rsquo;re ready, see who this candidate is and talk to them directly. <Link href="/hiring-help">Hiring help</Link> covers how it works.
         </p>
       </div>
     );
@@ -120,7 +120,7 @@ export function TalkToRep({
           </label>
           {state && !state.ok && (
             <p className="notice notice-bad" role="alert">
-              {state.error === "cutoff" ? "You've used the free conversation time we can offer." : state.error}
+              {state.error === "cutoff" ? "You've reached the limit of free conversation." : state.error}
             </p>
           )}
           <button className="btn btn-gold" type="submit" disabled={pending} style={{ width: "100%" }}>

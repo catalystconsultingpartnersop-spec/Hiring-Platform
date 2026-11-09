@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getThread, reopen, repReplies, wrapUp } from "@/lib/ownerMessages";
+import { getThread, reopen, repReplies, setLimit } from "@/lib/ownerMessages";
 import { requireStaff } from "@/lib/session";
 
 async function allowed(threadId: string) {
@@ -20,10 +20,10 @@ export async function answerOwner(threadId: string, _prev: { ok: boolean; error?
   return r;
 }
 
-export async function wrapUpConversation(threadId: string) {
+export async function limitOwner(threadId: string) {
   const a = await allowed(threadId);
   if (!a) return;
-  await wrapUp(threadId, { id: a.me.id, name: a.me.name });
+  await setLimit(threadId, { id: a.me.id, name: a.me.name });
   revalidatePath(`/admin/messages/${threadId}`);
 }
 

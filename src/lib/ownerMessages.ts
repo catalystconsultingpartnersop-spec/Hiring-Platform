@@ -10,7 +10,7 @@ import { cleanPhone } from "./staffPhones";
 // conversation and message is a line in the activity log (no new tables):
 //   msg_thread  {thread, email, name, company, phone, candidate_id, staff_id, headline, role}
 //   msg         {thread, from: "owner" | "rep", by, text, kind}
-//   msg_cutoff  {thread, email, by}: the rep wrapped it up; the owner can't send more
+//   msg_cutoff  {thread, email, by}: an owner taking advantage was told they've reached the limit
 //   msg_reopen  {email, by}: Heshy reopened them
 
 export type MsgKind = "call" | "question" | "other";
@@ -31,9 +31,9 @@ export type Msg = { id: string; at: string; from: "owner" | "rep"; by: string; t
 export const ownerLink = (threadId: string) => `${siteUrl()}/talk/${signedToken(`thr_${threadId}`, 180)}`;
 export const repLink = (threadId: string) => `${teamUrl()}/admin/messages/${threadId}`;
 
-export function wrapUpText(name: string) {
+export function limitText(name: string) {
   const first = name.split(" ")[0] || "there";
-  return `Thanks for your questions, ${first}. We've reached the end of the free conversation time we can offer here. We're here to give you the information you need to decide on a candidate, but we're limited in how much consulting and coaching we can do. When you're ready, you can see who this candidate is and talk to them directly. And if anything about how this works is unclear, Hiring help has the answers.`;
+  return `Thanks for all your questions, ${first}. You've reached the limit of the free conversation we can offer. We're here to give business owners the information they need to decide on a candidate, but we're limited in how much ongoing consulting and coaching we can do. When you're ready, you can see who this candidate is and talk to them directly. And Hiring help covers how everything works.`;
 }
 
 // Who answers: the rep who met the candidate, if they're still on the team.
@@ -205,11 +205,12 @@ export async function repReplies(threadId: string, by: { id: string | null; name
   return { ok: true };
 }
 
-// The rep wraps up: a polite closing note to the owner, and no more free messages.
-export async function wrapUp(threadId: string, by: { id: string | null; name: string }) {
+// Only for an owner taking advantage: a polite note that they've reached the limit.
+// The conversation and its history stay; they just can't send more messages.
+export async function setLimit(threadId: string, by: { id: string | null; name: string }) {
   const th = await getThread(threadId);
   if (!th || th.cutOff) return;
-  const text = wrapUpText(th.t.name);
+  const text = limitText(th.t.name);
   await logActivity(by.id ?? "admin", "msg", { thread: threadId, from: "rep", by: by.name.split(" ")[0], text });
   await logActivity(by.id ?? "admin", "msg_cutoff", { thread: threadId, email: th.t.email, by: by.name });
   const k = kit;
@@ -225,7 +226,7 @@ export async function wrapUp(threadId: string, by: { id: string | null; name: st
       "owner",
     ),
   });
-  await emailAdmin(`${by.name} wrapped up the conversation with ${th.t.name}`, layout(k.p(`About ${about(th.t)}. <a href="${repLink(threadId)}">See the conversation</a>.`)));
+  await emailAdmin(`${by.name} told ${th.t.name} they've reached the limit`, layout(k.p(`About ${about(th.t)}. <a href="${repLink(threadId)}">See the conversation</a>.`)));
 }
 
 export async function reopen(email: string, by: string) {
@@ -255,7 +256,7 @@ async function notifyRep(t: Thread, text: string, kind: MsgKind, isNew: boolean)
         ["Email", k.esc(t.email)],
       ]) +
       k.button(repLink(t.id), "Open the conversation") +
-      k.quiet("Answer in the conversation and the owner gets an email. Don't share the candidate's name or contact details yet. If it's going on too long, use “Wrap up” to end it politely."),
+      k.quiet("Answer in the conversation and the owner gets an email. Don't share the candidate's name or contact details yet. If an owner starts taking advantage, “Set a limit” sends them a polite note and stops further messages."),
     "team",
   );
   const whoPlain = `${t.name}${t.company ? ` (${t.company})` : ""}`;

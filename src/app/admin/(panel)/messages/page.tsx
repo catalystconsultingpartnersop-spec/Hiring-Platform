@@ -33,7 +33,7 @@ export default async function Messages() {
                   {t.name}
                   {t.company ? ` · ${t.company}` : ""}
                   {t.waiting && <span className="msg-dot">Waiting for you</span>}
-                  {t.cutOff && <span className="msg-closed">Wrapped up</span>}
+                  {t.cutOff && <span className="msg-closed">Limit reached</span>}
                 </span>
                 <span className="small muted">
                   About {t.headline ?? t.role ?? "a candidate"} ({refCode(t.candidate_id)}) · {t.count} message{t.count === 1 ? "" : "s"} · {ago(t.last?.at ?? t.at)}

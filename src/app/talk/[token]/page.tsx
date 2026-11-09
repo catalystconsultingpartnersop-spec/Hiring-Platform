@@ -36,7 +36,7 @@ export default async function TalkPage({ params }: PageProps<"/talk/[token]">) {
       {th.cutOff ? (
         <div className="rep-call" style={{ marginTop: 18 }}>
           <p className="small" style={{ margin: 0 }}>
-            This conversation has wrapped up. When you&rsquo;re ready,{" "}
+            You&rsquo;ve reached the limit of free conversation. When you&rsquo;re ready,{" "}
             <Link href={`/candidates/${th.t.candidate_id}/unlock`}>see who this candidate is</Link> and talk to them directly.
           </p>
         </div>
