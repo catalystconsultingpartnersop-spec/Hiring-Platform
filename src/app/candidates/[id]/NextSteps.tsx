@@ -312,7 +312,7 @@ const ADVICE: Partial<Record<PathState["stage"], string>> = {
   meeting_retime: "Offer a wider spread this time: one morning, one afternoon, one evening.",
   meeting_booked: "Ask about real situations from their past, then score them on the scorecard right after.",
   meeting_feedback: "Tell us how it went while it's fresh. A quick yes or no is kinder to everyone.",
-  decide: "If you're 80% sure, make the offer. Good people don't stay available long.",
+  decide: "Look over your notes and the scorecard. Not sure yet? Meet again or ask for references. There's no rush.",
   refs_waiting: "You can decide now, or wait a day or two for the references.",
 };
 
