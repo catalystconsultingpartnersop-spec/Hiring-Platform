@@ -10,8 +10,7 @@ import { currentOwner } from "./session";
 
 const DEFAULT_TIERS: FeeTier[] = [
   { id: "t1", max_salary: 100000, fee_cents: 500000, sort: 1 },
-  { id: "t2", max_salary: 200000, fee_cents: 1000000, sort: 2 },
-  { id: "t3", max_salary: null, fee_cents: null, sort: 3 },
+  { id: "t2", max_salary: null, fee_cents: 500000, sort: 2 },
 ];
 
 // Kept for 30 seconds so a rush of visitors doesn't hit the database on every

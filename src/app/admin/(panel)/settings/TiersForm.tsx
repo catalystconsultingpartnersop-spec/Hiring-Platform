@@ -63,8 +63,8 @@ export function TiersForm({ tiers, removeTier }: { tiers: FeeTier[]; removeTier:
           </table>
         </div>
         <p className="small muted" style={{ marginTop: 10 }}>
-          Leave a fee empty to set it by hand for candidates in that range. Keep tiers in order from lowest salary to
-          highest.
+          A fee left empty uses the $5,000 default, so every candidate always has a fee. Keep tiers in order from lowest
+          salary to highest.
         </p>
         <button className="btn" type="submit" disabled={pending} style={{ marginTop: 16 }}>
           {pending ? "Saving…" : "Save fees"}

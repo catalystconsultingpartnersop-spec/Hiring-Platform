@@ -34,18 +34,17 @@ export const WORK_MODE_LABEL: Record<string, string> = {
   flexible: "Flexible",
 };
 
+// Every candidate has a fee: $5,000 unless someone changes it.
+export const DEFAULT_FEE_CENTS = 500000;
+
 // The flat fee for a candidate: their own override if set, otherwise the tier
-// that matches their expected salary. Null means "set by hand" and not set yet.
-export function feeFor(c: Pick<PublicCandidate, "fee_override_cents" | "salary_min" | "salary_max">, tiers: FeeTier[]) {
+// that matches their expected salary, otherwise the $5,000 default. Never empty.
+export function feeFor(c: Pick<PublicCandidate, "fee_override_cents" | "salary_min" | "salary_max">, tiers: FeeTier[]): number {
   if (c.fee_override_cents != null) return c.fee_override_cents;
   const salary = c.salary_max ?? c.salary_min;
-  if (salary == null) {
-    const first = [...tiers].sort((a, b) => a.sort - b.sort)[0];
-    return first?.fee_cents ?? null;
-  }
   const sorted = [...tiers].sort((a, b) => a.sort - b.sort);
-  const tier = sorted.find((t) => t.max_salary == null || salary <= t.max_salary);
-  return tier?.fee_cents ?? null;
+  const tier = salary == null ? sorted[0] : sorted.find((t) => t.max_salary == null || salary <= t.max_salary);
+  return tier?.fee_cents ?? DEFAULT_FEE_CENTS;
 }
 
 export function dateShort(iso: string | null | undefined) {
