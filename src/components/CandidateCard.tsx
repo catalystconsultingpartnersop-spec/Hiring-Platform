@@ -4,7 +4,6 @@ import type { PublicCandidate } from "@/lib/db";
 import { describe, profileOf, TRAITS } from "@/lib/strengths";
 import { isAnyIndustry, LEVEL_LABEL, WORK_MODE_LABEL, money, salaryRange } from "@/lib/format";
 
-import { ShortlistButton } from "./Shortlist";
 import type { QuickData } from "./QuickLook";
 
 export function Strengths({ items, strong = false }: { items: string[]; strong?: boolean }) {
@@ -169,7 +168,6 @@ export function CandidateCard({
           {example ? "Example" : interviewing ? "● Interviewing now" : avail ? `● ${avail}` : ""}
         </span>
         <span className="ci-actions">
-          {href && <ShortlistButton id={c.id} />}
           {href && <span className="ci-go" aria-hidden="true">View →</span>}
         </span>
       </div>

@@ -13,16 +13,14 @@ import {
   rolesOf,
 } from "@/lib/catalog";
 import { CompareTray } from "@/components/Compare";
-import { BudgetSlider } from "./BudgetSlider";
 import { feeFor, LEVEL_LABEL, WORK_MODE_LABEL } from "@/lib/format";
 import { TRAIT_LIST, TRAITS } from "@/lib/strengths";
 import styles from "./catalog.module.css";
-import { FiltersToggle } from "./FiltersToggle";
-import { ParamSelect } from "./SortSelect";
+import { Pill } from "./Pill";
 
 export const dynamic = "force-dynamic";
 
-const KEYS = ["q", "role", "level", "mode", "region", "strength", "pay", "maxpay", "industry", "saved", "sort"] as const;
+const KEYS = ["q", "role", "level", "mode", "region", "strength", "pay", "maxpay", "industry", "avail", "saved", "sort"] as const;
 
 function href(f: CatalogFilters, change: Partial<CatalogFilters>) {
   const next = { ...f, ...change };
@@ -63,110 +61,133 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
   if (f.mode) active.push(["mode", WORK_MODE_LABEL[f.mode] ?? f.mode]);
   if (f.region) active.push(["region", f.region]);
   if (f.industry) active.push(["industry", f.industry]);
+  if (f.avail) active.push(["avail", "Available now"]);
   if (f.q) active.push(["q", `“${f.q}”`]);
 
+  const roleLabel = f.role ?? "Role";
+  const payLabel = Number(f.maxpay) > 0 ? `Up to $${Math.round(Number(f.maxpay) / 1000)}k` : "Pay";
+  const sortLabel = SORTS.find(([v]) => v === (f.sort ?? ""))?.[1] ?? "Newest";
+  const moreOn = [f.strength, f.level, f.mode, f.industry].filter(Boolean).length;
+
   return (
-    <>
-      <div className={styles.searchBand}>
-        <div className="wrap">
+    <div className="card-shelf shelf-warm">
+      <div className="wrap">
+        {owner && !shortlistView && !Object.keys(f).length && <OwnerMatchNote ownerId={owner.id} />}
+        <div className={styles.head}>
+          <h1>{shortlistView ? "Your shortlist" : "Candidates we\u2019ve met and vouch for"}</h1>
+          <p>
+            {shortlistView
+              ? `${rows.length} saved ${rows.length === 1 ? "candidate" : "candidates"}.`
+              : "Every person here sat down one-on-one with our team. Browse freely."}
+          </p>
+        </div>
+
+        <div className={styles.pills}>
+          <Pill label={roleLabel} on={!!f.role}>
+            <MenuLink href={href(f, { role: undefined, saved: undefined })} on={!f.role}>
+              All roles <span>{all.length}</span>
+            </MenuLink>
+            {allRoles.map((r) => (
+              <MenuLink key={r} href={href(f, { role: r, saved: undefined })} on={f.role === r}>
+                {r} <span>{roleCounts.get(r) ?? 0}</span>
+              </MenuLink>
+            ))}
+          </Pill>
+          <Pill label={f.region ?? "Location"} on={!!f.region}>
+            <MenuLink href={href(f, { region: undefined })} on={!f.region}>
+              Anywhere
+            </MenuLink>
+            {regions.map(([v, n]) => (
+              <MenuLink key={v} href={href(f, { region: v })} on={f.region === v}>
+                {v} <span>{n}</span>
+              </MenuLink>
+            ))}
+          </Pill>
+          <Pill label={payLabel} on={Number(f.maxpay) > 0}>
+            <MenuLink href={href(f, { maxpay: undefined })} on={!(Number(f.maxpay) > 0)}>
+              Any salary
+            </MenuLink>
+            {BUDGETS.map((b) => (
+              <MenuLink key={b} href={href(f, { maxpay: String(b) })} on={Number(f.maxpay) === b}>
+                Up to ${b / 1000}k
+              </MenuLink>
+            ))}
+          </Pill>
+          <Link
+            href={href(f, { avail: f.avail ? undefined : "now" })}
+            className={`pill ${f.avail ? "pill-on" : ""}`}
+            aria-pressed={!!f.avail}
+          >
+            {f.avail ? "✓ " : ""}Available now
+          </Link>
+          <Pill label={moreOn ? `More filters (${moreOn})` : "More filters"} on={moreOn > 0} wide>
+            <MenuGroup title="Best at">
+              {TRAIT_LIST.map((t) => (
+                <MenuLink key={t.key} on={f.strength === t.key} href={href(f, { strength: f.strength === t.key ? undefined : t.key })}>
+                  {t.label} <span>{facetCounts(all, f, "strength").get(t.key) ?? 0}</span>
+                </MenuLink>
+              ))}
+            </MenuGroup>
+            <MenuGroup title="Experience">
+              {Object.entries(LEVEL_LABEL).map(([v, label]) => (
+                <MenuLink key={v} on={f.level === v} href={href(f, { level: f.level === v ? undefined : v })}>
+                  {label} <span>{facetCounts(all, f, "level").get(v) ?? 0}</span>
+                </MenuLink>
+              ))}
+            </MenuGroup>
+            <MenuGroup title="Work setting">
+              {Object.entries(WORK_MODE_LABEL).map(([v, label]) => (
+                <MenuLink key={v} on={f.mode === v} href={href(f, { mode: f.mode === v ? undefined : v })}>
+                  {label} <span>{facetCounts(all, f, "mode").get(v) ?? 0}</span>
+                </MenuLink>
+              ))}
+            </MenuGroup>
+            {allIndustries.length > 0 && (
+              <MenuGroup title="Industry">
+                {allIndustries.map((v) => (
+                  <MenuLink key={v} on={f.industry === v} href={href(f, { industry: f.industry === v ? undefined : v })}>
+                    {v} <span>{industryCounts.get(v) ?? 0}</span>
+                  </MenuLink>
+                ))}
+              </MenuGroup>
+            )}
+          </Pill>
           <form className={styles.search} method="get" action="/candidates" role="search">
             {f.role && <input type="hidden" name="role" value={f.role} />}
             <label className="sr-only" htmlFor="q">
               Search candidates
             </label>
-            <input
-              id="q"
-              className={styles.searchInput}
-              type="search"
-              name="q"
-              defaultValue={f.q ?? ""}
-              placeholder="Search by role, strength or industry, e.g. “numbers” or “closer”"
-            />
-            <button className="btn btn-gold" type="submit">
-              Search
-            </button>
+            <input id="q" type="search" name="q" defaultValue={f.q ?? ""} placeholder="Search, e.g. “numbers”" />
           </form>
-          <nav className={styles.departments} aria-label="Departments">
-            <Link href={href(f, { role: undefined, saved: undefined })} aria-current={!f.role && !shortlistView ? "page" : undefined}>
-              All candidates
-            </Link>
-            {allRoles.map((r) => (
-              <Link key={r} href={href(f, { role: r, saved: undefined })} aria-current={f.role === r ? "page" : undefined}>
-                {r} <span>{roleCounts.get(r) ?? 0}</span>
-              </Link>
-            ))}
-          </nav>
+          <p className={styles.fee}>
+            One flat fee: <strong>$5,000</strong>, only if you hire
+          </p>
         </div>
-      </div>
 
-      <div className="card-shelf">
-      <div className={`wrap ${styles.layout}`}>
-        <FiltersToggle active={active.length} count={rows.length} sort={<SortBy value={f.sort ?? ""} />}>
-          <aside className={styles.rail} aria-label="Filters">
-            <Facet title="Best at">
-              {TRAIT_LIST.map((t) => (
-                <FacetLink
-                  key={t.key}
-                  on={f.strength === t.key}
-                  n={facetCounts(all, f, "strength").get(t.key) ?? 0}
-                  href={href(f, { strength: f.strength === t.key ? undefined : t.key })}
-                >
-                  <span title={t.short}>{t.label}</span>
-                </FacetLink>
+        <div className={styles.countRow}>
+          <span>
+            {rows.length} {rows.length === 1 ? "candidate" : "candidates"}
+          </span>
+          {active.length > 0 && (
+            <span className={styles.chips}>
+              {active.map(([k, label]) => (
+                <Link key={k} href={href(f, { [k]: undefined })} className={styles.chip} aria-label={`Remove filter ${label}`}>
+                  {label} <span aria-hidden="true">×</span>
+                </Link>
               ))}
-            </Facet>
-            <Facet title="Experience">
-              {Object.entries(LEVEL_LABEL).map(([v, label]) => (
-                <FacetLink
-                  key={v}
-                  on={f.level === v}
-                  n={facetCounts(all, f, "level").get(v) ?? 0}
-                  href={href(f, { level: f.level === v ? undefined : v })}
-                >
-                  {label}
-                </FacetLink>
-              ))}
-            </Facet>
-            {allIndustries.length > 0 && (
-              <Facet title="Industry">
-                {allIndustries.map((v) => (
-                  <FacetLink
-                    key={v}
-                    on={f.industry === v}
-                    n={industryCounts.get(v) ?? 0}
-                    href={href(f, { industry: f.industry === v ? undefined : v })}
-                  >
-                    {v}
-                  </FacetLink>
-                ))}
-              </Facet>
-            )}
-            <Facet title="Your budget">
-              <li style={{ listStyle: "none" }}>
-                <BudgetSlider value={Number(f.maxpay) > 0 ? Number(f.maxpay) : null} />
-              </li>
-            </Facet>
-            <Facet title="Work setting">
-              {Object.entries(WORK_MODE_LABEL).map(([v, label]) => (
-                <FacetLink
-                  key={v}
-                  on={f.mode === v}
-                  n={facetCounts(all, f, "mode").get(v) ?? 0}
-                  href={href(f, { mode: f.mode === v ? undefined : v })}
-                >
-                  {label}
-                </FacetLink>
-              ))}
-            </Facet>
-            <Facet title="Location">
-              {regions.map(([v, n]) => (
-                <FacetLink key={v} on={f.region === v} n={n} href={href(f, { region: f.region === v ? undefined : v })}>
-                  {v}
-                </FacetLink>
-              ))}
-            </Facet>
-          </aside>
-        </FiltersToggle>
+              <Link href={href({}, { sort: f.sort })} className="small">
+                Clear all
+              </Link>
+            </span>
+          )}
+          <Pill label={`Sort: ${sortLabel}`}>
+            {SORTS.map(([v, l]) => (
+              <MenuLink key={v} href={href(f, { sort: v || undefined })} on={(f.sort ?? "") === v}>
+                {l}
+              </MenuLink>
+            ))}
+          </Pill>
+        </div>
 
         <section aria-live="polite">
           {goneFromShortlist > 0 && (
@@ -183,37 +204,8 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
               is hired.
             </p>
           )}
-          {owner && !shortlistView && !Object.keys(f).length && <OwnerMatchNote ownerId={owner.id} />}
-          <div className={styles.resultsHead}>
-            <h1>
-              {shortlistView ? "Your shortlist" : f.role ?? "Candidates we\u2019ve met and vouch for"}
-              <span>
-                {rows.length} {rows.length === 1 ? "candidate" : "candidates"}
-              </span>
-            </h1>
-            <div className={`${styles.tools} ${styles.wideOnly}`}>
-              <SortBy value={f.sort ?? ""} />
-            </div>
-          </div>
-          {!shortlistView && (
-            <p className="small muted" style={{ margin: "-6px 0 14px" }}>
-              Every person here sat down one-on-one with our team. One flat fee, <strong>$5,000</strong>, only if you hire.
-            </p>
-          )}
-          {active.length > 0 && (
-            <div className={styles.chips}>
-              {active.map(([k, label]) => (
-                <Link key={k} href={href(f, { [k]: undefined })} className={styles.chip} aria-label={`Remove filter ${label}`}>
-                  {label} <span aria-hidden="true">×</span>
-                </Link>
-              ))}
-              <Link href={href({}, { role: f.role, sort: f.sort })} className="small">
-                Clear all
-              </Link>
-            </div>
-          )}
           {rows.length > 0 ? (
-            <div className="cards">
+            <div className="cards cards-intro">
               {rows.map((c) => (
                 <CandidateCard key={c.id} c={c} fee={feeOf(c)} href={`/candidates/${c.id}`} store interviewing={busy.has(c.id)} />
               ))}
@@ -222,7 +214,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
             <div className="panel panel-wash">
               <p>
                 {shortlistView
-                  ? "Your shortlist is empty. Tap the heart on any candidate to save them here while you browse."
+                  ? "Your shortlist is empty. Tap the heart on any candidate's page to save them here while you browse."
                   : all.length === 0
                     ? "New candidates are being coached and will be listed here soon. Check back shortly."
                     : f.q
@@ -236,55 +228,32 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
           )}
         </section>
       </div>
-      </div>
       <CompareTray />
-    </>
-  );
-}
-
-function SortBy({ value }: { value: string }) {
-  return (
-    <ParamSelect
-      param="sort"
-      label="Sort by"
-      value={value}
-      options={[
-        ["", "Newest"],
-        ["pay", "Salary: low to high"],
-        ["pay-desc", "Salary: high to low"],
-        ["experience", "Most experienced"],
-        ["fee", "Fee: low to high"],
-      ]}
-    />
-  );
-}
-
-function Facet({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
-  return (
-    <div className={styles.facet}>
-      <h2>{title}</h2>
-      {note && <p className={styles.facetNote}>{note}</p>}
-      <ul>{children}</ul>
     </div>
   );
 }
 
-function FacetLink({ on, n, href, children }: { on: boolean; n: number; href: string; children: React.ReactNode }) {
-  if (!on && n === 0) {
-    return (
-      <li className={styles.facetEmpty}>
-        <span className={styles.box} aria-hidden="true" />
-        <span className={styles.facetLabel}>{children}</span>
-      </li>
-    );
-  }
+const BUDGETS = [60000, 80000, 100000, 130000, 175000];
+const SORTS: [string, string][] = [
+  ["", "Newest"],
+  ["pay", "Salary: low to high"],
+  ["pay-desc", "Salary: high to low"],
+  ["experience", "Most experienced"],
+];
+
+function MenuLink({ href, on, children }: { href: string; on: boolean; children: React.ReactNode }) {
   return (
-    <li>
-      <Link href={href} aria-current={on ? "true" : undefined} className={on ? styles.facetOn : undefined}>
-        <span className={styles.box} aria-hidden="true" />
-        <span className={styles.facetLabel}>{children}</span>
-        <span className={styles.count}>{n}</span>
-      </Link>
-    </li>
+    <Link href={href} className={on ? "pill-item pill-item-on" : "pill-item"} aria-current={on ? "true" : undefined}>
+      {children}
+    </Link>
+  );
+}
+
+function MenuGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="pill-group">
+      <p>{title}</p>
+      {children}
+    </div>
   );
 }

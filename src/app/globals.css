@@ -832,7 +832,25 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 .card-intro .compare-toggle { margin-top: -2px; }
 .card.card-intro h3.ci-line { display: block; -webkit-line-clamp: unset; overflow: visible; font-size: 16px; font-weight: 400; }
 /* Intro cards need room for the facts line: wider minimum so the catalog shows 2 across beside the filters. */
-.cards:has(> .card-intro) { grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 18px; }
+.cards:has(> .card-intro) { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 22px; }
 .ci-facts { row-gap: 2px; }
 .ci-avail { white-space: nowrap; }
 .ci-foot { gap: 10px; }
+
+/* Option A: warm page, soft white cards, pill filters */
+.shelf-warm { background: #f4f3ee; }
+.card.card-intro { border: 1px solid #ebe7dc; box-shadow: 0 1px 2px rgba(23, 33, 58, 0.05); border-radius: 18px; }
+.card.card-intro:has(.card-link:hover) { border-color: #cfc8b6; box-shadow: 0 4px 14px rgba(23, 33, 58, 0.08); }
+.pill-wrap { position: relative; }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 17px; border-radius: 999px; border: 1.5px solid #ddd8ca; background: var(--paper); color: var(--ink); font: 700 15.5px/1 var(--text); cursor: pointer; text-decoration: none; white-space: nowrap; }
+.pill:hover { border-color: var(--ink); }
+.pill-on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.pill-caret { font-size: 13px; position: relative; top: -3px; }
+.pill-menu { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; min-width: 220px; max-width: calc(100vw - 32px); max-height: 60vh; overflow-y: auto; background: var(--paper); border: 1px solid #e3dfd3; border-radius: 14px; box-shadow: 0 12px 30px rgba(23, 33, 58, 0.14); padding: 6px; }
+.pill-menu-wide { display: grid; grid-template-columns: repeat(2, minmax(190px, 1fr)); gap: 4px 10px; min-width: 420px; padding: 10px; }
+@media (max-width: 700px) { .pill-menu-wide { grid-template-columns: 1fr; min-width: 260px; } }
+.pill-item { display: flex; justify-content: space-between; gap: 14px; padding: 9px 12px; border-radius: 9px; color: var(--ink); text-decoration: none; font-size: 15px; }
+.pill-item span { color: #8a8f9c; font-size: 13.5px; }
+.pill-item:hover { background: #f4f3ee; }
+.pill-item-on { font-weight: 700; background: #f4f3ee; }
+.pill-group p { margin: 4px 12px 4px; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #8a8f9c; }

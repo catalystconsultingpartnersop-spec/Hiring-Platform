@@ -177,3 +177,24 @@
 }
 @keyframes sheetUp { from { transform: translateY(40px); opacity: 0.4; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .sheetOpen { animation: none; } }
+
+/* ---------- Option A: introduction layout ---------- */
+.head { padding-top: 34px; }
+.head h1 { font-family: var(--display); font-weight: 800; font-size: clamp(28px, 3.6vw, 40px); letter-spacing: -0.02em; line-height: 1.05; margin: 0; }
+.head p { margin: 8px 0 0; color: #4b5568; font-size: 17px; }
+.pills { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 20px 0 6px; }
+.search input { height: 42px; border-radius: 999px; border: 1.5px solid #ddd8ca; background: var(--paper); padding: 0 16px; font: 400 15px/1 var(--text); color: var(--ink); width: 210px; }
+.search input:focus { outline: none; border-color: var(--ink); }
+.fee { margin: 0 0 0 auto; font-size: 14.5px; color: #4b5568; }
+.fee strong { color: var(--ink); }
+.countRow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 6px 0 16px; font-size: 14px; color: #4b5568; }
+.countRow > :last-child { margin-left: auto; }
+.countRow .chips { margin: 0; }
+@media (max-width: 700px) {
+  .pills { gap: 8px; }
+  .pills :global(.pill) { height: 36px; padding: 0 13px; font-size: 14.5px; }
+  .search { flex-basis: 100%; }
+  .search input { width: 100%; height: 40px; }
+  .head p { font-size: 15.5px; }
+  .fee { display: none; }
+}

@@ -107,12 +107,13 @@ export type CatalogFilters = {
   strength?: string;
   industry?: string;
   pay?: string;
+  avail?: string; // "now": only people who can start right away
   maxpay?: string; // the most the owner can pay, from the salary slider
   saved?: string;
   sort?: string;
 };
 
-const FILTER_KEYS = ["role", "level", "mode", "region", "strength", "pay", "industry"] as const;
+const FILTER_KEYS = ["role", "level", "mode", "region", "strength", "pay", "industry", "avail"] as const;
 type FilterKey = (typeof FILTER_KEYS)[number];
 
 // Every kind of role and industry a candidate fits, main one first.
@@ -137,6 +138,8 @@ function valueOf(c: PublicCandidate, key: FilterKey): string[] {
       return strengthsOf(c);
     case "industry":
       return industriesOf(c);
+    case "avail":
+      return c.available ? [c.available] : [];
     case "pay": {
       const b = payBand(c);
       return b ? [b] : [];
