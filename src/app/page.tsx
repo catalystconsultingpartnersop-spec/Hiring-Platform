@@ -115,7 +115,7 @@ export default async function Home() {
         <section className={`${styles.feed} shelf-warm`}>
           <div className="wrap">
             <div className={styles.feedHead}>
-              <h2>Candidates we&rsquo;ve met and gotten to know</h2>
+              <h2>Meet the candidates</h2>
               <Link href="/candidates">See everyone ({all.length})</Link>
             </div>
             <div className={styles.grid}>{feed.map(card)}</div>

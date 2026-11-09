@@ -186,7 +186,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
           {owner && !shortlistView && !Object.keys(f).length && <OwnerMatchNote ownerId={owner.id} />}
           <div className={styles.resultsHead}>
             <h1>
-              {shortlistView ? "Your shortlist" : f.role ?? "Candidates we\u2019ve met and gotten to know"}
+              {shortlistView ? "Your shortlist" : f.role ?? "Meet the candidates"}
               <span>
                 {rows.length} {rows.length === 1 ? "candidate" : "candidates"}
               </span>
