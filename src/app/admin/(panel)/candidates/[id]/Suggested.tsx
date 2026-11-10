@@ -1,5 +1,6 @@
 import { listPointed } from "@/lib/pointed";
 import { COMPANY_TZ } from "@/lib/time";
+import { FollowUpText } from "./FollowUpText";
 
 const when = (iso: string) =>
   new Date(iso).toLocaleString("en-US", { timeZone: COMPANY_TZ, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -56,9 +57,7 @@ export async function Suggested({ candidateId, link, repFirst, first, myEmail }:
                     <a className="btn btn-ghost btn-small" href={`https://wa.me/${intl}?text=${encodeURIComponent(follow)}`} target="_blank" rel="noreferrer">
                       Follow up on WhatsApp
                     </a>
-                    <a className="btn btn-ghost btn-small" href={`sms:+${intl}?&body=${encodeURIComponent(follow)}`}>
-                      Follow up by text
-                    </a>
+                    <FollowUpText intl={intl} body={follow} />
                   </>
                 )}
               </div>

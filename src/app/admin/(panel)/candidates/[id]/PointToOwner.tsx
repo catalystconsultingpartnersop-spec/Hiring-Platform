@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import QRCode from "qrcode";
 import { pointCandidate } from "@/app/admin/actions";
 
 type Channel = "whatsapp" | "text" | "email";
@@ -14,6 +15,8 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
   const [edited, setEdited] = useState<string | null>(null);
   const [state, setState] = useState<{ ok?: boolean; error?: string; already?: string } | null>(null);
   const [pending, start] = useTransition();
+  const [onPhone, setOnPhone] = useState(false);
+  const [copied, setCopied] = useState(false);
   // A tag on this one send's link, so we can tell the rep when it's opened.
   const [token, setToken] = useState(() => Math.random().toString(36).slice(2, 10));
   const sentLink = `${link}${link.includes("?") ? "&" : "?"}s=${token}`;
@@ -36,7 +39,11 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
       const r = await pointCandidate(candidateId, { name, contact, channel: ch, message, force, token });
       setState(r);
       const href = hrefFor(ch);
-      if (r.ok && href) window.location.href = href;
+      // On a phone, open Messages / WhatsApp right away. On a computer there's
+      // usually no texting app, so the next screen gives a code to scan instead.
+      const phone = window.matchMedia("(pointer: coarse)").matches;
+      setOnPhone(phone);
+      if (r.ok && href && phone) window.location.href = href;
     });
   };
 
@@ -78,31 +85,58 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
       </section>
     );
 
-  if (state?.ok)
+  if (state?.ok) {
+    const copy = () => navigator.clipboard?.writeText(message).then(() => setCopied(true), () => null);
+    const again = () => {
+      setState(null);
+      setName("");
+      setContact("");
+      setEdited(null);
+      setCopied(false);
+      setToken(Math.random().toString(36).slice(2, 10));
+    };
     return (
       <section className="panel" style={{ marginTop: 18 }}>
-        <strong>Passed along ✓</strong>{" "}
-        <span className="small muted">
-          {channel === "email"
-            ? `Emailed to ${contact} from the site, in your name. Their reply goes to your email inbox.`
-            : `Your ${channel === "whatsapp" ? "WhatsApp" : "Messages app"} opened with it ready. Tap send there, and the conversation stays in your ${channel === "whatsapp" ? "WhatsApp" : "phone"}.`}{" "}
-          We&rsquo;ll email you when they open the profile. Everyone you suggested is listed below, with a follow-up button.
-        </span>{" "}
-        <button
-          type="button"
-          className="btn btn-ghost btn-small"
-          onClick={() => {
-            setState(null);
-            setName("");
-            setContact("");
-            setEdited(null);
-            setToken(Math.random().toString(36).slice(2, 10));
-          }}
-        >
-          Pass it to someone else
-        </button>
+        {channel === "email" ? (
+          <p style={{ margin: 0 }}>
+            <strong>Sent ✓</strong> <span className="muted">Emailed to {contact} in your name. Their reply goes to your email inbox.</span>
+          </p>
+        ) : (
+          <>
+            <p style={{ margin: "0 0 10px" }}>
+              <strong>Almost done: send it from your {channel === "whatsapp" ? "WhatsApp" : "phone"}.</strong>{" "}
+              <span className="muted">
+                {onPhone
+                  ? `Your ${channel === "whatsapp" ? "WhatsApp" : "Messages app"} should have opened with it ready. Tap send there.`
+                  : channel === "text"
+                    ? "Texts go from your phone. Point your phone's camera at this code and Messages opens with it ready. Tap send."
+                    : "Open WhatsApp with it ready, then tap send."}
+              </span>
+            </p>
+            <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+              {channel === "text" && !onPhone && <SmsCode to={intl} body={message} />}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {(onPhone || channel === "whatsapp") && (
+                  <a className="btn btn-gold btn-small" href={hrefFor(channel)} target={channel === "whatsapp" ? "_blank" : undefined} rel="noreferrer">
+                    {onPhone ? "Didn't open? Open it again" : "Open WhatsApp"}
+                  </a>
+                )}
+                <button type="button" className="btn btn-ghost btn-small" onClick={copy}>
+                  {copied ? "Copied ✓" : "Copy the message"}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+        <p className="small muted" style={{ margin: "10px 0 0" }}>
+          We&rsquo;ll email you when they open the profile. Everyone you suggested is listed below, with a follow-up button.{" "}
+          <button type="button" className="btn btn-ghost btn-small" onClick={again}>
+            Pass it to someone else
+          </button>
+        </p>
       </section>
     );
+  }
 
   return (
     <section className="panel" style={{ marginTop: 18, borderColor: "var(--marigold)" }}>
@@ -159,4 +193,15 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
       </div>
     </section>
   );
+}
+
+// A code to scan with a phone camera: opens Messages with the number and text filled in.
+export function SmsCode({ to, body }: { to: string; body: string }) {
+  const [src, setSrc] = useState("");
+  useEffect(() => {
+    QRCode.toDataURL(`SMSTO:+${to}:${body}`, { margin: 1, width: 400 }).then(setSrc, () => setSrc(""));
+  }, [to, body]);
+  if (!src) return null;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt="Scan with your phone to text it" width={200} height={200} style={{ borderRadius: 8, border: "1px solid var(--line)" }} />;
 }
