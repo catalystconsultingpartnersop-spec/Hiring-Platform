@@ -67,7 +67,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
           {c.status === "listed" && (
             <>
               {" "}
-              · <Link href={`/candidates/${c.id}`}>View public profile</Link>
+              · <a href={`${siteUrl()}/candidates/${c.id}`} target="_blank" rel="noreferrer">View public profile</a>
             </>
           )}
         </p>

@@ -49,7 +49,7 @@ export function feeFor(c: Pick<PublicCandidate, "fee_override_cents" | "salary_m
 
 export function dateShort(iso: string | null | undefined) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York" });
 }
 
 export function lines(text: string | null | undefined) {
