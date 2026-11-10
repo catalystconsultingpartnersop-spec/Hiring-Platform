@@ -38,12 +38,9 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
     start(async () => {
       const r = await pointCandidate(candidateId, { name, contact, channel: ch, message, force, token });
       setState(r);
-      const href = hrefFor(ch);
-      // On a phone, open Messages / WhatsApp right away. On a computer there's
-      // usually no texting app, so the next screen gives a code to scan instead.
-      const phone = window.matchMedia("(pointer: coarse)").matches;
-      setOnPhone(phone);
-      if (r.ok && href && phone) window.location.href = href;
+      // Phones only open Messages / WhatsApp from a tap, so the next screen has a
+      // button for it. A computer usually has no texting app: it gets a code to scan.
+      setOnPhone(window.matchMedia("(pointer: coarse)").matches);
     });
   };
 
@@ -107,7 +104,7 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
               <strong>Almost done: send it from your {channel === "whatsapp" ? "WhatsApp" : "phone"}.</strong>{" "}
               <span className="muted">
                 {onPhone
-                  ? `Your ${channel === "whatsapp" ? "WhatsApp" : "Messages app"} should have opened with it ready. Tap send there.`
+                  ? `Tap the button: your ${channel === "whatsapp" ? "WhatsApp" : "Messages app"} opens with it ready. Then tap send there.`
                   : channel === "text"
                     ? "Texts go from your phone. Point your phone's camera at this code and Messages opens with it ready. Tap send."
                     : "Open WhatsApp with it ready, then tap send."}
@@ -117,8 +114,8 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
               {channel === "text" && !onPhone && <SmsCode to={intl} body={message} />}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {(onPhone || channel === "whatsapp") && (
-                  <a className="btn btn-gold btn-small" href={hrefFor(channel)} target={channel === "whatsapp" ? "_blank" : undefined} rel="noreferrer">
-                    {onPhone ? "Didn't open? Open it again" : "Open WhatsApp"}
+                  <a className={`btn btn-gold ${onPhone ? "" : "btn-small"}`} href={hrefFor(channel)} target={channel === "whatsapp" ? "_blank" : undefined} rel="noreferrer">
+                    {onPhone ? (channel === "whatsapp" ? "Open WhatsApp with it ready" : "Open Messages with it ready") : "Open WhatsApp"}
                   </a>
                 )}
                 <button type="button" className="btn btn-ghost btn-small" onClick={copy}>
