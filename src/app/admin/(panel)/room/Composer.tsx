@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import type { Kind, RoomCand } from "@/lib/teamRoom";
 import { postToRoom, replyToPost, type RoomState } from "./actions";
 import { Picker } from "./Picker";
+import { MentionText } from "./MentionText";
 import s from "./room.module.css";
 
 const TABS: [Kind, string, string][] = [
@@ -12,7 +13,7 @@ const TABS: [Kind, string, string][] = [
   ["talk", "💬 Just talk", "A question, a tip, a win…"],
 ];
 
-export function Composer({ cands, meId, spot }: { cands: RoomCand[]; meId: string | null; spot: string | null }) {
+export function Composer({ cands, meId, spot, names }: { cands: RoomCand[]; meId: string | null; spot: string | null; names: string[] }) {
   const [kind, setKind] = useState<Kind>(spot ? "spotlight" : "spotlight");
   const [text, setText] = useState("");
   const [picked, setPicked] = useState<string[]>(spot ? [spot] : []);
@@ -37,7 +38,7 @@ export function Composer({ cands, meId, spot }: { cands: RoomCand[]; meId: strin
           </button>
         ))}
       </div>
-      <textarea className="textarea" name="text" rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder={tab[2]} />
+      <MentionText name="text" rows={3} value={text} onChange={setText} placeholder={tab[2]} names={names} />
       <div className={s.composeRow}>
         <Picker cands={cands} meId={meId} context={kind === "looking" ? text : ""} value={picked} onChange={setPicked} />
         <button className="btn btn-gold" type="submit" disabled={pending}>
@@ -46,13 +47,13 @@ export function Composer({ cands, meId, spot }: { cands: RoomCand[]; meId: strin
       </div>
       {state.error && <p className="notice notice-bad small">{state.error}</p>}
       <p className="small muted" style={{ margin: "6px 0 0" }}>
-        Tip: type @ and a name (like @Mechel) to let them know.
+        Tip: type @ to pick someone, or @all to let the whole team know.
       </p>
     </form>
   );
 }
 
-export function ReplyBox({ postId, cands, meId, context }: { postId: number; cands: RoomCand[]; meId: string | null; context: string }) {
+export function ReplyBox({ postId, cands, meId, context, names }: { postId: number; cands: RoomCand[]; meId: string | null; context: string; names: string[] }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
@@ -74,7 +75,7 @@ export function ReplyBox({ postId, cands, meId, context }: { postId: number; can
   return (
     <form action={action} className={s.replyForm}>
       <input type="hidden" name="cands" value={picked.join(",")} />
-      <textarea className="textarea" name="text" rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder="Write a reply…" autoFocus />
+      <MentionText name="text" rows={2} value={text} onChange={setText} placeholder="Write a reply… (type @ to tag someone)" names={names} autoFocus />
       <div className={s.composeRow}>
         <Picker cands={cands} meId={meId} context={context} value={picked} onChange={setPicked} />
         <span style={{ display: "flex", gap: 8 }}>

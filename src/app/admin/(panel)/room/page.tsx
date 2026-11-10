@@ -63,6 +63,7 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
   const me = await requireStaff();
   const sp = await searchParams;
   const [posts, cands, spec, team, calls, notes, emailPrefs] = await Promise.all([loadRoom(), roomCandidates(), specialties(), teamMembers(), teamCalls(), allNotes(), roomEmailPrefs()]);
+  const names = [...new Set(team.filter((t) => t.email !== me.email).map((t) => t.name.split(" ")[0]))];
   // Opening the room clears the unread count on the menu.
   after(() => markRoomSeen(me.email).catch(() => null));
   const byId = new Map(cands.map((c) => [c.id, c]));
@@ -251,7 +252,7 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
           </div>
         ))}
         <div className={s.acts}>
-          <ReplyBox postId={p.id} cands={cands} meId={me.id} context={p.kind === "looking" ? p.text : ""} />
+          <ReplyBox postId={p.id} cands={cands} meId={me.id} context={p.kind === "looking" ? p.text : ""} names={names} />
           {(mine || me.manager) && (
             <form action={removePost.bind(null, p.id)}>
               <button type="submit" className={s.act}>
@@ -272,7 +273,7 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
           <p>Spotlight great candidates, ask who has someone, and celebrate the wins. Only our team sees this.</p>
         </div>
         {next ? <div className={s.mobileOnly}>{callCard}</div> : null}
-        <Composer cands={cands} meId={me.id} spot={spot} />
+        <Composer cands={cands} meId={me.id} spot={spot} names={names} />
         {feed.length === 0 ? <p className="panel panel-wash">Nothing here yet. Be the first: spotlight someone great you met.</p> : feed.map(post)}
       </div>
       <aside className={s.side}>

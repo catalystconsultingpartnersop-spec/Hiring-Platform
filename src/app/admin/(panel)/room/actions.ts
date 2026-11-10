@@ -27,12 +27,14 @@ async function candIds(form: FormData, text: string) {
 // @Name tags: a short email to whoever was tagged.
 async function notifyTagged(text: string, me: { email: string; name: string }, link: string): Promise<string[]> {
   const team = await teamMembers();
-  const tagged = team.filter((t) => t.email !== me.email && new RegExp(`@${t.name.split(" ")[0]}\\b`, "i").test(text));
+  // @all (or @everyone) tags the whole team, whatever their email setting.
+  const all = /(^|\s)@(all|everyone)\b/i.test(text);
+  const tagged = team.filter((t) => t.email !== me.email && (all || new RegExp(`@${t.name.split(" ")[0]}\\b`, "i").test(text)));
   for (const t of tagged)
     await sendEmail({
       to: t.email,
-      subject: `${me.name.split(" ")[0]} mentioned you in the Team Room`,
-      html: `<p><strong>${escapeHtml(me.name)}</strong> mentioned you:</p><blockquote style="border-left:3px solid #f2b300;margin:0;padding:6px 12px">${escapeHtml(text.slice(0, 600))}</blockquote><p><a href="${link}">Open the Team Room</a></p>`,
+      subject: `${me.name.split(" ")[0]} ${all ? "tagged the whole team" : "mentioned you"} in the Team Room`,
+      html: `<p><strong>${escapeHtml(me.name)}</strong> ${all ? "tagged everyone" : "mentioned you"}:</p><blockquote style="border-left:3px solid #f2b300;margin:0;padding:6px 12px">${escapeHtml(text.slice(0, 600))}</blockquote><p><a href="${link}">Open the Team Room</a></p>`,
     }).catch(() => null);
   return tagged.map((t) => t.email.toLowerCase());
 }
