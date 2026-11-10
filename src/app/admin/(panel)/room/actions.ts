@@ -25,8 +25,8 @@ async function candIds(form: FormData, text: string) {
 }
 
 // @Name tags: a short email to whoever was tagged.
-async function notifyTagged(text: string, me: { email: string; name: string }, link: string): Promise<string[]> {
-  const team = await teamMembers();
+async function notifyTagged(text: string, me: { email: string; name: string }, link: string, already: string[] = []): Promise<string[]> {
+  const team = (await teamMembers()).filter((t) => !already.includes(t.email.toLowerCase()));
   // @all (or @everyone) tags the whole team, whatever their email setting.
   const all = /(^|\s)@(all|everyone)\b/i.test(text);
   const tagged = team.filter((t) => t.email !== me.email && (all || new RegExp(`@${t.name.split(" ")[0]}\\b`, "i").test(text)));
@@ -148,4 +148,38 @@ export async function saveAgenda(callId: number, _prev: RoomState, form: FormDat
   await logActivity(staffActor(me), "team_call_agenda", { call_id: callId, agenda: cleanAgenda(String(form.get("agenda") ?? "")), by_name: me.name });
   revalidatePath("/admin/room");
   return { ok: true };
+}
+
+// Who a piece of text tags (lower-case emails), to tell only newly tagged people after an edit.
+async function taggedIn(text: string, myEmail: string) {
+  const all = /(^|\s)@(all|everyone)\b/i.test(text);
+  return (await teamMembers())
+    .filter((t) => t.email !== myEmail && (all || new RegExp(`@${t.name.split(" ")[0]}\\b`, "i").test(text)))
+    .map((t) => t.email.toLowerCase());
+}
+
+// Fix your own post or reply. Anyone newly @tagged by the edit gets told; nobody else is emailed again.
+export async function editRoomText(id: number, _prev: RoomState, form: FormData): Promise<RoomState> {
+  const me = await requireStaff();
+  const text = String(form.get("text") ?? "").trim().slice(0, 2000);
+  if (!text) return { error: "Write a line or two first." };
+  if (!(await allow(`room-edit:${me.email}`, 30, 60))) return { error: SLOW_DOWN };
+  const { data: row } = await db().from("activity_log").select("id, action, actor, details").eq("id", id).in("action", ["team_post", "team_reply"]).maybeSingle();
+  if (!row || String(row.actor) !== staffActor(me)) return { error: "You can only edit your own messages." };
+  const { data: prev } = await db().from("activity_log").select("details").eq("action", "team_edit").eq("details->>id", String(id)).order("at", { ascending: false }).limit(1);
+  const before = String((prev?.[0]?.details as { text?: string } | undefined)?.text ?? (row.details as { text?: string }).text ?? "");
+  await logActivity(staffActor(me), "team_edit", { id, text });
+  const postId = row.action === "team_post" ? id : Number((row.details as { post_id?: number }).post_id);
+  await notifyTagged(text, me, `${teamUrl()}/admin/room#p${postId}`, await taggedIn(before, me.email));
+  revalidatePath("/admin/room");
+  return { ok: true };
+}
+
+export async function removeReply(replyId: number) {
+  const me = await requireStaff();
+  const { data: r } = await db().from("activity_log").select("actor").eq("id", replyId).eq("action", "team_reply").maybeSingle();
+  if (!r) return;
+  if (!me.manager && String(r.actor) !== staffActor(me)) return;
+  await logActivity(staffActor(me), "team_reply_removed", { reply_id: replyId });
+  revalidatePath("/admin/room");
 }

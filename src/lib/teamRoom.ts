@@ -10,7 +10,7 @@ import { isCheckAccount } from "./session";
 
 export type Kind = "spotlight" | "looking" | "talk";
 export type RoomCand = { id: string; first: string; headline: string; sub: string; gold: boolean; repId: string | null; repFirst: string; role: string; place: string; status: string };
-export type RoomReply = { id: number; at: string; byName: string; byEmail: string; text: string; cands: string[] };
+export type RoomReply = { id: number; at: string; byName: string; byEmail: string; text: string; cands: string[]; edited?: boolean };
 export type RoomPost = {
   id: number;
   at: string;
@@ -20,6 +20,7 @@ export type RoomPost = {
   text: string;
   cands: string[];
   replies: RoomReply[];
+  edited?: boolean;
 };
 export type Specialty = "candidates" | "owners" | "both";
 export const SPECIALTY_LABEL: Record<Specialty, string> = { candidates: "Candidates", owners: "Business owners", both: "Both" };
@@ -57,13 +58,18 @@ export async function loadRoom(): Promise<RoomPost[]> {
   const { data } = await db()
     .from("activity_log")
     .select("id, at, actor, action, details")
-    .in("action", ["team_post", "team_reply", "team_post_removed", "gold_on"])
+    .in("action", ["team_post", "team_reply", "team_post_removed", "team_reply_removed", "team_edit", "gold_on"])
     .gte("at", since)
     .order("at", { ascending: false })
     .limit(600);
   type Row = { id: number; at: string; actor: string; action: string; details: Record<string, unknown> };
   const rows = (data ?? []) as Row[];
   const removed = new Set(rows.filter((r) => r.action === "team_post_removed").map((r) => Number(r.details.post_id)));
+  const removedReplies = new Set(rows.filter((r) => r.action === "team_reply_removed").map((r) => Number(r.details.reply_id)));
+  // Edits: rows come newest first, so the first one seen for an id is the latest.
+  const edits = new Map<number, string>();
+  for (const r of rows) if (r.action === "team_edit" && !edits.has(Number(r.details.id))) edits.set(Number(r.details.id), String(r.details.text ?? ""));
+  const textOf = (r: Row) => edits.get(r.id) ?? String(r.details.text ?? "");
   const email = (a: string) => a.replace(/^staff:/, "");
   const posts: RoomPost[] = rows
     .filter((r) => r.action === "team_post" && !removed.has(r.id))
@@ -73,15 +79,16 @@ export async function loadRoom(): Promise<RoomPost[]> {
       kind: (r.details.kind as Kind) ?? "talk",
       byName: String(r.details.by_name ?? email(r.actor)),
       byEmail: email(r.actor),
-      text: String(r.details.text ?? ""),
+      text: textOf(r),
+      edited: edits.has(r.id),
       cands: (r.details.cands as string[]) ?? [],
       replies: [],
     }));
   const byId = new Map(posts.map((p) => [p.id, p]));
   for (const r of [...rows].reverse()) {
-    if (r.action !== "team_reply") continue;
+    if (r.action !== "team_reply" || removedReplies.has(r.id)) continue;
     const p = byId.get(Number(r.details.post_id));
-    if (p) p.replies.push({ id: r.id, at: r.at, byName: String(r.details.by_name ?? email(r.actor)), byEmail: email(r.actor), text: String(r.details.text ?? ""), cands: (r.details.cands as string[]) ?? [] });
+    if (p) p.replies.push({ id: r.id, at: r.at, byName: String(r.details.by_name ?? email(r.actor)), byEmail: email(r.actor), text: textOf(r), edited: edits.has(r.id), cands: (r.details.cands as string[]) ?? [] });
   }
   // New gold candidates, posted on their own.
   for (const r of rows.filter((x) => x.action === "gold_on")) {

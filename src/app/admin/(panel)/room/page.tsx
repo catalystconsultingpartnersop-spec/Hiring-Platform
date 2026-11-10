@@ -6,7 +6,8 @@ import { Composer, ReplyBox } from "./Composer";
 import { AgendaEdit, CallBox } from "./CallBox";
 import { allNotes, googleCalendarLink, nextCall, teamCalls } from "@/lib/teamCalls";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
-import { cancelTeamCall, removePost, setRoomEmailPref, setSpecialty } from "./actions";
+import { cancelTeamCall, removePost, removeReply, setRoomEmailPref, setSpecialty } from "./actions";
+import { EditableText } from "./EditableText";
 import { markRoomSeen, roomEmailPrefs } from "@/lib/roomNotify";
 import { after } from "next/server";
 import s from "./room.module.css";
@@ -26,14 +27,6 @@ function ago(at: string, now: number) {
   return d === 1 ? "yesterday" : `${d} days ago`;
 }
 
-function Text({ t }: { t: string }) {
-  // @Names in bold; everything else as written.
-  return (
-    <p className={s.txt}>
-      {t.split(/(@[A-Za-z]+)/g).map((part, i) => (part.startsWith("@") ? <b key={i}>{part}</b> : part))}
-    </p>
-  );
-}
 
 function Card({ c }: { c: RoomCand }) {
   return (
@@ -226,7 +219,7 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
           </div>
           <span className={`${s.kind} ${cls}`}>{tag}</span>
         </div>
-        <Text t={p.text} />
+        <EditableText id={p.id} text={p.text} edited={p.edited} mine={mine} names={names} />
         <div className={s.cards}>
           {cardsFor(p.cands, p.text).map((c) => (
             <Card key={c.id} c={c} />
@@ -242,8 +235,15 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
                 <b>{r.byName}</b>
                 <small>{ago(r.at, now)}</small>
               </div>
+              {(r.byEmail === me.email || me.manager) && (
+                <form action={removeReply.bind(null, r.id)} style={{ marginLeft: "auto" }}>
+                  <button type="submit" className={s.act}>
+                    Remove
+                  </button>
+                </form>
+              )}
             </div>
-            {r.text && <Text t={r.text} />}
+            {(r.text || r.byEmail === me.email) && <EditableText id={r.id} text={r.text} edited={r.edited} mine={r.byEmail === me.email} names={names} />}
             <div className={s.cards}>
               {cardsFor(r.cands, r.text).map((c) => (
                 <Card key={c.id} c={c} />
