@@ -9,17 +9,29 @@ import { roomCandidates, teamMembers } from "./teamRoom";
 // that records itself; afterwards the notes are written up, posted in the Team
 // Room and emailed to everyone invited. Kept in the activity log.
 
-export type TeamCall = { id: number; title: string; starts_at: string; minutes: number; invitees: string[]; link: string; space: string | null; by_name: string };
+export type TeamCall = { id: number; title: string; starts_at: string; minutes: number; invitees: string[]; link: string; space: string | null; by_name: string; agenda: string[] };
+
+// "One item per line" into a clean agenda.
+export const cleanAgenda = (t: string) =>
+  t
+    .split(/\n+/)
+    .map((x) => x.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim().slice(0, 200))
+    .filter(Boolean)
+    .slice(0, 15);
+
+const agendaText = (a: string[]) => (a.length ? `Agenda:\n${a.map((x, i) => `${i + 1}. ${x}`).join("\n")}\n\n` : "");
 export type CallNotes = { id: number; at: string; call_id: number; title: string; bullets: string[]; actions: { who: string; what: string }[]; cands: string[]; failed?: boolean };
 
 export async function teamCalls(): Promise<TeamCall[]> {
   const since = new Date(Date.now() - 60 * 864e5).toISOString();
-  const { data } = await db().from("activity_log").select("id, action, details").in("action", ["team_call", "team_call_cancelled"]).gte("at", since);
+  const { data } = await db().from("activity_log").select("id, action, details").in("action", ["team_call", "team_call_cancelled", "team_call_agenda"]).gte("at", since).order("at", { ascending: true });
   const rows = (data ?? []) as { id: number; action: string; details: Record<string, unknown> }[];
   const gone = new Set(rows.filter((r) => r.action === "team_call_cancelled").map((r) => Number(r.details.call_id)));
+  // Agenda edits after scheduling: the latest one wins.
+  const agendas = new Map(rows.filter((r) => r.action === "team_call_agenda").map((r) => [Number(r.details.call_id), (r.details.agenda as string[]) ?? []]));
   return rows
     .filter((r) => r.action === "team_call" && !gone.has(r.id))
-    .map((r) => ({ id: r.id, ...(r.details as Omit<TeamCall, "id">) }))
+    .map((r) => ({ id: r.id, ...(r.details as Omit<TeamCall, "id" | "agenda">), agenda: agendas.get(r.id) ?? ((r.details.agenda as string[] | undefined) ?? []) }))
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
 }
 
@@ -35,10 +47,10 @@ export function nextCall(calls: TeamCall[], now: number) {
 export function googleCalendarLink(c: TeamCall) {
   const st = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
   const end = new Date(Date.parse(c.starts_at) + c.minutes * 60e3).toISOString();
-  return `https://calendar.google.com/calendar/render?${new URLSearchParams({ action: "TEMPLATE", text: c.title, dates: `${st(c.starts_at)}/${st(end)}`, details: `Join: ${c.link}`, location: c.link })}`;
+  return `https://calendar.google.com/calendar/render?${new URLSearchParams({ action: "TEMPLATE", text: c.title, dates: `${st(c.starts_at)}/${st(end)}`, details: `${agendaText(c.agenda)}Join: ${c.link}`, location: c.link })}`;
 }
 
-export async function scheduleTeamCall(me: { id: string | null; email: string; name: string }, o: { title: string; starts_at: string; minutes: number; invitees: string[] }) {
+export async function scheduleTeamCall(me: { id: string | null; email: string; name: string }, o: { title: string; starts_at: string; minutes: number; invitees: string[]; agenda: string[] }) {
   const team = await teamMembers();
   const invited = team.filter((t) => o.invitees.includes(t.id) || t.email === me.email);
   const { newRecordedMeeting, addCohost } = await import("./googleCalls");
@@ -61,7 +73,7 @@ export async function scheduleTeamCall(me: { id: string | null; email: string; n
     link = (data?.meeting_link as string | null) ?? "";
   }
   if (!link) return { error: "We couldn't make a video link. Connect Google in Settings, or add your own video link on My hours." };
-  const details = { title: o.title, starts_at: o.starts_at, minutes: o.minutes, invitees: invited.map((t) => t.id), link, space, by_name: me.name };
+  const details = { title: o.title, starts_at: o.starts_at, minutes: o.minutes, invitees: invited.map((t) => t.id), link, space, by_name: me.name, agenda: o.agenda };
   await logActivity(`staff:${me.email}`, "team_call", details);
   const when = formatInZone(o.starts_at, COMPANY_TZ);
   const end = new Date(Date.parse(o.starts_at) + o.minutes * 60e3).toISOString();
@@ -69,8 +81,8 @@ export async function scheduleTeamCall(me: { id: string | null; email: string; n
     await sendEmail({
       to: t.email,
       subject: `Team call: ${when}`,
-      html: `<p><strong>${escapeHtml(me.name)}</strong> set up a team call.</p><p style="font-size:18px"><strong>${escapeHtml(o.title)}</strong><br>${escapeHtml(when)} · ${o.minutes} minutes</p><p><a href="${escapeHtml(link)}">Join the call</a></p>${space ? `<p style="font-size:14px;color:#4a5570">It records itself. Afterwards we&rsquo;ll send everyone the notes.</p>` : ""}<p><a href="${teamUrl()}/admin/room">Open the Team Room</a></p>`,
-      attachments: [{ filename: "team-call.ics", content: callIcs({ uid: `team-${o.starts_at}-${me.email}@candidate-collection`, start: o.starts_at, end, title: o.title, description: `Join: ${link}`, location: link }) }],
+      html: `<p><strong>${escapeHtml(me.name)}</strong> set up a team call.</p><p style="font-size:18px"><strong>${escapeHtml(o.title)}</strong><br>${escapeHtml(when)} · ${o.minutes} minutes</p>${o.agenda.length ? `<p style="margin-bottom:4px"><strong>Agenda</strong></p><ol style="margin-top:0">${o.agenda.map((a) => `<li>${escapeHtml(a)}</li>`).join("")}</ol>` : ""}<p><a href="${escapeHtml(link)}">Join the call</a></p>${space ? `<p style="font-size:14px;color:#4a5570">It records itself. Afterwards we&rsquo;ll send everyone the notes.</p>` : ""}<p><a href="${teamUrl()}/admin/room">Open the Team Room</a></p>`,
+      attachments: [{ filename: "team-call.ics", content: callIcs({ uid: `team-${o.starts_at}-${me.email}@candidate-collection`, start: o.starts_at, end, title: o.title, description: `${agendaText(o.agenda)}Join: ${link}`, location: link }) }],
     }).catch(() => null);
   return { ok: true };
 }
@@ -101,7 +113,9 @@ export async function writeTeamCallNotes() {
     if (!key) continue;
     const prompt = `This is the transcript of a team call at a hiring company (reps who meet job candidates, and people who find business owners). Write short notes for the team.
 Answer with JSON only: {"bullets":["3 to 6 short lines: what was discussed and decided"],"actions":[{"who":"first name","what":"short task"}],"candidates":["full names of any candidates discussed"]}
-Plain, warm, short. No dollar amounts or commissions.
+Plain, warm, short. No dollar amounts or commissions.${c.agenda.length ? `
+The call had this agenda. Follow its order in the bullets, one line per item saying what was decided. If an item wasn't covered, add a line "Not covered: <item>".
+${c.agenda.map((a, i) => `${i + 1}. ${a}`).join("\n")}` : ""}
 
 Transcript:
 ${transcript.slice(0, 80000)}`;
@@ -127,7 +141,7 @@ ${transcript.slice(0, 80000)}`;
     const { data: full } = await db().from("candidates").select("id, full_name").in("id", people.map((p) => p.id));
     const names = (out.candidates ?? []).map((n) => n.toLowerCase().trim());
     const cands = ((full ?? []) as { id: string; full_name: string }[]).filter((p) => names.includes(p.full_name.toLowerCase().trim())).map((p) => p.id);
-    const bullets = (out.bullets ?? []).slice(0, 8).map(String);
+    const bullets = (out.bullets ?? []).slice(0, c.agenda.length ? 16 : 8).map(String);
     const actions = (out.actions ?? []).slice(0, 10).map((a) => ({ who: String(a.who ?? ""), what: String(a.what ?? "") }));
     await logActivity("system", "team_call_notes", { call_id: c.id, title: c.title, bullets, actions, cands });
     wrote++;

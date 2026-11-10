@@ -3,7 +3,7 @@ import { requireStaff } from "@/lib/session";
 import { nowMs } from "@/lib/time";
 import { loadRoom, roomCandidates, SPECIALTY_LABEL, specialties, teamMembers, codesIn, type RoomCand, type RoomPost } from "@/lib/teamRoom";
 import { Composer, ReplyBox } from "./Composer";
-import { CallBox } from "./CallBox";
+import { AgendaEdit, CallBox } from "./CallBox";
 import { allNotes, googleCalendarLink, nextCall, teamCalls } from "@/lib/teamCalls";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 import { cancelTeamCall, removePost, setRoomEmailPref, setSpecialty } from "./actions";
@@ -96,6 +96,16 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
               <br />
               {formatInZone(next.starts_at, COMPANY_TZ, { weekday: undefined, hour: undefined, minute: undefined, timeZoneName: undefined })} · set up by {next.by_name.split(" ")[0]}
             </p>
+            {next.agenda.length > 0 && (
+              <div className={s.agenda}>
+                <b>Agenda</b>
+                <ol>
+                  {next.agenda.map((a, i) => (
+                    <li key={i}>{a}</li>
+                  ))}
+                </ol>
+              </div>
+            )}
             <span className={s.callRow}>
               <a className="btn btn-gold btn-small" href={next.link} target="_blank" rel="noreferrer">
                 Join the call
@@ -104,6 +114,7 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
                 Add to calendar
               </a>
             </span>
+            <AgendaEdit key={next.agenda.join("|")} callId={next.id} agenda={next.agenda} />
             {(me.manager || next.by_name === me.name) && (
               <form action={cancelTeamCall.bind(null, next.id)} style={{ marginTop: 8 }}>
                 <button type="submit" className={s.callCancel}>

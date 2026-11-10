@@ -112,7 +112,9 @@ export async function scheduleCall(_prev: RoomState, form: FormData): Promise<Ro
   const invitees = form.getAll("invite").map(String);
   if (!(await allow(`teamcall:${me.email}`, 10, 60))) return { error: SLOW_DOWN };
   const { scheduleTeamCall } = await import("@/lib/teamCalls");
-  const r = await scheduleTeamCall(me, { title, starts_at: starts, minutes, invitees });
+  const { cleanAgenda } = await import("@/lib/teamCalls");
+  const agenda = cleanAgenda(String(form.get("agenda") ?? ""));
+  const r = await scheduleTeamCall(me, { title, starts_at: starts, minutes, invitees, agenda });
   if ("error" in r && r.error) return { error: r.error };
   revalidatePath("/admin/room");
   return { ok: true };
@@ -132,4 +134,16 @@ export async function setRoomEmailPref(form: FormData) {
   const v = String(form.get("room_email") ?? "all");
   await setRoomEmail(me.email, (v === "mine" ? "mine" : "all") as RoomEmail);
   revalidatePath("/admin/room");
+}
+
+// Change the agenda after scheduling. Anyone on the team can add to it.
+export async function saveAgenda(callId: number, _prev: RoomState, form: FormData): Promise<RoomState> {
+  const me = await requireStaff();
+  const { data } = await db().from("activity_log").select("id").eq("id", callId).eq("action", "team_call").maybeSingle();
+  if (!data) return { error: "That call isn't there anymore." };
+  if (!(await allow(`agenda:${me.email}`, 20, 60))) return { error: SLOW_DOWN };
+  const { cleanAgenda } = await import("@/lib/teamCalls");
+  await logActivity(staffActor(me), "team_call_agenda", { call_id: callId, agenda: cleanAgenda(String(form.get("agenda") ?? "")), by_name: me.name });
+  revalidatePath("/admin/room");
+  return { ok: true };
 }

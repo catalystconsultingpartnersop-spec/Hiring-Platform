@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState, useSyncExternalStore } from "react";
-import { scheduleCall, type RoomState } from "./actions";
+import { saveAgenda, scheduleCall, type RoomState } from "./actions";
 import s from "./room.module.css";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -59,6 +59,10 @@ export function CallBox({ team, meId }: { team: { id: string; name: string }[]; 
         <option value="45">45 minutes</option>
         <option value="60">1 hour</option>
       </select>
+      <label className="small" style={{ display: "grid", gap: 4 }}>
+        <span>Agenda (one item per line)</span>
+        <textarea className="textarea" name="agenda" rows={4} placeholder={"New candidates this week\nOwners we're talking to\nWho needs help"} />
+      </label>
       <fieldset className={s.invites}>
         <legend className="small">Who&rsquo;s invited</legend>
         {team
@@ -78,7 +82,33 @@ export function CallBox({ team, meId }: { team: { id: string; name: string }[]; 
           Cancel
         </button>
       </span>
-      <p className="small muted" style={{ margin: 0 }}>Everyone gets an email with the link. The call records itself, and we send the notes after.</p>
+      <p className="small muted" style={{ margin: 0 }}>Everyone gets an email with the link and the agenda. The call records itself, and the notes after follow the agenda.</p>
+    </form>
+  );
+}
+
+// The agenda on the call card: anyone on the team can change or add to it.
+export function AgendaEdit({ callId, agenda }: { callId: number; agenda: string[] }) {
+  const [open, setOpen] = useState(false);
+  const [state, action, pending] = useActionState<RoomState, FormData>(saveAgenda.bind(null, callId), {});
+  if (!open || state.ok)
+    return (
+      <button type="button" className={s.callCancel} onClick={() => setOpen(true)} style={{ marginTop: 6, color: "#fff", display: "block" }}>
+        {state.ok ? "Saved ✓ Change it again" : agenda.length ? "Change or add to the agenda" : "+ Add an agenda"}
+      </button>
+    );
+  return (
+    <form action={action} className={s.callForm} style={{ marginTop: 8 }}>
+      <textarea className="textarea" name="agenda" rows={5} defaultValue={agenda.join("\n")} placeholder="One item per line" aria-label="Agenda" autoFocus />
+      {state.error && <p className="notice notice-bad small">{state.error}</p>}
+      <span style={{ display: "flex", gap: 8 }}>
+        <button className="btn btn-gold btn-small" type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Save agenda"}
+        </button>
+        <button className="btn btn-ghost btn-small" type="button" onClick={() => setOpen(false)}>
+          Cancel
+        </button>
+      </span>
     </form>
   );
 }
