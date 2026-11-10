@@ -126,7 +126,7 @@ export function CandidateCard({
 }) {
   void store;
   const salary = salaryRange(c.salary_min, c.salary_max);
-  const facts = [salary, placeName(c.location_region), c.level ? LEVEL_LABEL[c.level] : null].filter(Boolean) as string[];
+  const facts = [salary, placeName(c.location_region), c.level ? LEVEL_LABEL[c.level] : null, c.hours === "part" ? "Part-time" : c.hours === "either" ? "Full or part-time" : null].filter(Boolean) as string[];
   const role = [c.role_category, ...(c.also_roles ?? [])].filter(Boolean).slice(0, 2).join(" / ") || "Candidate";
   const repName = (c.rep?.full_name ?? "").trim().split(" ")[0];
   const word = (c.rep_word ?? "").trim() || ownLine(c);

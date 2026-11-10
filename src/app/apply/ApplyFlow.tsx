@@ -1,5 +1,6 @@
 "use client";
 
+import { HOURS } from "@/lib/hours";
 import { LANGUAGES } from "@/lib/languages";
 import { AVAILABILITY } from "@/lib/availability";
 import { UploadHelper } from "@/components/UploadHelper";
@@ -168,6 +169,18 @@ export function ApplyFlow({
           placeholder="A sentence is plenty. It's fine if you're not sure yet; that's what the call is for."
         />
       </label>
+      <fieldset className="field" style={{ border: 0, padding: 0, margin: "0 0 18px" }}>
+        <legend style={{ fontWeight: 700, marginBottom: 8, padding: 0 }}>
+          Full-time or part-time? <span className="opt">(optional)</span>
+        </legend>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 18px" }}>
+          {HOURS.map(([val, label]) => (
+            <label key={val} style={{ display: "inline-flex", gap: 6, alignItems: "center", fontWeight: 500 }}>
+              <input type="radio" name="hours" value={val} style={{ width: 18, height: 18, margin: 0 }} /> {val === "either" ? "Either works" : label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <fieldset className="field" style={{ border: 0, padding: 0, margin: "0 0 18px" }}>
         <legend style={{ fontWeight: 700, marginBottom: 8, padding: 0 }}>
           When could you start? <span className="opt">(optional)</span>

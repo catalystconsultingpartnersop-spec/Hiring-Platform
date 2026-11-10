@@ -1,5 +1,6 @@
 "use client";
 
+import { HOURS } from "@/lib/hours";
 import { cleanLanguages, LANGUAGES } from "@/lib/languages";
 import { UploadHelper } from "@/components/UploadHelper";
 import { startTransition, useActionState, useRef, useState } from "react";
@@ -107,6 +108,7 @@ export function CandidateForm({
   const [role, setRole] = useState(v("role_category"));
   const [level, setLevel] = useState(v("level"));
   const [mode, setMode] = useState(v("work_mode"));
+  const [hours, setHours] = useState((c?.application as Record<string, string> | undefined)?.hours ?? "");
   const [avail, setAvail] = useState(
     (c?.application as Record<string, string> | undefined)?.available ?? "",
   );
@@ -274,6 +276,7 @@ export function CandidateForm({
           id: c?.id ?? "preview",
           status: "listed",
           available: avail || null,
+          hours: hours || null,
           role_category: role || null,
           industry: industry || null,
           also_roles: alsoRoles,
@@ -704,6 +707,23 @@ export function CandidateForm({
                 className={mode === val ? styles.chipOn : styles.chip}
                 aria-pressed={mode === val}
                 onClick={() => setMode(mode === val ? "" : val)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={styles.chipField} style={{ marginTop: 18 }}>
+          <span>Full-time or part-time</span>
+          <input type="hidden" name="hours" value={hours} />
+          <div className={styles.chips}>
+            {HOURS.map(([val, label]) => (
+              <button
+                key={val}
+                type="button"
+                className={hours === val ? styles.chipOn : styles.chip}
+                aria-pressed={hours === val}
+                onClick={() => setHours(hours === val ? "" : val)}
               >
                 {label}
               </button>

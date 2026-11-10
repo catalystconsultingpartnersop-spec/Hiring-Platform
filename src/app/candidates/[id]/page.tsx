@@ -1,4 +1,5 @@
 import { languagesText } from "@/lib/languages";
+import { hoursLabel } from "@/lib/hours";
 import Link from "next/link";
 import { availabilityLabel } from "@/lib/availability";
 import { similarReason } from "@/lib/matching";
@@ -122,6 +123,7 @@ function Tiles({ c, page }: { c: PublicCandidate; page: OwnerPage | null }) {
     ["Experience", [level, page?.years].filter(Boolean).join(", ") || null],
     ["Location", c.location_region],
     ["Works", c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null],
+    ["Hours", hoursLabel(c.hours ?? (c as { application?: Record<string, string> }).application?.hours)],
     ["Looking for", salaryRange(c.salary_min, c.salary_max)],
     ["Speaks", languagesText(c.languages)],
     ["Can start", availabilityLabel(c.available ?? (c as { application?: Record<string, string> }).application?.available)],

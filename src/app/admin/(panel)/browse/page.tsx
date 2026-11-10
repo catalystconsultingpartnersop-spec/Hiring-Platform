@@ -69,6 +69,7 @@ export default async function Browse() {
       wg: l.length === 6 ? l.join("") : null,
       assessment: l.length === 6 ? "done" : c.assessment_path ? "uploaded" : "missing",
       available: c.application?.available ?? null,
+      hours: c.application?.hours ?? null,
       rep: rep ? (rep === me.id ? "You" : repName(rep)) : null,
       mine: rep === me.id,
       gold: !!goldOf(c),

@@ -392,6 +392,19 @@ ${hireSummaryHtml(notice)}`,
     if (changed) await db().from("candidates").update({ application: app }).eq("id", candidateId);
   }
 
+  // Full-time or part-time, kept in the application too.
+  if (candidateId && form.has("hours")) {
+    const { cleanHours } = await import("@/lib/hours");
+    const h = cleanHours(form.get("hours"));
+    const { data: cur } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
+    const app = { ...((cur?.application ?? {}) as Record<string, string>) };
+    if ((app.hours ?? "") !== h) {
+      if (h) app.hours = h;
+      else delete app.hours;
+      await db().from("candidates").update({ application: app }).eq("id", candidateId);
+    }
+  }
+
   // When they can start: kept in their application, so it rides along without a new column.
   if (candidateId && form.has("available")) {
     const { cleanAvailability } = await import("@/lib/availability");

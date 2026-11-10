@@ -22,6 +22,7 @@ export type Row = {
   wg: string | null;
   assessment: "done" | "uploaded" | "missing";
   available: string | null;
+  hours: string | null;
   rep: string | null;
   mine: boolean;
   gold: boolean;
@@ -83,6 +84,7 @@ export function Board({ rows }: { rows: Row[] }) {
   const [place, setPlace] = useState("");
   const [rep, setRep] = useState("");
   const [maxPay, setMaxPay] = useState("");
+  const [hours, setHours] = useState("");
   const [only, setOnly] = useState<string[]>([]);
   const [sort, setSort] = useState("new");
   const [group, setGroup] = useState("");
@@ -104,6 +106,7 @@ export function Board({ rows }: { rows: Row[] }) {
       if (place && nice(r.place ?? "") !== place) return false;
       if (rep && r.rep !== rep) return false;
       if (maxPay && (payMid(r) ?? Infinity) > Number(maxPay)) return false;
+      if (hours && !(r.hours === hours || r.hours === "either")) return false;
       if (only.includes("gold") && !r.gold) return false;
       if (only.includes("assessed") && r.assessment !== "done") return false;
       if (only.includes("mine") && !r.mine) return false;
@@ -122,7 +125,7 @@ export function Board({ rows }: { rows: Row[] }) {
     };
     out = [...out].sort(by[sort] ?? by.new);
     return out;
-  }, [rows, status, q, role, industry, strength, level, place, rep, maxPay, only, sort]);
+  }, [rows, status, q, role, industry, strength, level, place, rep, maxPay, hours, only, sort]);
 
   const groups = useMemo(() => {
     if (!group) return [["", shown]] as [string, Row[]][];
@@ -147,9 +150,9 @@ export function Board({ rows }: { rows: Row[] }) {
   }, [shown, group]);
 
   const toggle = (list: string[], set: (v: string[]) => void, v: string) => set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
-  const anyFilter = role || industry || strength || level || place || rep || maxPay || only.length || q;
+  const anyFilter = role || industry || strength || level || place || rep || maxPay || hours || only.length || q;
   const clear = () => {
-    setRole(""); setIndustry(""); setStrength(""); setLevel(""); setPlace(""); setRep(""); setMaxPay(""); setOnly([]); setQ("");
+    setHours(""); setRole(""); setIndustry(""); setStrength(""); setLevel(""); setPlace(""); setRep(""); setMaxPay(""); setOnly([]); setQ("");
   };
 
 
@@ -173,6 +176,7 @@ export function Board({ rows }: { rows: Row[] }) {
         <Sel label="Natural strength" value={strength} set={setStrength} opts={TRAIT_LIST.map((t) => [t.key, `${t.label} (${t.key})`] as [string, string])} />
         <Sel label="Experience" value={level} set={setLevel} opts={levels} />
         <Sel label="Salary up to" value={maxPay} set={setMaxPay} opts={[50000, 75000, 100000, 125000, 150000, 200000].map((n) => [String(n), k(n)] as [string, string])} />
+        <Sel label="Hours" value={hours} set={setHours} opts={[["full", "Full-time"], ["part", "Part-time"]]} />
         <Sel label="Location" value={place} set={setPlace} opts={places} />
         <Sel label="Rep" value={rep} set={setRep} opts={reps} />
       </div>
@@ -234,7 +238,7 @@ export function Board({ rows }: { rows: Row[] }) {
                     <th>Role and industry</th>
                     <th title="Green: natural strengths. Yellow: can do well. Red: wears them down.">Strengths</th>
                     <th>Salary</th>
-                    <th>Experience</th>
+                    <th>Experience and hours</th>
                     <th>Location</th>
                     <th>Rep</th>
                   </tr>
@@ -268,7 +272,10 @@ export function Board({ rows }: { rows: Row[] }) {
                         )}
                       </td>
                       <td style={{ whiteSpace: "nowrap" }}>{pay(r) ?? <span className="muted">Not set</span>}</td>
-                      <td>{r.level ?? <span className="muted">Not set</span>}</td>
+                      <td>
+                        {r.level ?? <span className="muted">Not set</span>}
+                        {r.hours && <div className="small muted">{r.hours === "full" ? "Full-time" : r.hours === "part" ? "Part-time" : "Full or part-time"}</div>}
+                      </td>
                       <td>
                         {r.place ? nice(r.place) : <span className="muted">Not set</span>}
                         {r.mode && <div className="small muted">{r.mode}</div>}

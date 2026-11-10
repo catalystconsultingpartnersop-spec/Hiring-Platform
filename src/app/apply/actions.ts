@@ -1,5 +1,6 @@
 "use server";
 
+import { cleanHours } from "@/lib/hours";
 import { cleanAvailability } from "@/lib/availability";
 import { hiddenStaffIds } from "@/lib/hiddenStaff";
 import { isCheckAccount } from "@/lib/session";
@@ -72,6 +73,7 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
           looking_for,
           ...(hasResume ? {} : { no_resume: "yes" }),
           ...(cleanAvailability(form.get("available")) ? { available: cleanAvailability(form.get("available")) } : {}),
+          ...(cleanHours(form.get("hours")) ? { hours: cleanHours(form.get("hours")) } : {}),
         },
         languages: cleanLanguages(form.getAll("languages")),
         consent_at: new Date().toISOString(),

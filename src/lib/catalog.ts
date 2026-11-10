@@ -56,7 +56,7 @@ const cachedListed = unstable_cache(
     if (error) throw error;
     return ((data ?? []) as unknown as PublicCandidate[]).map(tidyRoles);
   },
-  ["catalog-listed", "v2-available"],
+  ["catalog-listed", "v3-hours"],
   { revalidate: 30, tags: [CATALOG_TAG] },
 );
 
@@ -108,12 +108,13 @@ export type CatalogFilters = {
   industry?: string;
   pay?: string;
   avail?: string; // "now": only people who can start right away
+  hours?: string; // full | part: someone open to either counts for both
   maxpay?: string; // the most the owner can pay, from the salary slider
   saved?: string;
   sort?: string;
 };
 
-const FILTER_KEYS = ["role", "level", "mode", "region", "strength", "pay", "industry", "avail"] as const;
+const FILTER_KEYS = ["role", "level", "mode", "region", "strength", "pay", "industry", "avail", "hours"] as const;
 type FilterKey = (typeof FILTER_KEYS)[number];
 
 // Every kind of role and industry a candidate fits, main one first.
@@ -140,6 +141,8 @@ function valueOf(c: PublicCandidate, key: FilterKey): string[] {
       return industriesOf(c);
     case "avail":
       return c.available ? [c.available] : [];
+    case "hours":
+      return c.hours === "either" ? ["full", "part"] : c.hours ? [c.hours] : [];
     case "pay": {
       const b = payBand(c);
       return b ? [b] : [];

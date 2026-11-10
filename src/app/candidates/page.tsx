@@ -22,7 +22,7 @@ import { ParamSelect } from "./SortSelect";
 
 export const dynamic = "force-dynamic";
 
-const KEYS = ["q", "role", "level", "mode", "region", "strength", "pay", "maxpay", "industry", "saved", "sort"] as const;
+const KEYS = ["q", "role", "level", "mode", "region", "strength", "pay", "maxpay", "industry", "hours", "saved", "sort"] as const;
 
 function href(f: CatalogFilters, change: Partial<CatalogFilters>) {
   const next = { ...f, ...change };
@@ -61,6 +61,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
   if (f.level) active.push(["level", LEVEL_LABEL[f.level] ?? f.level]);
   if (Number(f.maxpay) > 0) active.push(["maxpay", `Up to $${Math.round(Number(f.maxpay) / 1000)}k`]);
   if (f.mode) active.push(["mode", WORK_MODE_LABEL[f.mode] ?? f.mode]);
+  if (f.hours) active.push(["hours", f.hours === "part" ? "Part-time" : "Full-time"]);
   if (f.region) active.push(["region", f.region]);
   if (f.industry) active.push(["industry", f.industry]);
   if (f.q) active.push(["q", `“${f.q}”`]);
@@ -154,6 +155,16 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
                   n={facetCounts(all, f, "mode").get(v) ?? 0}
                   href={href(f, { mode: f.mode === v ? undefined : v })}
                 >
+                  {label}
+                </FacetLink>
+              ))}
+            </Facet>
+            <Facet title="Hours">
+              {[
+                ["full", "Full-time"],
+                ["part", "Part-time"],
+              ].map(([v, label]) => (
+                <FacetLink key={v} on={f.hours === v} n={facetCounts(all, f, "hours").get(v) ?? 0} href={href(f, { hours: f.hours === v ? undefined : v })}>
                   {label}
                 </FacetLink>
               ))}
