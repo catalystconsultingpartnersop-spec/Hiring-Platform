@@ -117,13 +117,19 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
 }
 
 // The few facts an owner checks first, as tiles.
+// Hours ride along quietly on the "Works" line (e.g. "On-site, part-time").
+function worksText(mode: string | null, hours?: string | null) {
+  const h = hoursLabel(hours);
+  if (!h) return mode;
+  return mode ? `${mode}, ${h.toLowerCase()}` : h;
+}
+
 function Tiles({ c, page }: { c: PublicCandidate; page: OwnerPage | null }) {
   const level = c.level ? LEVEL_LABEL[c.level] : null;
   const tiles: [string, string | null][] = [
     ["Experience", [level, page?.years].filter(Boolean).join(", ") || null],
     ["Location", c.location_region],
-    ["Works", c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null],
-    ["Hours", hoursLabel(c.hours ?? (c as { application?: Record<string, string> }).application?.hours)],
+    ["Works", worksText(c.work_mode ? WORK_MODE_LABEL[c.work_mode] : null, c.hours ?? (c as { application?: Record<string, string> }).application?.hours)],
     ["Looking for", salaryRange(c.salary_min, c.salary_max)],
     ["Speaks", languagesText(c.languages)],
     ["Can start", availabilityLabel(c.available ?? (c as { application?: Record<string, string> }).application?.available)],
