@@ -5,7 +5,7 @@ import { assignRep, FormState } from "../../actions";
 
 // A small dropdown that saves as soon as Heshy picks a rep. It calls the save
 // directly (not through a form), so nothing resets the choice after saving.
-export function RepPicker(p: { candidateId: string; value: string; options: [string, string][]; note?: string }) {
+export function RepPicker(p: { candidateId: string; value: string; options: [string, string][]; note?: string; compact?: boolean }) {
   const [value, setValue] = useState(p.value);
   const [state, setState] = useState<FormState>({});
   const [pending, start] = useTransition();
@@ -32,6 +32,17 @@ export function RepPicker(p: { candidateId: string; value: string; options: [str
     });
   }
 
+  const checks = (
+    <>
+      <label className="small" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> Email the candidate about the change
+      </label>
+      <label className="small" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <input type="checkbox" checked={moveCalls} onChange={(e) => setMoveCalls(e.target.checked)} /> Move their upcoming call too
+      </label>
+    </>
+  );
+
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
       <select
@@ -49,12 +60,14 @@ export function RepPicker(p: { candidateId: string; value: string; options: [str
           </option>
         ))}
       </select>
-      <label className="small" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-        <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> Email the candidate about the change
-      </label>
-      <label className="small" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-        <input type="checkbox" checked={moveCalls} onChange={(e) => setMoveCalls(e.target.checked)} /> Move their upcoming call too
-      </label>
+      {p.compact ? (
+        <details className="small">
+          <summary className="muted" style={{ cursor: "pointer" }}>Options before changing</summary>
+          {checks}
+        </details>
+      ) : (
+        checks
+      )}
       {pending ? (
         <span className="small muted">Saving…</span>
       ) : state.error ? (

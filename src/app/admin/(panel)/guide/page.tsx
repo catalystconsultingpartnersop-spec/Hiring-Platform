@@ -131,11 +131,11 @@ export default async function RepGuide() {
         </div>
         <div>
           <p className={styles.label}>
-            <Link href="/admin/candidates">Candidates</Link>
+            <Link href="/admin/candidates">Browse candidates</Link>
           </p>
           <p>
-            Your candidates, or switch to <b>Everyone</b> to see the whole team&rsquo;s. You can view anyone; you edit your own.
-            The <b>⭐ Gold standard</b> tab shows the ones reps marked as worth placing.
+            Every candidate on the team. Pick a status (new applications, listed, drafts…), filter, sort and group. Tap{" "}
+            <b>Only mine</b> for yours. You can view anyone; you edit your own. <b>⭐ Gold standard</b> shows the ones reps marked as worth placing.
           </p>
         </div>
         <div>

@@ -3,12 +3,17 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { TRAIT_LIST, TRAITS, type Letter } from "@/lib/strengths";
-import { WGChips } from "../candidates/WGChips";
+import { WGChips } from "./WGChips";
+import { RepPicker } from "./RepPicker";
+import { dateShort } from "@/lib/format";
 
 export type Row = {
   id: string;
   ref: string;
   name: string;
+  email: string;
+  repId: string;
+  repNote?: string;
   status: string;
   headline: string | null;
   roles: string[];
@@ -37,6 +42,7 @@ const STATUS: [string, string][] = [
   ["applied", "New applications"],
   ["paused", "Paused"],
   ["hired", "Hired"],
+  ["archived", "Archived"],
 ];
 const SORTS: [string, string][] = [
   ["new", "Newest first"],
@@ -74,9 +80,11 @@ const BAND_ORDER = ["Under $50k", "$50k–$75k", "$75k–$100k", "$100k–$150k"
 const uniq = (xs: (string | null)[]) => [...new Set(xs.filter((x): x is string => !!x))].sort((a, b) => a.localeCompare(b));
 const nice = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-export function Board({ rows }: { rows: Row[] }) {
-  const [status, setStatus] = useState<string[]>(["listed"]);
-  const [q, setQ] = useState("");
+export type Start = { status: string[]; q?: string; gold?: boolean; mine?: boolean };
+
+export function Board({ rows, start, repOptions }: { rows: Row[]; start: Start; repOptions: [string, string][] | null }) {
+  const [status, setStatus] = useState<string[]>(start.status);
+  const [q, setQ] = useState(start.q ?? "");
   const [role, setRole] = useState("");
   const [industry, setIndustry] = useState("");
   const [strength, setStrength] = useState("");
@@ -85,7 +93,7 @@ export function Board({ rows }: { rows: Row[] }) {
   const [rep, setRep] = useState("");
   const [maxPay, setMaxPay] = useState("");
   const [hours, setHours] = useState("");
-  const [only, setOnly] = useState<string[]>([]);
+  const [only, setOnly] = useState<string[]>([...(start.gold ? ["gold"] : []), ...(start.mine ? ["mine"] : [])]);
   const [sort, setSort] = useState("new");
   const [group, setGroup] = useState("");
 
@@ -111,7 +119,7 @@ export function Board({ rows }: { rows: Row[] }) {
       if (only.includes("assessed") && r.assessment !== "done") return false;
       if (only.includes("mine") && !r.mine) return false;
       if (only.includes("interest") && !r.interest) return false;
-      if (t && ![r.name, r.ref, r.headline, ...r.roles, ...r.industries, r.place].join(" ").toLowerCase().includes(t)) return false;
+      if (t && ![r.name, r.email, r.ref, r.headline, ...r.roles, ...r.industries, r.place].join(" ").toLowerCase().includes(t)) return false;
       return true;
     });
     const by: Record<string, (a: Row, b: Row) => number> = {
@@ -169,7 +177,7 @@ export function Board({ rows }: { rows: Row[] }) {
       <div className="bd-filters">
         <label className="bd-field bd-search">
           <span>Search</span>
-          <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, ref, role, word in headline…" />
+          <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, email, ref, role, word in headline…" />
         </label>
         <Sel label="Role" value={role} set={setRole} opts={roles} />
         <Sel label="Industry" value={industry} set={setIndustry} opts={industries} />
@@ -221,7 +229,9 @@ export function Board({ rows }: { rows: Row[] }) {
       </p>
 
       {shown.length === 0 ? (
-        <p className="panel panel-wash">No one matches all of that. Try removing a filter.</p>
+        <p className="panel panel-wash">
+          No one matches all of that. Try removing a filter{status.length ? " or picking more statuses above" : ""}, or <Link href="/admin/candidates/new">add a candidate</Link>.
+        </p>
       ) : (
         groups.map(([g, list]) => (
           <section key={g || "all"} className="bd-group">
@@ -256,6 +266,7 @@ export function Board({ rows }: { rows: Row[] }) {
                           {r.ref}
                           {r.status !== "listed" ? ` · ${STATUS.find(([v]) => v === r.status)?.[1] ?? r.status}` : ""}
                           {r.available ? ` · ${r.available}` : ""}
+                          {` · ${r.listed && r.status === "listed" ? "listed" : "added"} ${dateShort(r.listed && r.status === "listed" ? r.listed : r.added)}`}
                         </div>
                         {r.headline && <div className="bd-head">{r.headline}</div>}
                       </td>
@@ -280,7 +291,15 @@ export function Board({ rows }: { rows: Row[] }) {
                         {r.place ? nice(r.place) : <span className="muted">Not set</span>}
                         {r.mode && <div className="small muted">{r.mode}</div>}
                       </td>
-                      <td>{r.mine ? <b>You</b> : (r.rep ?? <span className="muted">None</span>)}</td>
+                      <td>
+                        {repOptions ? (
+                          <RepPicker candidateId={r.id} value={r.repId} options={repOptions} note={r.repNote} compact />
+                        ) : r.mine ? (
+                          <b>You</b>
+                        ) : (
+                          (r.rep ?? <span className="muted">None</span>)
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

@@ -32,7 +32,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <nav className={styles.bar} aria-label="Admin">
         {!admin && me.manager && <Link href="/admin/reps">Team</Link>}
         <Link href={!admin && me.manager ? "/admin?mine=1" : "/admin"}>{admin ? "Dashboard" : "My dashboard"}</Link>
-        <Link href="/admin/candidates">Candidates</Link>
+        <Link href="/admin/candidates">🔎 Browse candidates</Link>
         <Link href="/admin/room">Team Room</Link>
         {admin && <Link href="/admin/agreements">Introductions</Link>}
         {admin && <Link href="/admin/clients">Clients</Link>}
@@ -42,7 +42,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </Link>
         {admin && <Link href="/admin/reps">Reps</Link>}
         <Link href="/admin/calls">{me.manager ? "Calls" : "My calls"}</Link>
-        <Link href="/admin/browse">🔎 Browse candidates</Link>
         {me.id && <Link href="/admin/booking-link">📅 My booking link</Link>}
         <Link href="/admin/messages">
           💬 Messages{waiting ? <span className={styles.badge}>{waiting}</span> : null}

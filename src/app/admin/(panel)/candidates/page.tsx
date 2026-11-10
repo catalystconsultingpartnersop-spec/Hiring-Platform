@@ -1,112 +1,119 @@
-import { goldOf } from "@/lib/gold";
-import Link from "next/link";
 import { db } from "@/lib/db";
-import { dateShort, refCode } from "@/lib/format";
-
+import { goldOf } from "@/lib/gold";
+import { refCode, LEVEL_LABEL, WORK_MODE_LABEL } from "@/lib/format";
 import { requireStaff } from "@/lib/session";
-import { releaseWaitingProfiles } from "@/lib/promise";
 import { effectiveReps, repOptions } from "@/lib/reps";
-import { after } from "next/server";
+import { releaseWaitingProfiles } from "@/lib/promise";
+import { parseResult } from "@/lib/strengths";
 import { backfillWorkingGenius } from "@/lib/readAssessment";
 import { backfillStrengths } from "@/lib/strengthsBackfill";
-import { RepPicker } from "./RepPicker";
-import { WGChips } from "./WGChips";
-import styles from "../admin.module.css";
+import { after } from "next/server";
+import { Board, type Row, type Start } from "./Board";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Browse candidates" };
 
-const VIEWS = [
-  ["applied", "New applications"],
-  ["draft", "Drafts"],
-  ["listed", "Listed"],
-  ["paused", "Paused"],
-  ["hired", "Hired"],
-  ["archived", "Archived"],
-] as const;
+const VIEWS = ["applied", "draft", "listed", "paused", "hired", "archived"];
 
-type CandRow = {
-  id: string;
-  status: string;
-  full_name: string;
-  email: string;
-  headline: string | null;
-  role_category: string | null;
-  created_at: string;
-  listed_at: string | null;
-  updated_at: string;
-  added_by: string | null;
-  working_genius: string | null;
-  assessment_path: string | null;
-  application: Record<string, string> | null;
-  staff: { full_name: string | null; email: string } | null;
-};
-
-export default async function CandidatesList({ searchParams }: PageProps<"/admin/candidates">) {
+// Every candidate on the team, in one sortable, filterable view, so reps can scan
+// for different kinds of people at a glance. Old links (?view=applied, ?gold=1,
+// ?q=…) open it with the matching filters already on.
+export default async function Browse({ searchParams }: PageProps<"/admin/candidates">) {
   const sp = await searchParams;
   const me = await requireStaff();
   await releaseWaitingProfiles();
   const admin = me.role === "admin";
-  const view = typeof sp.view === "string" && VIEWS.some(([v]) => v === sp.view) ? sp.view : "applied";
-  const q = typeof sp.q === "string" ? sp.q.trim().toLowerCase() : "";
-
   const { data, error } = await db()
     .from("candidates")
-    .select("id, status, full_name, email, headline, role_category, created_at, listed_at, updated_at, added_by, working_genius, assessment_path, application, staff(full_name, email)")
-    .order("created_at", { ascending: false });
-  let cands = (data ?? []) as unknown as CandRow[];
-  // Everyone can see every candidate. Reps start on their own ("Mine") and can switch to Everyone.
-  const who = !me.manager && sp.who !== "all" ? "mine" : "all";
-  const owner = await effectiveReps(cands);
-  // Gold standard: everyone's, whatever "Mine / Everyone" says.
-  const goldView = sp.gold === "1";
-  const goldAll = cands.filter((c) => goldOf(c));
-  if (who === "mine") cands = cands.filter((c) => owner.get(c.id)?.id === me.id);
-  const count = (s: string) => cands.filter((c) => c.status === s).length;
-  const shown = goldView && !q
-    ? goldAll
-    : cands.filter((c) =>
-        q ? [c.full_name, c.email, c.headline, c.role_category, refCode(c.id)].join(" ").toLowerCase().includes(q) : c.status === view,
-      );
-  const options = await repOptions();
-  const reps = owner;
-  const repName = (id: string | undefined) => options.find(([x]) => x === id)?.[1]?.split(" (")[0];
-  const withWho = (href: string) => (who === "all" && !me.manager ? `${href}${href.includes("?") ? "&" : "?"}who=all` : href);
+    .select(
+      "id, status, full_name, email, headline, role_category, also_roles, industry, also_industries, level, location_region, work_mode, salary_min, salary_max, working_genius, assessment_path, created_at, listed_at, added_by, application",
+    );
+  const cands = (data ?? []) as unknown as {
+    id: string;
+    status: string;
+    full_name: string;
+    email: string;
+    headline: string | null;
+    role_category: string | null;
+    also_roles: string[] | null;
+    industry: string | null;
+    also_industries: string[] | null;
+    level: string | null;
+    location_region: string | null;
+    work_mode: string | null;
+    salary_min: number | null;
+    salary_max: number | null;
+    working_genius: string | null;
+    assessment_path: string | null;
+    created_at: string;
+    listed_at: string | null;
+    added_by: string | null;
+    application: Record<string, string> | null;
+  }[];
+  const [owners, options, { data: unlocks }] = await Promise.all([
+    effectiveReps(cands),
+    repOptions(),
+    db().from("unlocks").select("candidate_id").not("confirmed_at", "is", null),
+  ]);
   // Reports uploaded before results were read automatically: catch up a few at a time.
   after(() => backfillWorkingGenius(3).catch(() => null));
   after(() => backfillStrengths().catch(() => null));
 
+  const interest = new Map<string, number>();
+  for (const u of unlocks ?? []) interest.set(u.candidate_id as string, (interest.get(u.candidate_id as string) ?? 0) + 1);
+  const repName = (id?: string) => (id ? (options.find(([x]) => x === id)?.[1] ?? "").split(" (")[0].split(" ")[0] || "Rep" : "");
+
+  const rows: Row[] = cands.map((c) => {
+    const l = parseResult(c.working_genius);
+    const o = owners.get(c.id);
+    const rep = o?.id;
+    return {
+      id: c.id,
+      ref: refCode(c.id),
+      name: c.full_name,
+      email: c.email ?? "",
+      repId: rep ?? "",
+      repNote: o?.viaCall ? "from their call" : undefined,
+      status: c.status,
+      headline: c.headline,
+      roles: [c.role_category, ...(c.also_roles ?? [])].filter((x): x is string => !!x?.trim()),
+      industries: [c.industry, ...(c.also_industries ?? [])].filter((x): x is string => !!x?.trim()),
+      level: c.level ? (LEVEL_LABEL[c.level] ?? c.level) : null,
+      levelRank: c.level === "senior" ? 3 : c.level === "experienced" ? 2 : c.level === "beginner" ? 1 : 0,
+      place: c.location_region?.trim() || null,
+      mode: c.work_mode ? (WORK_MODE_LABEL[c.work_mode] ?? c.work_mode) : null,
+      payMin: c.salary_min,
+      payMax: c.salary_max,
+      wg: l.length === 6 ? l.join("") : null,
+      assessment: l.length === 6 ? "done" : c.assessment_path ? "uploaded" : "missing",
+      available: c.application?.available ?? null,
+      hours: c.application?.hours ?? null,
+      rep: rep ? (rep === me.id ? "You" : repName(rep)) : null,
+      mine: rep === me.id,
+      gold: !!goldOf(c),
+      interest: interest.get(c.id) ?? 0,
+      added: c.created_at,
+      listed: c.listed_at,
+    };
+  });
+
+  const q = typeof sp.q === "string" ? sp.q.trim() : "";
+  const view = typeof sp.view === "string" && VIEWS.includes(sp.view) ? sp.view : null;
+  const start: Start =
+    q || sp.gold === "1"
+      ? { status: [], q, gold: sp.gold === "1" }
+      : { status: [view ?? (rows.some((r) => r.status === "applied") ? "applied" : "listed")], mine: sp.mine === "1" };
+  if (!view && !q && sp.gold !== "1" && start.status[0] === "applied") start.status.push("listed");
+
   return (
     <>
-      <div className="page-head" style={{ paddingBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "end", gap: 16, flexWrap: "wrap" }}>
-        <div>
-          <h1>Candidates</h1>
-          {!me.manager && (
-            <div className={styles.tabs} style={{ marginTop: 8 }}>
-              <Link href={`/admin/candidates?view=${view}`} aria-current={who === "mine" ? "page" : undefined}>
-                Mine
-              </Link>
-              <Link href={`/admin/candidates?view=${view}&who=all`} aria-current={who === "all" ? "page" : undefined}>
-                Everyone
-              </Link>
-            </div>
-          )}
-        </div>
-        <form style={{ display: "flex", gap: 8 }}>
-          <input className="input" name="q" defaultValue={q} placeholder="Search name, email, ref…" style={{ minWidth: 240 }} />
-          {who === "all" && !me.manager && <input type="hidden" name="who" value="all" />}
-          <button className="btn btn-small" type="submit">
-            Search
-          </button>
-        </form>
+      <div className="page-head">
+        <h1>Browse candidates</h1>
+        <p>Every candidate on the team. Sort, filter and group to spot the right kind of person fast.</p>
       </div>
       {typeof sp.deleted === "string" && (
         <p className="notice notice-good" role="status">
           {sp.deleted} was deleted.
-        </p>
-      )}
-      {sp.password === "set" && (
-        <p className="notice notice-good" role="status">
-          Password saved. Next time, sign in with your email and password.
         </p>
       )}
       {error && (
@@ -114,83 +121,7 @@ export default async function CandidatesList({ searchParams }: PageProps<"/admin
           Couldn&rsquo;t load candidates: {error.message}
         </p>
       )}
-      <div className={styles.tabs}>
-        {VIEWS.map(([v, label]) => (
-          <Link key={v} href={withWho(`/admin/candidates?view=${v}`)} aria-current={!q && !goldView && v === view ? "page" : undefined}>
-            {label} ({count(v)})
-          </Link>
-        ))}
-        <Link href="/admin/candidates?gold=1" aria-current={goldView && !q ? "page" : undefined}>
-          ⭐ Gold standard ({goldAll.length})
-        </Link>
-      </div>
-      {goldView && !q && <p className="small muted">Candidates the rep who met them marked as worth placing. Only our team sees this, never business owners.</p>}
-      {q && <p className="small muted">Search results for &ldquo;{q}&rdquo; across all statuses. <Link href="/admin/candidates">Clear</Link></p>}
-      {shown.length === 0 ? (
-        <p className="panel panel-wash">
-          No one here. <Link href="/admin/candidates/new">Add a candidate</Link>
-        </p>
-      ) : (
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Profile</th>
-                <th title="Green: natural strengths. Yellow: can do well. Red: wears them down.">Strengths</th>
-                {q && <th>Status</th>}
-                <th>Rep</th>
-                <th>{view === "listed" && !q ? "Listed" : view === "hired" && !q ? "Hired" : "Added"}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((c) => (
-                <tr key={c.id}>
-                  <td>
-                    <Link prefetch={false} href={`/admin/candidates/${c.id}`}>{c.full_name}</Link>
-                    {goldOf(c) && (
-                      <span title={`Gold standard, says ${goldOf(c)!.by_name}`} style={{ marginLeft: 6, background: "#ffe08a", border: "1px solid #e2a800", borderRadius: 999, padding: "1px 7px", fontSize: 12, fontWeight: 800 }}>
-                        ⭐ Gold
-                      </span>
-                    )}
-                    <div className="small muted">{c.email}</div>
-                  </td>
-                  <td>
-                    {c.headline ?? <span className="muted">No profile yet</span>}
-                    <div className="small muted">
-                      {refCode(c.id)}
-                      {c.role_category ? `, ${c.role_category}` : ""}
-                    </div>
-                  </td>
-                  <td>
-                    <WGChips result={c.working_genius} uploaded={!!c.assessment_path} tried={!!c.application?.wg_read_at} />
-                  </td>
-                  {q && (
-                    <td>
-                      <span className="tag">{c.status}</span>
-                    </td>
-                  )}
-                  <td>
-                    {admin ? (
-                      <RepPicker
-                        candidateId={c.id}
-                        value={reps.get(c.id)?.id ?? ""}
-                        options={options}
-                        note={reps.get(c.id)?.viaCall ? "from their call" : undefined}
-                      />
-                    ) : reps.get(c.id) ? (
-                      reps.get(c.id)?.id === me.id ? <b>You</b> : (repName(reps.get(c.id)?.id) ?? "Another rep")
-                    ) : (
-                      <span className="muted">Not assigned</span>
-                    )}
-                  </td>
-                  <td>{dateShort(view === "listed" && !q ? c.listed_at : view === "hired" && !q ? c.updated_at : c.created_at)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <Board key={JSON.stringify(start)} rows={rows} start={start} repOptions={admin ? options : null} />
     </>
   );
 }
