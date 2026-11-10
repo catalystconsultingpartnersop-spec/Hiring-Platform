@@ -42,6 +42,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </Link>
         {admin && <Link href="/admin/reps">Reps</Link>}
         <Link href="/admin/calls">{me.manager ? "Calls" : "My calls"}</Link>
+        <Link href="/admin/browse">🔎 Browse candidates</Link>
         {me.id && <Link href="/admin/booking-link">📅 My booking link</Link>}
         <Link href="/admin/messages">
           💬 Messages{waiting ? <span className={styles.badge}>{waiting}</span> : null}
