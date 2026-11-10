@@ -1,6 +1,7 @@
 import { refSlug } from "@/lib/shareKit";
 import { requireStaff } from "@/lib/session";
 import { PointToOwner } from "./PointToOwner";
+import { Suggested } from "./Suggested";
 import { GoldBadge } from "./GoldBadge";
 import { goldOf } from "@/lib/gold";
 import { pathCtx, phoneLinks, pickNudgeText } from "@/lib/pathEmails";
@@ -135,7 +136,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
       {c.status === "listed" && c.headline && (
         <PointToOwner candidateId={c.id} headline={c.headline} link={`${siteUrl().replace(/^https?:\/\//, "")}/c/${refCode(c.id)}${me.name ? `?r=${refSlug(me.name.split(" ")[0])}` : ""}`} repFirst={(me.name || "").split(" ")[0]} mine={canEdit && !me.manager} first={c.full_name.split(" ")[0]} gold={!!goldOf(c as unknown as { status: string; application: Record<string, unknown> | null })} />
       )}
-      <PointedLog candidateId={c.id} />
+      <Suggested candidateId={c.id} link={`${siteUrl().replace(/^https?:\/\//, "")}/c/${refCode(c.id)}${me.name ? `?r=${refSlug(me.name.split(" ")[0])}` : ""}`} repFirst={(me.name || "").split(" ")[0]} first={c.full_name.split(" ")[0]} myEmail={me.email} />
       <p className="small" style={{ margin: "6px 0 0" }}>
         <Link href={`/admin/room?spot=${c.id}`}>⭐ Post {c.full_name.split(" ")[0]} to the Team Room</Link>
       </p>
@@ -298,20 +299,6 @@ function RO({ edit, children }: { edit: boolean; children: React.ReactNode }) {
   return edit ? <>{children}</> : <fieldset disabled style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>{children}</fieldset>;
 }
 
-// Who this candidate has been sent to, so nobody sends them to the same owner twice.
-async function PointedLog({ candidateId }: { candidateId: string }) {
-  const { data } = await db().from("activity_log").select("at, details").eq("action", "candidate_pointed").eq("details->>candidate_id", candidateId).order("at", { ascending: false }).limit(20);
-  const rows = (data ?? []) as { at: string; details: { to_name?: string | null; to_key?: string; channel?: string; by_name?: string } }[];
-  if (!rows.length) return null;
-  return (
-    <p className="small muted" style={{ marginTop: 8 }}>
-      Passed along to:{" "}
-      {rows
-        .map((r) => `${r.details.to_name || r.details.to_key} (${r.details.channel === "whatsapp" ? "WhatsApp" : r.details.channel}, by ${(r.details.by_name ?? "").split(" ")[0]}, ${dateShort(r.at)})`)
-        .join(" · ")}
-    </p>
-  );
-}
 
 // An employer offered times and the candidate hasn't answered: show it, with one-tap nudges.
 async function WaitingOn({ candidateId, canEdit, repFirst }: { candidateId: string; canEdit: boolean; repFirst: string }) {

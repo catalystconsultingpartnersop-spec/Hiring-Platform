@@ -1702,7 +1702,7 @@ export async function startCallWithSomeone(
 // The candidate stays their own rep's: pointing doesn't change who gets credit.
 export async function pointCandidate(
   candidateId: string,
-  o: { name: string; contact: string; channel: "email" | "whatsapp" | "text"; message: string; force?: boolean },
+  o: { name: string; contact: string; channel: "email" | "whatsapp" | "text"; message: string; force?: boolean; token?: string },
 ): Promise<{ ok?: boolean; error?: string; already?: string }> {
   const me = await requireStaff();
   const { data: c } = await db().from("candidates").select("id, status, headline").eq("id", candidateId).maybeSingle();
@@ -1741,7 +1741,7 @@ export async function pointCandidate(
     });
     if (!r.ok) return { error: `The email didn't send: ${r.error}` };
   }
-  await logActivity(staffActor(me), "candidate_pointed", { candidate_id: candidateId, to_key: key, to_name: name || null, channel: o.channel, by_name: me.name || me.email });
+  await logActivity(staffActor(me), "candidate_pointed", { candidate_id: candidateId, to_key: key, to_name: name || null, channel: o.channel, by_name: me.name || me.email, by_email: me.email, token: /^[a-z0-9]{6,16}$/.test(o.token ?? "") ? o.token : undefined });
   revalidatePath(`/admin/candidates/${candidateId}`);
   return { ok: true };
 }

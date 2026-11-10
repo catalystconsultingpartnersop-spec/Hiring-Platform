@@ -14,8 +14,11 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
   const [edited, setEdited] = useState<string | null>(null);
   const [state, setState] = useState<{ ok?: boolean; error?: string; already?: string } | null>(null);
   const [pending, start] = useTransition();
+  // A tag on this one send's link, so we can tell the rep when it's opened.
+  const [token, setToken] = useState(() => Math.random().toString(36).slice(2, 10));
+  const sentLink = `${link}${link.includes("?") ? "&" : "?"}s=${token}`;
 
-  const preset = `Hi${name.trim() ? ` ${name.trim()}` : ""}, ${mine ? "someone I've been working with came to mind for you" : "someone came to mind for you"}:\n${headline}\n\nTake a look: ${link}\n\nLooking is free, and you only pay if you hire.\n${repFirst}`;
+  const preset = `Hi${name.trim() ? ` ${name.trim()}` : ""}, ${mine ? "someone I've been working with came to mind for you" : "someone came to mind for you"}:\n${headline}\n\nTake a look: ${sentLink}\n\nLooking is free, and you only pay if you hire.\n${repFirst}`;
   const message = edited ?? preset;
   const isEmail = contact.includes("@");
   const digits = contact.replace(/\D/g, "");
@@ -30,7 +33,7 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
     if (ch === "email" && !isEmail) return setState({ error: "That's a phone number. Use WhatsApp or Text, or type their email." });
     if (ch !== "email" && isEmail) return setState({ error: "That's an email address. Use Email, or type their phone number." });
     start(async () => {
-      const r = await pointCandidate(candidateId, { name, contact, channel: ch, message, force });
+      const r = await pointCandidate(candidateId, { name, contact, channel: ch, message, force, token });
       setState(r);
       const href = hrefFor(ch);
       if (r.ok && href) window.location.href = href;
@@ -80,7 +83,10 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
       <section className="panel" style={{ marginTop: 18 }}>
         <strong>Passed along ✓</strong>{" "}
         <span className="small muted">
-          {channel === "email" ? `Emailed to ${contact}. Replies come to you.` : `Your ${channel === "whatsapp" ? "WhatsApp" : "messages"} opened with it ready. Tap send there.`} That&rsquo;s it, nothing else to do.
+          {channel === "email"
+            ? `Emailed to ${contact} from the site, in your name. Their reply goes to your email inbox.`
+            : `Your ${channel === "whatsapp" ? "WhatsApp" : "Messages app"} opened with it ready. Tap send there, and the conversation stays in your ${channel === "whatsapp" ? "WhatsApp" : "phone"}.`}{" "}
+          We&rsquo;ll email you when they open the profile. Everyone you suggested is listed below, with a follow-up button.
         </span>{" "}
         <button
           type="button"
@@ -90,6 +96,7 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
             setName("");
             setContact("");
             setEdited(null);
+            setToken(Math.random().toString(36).slice(2, 10));
           }}
         >
           Pass it to someone else
