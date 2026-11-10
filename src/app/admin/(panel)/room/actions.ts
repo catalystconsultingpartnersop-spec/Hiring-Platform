@@ -7,6 +7,8 @@ import { teamUrl } from "@/lib/format";
 import { requireStaff, staffActor } from "@/lib/session";
 import { setSetting } from "@/lib/settings";
 import { allow, SLOW_DOWN } from "@/lib/throttle";
+import { after } from "next/server";
+import { emailNewPost, emailReply, setRoomEmail, type RoomEmail } from "@/lib/roomNotify";
 import { codesIn, roomCandidates, specialties, teamMembers, type Kind, type Specialty } from "@/lib/teamRoom";
 
 export type RoomState = { error?: string; ok?: boolean };
@@ -23,7 +25,7 @@ async function candIds(form: FormData, text: string) {
 }
 
 // @Name tags: a short email to whoever was tagged.
-async function notifyTagged(text: string, me: { email: string; name: string }, link: string) {
+async function notifyTagged(text: string, me: { email: string; name: string }, link: string): Promise<string[]> {
   const team = await teamMembers();
   const tagged = team.filter((t) => t.email !== me.email && new RegExp(`@${t.name.split(" ")[0]}\\b`, "i").test(text));
   for (const t of tagged)
@@ -32,6 +34,7 @@ async function notifyTagged(text: string, me: { email: string; name: string }, l
       subject: `${me.name.split(" ")[0]} mentioned you in the Team Room`,
       html: `<p><strong>${escapeHtml(me.name)}</strong> mentioned you:</p><blockquote style="border-left:3px solid #f2b300;margin:0;padding:6px 12px">${escapeHtml(text.slice(0, 600))}</blockquote><p><a href="${link}">Open the Team Room</a></p>`,
     }).catch(() => null);
+  return tagged.map((t) => t.email.toLowerCase());
 }
 
 export async function postToRoom(_prev: RoomState, form: FormData): Promise<RoomState> {
@@ -43,7 +46,12 @@ export async function postToRoom(_prev: RoomState, form: FormData): Promise<Room
   const cands = await candIds(form, text);
   if (kind === "spotlight" && !cands.length) return { error: "Attach the candidate you're spotlighting." };
   await logActivity(staffActor(me), "team_post", { kind, text, cands, by_name: me.name, by_id: me.id });
-  await notifyTagged(text, me, `${teamUrl()}/admin/room`);
+  const tagged = await notifyTagged(text, me, `${teamUrl()}/admin/room`);
+  // Let the team know right away (each person can switch to replies and tags only).
+  const { data: mine } = await db().from("activity_log").select("id").eq("action", "team_post").eq("actor", staffActor(me)).order("at", { ascending: false }).limit(1);
+  after(() =>
+    emailNewPost({ postId: (mine?.[0]?.id as number | undefined) ?? null, kind, text, by: { email: me.email, name: me.name || me.email }, tagged, link: `${teamUrl()}/admin/room` }).catch(() => null),
+  );
   revalidatePath("/admin/room");
   return { ok: true };
 }
@@ -59,13 +67,9 @@ export async function replyToPost(postId: number, _prev: RoomState, form: FormDa
   await logActivity(staffActor(me), "team_reply", { post_id: postId, text, cands, by_name: me.name, by_id: me.id });
   const author = String(post.actor).replace(/^staff:/, "");
   const link = `${teamUrl()}/admin/room#p${postId}`;
-  if (author && author !== me.email && author.includes("@"))
-    await sendEmail({
-      to: author,
-      subject: `${me.name.split(" ")[0]} replied to your post`,
-      html: `<p><strong>${escapeHtml(me.name)}</strong> replied in the Team Room${cands.length ? ` and attached ${cands.length === 1 ? "a candidate" : `${cands.length} candidates`}` : ""}:</p>${text ? `<blockquote style="border-left:3px solid #f2b300;margin:0;padding:6px 12px">${escapeHtml(text.slice(0, 600))}</blockquote>` : ""}<p><a href="${link}">See the reply</a></p>`,
-    }).catch(() => null);
-  await notifyTagged(text, me, link);
+  const tagged = await notifyTagged(text, me, link);
+  // The person who posted, plus everyone else already in the conversation.
+  after(() => emailReply({ postId, postAuthor: author, text, cands: cands.length, by: { email: me.email, name: me.name || me.email }, tagged, link }).catch(() => null));
   revalidatePath("/admin/room");
   return { ok: true };
 }
@@ -120,5 +124,12 @@ export async function cancelTeamCall(callId: number) {
   if (!data) return;
   if (!me.manager && String(data.actor) !== staffActor(me)) return;
   await logActivity(staffActor(me), "team_call_cancelled", { call_id: callId });
+  revalidatePath("/admin/room");
+}
+
+export async function setRoomEmailPref(form: FormData) {
+  const me = await requireStaff();
+  const v = String(form.get("room_email") ?? "all");
+  await setRoomEmail(me.email, (v === "mine" ? "mine" : "all") as RoomEmail);
   revalidatePath("/admin/room");
 }

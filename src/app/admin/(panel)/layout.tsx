@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { isMine, listThreads } from "@/lib/ownerMessages";
 import { requireStaff } from "@/lib/session";
+import { roomUnread } from "@/lib/roomNotify";
 import { adminLogout } from "../actions";
 import styles from "./admin.module.css";
 
@@ -18,6 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!admin && me.id) q = q.contains("routed_to", [me.id]);
   const { count: openRequests } = await q;
   // Only conversations that are theirs to answer.
+  const roomNew = await roomUnread(me.email).catch(() => 0);
   const waiting = (await listThreads(admin ? null : me.id).catch(() => [])).filter((t) => t.waiting && isMine(t, me)).length;
   // Reps sign the rep agreement once before using the back office.
   if (!admin && me.id) {
@@ -33,7 +35,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {!admin && me.manager && <Link href="/admin/reps">Team</Link>}
         <Link href={!admin && me.manager ? "/admin?mine=1" : "/admin"}>{admin ? "Dashboard" : "My dashboard"}</Link>
         <Link href="/admin/candidates">🔎 Browse candidates</Link>
-        <Link href="/admin/room">Team Room</Link>
+        <Link href="/admin/room">
+          Team Room{roomNew ? <span className={styles.badge}>{roomNew}</span> : null}
+        </Link>
         {admin && <Link href="/admin/agreements">Introductions</Link>}
         {admin && <Link href="/admin/clients">Clients</Link>}
         {admin && <Link href="/admin/payments">Finance</Link>}

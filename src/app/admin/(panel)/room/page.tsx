@@ -6,7 +6,9 @@ import { Composer, ReplyBox } from "./Composer";
 import { CallBox } from "./CallBox";
 import { allNotes, googleCalendarLink, nextCall, teamCalls } from "@/lib/teamCalls";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
-import { cancelTeamCall, removePost, setSpecialty } from "./actions";
+import { cancelTeamCall, removePost, setRoomEmailPref, setSpecialty } from "./actions";
+import { markRoomSeen, roomEmailPrefs } from "@/lib/roomNotify";
+import { after } from "next/server";
 import s from "./room.module.css";
 
 export const metadata = { title: "Team Room" };
@@ -60,7 +62,9 @@ const KIND_TAG: Record<string, [string, string]> = {
 export default async function TeamRoom({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const me = await requireStaff();
   const sp = await searchParams;
-  const [posts, cands, spec, team, calls, notes] = await Promise.all([loadRoom(), roomCandidates(), specialties(), teamMembers(), teamCalls(), allNotes()]);
+  const [posts, cands, spec, team, calls, notes, emailPrefs] = await Promise.all([loadRoom(), roomCandidates(), specialties(), teamMembers(), teamCalls(), allNotes(), roomEmailPrefs()]);
+  // Opening the room clears the unread count on the menu.
+  after(() => markRoomSeen(me.email).catch(() => null));
   const byId = new Map(cands.map((c) => [c.id, c]));
   const cardsFor = (ids: string[], text: string) => {
     const codes = codesIn(text);
@@ -311,7 +315,21 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
             </form>
           )}
         </div>
-        <p className="small muted">You&rsquo;ll get an email when someone replies to your post or tags you, plus one short summary a day.</p>
+        <form action={setRoomEmailPref} className={s.card}>
+          <h3>Email me</h3>
+          <label className="small" style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 6 }}>
+            <input type="radio" name="room_email" value="all" defaultChecked={emailPrefs[me.email.toLowerCase()] !== "mine"} /> Every new post, plus replies to mine and when I&rsquo;m tagged
+          </label>
+          <label className="small" style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
+            <input type="radio" name="room_email" value="mine" defaultChecked={emailPrefs[me.email.toLowerCase()] === "mine"} /> Only replies to my posts and when I&rsquo;m tagged
+          </label>
+          <button className="btn btn-small btn-ghost" type="submit">
+            Save
+          </button>
+          <p className="small muted" style={{ margin: "8px 0 0" }}>
+            Replies in a conversation you&rsquo;re in always come to you. Plus one short summary a day. The menu shows a number when there&rsquo;s something new.
+          </p>
+        </form>
       </aside>
     </div>
   );
