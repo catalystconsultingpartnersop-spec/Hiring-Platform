@@ -2,6 +2,7 @@ import { db } from "./db";
 import { isCheckAccount, isOwnerEmail } from "./session";
 import { refSlug } from "./shareKit";
 import { getSetting, setSetting } from "./settings";
+import { allReferrers } from "./referrers";
 
 // The finder's share: on every hire, 5% of the fee goes to whoever found the
 // business owner: a rep who passed the candidate to that owner, or whose share
@@ -13,7 +14,8 @@ import { getSetting, setSetting } from "./settings";
 export const FINDER_PCT = 5;
 
 type StaffRow = { id: string; email: string; full_name: string | null; is_partner?: boolean | null; active?: boolean | null };
-export type FinderShare = { hireId: string; staffId: string; cents: number; how: "passed" | "link" | "came_in"; paidAt: string | null };
+// staffId is a rep's id, or "ref:<code>" for a referral partner (someone outside the team).
+export type FinderShare = { hireId: string; staffId: string; cents: number; how: "passed" | "link" | "came_in" | "referrer"; paidAt: string | null };
 
 type Paid = Record<string, { staff_id: string; cents: number; paid_at: string; how?: FinderShare["how"] }>;
 const KEY = "finder_paid";
@@ -44,10 +46,11 @@ export async function finderShares(
   const out = new Map<string, FinderShare>();
   const live = hires.filter((h) => h.status === "paid" || h.status === "hired");
   if (!live.length) return out;
-  const [{ data: staff }, { data: pointed }, paid] = await Promise.all([
+  const [{ data: staff }, { data: pointed }, paid, referrers] = await Promise.all([
     db().from("staff").select("id, email, full_name, is_partner, active"),
     db().from("activity_log").select("actor, at, details").eq("action", "candidate_pointed").in("details->>candidate_id", [...new Set(live.map((h) => h.candidate_id))]),
     finderPaid(),
+    allReferrers(),
   ]);
   const people = ((staff ?? []) as StaffRow[]).filter((s) => !isCheckAccount(s.email));
   const byEmail = new Map(people.map((s) => [s.email.toLowerCase(), s]));
@@ -76,6 +79,13 @@ export async function finderShares(
       who = bySlug.get(refSlug(h.owner.referred_by)) ?? null;
       if (who) how = "link";
     }
+    // 2b. The owner came through a referral partner's link (not their own business).
+    if (!who && h.owner.referred_by && referrers[h.owner.referred_by]) {
+      const r = referrers[h.owner.referred_by];
+      const self = r.email === h.owner.email.toLowerCase() || (!!digits(r.phone) && digits(r.phone) === digits(h.owner.phone));
+      if (!self) out.set(h.id, { hireId: h.id, staffId: `ref:${r.code}`, cents: Math.round((h.amount_cents * FINDER_PCT) / 100), how: "referrer", paidAt: null });
+      continue;
+    }
     // 3. Nobody found them: only the partner's own candidates earn it (back to him).
     if (!who) {
       if (!partner || h.repId !== partner.id) continue;
@@ -93,4 +103,5 @@ export const HOW_LABEL: Record<FinderShare["how"], string> = {
   passed: "passed the candidate to this owner",
   link: "the owner came through their link",
   came_in: "their own candidate, and the owner came in on their own",
+  referrer: "a referral partner: the owner came through their link",
 };

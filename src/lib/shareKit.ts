@@ -52,6 +52,9 @@ export async function tagReferral(ownerId: string) {
   try {
     const ref = refSlug((await cookies()).get(REF_COOKIE)?.value ?? "");
     if (!ref) return;
+    // A referral partner who's been turned off no longer earns on new owners.
+    const { allReferrers } = await import("./referrers");
+    if ((await allReferrers())[ref]?.off) return;
     await db().from("owners").update({ referred_by: ref }).eq("id", ownerId).is("referred_by", null);
   } catch {
     /* never block sign-up over this */

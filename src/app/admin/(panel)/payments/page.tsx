@@ -14,6 +14,8 @@ import { requireAdmin } from "@/lib/session";
 import { commissionPercent } from "@/lib/settings";
 import { deleteExpense, markCommissionPaid, payRepAll, setCommissionAmount, undoCommissionPaid } from "../../actions";
 import { CommissionRateForm } from "./CommissionRateForm";
+import { allReferrers } from "@/lib/referrers";
+import { payReferrer, toggleReferrer } from "./referrerActions";
 import { ExpenseForm } from "./ExpenseForm";
 import styles from "../admin.module.css";
 import { RefundButton } from "../RefundButton";
@@ -78,6 +80,18 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
   const finderList = [...finders.values()];
   const finderOwed = finderList.filter((f) => !f.paidAt);
   const finderOwedTotal = finderOwed.reduce((s, f) => s + f.cents, 0);
+  // Referral partners: people outside the team who send business owners our way.
+  const referrers = await allReferrers();
+  const { data: refOwners } = await db().from("owners").select("referred_by").in("referred_by", Object.keys(referrers).length ? Object.keys(referrers) : ["-"]);
+  const joined = new Map<string, number>();
+  for (const o of (refOwners ?? []) as { referred_by: string }[]) joined.set(o.referred_by, (joined.get(o.referred_by) ?? 0) + 1);
+  const refRows = Object.values(referrers)
+    .map((r) => {
+      const mine = finderList.filter((f) => f.staffId === `ref:${r.code}`);
+      return { r, joined: joined.get(r.code) ?? 0, hires: mine.length, owed: mine.filter((f) => !f.paidAt).reduce((t, f) => t + f.cents, 0), paid: mine.filter((f) => f.paidAt).reduce((t, f) => t + f.cents, 0) };
+    })
+    .sort((a, b) => b.owed - a.owed || b.joined - a.joined || b.r.created_at.localeCompare(a.r.created_at));
+  const nameOf = (id: string) => (id.startsWith("ref:") ? `${referrers[id.slice(4)]?.name ?? "Referral partner"} (referral partner)` : repName(people.get(id)));
 
   // Per-rep totals
   const reps = new Map<string, { rep: StaffLite; hires: number; owed: number; paid: number }>();
@@ -210,7 +224,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
         </div>
         <Link className={styles.stat} href={`${qs("owed", "")}#payments`}>
           <strong>{money(sum(owed) + finderOwedTotal)}</strong>
-          <span>Owed to reps now ({owed.length + finderOwed.length} share{owed.length + finderOwed.length === 1 ? "" : "s"})</span>
+          <span>Owed now, reps and referral partners ({owed.length + finderOwed.length} share{owed.length + finderOwed.length === 1 ? "" : "s"})</span>
         </Link>
         <Link className={styles.stat} href="/admin/agreements?stage=considering">
           <strong>{money(pipeline)}</strong>
@@ -271,6 +285,65 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
         </table>
       </div>
       <CommissionRateForm pct={pct} />
+
+      <h2 className={styles.h3} style={{ marginTop: 28 }}>Referral partners</h2>
+      <p className="small muted" style={{ marginTop: -6 }}>
+        Anyone can sign up at <a href="/refer" target="_blank">/refer</a> for their own link. When a business owner who came through it hires, they get {FINDER_PCT}% of the fee.
+      </p>
+      {refRows.length === 0 ? (
+        <p className="panel panel-wash small">No one has signed up yet.</p>
+      ) : (
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Who</th>
+                <th>Their link</th>
+                <th>Owners joined</th>
+                <th>Hires</th>
+                <th>Owed</th>
+                <th>Paid</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {refRows.map(({ r, joined, hires, owed, paid }) => (
+                <tr key={r.code} style={r.off ? { opacity: 0.55 } : undefined}>
+                  <td>
+                    <b>{r.name}</b>
+                    <div className="small muted">
+                      {r.email}
+                      {r.phone ? ` · ${r.phone}` : ""}
+                    </div>
+                    <div className="small muted">Pay by: {r.pay || "not given"} · joined {dateShort(r.created_at)}</div>
+                  </td>
+                  <td className="small">?r={r.code}</td>
+                  <td>{joined}</td>
+                  <td>{hires}</td>
+                  <td>{owed ? <strong>{money(owed)}</strong> : "—"}</td>
+                  <td>{paid ? money(paid) : "—"}</td>
+                  <td>
+                    <span style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {owed > 0 && (
+                        <form action={payReferrer.bind(null, r.code)}>
+                          <ConfirmButton className="btn btn-gold btn-small" message={`Mark ${money(owed)} as paid to ${r.name}?`}>
+                            Mark paid
+                          </ConfirmButton>
+                        </form>
+                      )}
+                      <form action={toggleReferrer.bind(null, r.code, !r.off)}>
+                        <button className="btn btn-ghost btn-small" type="submit">
+                          {r.off ? "Turn back on" : "Turn off"}
+                        </button>
+                      </form>
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <h2 className={styles.h3} style={{ marginTop: 28 }}>By month</h2>
       <div className="table-wrap">
@@ -419,7 +492,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
                       {repName(h.rep) ?? <span className="muted">Applied online</span>}
                       {finders.get(h.id) && (
                         <div className="small" style={{ marginTop: 6 }}>
-                          Finder&rsquo;s share ({FINDER_PCT}%): <strong>{repName(people.get(finders.get(h.id)!.staffId))}</strong>{" "}
+                          Finder&rsquo;s share ({FINDER_PCT}%): <strong>{nameOf(finders.get(h.id)!.staffId)}</strong>{" "}
                           {money(finders.get(h.id)!.cents)}{" "}
                           {finders.get(h.id)!.paidAt ? <span className="tag tag-good">Paid out</span> : <span className="tag tag-gold">Owed</span>}
                           <div className="muted">{HOW_LABEL[finders.get(h.id)!.how]}</div>

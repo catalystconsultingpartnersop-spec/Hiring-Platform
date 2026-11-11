@@ -28,6 +28,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/admin/cl
   const sentBy = new Map(
     ((staffRows ?? []) as { full_name: string | null; email: string }[]).map((s) => [refSlug((s.full_name ?? s.email).split(" ")[0]), s.full_name ?? s.email]),
   );
+  for (const r of Object.values(await (await import("@/lib/referrers")).allReferrers())) sentBy.set(r.code, `${r.name} (referral partner)`);
   const byOwner = new Map<string, { signed: number; hires: number; paid: number; considering: number }>();
   for (const a of agreements) {
     const key = a.owners.email;
