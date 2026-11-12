@@ -106,9 +106,6 @@ export default async function Home() {
               So we start with the person. We sit with every candidate, understand their strengths and what they really want, and
               help them see where they belong. So when a position comes along, we have a good sense of who might fit.
             </p>
-            <Link href="/why" className={s.storyDark}>
-              Read our story →
-            </Link>
           </div>
         </div>
       </section>

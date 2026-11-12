@@ -74,9 +74,6 @@ export default async function BillingPage() {
             <Link className="btn btn-gold" href="/meet">
               Meet the founders
             </Link>
-            <Link className={`btn btn-ghost ${styles.light}`} href="/why">
-              Read our story
-            </Link>
           </div>
         </div>
       </section>
