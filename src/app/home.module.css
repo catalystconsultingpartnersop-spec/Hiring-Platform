@@ -103,6 +103,9 @@
 .fee b { color: var(--ink); }
 .fee a { font-weight: 700; color: var(--ink); white-space: nowrap; }
 
+.more { margin: 14px 0 0; font-weight: 700; font-size: 17px; }
+.more a { color: var(--ink); }
+
 /* Invitation */
 .invite { background: radial-gradient(900px 420px at 50% 120%, #2a3656 0%, transparent 60%), var(--ink); color: #fff; padding: clamp(80px, 11vw, 136px) 0; text-align: center; }
 .invite h2 { font-size: clamp(36px, 5vw, 64px); letter-spacing: -0.04em; line-height: 1.04; margin: 0 auto; max-width: 18ch; }

@@ -221,6 +221,9 @@ export default async function Home() {
             <b>One flat fee of $5,000, paid the day you hire.</b> Never a percentage of salary, and nothing at all if you don&rsquo;t hire.{" "}
             <Link href="/billing">Our billing philosophy →</Link>
           </p>
+          <p className={s.more}>
+            <Link href="/how-it-works">How it works, and the questions owners ask →</Link>
+          </p>
         </div>
       </section>
 

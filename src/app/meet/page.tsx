@@ -14,7 +14,8 @@ export default async function MeetPage() {
         <div>
           <h1>Meet the team</h1>
           <p>
-            A short video call with our team. Tell us about the role and hear what we have to offer. Pick how long works for you.
+            A short video call with the people who met the candidates. Tell us about your position, and we&rsquo;ll tell you who might fit.
+            Pick how long works for you.
           </p>
         </div>
       </div>

@@ -21,8 +21,8 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: brandName(),
-    title: "We cracked the code. We found the solution to the hiring pain.",
-    description: "A revolutionary way of hiring. A collection of candidates ready for their next role. Meet the team.",
+    title: "You don't need more résumés. You need the right person.",
+    description: "We've sat down with every candidate and learned what each one is truly great at. So you meet the people who fit your position.",
     images: [{ url: "/share/og.png", width: 1200, height: 630, alt: "We cracked the code. We found the solution to the hiring pain." }],
   },
   twitter: { card: "summary_large_image", images: ["/share/og.png"] },
@@ -91,6 +91,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <Link href={P("/join")} className="hide-sm">
                 Looking for work?
               </Link>
+              <Link href={P("/how-it-works")} className="hide-sm">
+                How it works
+              </Link>
               <Link href={P("/hiring-help")} className="hide-sm">
                 Hiring help
               </Link>
@@ -122,6 +125,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <nav aria-label="For businesses">
               <h3>For businesses</h3>
               <Link href={P("/meet")}>Meet the team</Link>
+              <Link href={P("/how-it-works")}>How it works</Link>
               <Link href={P("/candidates")}>Browse candidates</Link>
               <Link href={P("/hiring-help")}>Hiring help</Link>
               <Link href={P("/billing")}>Billing philosophy</Link>
