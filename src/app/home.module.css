@@ -8,7 +8,7 @@
 .heroGrid { display: grid; grid-template-columns: 1.15fr 0.95fr; gap: clamp(28px, 5vw, 72px); align-items: center; }
 .eyebrow { display: inline-flex; align-items: center; gap: 9px; margin: 0 0 22px; padding: 7px 14px 7px 11px; border-radius: 999px; background: rgba(242, 179, 0, 0.14); border: 1px solid rgba(242, 179, 0, 0.45); color: var(--marigold); font-weight: 700; font-size: 14px; letter-spacing: 0.02em; }
 .eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--marigold); }
-.hero h1 { font-size: clamp(38px, 5.2vw, 70px); line-height: 1.02; letter-spacing: -0.04em; margin: 0; color: var(--marigold); }
+.hero h1 { font-size: clamp(38px, 5.2vw, 70px); line-height: 1.02; letter-spacing: -0.04em; margin: 0; color: #c9d0de; }
 .hero h1 span { display: block; color: #fff; margin-top: 6px; }
 .hero h1 span::after { content: ""; display: block; width: 88px; height: 6px; border-radius: 6px; background: var(--marigold); margin-top: 20px; }
 .wink { font-size: clamp(18px, 1.8vw, 22px); font-style: italic; font-weight: 600; margin: -14px 0 26px; color: var(--marigold); }
