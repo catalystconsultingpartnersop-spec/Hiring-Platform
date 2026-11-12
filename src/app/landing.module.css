@@ -1,8 +1,9 @@
 .hero { background: radial-gradient(1200px 520px at 85% -10%, #2a3656 0%, transparent 60%), var(--ink); color: #fff; padding: clamp(56px, 8vw, 104px) 0 clamp(56px, 7vw, 96px); }
 .heroGrid { display: grid; grid-template-columns: 1.25fr 1fr; gap: clamp(32px, 6vw, 80px); align-items: center; }
 .kicker { color: var(--marigold); font-weight: 700; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 18px; }
-.hero h1 { font-size: clamp(38px, 5vw, 62px); line-height: 1.05; letter-spacing: -0.035em; margin: 0 0 22px; max-width: 16ch; }
-.gold { color: var(--marigold); display: block; }
+.hero h1 { font-size: clamp(40px, 5.4vw, 70px); line-height: 1.02; letter-spacing: -0.035em; margin: 0 0 18px; max-width: 18ch; }
+.gold { color: var(--marigold); display: block; font-size: 0.6em; line-height: 1.15; letter-spacing: -0.02em; margin-top: 14px; }
+.wink { font-size: clamp(18px, 1.8vw, 22px); font-style: italic; font-weight: 600; color: #fff; margin: 0 0 22px; }
 .lede { font-size: clamp(17px, 1.55vw, 20px); line-height: 1.6; color: #d3d9e5; max-width: 40ch; margin: 0 0 32px; }
 .ctaWrap { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
 .center { align-items: center; }
@@ -61,7 +62,7 @@
 }
 @media (max-width: 640px) {
   .hero { padding: 40px 0 44px; }
-  .hero h1 { font-size: 36px; }
+  .hero h1 { font-size: 40px; }
   .lede { font-size: 16.5px; margin-bottom: 26px; }
   .ctaWrap { align-items: stretch; text-align: center; }
   .ctaBtn { justify-content: center; }

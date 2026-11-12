@@ -28,10 +28,11 @@ export default async function Home() {
       <section className={s.hero}>
         <div className={`wrap ${s.heroGrid}`}>
           <div>
-            <p className={s.kicker}>For business owners who are hiring</p>
+            <p className={s.kicker}>A revolutionary way of hiring</p>
             <h1>
-              A revolutionary way of hiring. <span className={s.gold}>It starts with a conversation.</span>
+              We cracked the code. <span className={s.gold}>We found the solution to the hiring pain.</span>
             </h1>
+            <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
             <p className={s.lede}>
               You know your business, and you know the kind of person you need. Chances are, we&rsquo;ve already met them. Let us introduce you.
             </p>
