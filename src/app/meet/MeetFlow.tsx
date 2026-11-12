@@ -8,7 +8,7 @@ import s from "./meet.module.css";
 
 const WHEN = ["As soon as possible", "Within a month", "Just exploring"];
 
-export function MeetFlow({ times, names }: { times: string[]; names: string }) {
+export function MeetFlow({ times }: { times: string[] }) {
   const [r, setR] = useState<MeetRequest>({ name: "", business: "", email: "", phone: "", role: "", town: "", when: "", notes: "", phoneCall: false });
   const [done, setDone] = useState<null | { when?: string; link?: string; phoneCall?: boolean; asked?: boolean }>(null);
   const [err, setErr] = useState("");
@@ -29,7 +29,7 @@ export function MeetFlow({ times, names }: { times: string[]; names: string }) {
           <>
             <h2>You&rsquo;re booked.</h2>
             <p>
-              {new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(done.when!))}, with {names}.
+              {new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(done.when!))}, with our founders.
               {done.phoneCall ? ` We'll call you at ${r.phone}.` : " The video link is in your email, with a calendar invite."}
             </p>
             {done.link && !done.phoneCall && (
