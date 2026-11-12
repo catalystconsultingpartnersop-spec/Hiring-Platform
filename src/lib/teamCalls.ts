@@ -36,8 +36,14 @@ export async function teamCalls(): Promise<TeamCall[]> {
 }
 
 export async function allNotes(): Promise<CallNotes[]> {
-  const { data } = await db().from("activity_log").select("id, at, details").eq("action", "team_call_notes").order("at", { ascending: false }).limit(20);
-  return ((data ?? []) as { id: number; at: string; details: Record<string, unknown> }[]).map((r) => ({ id: r.id, at: r.at, ...(r.details as Omit<CallNotes, "id" | "at">) }));
+  const [{ data }, { data: gone }] = await Promise.all([
+    db().from("activity_log").select("id, at, details").eq("action", "team_call_notes").order("at", { ascending: false }).limit(20),
+    db().from("activity_log").select("details").eq("action", "team_call_notes_removed").limit(200),
+  ]);
+  const removed = new Set(((gone ?? []) as { details: { notes_id: number } }[]).map((r) => Number(r.details.notes_id)));
+  return ((data ?? []) as { id: number; at: string; details: Record<string, unknown> }[])
+    .filter((r) => !removed.has(r.id))
+    .map((r) => ({ id: r.id, at: r.at, ...(r.details as Omit<CallNotes, "id" | "at">) }));
 }
 
 export function nextCall(calls: TeamCall[], now: number) {

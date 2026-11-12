@@ -6,7 +6,7 @@ import { Composer, ReplyBox } from "./Composer";
 import { AgendaEdit, CallBox } from "./CallBox";
 import { allNotes, googleCalendarLink, nextCall, teamCalls } from "@/lib/teamCalls";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
-import { cancelTeamCall, removePost, removeReply, setRoomEmailPref, setSpecialty } from "./actions";
+import { cancelTeamCall, removeCallNotes, removePost, removeReply, setRoomEmailPref, setSpecialty } from "./actions";
 import { EditableText } from "./EditableText";
 import { markRoomSeen, roomEmailPrefs } from "@/lib/roomNotify";
 import { after } from "next/server";
@@ -68,12 +68,9 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
   const now = nowMs();
   const next = nextCall(calls, now);
   const goodNotes = notes.filter((n) => !n.failed);
-  const last = goodNotes[0] ?? null;
-  // Call notes go in the feed too.
-  const feed: RoomPost[] = [
-    ...posts,
-    ...goodNotes.map((n) => ({ id: -2e12 - n.id, at: n.at, kind: "auto_notes" as RoomPost["kind"], byName: "", byEmail: "", text: n.title, cands: n.cands, replies: [], notes: n })),
-  ].sort((a, b) => b.at.localeCompare(a.at));
+  // Calls and their notes live in the side column, so the feed stays the team talking.
+  const upcoming = calls.filter((c) => Date.parse(c.starts_at) + c.minutes * 60e3 > now && c.id !== next?.id);
+  const feed: RoomPost[] = [...posts].sort((a, b) => b.at.localeCompare(a.at));
   const spot = typeof sp.spot === "string" && byId.has(sp.spot) ? sp.spot : null;
   const nameOf = (email: string) => team.find((t) => t.email === email);
   const specOf = (email: string) => {
@@ -119,48 +116,7 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
           </div>
   ) : null;
 
-  const post = (p: RoomPost & { notes?: (typeof notes)[number] }) => {
-    if (p.kind === "auto_notes" && p.notes) {
-      const n = p.notes;
-      return (
-        <article key={p.id} id={`n${n.id}`} className={s.card}>
-          <div className={s.who}>
-            <span className={s.av} style={{ background: "var(--ink)" }}>
-              📝
-            </span>
-            <div>
-              <b>Notes from the team call: {n.title}</b>
-              <small>Written automatically · {ago(p.at, now)}</small>
-            </div>
-            <span className={`${s.kind} ${s.kTalk}`}>Notes</span>
-          </div>
-          <ul className={s.notes}>
-            {n.bullets.map((b, i) => (
-              <li key={i}>{b}</li>
-            ))}
-          </ul>
-          {n.actions.length > 0 && (
-            <>
-              <p className="small" style={{ margin: "8px 0 4px", fontWeight: 700 }}>
-                Who&rsquo;s doing what
-              </p>
-              <ul className={s.notes}>
-                {n.actions.map((a, i) => (
-                  <li key={i}>
-                    <b>{a.who}:</b> {a.what}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-          <div className={s.cards}>
-            {n.cands.map((id) => byId.get(id)).filter((c): c is RoomCand => !!c).map((c) => (
-              <Card key={c.id} c={c} />
-            ))}
-          </div>
-        </article>
-      );
-    }
+  const post = (p: RoomPost) => {
     if (p.kind === "auto_hire") {
       const c = byId.get(p.cands[0]);
       return (
@@ -277,21 +233,62 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
         {feed.length === 0 ? <p className="panel panel-wash">Nothing here yet. Be the first: spotlight someone great you met.</p> : feed.map(post)}
       </div>
       <aside className={s.side}>
-        {next ? <div className={s.desktopOnly}>{callCard}</div> : null}
-        {last && (
-          <div className={s.card}>
-            <h3>📝 Last call&rsquo;s notes</h3>
-            <p className="small muted" style={{ margin: "0 0 8px" }}>
-              {last.title} · made automatically
-            </p>
-            <ul className={s.notes}>
-              {last.bullets.slice(0, 4).map((b, i) => (
-                <li key={i}>{b}</li>
+        <div className={`${s.card} ${s.callsCard}`}>
+          <h3>📅 Team calls</h3>
+          {next ? <div className={s.desktopOnly}>{callCard}</div> : <p className="small muted" style={{ margin: "0 0 10px" }}>No call scheduled.</p>}
+          {upcoming.length > 0 && (
+            <ul className={s.later}>
+              {upcoming.map((c) => (
+                <li key={c.id}>
+                  <span>{c.title}</span>
+                  <a href={c.link} target="_blank" rel="noreferrer" className="small" style={{ whiteSpace: "nowrap" }}>
+                    {new Date(c.starts_at).toLocaleString("en-US", { timeZone: COMPANY_TZ, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </a>
+                </li>
               ))}
             </ul>
-            <a className="small" href={`#n${last.id}`} style={{ fontWeight: 700 }}>
-              Read the full notes
-            </a>
+          )}
+          <div style={{ marginTop: 12 }}>
+            <CallBox team={team} meId={me.id} />
+          </div>
+        </div>
+        {goodNotes.length > 0 && (
+          <div className={`${s.card} ${s.past}`}>
+            <h3>📝 Notes from past calls</h3>
+            {goodNotes.slice(0, 6).map((n) => (
+              <details key={n.id} id={`n${n.id}`}>
+                <summary>
+                  <span>{n.title}</span>
+                  <small>{formatInZone(n.at, COMPANY_TZ, { weekday: undefined, hour: undefined, minute: undefined, timeZoneName: undefined })}</small>
+                </summary>
+                <ul className={s.notes}>
+                  {n.bullets.map((b, k) => (
+                    <li key={k}>{b}</li>
+                  ))}
+                </ul>
+                {n.actions.length > 0 && (
+                  <>
+                    <p className="small" style={{ margin: "8px 0 4px", fontWeight: 700 }}>
+                      Who&rsquo;s doing what
+                    </p>
+                    <ul className={s.notes}>
+                      {n.actions.map((a, k) => (
+                        <li key={k}>
+                          <b>{a.who}:</b> {a.what}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                {me.manager && (
+                  <form action={removeCallNotes.bind(null, n.id)}>
+                    <button type="submit" className={s.act}>
+                      Remove these notes
+                    </button>
+                  </form>
+                )}
+              </details>
+            ))}
           </div>
         )}
         <div className={s.card}>
@@ -305,9 +302,6 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
               {spec[t.id] && <span className={`${s.spec} ${s["sp_" + spec[t.id]]}`}>{SPECIALTY_LABEL[spec[t.id]]}</span>}
             </div>
           ))}
-          <div style={{ marginTop: 12 }}>
-            <CallBox team={team} meId={me.id} />
-          </div>
           {me.id && (
             <form action={setSpecialty} className={s.specForm}>
               <label className="small" htmlFor="spec">
@@ -327,8 +321,9 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
             </form>
           )}
         </div>
-        <form action={setRoomEmailPref} className={s.card}>
-          <h3>Email me</h3>
+        <details className={`${s.card} ${s.prefs}`}>
+          <summary>✉️ Email settings</summary>
+          <form action={setRoomEmailPref} style={{ marginTop: 10 }}>
           <label className="small" style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 6 }}>
             <input type="radio" name="room_email" value="all" defaultChecked={emailPrefs[me.email.toLowerCase()] !== "mine"} /> Every new post, plus replies to mine and when I&rsquo;m tagged
           </label>
@@ -341,7 +336,8 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
           <p className="small muted" style={{ margin: "8px 0 0" }}>
             Replies in a conversation you&rsquo;re in always come to you. Plus one short summary a day. The menu shows a number when there&rsquo;s something new.
           </p>
-        </form>
+          </form>
+        </details>
       </aside>
     </div>
   );

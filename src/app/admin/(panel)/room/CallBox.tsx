@@ -22,14 +22,28 @@ const noop = () => () => {};
 const browserTz = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export function CallBox({ team, meId }: { team: { id: string; name: string }[]; meId: string | null }) {
-  const [open, setOpen] = useState(false);
+  // A fresh form each round, so another call can be set up right after one.
+  const [round, setRound] = useState(0);
+  return <CallForm key={round} team={team} meId={meId} again={() => setRound((r) => r + 1)} startOpen={round > 0} />;
+}
+
+function CallForm({ team, meId, again, startOpen }: { team: { id: string; name: string }[]; meId: string | null; again: () => void; startOpen: boolean }) {
+  const [open, setOpen] = useState(startOpen);
   const [dayList] = useState(days);
   const [state, action, pending] = useActionState<RoomState, FormData>(scheduleCall, {});
   const tz = useSyncExternalStore(noop, browserTz, () => "");
-  if (state.ok) return <p className="small" style={{ margin: "10px 0 0" }}>Scheduled ✓ Everyone invited got an email with the link.</p>;
+  if (state.ok)
+    return (
+      <p className="small" style={{ margin: "10px 0 0" }}>
+        Scheduled ✓ Everyone invited got an email with the link.{" "}
+        <button type="button" className={s.linkBtn} onClick={again}>
+          Schedule another
+        </button>
+      </p>
+    );
   if (!open)
     return (
-      <button type="button" className={`btn btn-small ${s.darkBtn}`} onClick={() => setOpen(true)}>
+      <button type="button" className={`btn btn-small ${s.darkBtn}`} onClick={() => setOpen(true)} style={{ width: "100%", justifyContent: "center" }}>
         📅 Schedule a team call
       </button>
     );

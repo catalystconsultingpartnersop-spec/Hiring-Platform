@@ -75,3 +75,16 @@
 .mentionList button { display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; background: none; border: 0; border-radius: 6px; padding: 7px 10px; cursor: pointer; color: var(--ink); }
 .mentionList button:hover, .mentionOn { background: #fff3cf !important; }
 .editBtn { font: inherit; font-size: 12.5px; color: var(--muted, #6b7489); background: none; border: 0; padding: 0 0 0 8px; text-decoration: underline; cursor: pointer; }
+
+.linkBtn { font: inherit; background: none; border: 0; padding: 0; color: var(--ink); font-weight: 700; text-decoration: underline; cursor: pointer; }
+.callsCard h3 { margin-bottom: 10px; }
+.later { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+.later li { display: flex; justify-content: space-between; gap: 8px; border-top: 1px solid var(--line); padding-top: 6px; }
+.past details { border-top: 1px solid var(--line); padding: 8px 0; }
+.past details:first-of-type { border-top: 0; }
+.past summary { cursor: pointer; font-weight: 600; font-size: 14.5px; list-style: none; display: flex; justify-content: space-between; gap: 8px; }
+.past summary::-webkit-details-marker { display: none; }
+.past summary small { color: var(--ink-3); font-weight: 500; white-space: nowrap; }
+.past details[open] summary { margin-bottom: 6px; }
+.prefs summary { cursor: pointer; font-weight: 700; list-style: none; }
+.prefs summary::-webkit-details-marker { display: none; }

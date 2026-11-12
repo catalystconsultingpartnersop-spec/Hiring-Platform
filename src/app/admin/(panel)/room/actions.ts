@@ -183,3 +183,11 @@ export async function removeReply(replyId: number) {
   await logActivity(staffActor(me), "team_reply_removed", { reply_id: replyId });
   revalidatePath("/admin/room");
 }
+
+// Managers can take call notes off the room (they stay in the records).
+export async function removeCallNotes(notesId: number) {
+  const me = await requireStaff();
+  if (!me.manager) return;
+  await logActivity(staffActor(me), "team_call_notes_removed", { notes_id: notesId });
+  revalidatePath("/admin/room");
+}
