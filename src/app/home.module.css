@@ -32,19 +32,38 @@
 /* Understood */
 .feel { background: #f7f4ec; padding: clamp(68px, 9vw, 120px) 0; }
 .feel h2, .now h2, .plan h2 { font-size: clamp(32px, 4.2vw, 54px); letter-spacing: -0.035em; line-height: 1.05; margin: 0; max-width: 20ch; }
-.thoughts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 38px; }
-.thoughts p { margin: 0; background: #fff; border-radius: 20px 20px 20px 4px; padding: 24px 24px; font-family: var(--display); font-size: clamp(20px, 2vw, 25px); font-weight: 600; letter-spacing: -0.015em; line-height: 1.22; color: var(--ink); box-shadow: 0 8px 24px rgba(23, 33, 58, 0.06); }
-.thoughts p:last-child { background: var(--ink); color: #fff; }
+.ways { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 38px; }
+.ways > div { background: #fff; border-radius: 20px; padding: 24px 24px 22px; box-shadow: 0 8px 24px rgba(23, 33, 58, 0.06); }
+.ways b { display: block; font-family: var(--display); font-size: clamp(20px, 1.9vw, 23px); letter-spacing: -0.015em; line-height: 1.2; }
+.ways p { margin: 6px 0 0; color: var(--ink-2); font-size: 16.5px; }
+.pile { display: flex; flex-wrap: wrap; gap: 5px; height: 74px; align-content: flex-start; margin-bottom: 18px; overflow: hidden; }
+.pile i { width: 26px; height: 34px; border-radius: 4px; background: #e6e1d3; border-top: 5px solid #d3ccb9; }
+.pile i:nth-child(3n) { transform: rotate(4deg); }
+.pile i:nth-child(4n + 1) { transform: rotate(-5deg) translateY(2px); }
+.bubbles i { width: 64px; height: 26px; border-radius: 14px 14px 14px 3px; border-top: 0; background: #dcefe2; }
+.bubbles i:nth-child(2n) { width: 88px; }
+.bubbles i:nth-child(3n) { width: 50px; transform: none; }
+.cardsPile i { width: 58px; height: 34px; border-radius: 7px; border-top: 0; border-left: 5px solid #c9cfdc; background: #e6eaf2; }
 .insight { margin: 48px 0 0; max-width: 46ch; font-size: clamp(19px, 1.9vw, 24px); line-height: 1.5; color: var(--ink-2); padding-left: 22px; border-left: 4px solid var(--marigold); }
 .insight b { color: var(--ink); }
 
 /* The flip */
 .flip { background: var(--ink); color: #fff; padding: clamp(72px, 10vw, 128px) 0; }
-.flipGrid { display: grid; grid-template-columns: 1.15fr 1fr; gap: clamp(28px, 6vw, 80px); align-items: end; }
-.flip h2 { font-size: clamp(34px, 4.6vw, 60px); letter-spacing: -0.04em; line-height: 1.04; margin: 0; color: #aab3c6; }
-.flip h2 span { display: block; color: #fff; margin-top: 10px; text-decoration: underline; text-decoration-color: var(--marigold); text-decoration-thickness: 5px; text-underline-offset: 9px; }
+.flipGrid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px, 6vw, 80px); align-items: center; }
+.flip h2 { font-size: clamp(38px, 5vw, 66px); letter-spacing: -0.04em; line-height: 1.04; margin: 0 0 30px; color: #aab3c6; }
+.flip h2 span { display: block; color: #fff; text-decoration: underline; text-decoration-color: var(--marigold); text-decoration-thickness: 5px; text-underline-offset: 9px; }
 .flipBody { font-size: clamp(18px, 1.7vw, 21px); line-height: 1.6; color: #d3d9e5; margin: 0 0 16px; }
 .flipBody b { color: #fff; }
+
+.sift { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: center; }
+.many { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; opacity: 0.55; }
+.many i { aspect-ratio: 3 / 4; border-radius: 5px; background: #46526f; }
+.many i:nth-child(3n) { transform: rotate(5deg); }
+.many i:nth-child(5n + 1) { transform: rotate(-6deg) translateY(3px); }
+.arrow { font-size: 34px; color: var(--marigold); font-weight: 800; }
+.few { display: grid; gap: 10px; }
+.few i { height: 52px; border-radius: 12px; background: #fff; border-left: 7px solid var(--marigold); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3); }
+.few small { color: #d3d9e5; font-size: 14px; font-weight: 700; margin-top: 4px; }
 
 /* Proof */
 .now { padding: clamp(68px, 9vw, 120px) 0; }
@@ -76,7 +95,8 @@
 @media (max-width: 860px) {
   .heroGrid, .flipGrid { grid-template-columns: 1fr; }
   .stack { margin-top: 12px; max-width: 460px; }
-  .thoughts { grid-template-columns: 1fr; margin-top: 28px; }
+  .ways { grid-template-columns: 1fr; margin-top: 28px; }
+  .sift { margin-top: 8px; }
   .people, .steps { grid-template-columns: 1fr; }
   .ctaBtn { width: 100%; text-align: center; }
   .cta { justify-items: stretch; text-align: center; }

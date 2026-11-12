@@ -18,8 +18,8 @@ function Cta({ dark }: { dark?: boolean }) {
 }
 
 // The front door for a business owner with a seat to fill. In order, they should:
-// get what this is in five seconds (the top), feel understood (no obvious place
-// to turn, and no confidence the candidates will be relevant to them),
+// get what this is in five seconds (the top), feel understood (every route brings
+// candidates; sorting out who's relevant lands on the owner; said with no blame),
 // see what's different (we start with the people), see it's real (people here
 // now), know what happens next (three steps), and be invited. One ask throughout.
 export default async function Home() {
@@ -49,12 +49,12 @@ export default async function Home() {
           <div>
             <p className={s.kicker}>For business owners with a position to fill</p>
             <h1>
-              We cracked the code. <span>When you need to hire, now you know where to turn.</span>
+              We cracked the code. <span>Not more candidates. Relevant ones.</span>
             </h1>
             <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
             <p className={s.lede}>
-              We&rsquo;ve sat down with {n ? <b>{n} candidates</b> : "candidates"} and learned what each one is truly great at. So the people
-              you meet here are relevant to your position. Tell us who you need.
+              Finding candidates is the easy part. Knowing which one is right for your position is the hard part. That&rsquo;s the part we
+              cracked: we&rsquo;ve sat down with {n ? <b>{n} candidates</b> : "candidates"} and learned what each one is truly great at.
             </p>
             <Cta dark />
           </div>
@@ -78,16 +78,39 @@ export default async function Home() {
 
       <section className={s.feel}>
         <div className="wrap">
-          <p className={s.label}>You know the feeling</p>
-          <h2>You need to hire. Where do you turn?</h2>
-          <div className={s.thoughts}>
-            <p>&ldquo;I need someone. Where do I even start?&rdquo;</p>
-            <p>&ldquo;Who do I ask?&rdquo;</p>
-            <p>&ldquo;Will the candidates I get even be relevant to me?&rdquo;</p>
+          <p className={s.label}>Sound familiar?</p>
+          <h2>Finding candidates was never the hard part.</h2>
+          <div className={s.ways}>
+            <div>
+              <div className={s.pile} aria-hidden>
+                {Array.from({ length: 14 }, (_, i) => (
+                  <i key={i} />
+                ))}
+              </div>
+              <b>You put an ad in the Luach.</b>
+              <p>Résumés came in. Plenty of them.</p>
+            </div>
+            <div>
+              <div className={`${s.pile} ${s.bubbles}`} aria-hidden>
+                {Array.from({ length: 7 }, (_, i) => (
+                  <i key={i} />
+                ))}
+              </div>
+              <b>You posted on your status.</b>
+              <p>Good people sent you names.</p>
+            </div>
+            <div>
+              <div className={`${s.pile} ${s.cardsPile}`} aria-hidden>
+                {Array.from({ length: 6 }, (_, i) => (
+                  <i key={i} />
+                ))}
+              </div>
+              <b>You called a recruiter.</b>
+              <p>More candidates to consider.</p>
+            </div>
           </div>
           <p className={s.insight}>
-            It&rsquo;s not you. <b>There hasn&rsquo;t been an obvious place to turn,</b> or a way to know that the candidates you&rsquo;ll get
-            fit your position.
+            Then comes the real work: <b>figuring out which of them is actually relevant to you.</b> And that part lands on your desk.
           </p>
         </div>
       </section>
@@ -95,19 +118,31 @@ export default async function Home() {
       <section className={s.flip}>
         <div className={`wrap ${s.flipGrid}`}>
           <div>
-            <p className={s.labelGold}>What we figured out</p>
+            <p className={s.labelGold}>What we cracked</p>
             <h2>
-              Hiring usually starts with the opening. <span>We start with the people.</span>
+              <span>We do that part first.</span>
             </h2>
+            <p className={s.flipBody}>
+              Long before you call, we&rsquo;ve sat down with each candidate, assessed their natural strengths, and understood the kind of
+              work they&rsquo;ll thrive in.
+            </p>
+            <p className={s.flipBody}>
+              So when you tell us about your position, <b>you meet a few people who fit it.</b>
+            </p>
           </div>
-          <div>
-            <p className={s.flipBody}>
-              Long before you call, we&rsquo;ve already sat with each candidate, assessed their natural strengths, and understood the kind
-              of work they&rsquo;ll thrive in.
-            </p>
-            <p className={s.flipBody}>
-              So when you tell us about your position, <b>we already know who&rsquo;s relevant to you.</b>
-            </p>
+          <div className={s.sift} aria-hidden>
+            <div className={s.many}>
+              {Array.from({ length: 24 }, (_, i) => (
+                <i key={i} />
+              ))}
+            </div>
+            <span className={s.arrow}>→</span>
+            <div className={s.few}>
+              <i />
+              <i />
+              <i />
+              <small>A few people we know</small>
+            </div>
           </div>
         </div>
       </section>
@@ -162,7 +197,7 @@ export default async function Home() {
 
       <section className={s.invite}>
         <div className="wrap">
-          <h2>Need to hire? Now you know where to turn.</h2>
+          <h2>Need to hire? Start with people we know.</h2>
           <p>Tell our team what you&rsquo;re looking for. We&rsquo;ll tell you who might fit.</p>
           <Cta dark />
           <p className={s.alt}>
