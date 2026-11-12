@@ -38,12 +38,12 @@ export default async function Home() {
           <div>
             <p className={s.eyebrow}>A revolutionary way to hire</p>
             <h1>
-              Looking to hire? <span>We already met your next candidate.</span>
+              Looking to hire? <span>We have qualified candidates, vetted and ready to roll.</span>
             </h1>
-            <p className={s.wink}>Qualified, vetted and ready to roll.</p>
+            <p className={s.wink}>We&rsquo;re not starting a search now. We already met them.</p>
             <p className={s.lede}>
-              We&rsquo;re not starting a search now. Our candidates are ready, willing and able. Tell us what you need, and{" "}
-              <b>you can meet one who&rsquo;s relevant to you within half an hour.</b>
+              They&rsquo;re ready, willing and able. Tell us what you need, and{" "}
+              <b>half an hour later you can have a qualified candidate to consider.</b>
             </p>
             <a href="#callback" className={`btn btn-gold ${s.ctaBtn} ${s.onlyPhone}`}>
               Talk to our team
@@ -58,8 +58,8 @@ export default async function Home() {
             </p>
           </div>
           <div id="callback" className={s.cb}>
-            <span className={s.tagOne}>Tell us what you need</span>
-            <h2>Talk to our team. We&rsquo;ll call you back.</h2>
+            <span className={s.tagOne}>Ready, willing and able</span>
+            <h2>Tell us what you need. We&rsquo;ll give you a good match.</h2>
             <CallbackForm />
           </div>
         </div>
@@ -163,7 +163,7 @@ export default async function Home() {
             </p>
             <p className={s.flipBody}>
               So when you tell us what you need, we&rsquo;re not starting now. They&rsquo;re ready, willing and able.{" "}
-              <b>You can meet a relevant candidate within half an hour.</b>
+              <b>Half an hour later, you can have a qualified candidate to consider.</b>
             </p>
           </div>
           <div className={s.sift} aria-hidden>
