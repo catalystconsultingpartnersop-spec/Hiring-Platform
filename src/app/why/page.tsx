@@ -94,7 +94,7 @@ export default async function WhyPage() {
           <p>A short call with our founders. Tell us who you need, and see who&rsquo;s already here.</p>
           <div className={styles.actions}>
             <Link className="btn btn-gold" href="/meet">
-              Schedule a call
+              Meet the founders
             </Link>
             <Link className={`btn btn-ghost ${styles.light}`} href="/candidates">
               Browse candidates

@@ -80,8 +80,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             ) : (
             <nav className="nav" aria-label="Main">
               <Link href={P("/meet")} className="btn btn-gold btn-small">
-                <span className="hide-sm">Schedule a call</span>
-                <span className="show-sm">Book a call</span>
+                <span className="hide-sm">Meet the founders</span>
+                <span className="show-sm">Meet us</span>
               </Link>
               <Link href={P("/candidates")} className="hide-sm">
                 Browse candidates
@@ -121,7 +121,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             {!onlyCandidate && (
             <nav aria-label="For businesses">
               <h3>For businesses</h3>
-              <Link href={P("/meet")}>Schedule a call</Link>
+              <Link href={P("/meet")}>Meet the founders</Link>
               <Link href={P("/candidates")}>Browse candidates</Link>
               <Link href={P("/hiring-help")}>Hiring help</Link>
               <Link href={P("/why")}>Our story</Link>
