@@ -114,7 +114,7 @@ export default async function Home() {
                   <i key={i} />
                 ))}
               </div>
-              <b>You put an ad in the Luach.</b>
+              <b>You put an ad in a publication.</b>
               <p>Résumés came in. Plenty of them.</p>
             </div>
             <div>
