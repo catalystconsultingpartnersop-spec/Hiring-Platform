@@ -2,25 +2,25 @@ import { WorksBest } from "@/components/CandidateCard";
 import { keepCandidatesOut } from "@/lib/candidateMode";
 import { allListed } from "@/lib/catalog";
 import Link from "next/link";
-import s from "./speech.module.css";
+import s from "./home.module.css";
 
 export const dynamic = "force-dynamic";
 
-function Cta({ dark, label = "Talk to our team" }: { dark?: boolean; label?: string }) {
+function Cta({ dark }: { dark?: boolean }) {
   return (
     <div className={s.cta}>
       <Link className={`btn btn-gold ${s.ctaBtn}`} href="/meet">
-        {label}
+        Talk to our team
       </Link>
       <span className={dark ? s.noteDark : s.note}>A short video call, at a time that works for you</span>
     </div>
   );
 }
 
-// The front page reads like a short talk to a room of business owners:
-// the hook, what we kept hearing, what we believe, what we built, who's here
-// right now, the fee, and an invitation. One idea per screen. The goal is
-// curiosity: enough to want to talk to our team.
+// The front door for a business owner with a seat to fill. In order, they should:
+// get what this is in five seconds (the top), feel understood (the usual way),
+// see what's different (we start with the people), see it's real (people here
+// now), know what happens next (three steps), and be invited. One ask throughout.
 export default async function Home() {
   await keepCandidatesOut();
   const { rows } = await allListed();
@@ -37,87 +37,89 @@ export default async function Home() {
       seen.add(k);
       return true;
     })
-    .slice(0, 3);
+    .slice(0, 4);
+  const top = sample[0];
+  const rest = sample.slice(1, 4);
 
   return (
     <>
-      {/* 1. The hook */}
-      <section className={s.hook}>
-        <div className={`wrap ${s.narrow}`}>
-          <p className={s.kicker}>A revolutionary way to hire</p>
-          <h1>We cracked the code.</h1>
-          <p className={s.hookGold}>Hiring doesn&rsquo;t have to be a headache.</p>
-          <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
-          <a href="#heard" className={s.down}>
-            Here&rsquo;s what we figured out <span aria-hidden>↓</span>
-          </a>
-        </div>
-      </section>
-
-      {/* 2. What we kept hearing */}
-      <section id="heard" className={s.heard}>
-        <div className={`wrap ${s.narrow}`}>
-          <p className={s.label}>It started with a conversation</p>
-          <p className={s.say}>Business owners and HR people kept coming back to the same thought:</p>
-          <blockquote className={s.quote}>&ldquo;Hiring is a headache.&rdquo;</blockquote>
-          <p className={s.say}>So we asked what it would take to make hiring work, for everyone.</p>
-        </div>
-      </section>
-
-      {/* 3. What we believe */}
-      <section className={s.believe}>
-        <div className="wrap">
-          <h2 className={s.center}>It comes down to two things.</h2>
-          <div className={s.pair}>
-            <div className={s.belief}>
-              <span className={s.who}>Business owners</span>
-              <p>deserve to choose for themselves.</p>
-              <small>No pressure, and a fair, simple fee.</small>
-            </div>
-            <div className={s.belief}>
-              <span className={s.who}>Candidates</span>
-              <p>deserve to be treated with respect.</p>
-              <small>Known for what they do best, not just a résumé.</small>
-            </div>
+      <section className={s.hero}>
+        <div className={`wrap ${s.heroGrid}`}>
+          <div>
+            <p className={s.kicker}>For business owners with a position to fill</p>
+            <h1>
+              We cracked the code. <span>The right person may already be here.</span>
+            </h1>
+            <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
+            <p className={s.lede}>
+              We&rsquo;ve sat down with {n ? <b>{n} candidates</b> : "candidates"}, learned what each one is truly great at, and they&rsquo;re
+              ready for their next role. Tell us who you need.
+            </p>
+            <Cta dark />
           </div>
-          <p className={s.wins}>When both happen, everyone wins.</p>
+          {top && (
+            <div className={s.stack}>
+              <span className={s.badge}>{n ? `1 of ${n} ready now` : "Ready now"}</span>
+              <Link href={`/candidates/${top.id}`} className={s.heroCard}>
+                {top.role_category && <span className={s.role}>{top.role_category}</span>}
+                <p className={s.headline}>{top.headline}</p>
+                <WorksBest c={top} compact />
+                <ul className={s.known}>
+                  <li>We sat down with them</li>
+                  <li>Strengths assessed</li>
+                  <li>We know what they want next</li>
+                </ul>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* 4. What we built */}
-      <section className={s.built}>
+      <section className={s.feel}>
         <div className="wrap">
-          <p className={s.labelDark}>So we built</p>
-          <h2>The Candidate Collection.</h2>
-          <p className={s.simple}>The idea is simple.</p>
-          <ol className={s.steps}>
+          <p className={s.label}>You know the feeling</p>
+          <h2>If hiring feels like a headache, it&rsquo;s not you.</h2>
+          <ol className={s.usual}>
+            <li>You post the opening.</li>
+            <li>Résumés pile up.</li>
+            <li>You interview people you&rsquo;ve never met.</li>
             <li>
-              <span>1</span>
-              <b>We sit with candidates.</b>
-              <p>Every one. We get to know them, their experience and what they&rsquo;re looking for.</p>
-            </li>
-            <li>
-              <span>2</span>
-              <b>We find what they&rsquo;re really good at.</b>
-              <p>Including a career strengths assessment, so they know the value they bring, and so do we.</p>
-            </li>
-            <li>
-              <span>3</span>
-              <b>We introduce them to you.</b>
-              <p>The people we think fit your work. A few great options, not a pile of résumés.</p>
+              You choose, <em>and hope.</em>
             </li>
           </ol>
+          <p className={s.insight}>
+            A résumé tells you where someone has been. <b>It doesn&rsquo;t tell you what they&rsquo;re great at.</b> So even a careful hire
+            can feel like a guess.
+          </p>
         </div>
       </section>
 
-      {/* 5. Who's here right now */}
+      <section className={s.flip}>
+        <div className={`wrap ${s.flipGrid}`}>
+          <div>
+            <p className={s.labelGold}>What we figured out</p>
+            <h2>
+              Hiring usually starts with the opening. <span>We start with the people.</span>
+            </h2>
+          </div>
+          <div>
+            <p className={s.flipBody}>
+              Long before you call, we&rsquo;ve already sat with each candidate, assessed their natural strengths, and understood the kind
+              of work they&rsquo;ll thrive in.
+            </p>
+            <p className={s.flipBody}>
+              So when you tell us about your position, <b>the getting-to-know part is already done.</b>
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className={s.now}>
         <div className="wrap">
-          <p className={s.label}>Right now</p>
-          <h2>{n ? `${n} candidates are ready for their next role.` : "Candidates are ready for their next role."}</h2>
-          <p className={s.nowSub}>A few of them:</p>
+          <p className={s.label}>See for yourself</p>
+          <h2>{n ? `${n} candidates, ready right now.` : "Candidates, ready right now."}</h2>
           <div className={s.people}>
-            {sample.map((c) => (
+            {rest.map((c) => (
               <Link key={c.id} href={`/candidates/${c.id}`} className={s.person}>
                 {c.role_category && <span className={s.role}>{c.role_category}</span>}
                 <p className={s.headline}>{c.headline}</p>
@@ -132,21 +134,37 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 6. The fee */}
-      <section className={s.fee}>
-        <div className={`wrap ${s.feeRow}`}>
-          <p>
-            <b>One flat fee of $5,000, paid the day you hire.</b> Never a percentage of salary, and nothing at all if you don&rsquo;t
-            hire.
+      <section className={s.plan}>
+        <div className="wrap">
+          <p className={s.label}>When you reach out</p>
+          <h2>Three steps. You stay in charge.</h2>
+          <ol className={s.steps}>
+            <li>
+              <span>1</span>
+              <b>Tell us who you need</b>
+              <p>A short video call with our team about the role and the kind of person who&rsquo;d thrive in it.</p>
+            </li>
+            <li>
+              <span>2</span>
+              <b>Meet people we know</b>
+              <p>A few who fit, not a pile of résumés.</p>
+            </li>
+            <li>
+              <span>3</span>
+              <b>You choose</b>
+              <p>Interview them, take your time, hire who you like.</p>
+            </li>
+          </ol>
+          <p className={s.fee}>
+            <b>One flat fee of $5,000, paid the day you hire.</b> Never a percentage of salary, and nothing at all if you don&rsquo;t hire.{" "}
+            <Link href="/billing">Our billing philosophy →</Link>
           </p>
-          <Link href="/billing">Our billing philosophy →</Link>
         </div>
       </section>
 
-      {/* 7. The invitation */}
       <section className={s.invite}>
-        <div className={`wrap ${s.narrow}`}>
-          <h2>Curious? Let&rsquo;s talk.</h2>
+        <div className="wrap">
+          <h2>Have a position to fill? Let&rsquo;s talk.</h2>
           <p>Tell our team what you&rsquo;re looking for. We&rsquo;ll tell you who might fit.</p>
           <Cta dark />
           <p className={s.alt}>
