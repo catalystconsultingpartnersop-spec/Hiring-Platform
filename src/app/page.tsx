@@ -1,4 +1,5 @@
 import { WorksBest } from "@/components/CandidateCard";
+import { CallbackForm } from "./CallbackForm";
 import { keepCandidatesOut } from "@/lib/candidateMode";
 import { allListed } from "@/lib/catalog";
 import Link from "next/link";
@@ -6,20 +7,9 @@ import s from "./home.module.css";
 
 export const dynamic = "force-dynamic";
 
-function Cta({ dark }: { dark?: boolean }) {
-  return (
-    <div className={s.cta}>
-      <Link className={`btn btn-gold ${s.ctaBtn}`} href="/meet">
-        Talk to our team
-      </Link>
-      <span className={dark ? s.noteDark : s.note}>A short video call, at a time that works for you</span>
-    </div>
-  );
-}
-
 // The front door for a business owner with a seat to fill. In order, they should:
-// get what this is in five seconds (the top), feel understood (every route brings
-// candidates; sorting out who's relevant lands on the owner; said with no blame),
+// get what this is in five seconds (the top), feel understood (every route starts
+// its search the day you call, so you wait; said with no blame),
 // see what's different (we start with the people), see it's real (people here
 // now), know what happens next (three steps), and be invited. One ask throughout.
 export default async function Home() {
@@ -39,8 +29,7 @@ export default async function Home() {
       return true;
     })
     .slice(0, 4);
-  const top = sample[0];
-  const rest = sample.slice(1, 4);
+  const rest = sample.slice(0, 3);
 
   return (
     <>
@@ -49,43 +38,32 @@ export default async function Home() {
           <div>
             <p className={s.eyebrow}>We cracked the code on hiring</p>
             <h1>
-              You don&rsquo;t need more résumés. <span>You need the right person.</span>
+              Need to hire? <span>The search is already done.</span>
             </h1>
             <p className={s.lede}>
-              We&rsquo;ve sat down with {n ? <b>{n} candidates</b> : "candidates"} and learned what each one is truly great at. So you
-              don&rsquo;t get a pile to sort. You meet the people who fit your position.
+              We&rsquo;ve already sat down with {n ? <b>{n} candidates</b> : "candidates"} and learned what each one is truly great at. Tell
+              us the position, and <b>you could be interviewing someone within half an hour of our call.</b>
             </p>
-            <div className={s.ctaRow}>
-              <Link className={`btn btn-gold ${s.ctaBtn}`} href="/meet">
-                Talk to our team
-              </Link>
+            <a href="#callback" className={`btn btn-gold ${s.ctaBtn} ${s.onlyPhone}`}>
+              Get a call back
+            </a>
+            <p className={s.links}>
               <a href="#now" className={s.second}>
                 See who&rsquo;s here <span aria-hidden>↓</span>
               </a>
-            </div>
-            <p className={s.noteDark}>A short video call, at a time that works for you</p>
-          </div>
-          {top && (
-            <div className={s.scene}>
-              <div className={s.sheets} aria-hidden>
-                {Array.from({ length: 9 }, (_, i) => (
-                  <i key={i} />
-                ))}
-              </div>
-              <span className={s.tagPile}>What you get: résumés</span>
-              <Link href={`/candidates/${top.id}`} className={s.heroCard}>
-                <span className={s.tagOne}>What you need: the right person</span>
-                {top.role_category && <span className={s.role}>{top.role_category}</span>}
-                <p className={s.headline}>{top.headline}</p>
-                <WorksBest c={top} compact />
-                <ul className={s.known}>
-                  <li>We sat down with them</li>
-                  <li>Strengths assessed</li>
-                  <li>We know what they want next</li>
-                </ul>
+              <Link href="/meet" className={s.second}>
+                Or pick a time for a video call
               </Link>
-            </div>
-          )}
+            </p>
+          </div>
+          <div id="callback" className={s.cb}>
+            <span className={s.tagOne}>{n ? `${n} candidates ready now` : "Candidates ready now"}</span>
+            <h2>Tell us the position. We&rsquo;ll call you back.</h2>
+            <CallbackForm />
+            <p className={s.cbNote}>
+              <b>No one who fits?</b> We&rsquo;ll tell you straight, and we can look.
+            </p>
+          </div>
         </div>
         <div className={`wrap ${s.strip}`}>
           <span>
@@ -106,7 +84,7 @@ export default async function Home() {
       <section className={s.feel}>
         <div className="wrap">
           <p className={s.label}>Sound familiar?</p>
-          <h2>All that effort, and you&rsquo;re holding a pile of résumés.</h2>
+          <h2>Usually, the search starts the day you need someone.</h2>
           <div className={s.ways}>
             <div>
               <div className={s.pile} aria-hidden>
@@ -115,7 +93,7 @@ export default async function Home() {
                 ))}
               </div>
               <b>You put an ad in a publication.</b>
-              <p>You waited. Résumés came in.</p>
+              <p>Then you wait for résumés.</p>
             </div>
             <div>
               <div className={`${s.pile} ${s.bubbles}`} aria-hidden>
@@ -124,7 +102,7 @@ export default async function Home() {
                 ))}
               </div>
               <b>You posted on your status.</b>
-              <p>You asked around. Good people sent names.</p>
+              <p>Then you wait for names.</p>
             </div>
             <div>
               <div className={`${s.pile} ${s.cardsPile}`} aria-hidden>
@@ -133,12 +111,11 @@ export default async function Home() {
                 ))}
               </div>
               <b>You called a recruiter.</b>
-              <p>You made the calls. More résumés.</p>
+              <p>&ldquo;We&rsquo;ll open the position and start looking.&rdquo;</p>
             </div>
           </div>
           <p className={s.insight}>
-            And now the real question: <b>which of these people is actually relevant to you?</b> A résumé doesn&rsquo;t say. So the
-            sorting lands on your desk.
+            Every route starts from zero. <b>So you wait, while the position sits open.</b>
           </p>
         </div>
       </section>
@@ -148,7 +125,7 @@ export default async function Home() {
           <div>
             <p className={s.labelGold}>What we cracked</p>
             <h2>
-              <span>That&rsquo;s the part we cracked.</span>
+              <span>Ours is already done.</span>
             </h2>
             <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
             <p className={s.flipBody}>
@@ -156,7 +133,8 @@ export default async function Home() {
               work they&rsquo;ll thrive in.
             </p>
             <p className={s.flipBody}>
-              So when you tell us about your position, <b>you meet a few people who fit it.</b>
+              So when you tell us the position, we look through people we already know, right then. <b>If someone fits, you could be
+              interviewing them within half an hour.</b> If no one does, we&rsquo;ll tell you straight, and we can look.
             </p>
           </div>
           <div className={s.sift} aria-hidden>
@@ -203,8 +181,8 @@ export default async function Home() {
           <ol className={s.steps}>
             <li>
               <span>1</span>
-              <b>Tell us who you need</b>
-              <p>A short video call with our team about the role and the kind of person who&rsquo;d thrive in it.</p>
+              <b>Tell us the position</b>
+              <p>Leave your number and we call you back, or pick a time for a short video call.</p>
             </li>
             <li>
               <span>2</span>
@@ -229,9 +207,14 @@ export default async function Home() {
 
       <section className={s.invite}>
         <div className="wrap">
-          <h2>Need to hire? Meet the right person.</h2>
-          <p>Tell our team what you&rsquo;re looking for. We&rsquo;ll tell you who might fit.</p>
-          <Cta dark />
+          <h2>Need to hire? The search is already done.</h2>
+          <p>Tell us the position. We&rsquo;ll tell you who fits, or tell you straight if no one does.</p>
+          <a className={`btn btn-gold ${s.ctaBtn}`} href="#callback">
+            Get a call back
+          </a>
+          <p className={s.noteDark} style={{ marginTop: 12 }}>
+            Or <Link href="/meet" style={{ color: "#fff" }}>pick a time for a video call</Link>
+          </p>
           <p className={s.alt}>
             Looking for work yourself? <Link href="/join">Start here</Link>
           </p>

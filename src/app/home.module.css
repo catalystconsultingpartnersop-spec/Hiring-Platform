@@ -48,6 +48,23 @@
 .known li { position: relative; padding-left: 28px; font-size: 15px; color: var(--ink-2); }
 .known li::before { content: "✓"; position: absolute; left: 0; top: 1px; width: 19px; height: 19px; border-radius: 50%; background: var(--moss-soft); color: var(--moss); font-size: 11.5px; font-weight: 900; display: grid; place-items: center; }
 
+.links { display: flex; gap: 10px 26px; flex-wrap: wrap; margin: 0; }
+.onlyPhone { display: none; }
+.cb { position: relative; background: #fff; color: var(--ink); border-radius: 24px; padding: 40px 30px 26px; box-shadow: 0 0 0 5px rgba(242, 179, 0, 0.9), 0 34px 80px rgba(0, 0, 0, 0.5); scroll-margin-top: 90px; }
+.cb h2 { font-size: 27px; letter-spacing: -0.02em; line-height: 1.12; margin: 0 0 18px; }
+.cbForm { display: grid; gap: 12px; }
+.cbForm label span { display: block; font-size: 13.5px; font-weight: 700; margin-bottom: 5px; }
+.cbForm input { width: 100%; }
+.cbTwo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cbBtn { font-size: 18px; padding: 15px 20px; margin-top: 4px; width: 100%; }
+.cbErr { margin: 0; color: var(--rust); font-size: 14px; }
+.cbNote { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--line); font-size: 14.5px; color: var(--ink-2); }
+.cbNote b { color: var(--ink); }
+.cbDone { text-align: center; padding: 18px 0 6px; }
+.cbDone span { display: grid; place-items: center; width: 54px; height: 54px; margin: 0 auto 12px; border-radius: 50%; background: var(--marigold); font-size: 26px; font-weight: 800; }
+.cbDone b { font-family: var(--display); font-size: 24px; }
+.cbDone p { color: var(--ink-2); margin: 6px 0 0; }
+
 /* Understood */
 .feel { background: #f7f4ec; padding: clamp(68px, 9vw, 120px) 0; }
 .feel h2, .now h2, .plan h2 { font-size: clamp(32px, 4.2vw, 54px); letter-spacing: -0.035em; line-height: 1.05; margin: 0; max-width: 20ch; }
@@ -116,7 +133,9 @@
 
 @media (max-width: 860px) {
   .heroGrid, .flipGrid { grid-template-columns: 1fr; }
-  .scene { padding: 40px 14px 6px 18px; max-width: 480px; }
+  .onlyPhone { display: block; margin-bottom: 18px; }
+  .cb { margin-top: 26px; }
+  .links { justify-content: center; }
   .ctaRow { gap: 16px; }
   .strip { font-size: 14px; gap: 6px 20px; }
   .hero h1 span::after { margin-top: 16px; }
