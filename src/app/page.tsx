@@ -8,16 +8,16 @@ function Cta({ light, center }: { light?: boolean; center?: boolean }) {
   return (
     <div className={`${s.ctaWrap} ${center ? s.center : ""}`}>
       <Link className={`btn btn-gold ${s.ctaBtn}`} href="/meet">
-        Meet the founders
+        Meet the team
       </Link>
-      <span className={light ? s.ctaNoteLight : s.ctaNote}>A short video call with our founders</span>
+      <span className={light ? s.ctaNoteLight : s.ctaNote}>A short video call with our team</span>
     </div>
   );
 }
 
 // The front door for business owners. The feeling we're after, in order:
 // understood, then curious, then invited: we're offering a service, come hear
-// what it is. One ask, everywhere: meet the founders. Browsing stays at the bottom.
+// what it is. One ask, everywhere: meet the team. Browsing stays at the bottom.
 export default async function Home() {
   await keepCandidatesOut();
 
@@ -41,7 +41,7 @@ export default async function Home() {
           <div className={s.familiar}>
             <p className={s.familiarTitle}>Hiring right now?</p>
             <p className={s.familiarSub}>
-              Come hear what we have to offer, in a short video call with our founders.
+              Come hear what we have to offer, in a short video call with our team.
             </p>
             <ul>
               <li>Tell us about your position</li>

@@ -29,7 +29,7 @@ export function MeetFlow({ times }: { times: string[] }) {
           <>
             <h2>You&rsquo;re booked.</h2>
             <p>
-              {new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(done.when!))}, with our founders.
+              {new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(done.when!))}, with our team.
               {done.phoneCall ? ` We'll call you at ${r.phone}.` : " The video link is in your email, with a calendar invite."}
             </p>
             {done.link && !done.phoneCall && (
