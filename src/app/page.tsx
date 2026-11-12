@@ -11,7 +11,7 @@ function Cta({ light, center }: { light?: boolean; center?: boolean }) {
       <Link className={`btn btn-gold ${s.ctaBtn}`} href="/meet">
         Meet the founders
       </Link>
-      <span className={light ? s.ctaNoteLight : s.ctaNote}>A {MEET_MINUTES}-minute call · video or phone · no cost, no commitment</span>
+      <span className={light ? s.ctaNoteLight : s.ctaNote}>A {MEET_MINUTES}-minute call with our founders · video or phone</span>
     </div>
   );
 }
@@ -33,22 +33,22 @@ export default async function Home() {
             </h1>
             <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
             <p className={s.lede}>
-              Here&rsquo;s the idea: we start with the person, not the position. We sit down with candidates first and get to know
-              their strengths and what they&rsquo;re looking for. So when you tell us who you need, we can introduce you to people who
-              fit.
+              Hiring usually starts with the opening. We start with the person. We sit down with every candidate, learn their
+              strengths and what they&rsquo;re truly looking for, so when you&rsquo;re ready to hire, we can introduce you to people
+              who already fit.
             </p>
             <Cta light />
           </div>
           <div className={s.familiar}>
             <p className={s.familiarTitle}>Hiring right now?</p>
             <p className={s.familiarSub}>
-              Come hear what we have to offer. A relaxed {MEET_MINUTES}-minute conversation with our founders.
+              Come hear what we have to offer, in a {MEET_MINUTES}-minute conversation with our founders.
             </p>
             <ul>
               <li>Tell us about your position</li>
               <li>Hear how we work</li>
               <li>See who might be a fit</li>
-              <li>No pressure, no commitment</li>
+              <li>Ask us anything</li>
             </ul>
             <Link className={`btn btn-gold ${s.cardBtn}`} href="/meet">
               Choose a time
@@ -89,7 +89,7 @@ export default async function Home() {
           <p className={s.doubtLead}>It&rsquo;s easier to explain in a conversation.</p>
           <p className={s.doubtBody}>
             Tell us about the position you&rsquo;re hiring for, and we&rsquo;ll walk you through how we work and who might be a fit.
-            {" "}{MEET_MINUTES} minutes with our founders, no pressure.
+            {" "}{MEET_MINUTES} minutes with our founders.
           </p>
           <Cta light center />
         </div>

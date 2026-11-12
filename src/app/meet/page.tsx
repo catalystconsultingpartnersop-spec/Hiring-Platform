@@ -14,7 +14,7 @@ export default async function MeetPage() {
         <div>
           <h1>Meet the founders</h1>
           <p>
-            A {MEET_MINUTES}-minute conversation with our founders. Tell us about the role and hear what we have to offer. No cost, no commitment.
+            A {MEET_MINUTES}-minute conversation with our founders. Tell us about the role and hear what we have to offer.
           </p>
         </div>
       </div>
