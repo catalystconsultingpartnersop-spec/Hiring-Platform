@@ -8,8 +8,8 @@ import s from "./meet.module.css";
 
 const WHEN = ["As soon as possible", "Within a month", "Just exploring"];
 
-export function MeetFlow({ times, names, role = "", town = "" }: { times: string[]; names: string; role?: string; town?: string }) {
-  const [r, setR] = useState<MeetRequest>({ name: "", business: "", email: "", phone: "", role, town, when: "", notes: "", phoneCall: false });
+export function MeetFlow({ times, names }: { times: string[]; names: string }) {
+  const [r, setR] = useState<MeetRequest>({ name: "", business: "", email: "", phone: "", role: "", town: "", when: "", notes: "", phoneCall: false });
   const [done, setDone] = useState<null | { when?: string; link?: string; phoneCall?: boolean; asked?: boolean }>(null);
   const [err, setErr] = useState("");
   const [pending, start] = useTransition();
