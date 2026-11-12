@@ -1,0 +1,82 @@
+/* The front page as a short talk: one idea per screen, big type, lots of air. */
+.narrow { max-width: 820px; }
+.center { text-align: center; }
+.kicker, .label, .labelDark { font-weight: 700; font-size: 13.5px; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 18px; }
+.kicker, .labelDark { color: var(--marigold); }
+.label { color: #a87a00; }
+
+/* 1. Hook */
+.hook { background: radial-gradient(1000px 520px at 80% -10%, #2a3656 0%, transparent 60%), var(--ink); color: #fff; padding: clamp(84px, 13vw, 168px) 0 clamp(64px, 9vw, 120px); text-align: center; }
+.hook .narrow { margin: 0 auto; }
+.hook h1 { font-size: clamp(52px, 8.4vw, 112px); line-height: 0.98; letter-spacing: -0.045em; margin: 0; }
+.hookGold { font-family: var(--display); color: var(--marigold); font-size: clamp(26px, 3.6vw, 46px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin: 22px 0 0; }
+.wink { font-size: clamp(18px, 1.9vw, 23px); font-style: italic; font-weight: 600; margin: 22px 0 0; color: #d3d9e5; }
+.down { display: inline-flex; gap: 10px; align-items: center; margin-top: clamp(44px, 6vw, 72px); color: #fff; font-weight: 700; text-decoration: none; border-bottom: 2px solid var(--marigold); padding-bottom: 4px; }
+.down span { color: var(--marigold); }
+
+/* 2. What we heard */
+.heard { background: #f7f4ec; padding: clamp(72px, 10vw, 136px) 0; text-align: center; }
+.heard .narrow { margin: 0 auto; }
+.say { font-size: clamp(19px, 2vw, 24px); line-height: 1.5; color: var(--ink-2); margin: 0 auto; max-width: 30ch; }
+.quote { font-family: var(--display); font-size: clamp(44px, 7vw, 92px); font-weight: 800; letter-spacing: -0.04em; line-height: 1; color: var(--ink); margin: 26px 0 30px; }
+
+/* 3. What we believe */
+.believe { padding: clamp(72px, 10vw, 128px) 0; }
+.believe h2 { font-size: clamp(30px, 3.6vw, 46px); letter-spacing: -0.03em; margin: 0 0 40px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; max-width: 980px; margin: 0 auto; }
+.belief { border: 1px solid var(--line); border-radius: 22px; padding: 34px 32px; background: #fff; }
+.who { font-family: var(--display); font-size: clamp(26px, 2.6vw, 34px); font-weight: 800; letter-spacing: -0.02em; color: var(--ink); }
+.belief p { font-family: var(--display); font-size: clamp(26px, 2.6vw, 34px); font-weight: 600; letter-spacing: -0.02em; line-height: 1.12; color: var(--ink-2); margin: 4px 0 16px; }
+.belief small { font-size: 16px; color: var(--ink-3); }
+.wins { text-align: center; font-family: var(--display); font-size: clamp(26px, 3vw, 38px); font-weight: 800; letter-spacing: -0.02em; margin: 44px 0 0; }
+.wins::before { content: ""; display: block; width: 56px; height: 4px; border-radius: 4px; background: var(--marigold); margin: 0 auto 26px; }
+
+/* 4. What we built */
+.built { background: var(--ink); color: #fff; padding: clamp(72px, 10vw, 128px) 0; }
+.built h2 { font-size: clamp(40px, 5.6vw, 72px); letter-spacing: -0.04em; line-height: 1; margin: 0; }
+.simple { font-size: clamp(19px, 2vw, 24px); color: #d3d9e5; margin: 16px 0 48px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.steps li { border-top: 3px solid var(--marigold); padding-top: 22px; }
+.steps span { font-family: var(--display); font-size: 54px; font-weight: 800; color: var(--marigold); line-height: 1; display: block; margin-bottom: 14px; }
+.steps b { font-family: var(--display); font-size: 25px; letter-spacing: -0.02em; line-height: 1.15; display: block; }
+.steps p { color: #c4cada; line-height: 1.55; margin: 10px 0 0; font-size: 16.5px; }
+
+/* 5. Who's here now */
+.now { padding: clamp(72px, 10vw, 128px) 0; }
+.now h2 { font-size: clamp(32px, 4.2vw, 54px); letter-spacing: -0.035em; line-height: 1.05; margin: 0; max-width: 20ch; }
+.nowSub { color: var(--ink-2); font-size: 19px; margin: 14px 0 28px; }
+.people { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.person { display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 24px; transition: transform 0.15s, box-shadow 0.15s; }
+.person:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(23, 33, 58, 0.1); }
+.role { align-self: flex-start; font-size: 12.5px; font-weight: 700; background: var(--marigold-soft); color: #6b4f00; padding: 4px 10px; border-radius: 999px; }
+.headline { font-family: var(--display); font-size: 21px; font-weight: 700; letter-spacing: -0.015em; line-height: 1.25; margin: 0; }
+.look { margin-top: auto; padding-top: 6px; font-weight: 700; font-size: 14.5px; }
+.all { margin: 26px 0 0; font-weight: 700; }
+
+/* 6. Fee */
+.fee { background: #f7f4ec; padding: 34px 0; }
+.feeRow { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
+.feeRow p { margin: 0; font-size: 18px; color: var(--ink-2); max-width: 62ch; }
+.feeRow b { color: var(--ink); }
+.feeRow a { font-weight: 700; color: var(--ink); white-space: nowrap; }
+
+/* 7. Invitation */
+.invite { background: radial-gradient(900px 420px at 50% 120%, #2a3656 0%, transparent 60%), var(--ink); color: #fff; padding: clamp(80px, 11vw, 140px) 0; text-align: center; }
+.invite .narrow { margin: 0 auto; }
+.invite h2 { font-size: clamp(44px, 6.4vw, 84px); letter-spacing: -0.045em; line-height: 1; margin: 0; }
+.invite > div > p:first-of-type { font-size: clamp(19px, 2vw, 24px); color: #d3d9e5; margin: 20px auto 34px; max-width: 30ch; }
+.cta { display: grid; justify-items: center; gap: 12px; }
+.ctaBtn { font-size: 19px; padding: 17px 40px; }
+.note { font-size: 14px; color: var(--ink-3); }
+.noteDark { font-size: 14px; color: #aab3c6; }
+.alt { margin: 34px 0 0; font-size: 15px; color: #aab3c6; }
+.alt a { color: #fff; }
+
+@media (max-width: 760px) {
+  .pair, .steps, .people { grid-template-columns: 1fr; }
+  .belief { padding: 26px 22px; }
+  .steps { gap: 30px; }
+  .steps span { font-size: 42px; }
+  .feeRow p { font-size: 16.5px; }
+  .ctaBtn { width: 100%; }
+}
