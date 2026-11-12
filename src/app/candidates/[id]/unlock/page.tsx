@@ -86,7 +86,7 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
               </li>
               <li>
                 <b>{candidateFee}, only if you hire.</b> Once, never a percentage of salary. We charge it when you tell us
-                you&rsquo;re hiring.
+                you&rsquo;re hiring. <Link href="/billing" target="_blank">Why we bill this way</Link>
               </li>
               <li>
                 <b>Not a fit? You owe nothing.</b> Just let us know, with one tap.

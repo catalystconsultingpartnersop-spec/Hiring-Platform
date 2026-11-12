@@ -30,7 +30,7 @@ export default async function Home() {
           <div>
             <p className={s.kicker}>For business owners who are hiring</p>
             <h1>
-              A revolutionary way of hiring. <span className={s.gold}>We finally cracked the code.</span>
+              A revolutionary way of hiring. <span className={s.gold}>It starts with a conversation.</span>
             </h1>
             <p className={s.lede}>
               You know your business, and you know the kind of person you need. Chances are, we&rsquo;ve already met them. Let us introduce you.
@@ -38,14 +38,19 @@ export default async function Home() {
             <Cta light />
           </div>
           <div className={s.familiar}>
-            <p className={s.familiarTitle}>Hiring, the way it should feel</p>
+            <p className={s.familiarTitle}>We&rsquo;re here to talk.</p>
+            <p className={s.familiarSub}>
+              Behind The Candidate Collection are real people, and we&rsquo;d like to hear from you.
+            </p>
             <ul>
-              <li>A few great options, not a pile of résumés</li>
-              <li>People who actually want this kind of work</li>
-              <li>Your business, your call</li>
-              <li>One fair fee, paid the day you hire</li>
+              <li>Talk with the founders themselves</li>
+              <li>We listen first: your business, your position</li>
+              <li>Ask us anything, see if it&rsquo;s right for you</li>
+              <li>No pressure, no commitment</li>
             </ul>
-            <p className={s.familiarFoot}>We&rsquo;re business owners too. We built what we always wanted.</p>
+            <Link className={`btn btn-gold ${s.cardBtn}`} href="/meet">
+              Choose a time
+            </Link>
           </div>
         </div>
       </section>
@@ -65,14 +70,13 @@ export default async function Home() {
             </li>
             <li>
               <b>Hire who you like</b>
-              <span>One flat $5,000, paid when you hire. Nothing before, nothing after.</span>
+              <span>Meet them, interview them, take your time. One flat fee, only when you hire.</span>
             </li>
           </ol>
           <ul className={s.nos}>
-            <li>One flat fee</li>
-            <li>Paid when you hire</li>
-            <li>Only people who want the job</li>
-            <li>You make every decision</li>
+            <li>A few great options, not a pile of résumés</li>
+            <li>People who want this kind of work</li>
+            <li>Your business, your call</li>
           </ul>
         </div>
       </section>
@@ -111,17 +115,13 @@ export default async function Home() {
       </section>
 
       <section className={s.fee}>
-        <div className="wrap">
-          <div className={s.feeGrid}>
-            <div className={s.feeBig}>$5,000</div>
-            <div>
-              <h2>Once. When you hire.</h2>
-              <p>
-                Paid the day you decide to hire, and then it&rsquo;s done. When your new hire walks in on day one, you&rsquo;re both
-                all in. That&rsquo;s how a hire succeeds.
-              </p>
-            </div>
-          </div>
+        <div className={`wrap ${s.feeLine}`}>
+          <p>
+            <b>One flat fee of $5,000, paid the day you hire.</b> Never a percentage of salary, and nothing at all if you don&rsquo;t hire.
+          </p>
+          <Link href="/billing" className={s.storyDark}>
+            Our billing philosophy →
+          </Link>
         </div>
       </section>
 

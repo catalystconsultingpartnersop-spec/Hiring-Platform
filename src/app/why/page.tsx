@@ -83,7 +83,7 @@ export default async function WhyPage() {
           first day, there&rsquo;s no bill hanging over either of you. Just the work, and the best possible start.
         </p>
         <p>
-          <strong>It&rsquo;s healthier for everyone.</strong>
+          <strong>It&rsquo;s healthier for everyone.</strong> <Link href="/billing">More on our billing philosophy</Link>
         </p>
         <p className={styles.sign}>Heshy, founder</p>
       </article>

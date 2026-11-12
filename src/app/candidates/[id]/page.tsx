@@ -303,6 +303,9 @@ function Teaser({
             <Link className="btn btn-gold" href={`/candidates/${c.id}/unlock`} style={{ width: "100%" }}>
               See who this is
             </Link>
+            <p className="small" style={{ margin: "10px 0 0", textAlign: "center" }}>
+              <Link href="/billing">Our billing philosophy</Link>
+            </p>
             <div className={styles.dealSave}>
               <ShortlistButton id={c.id} label />
             </div>

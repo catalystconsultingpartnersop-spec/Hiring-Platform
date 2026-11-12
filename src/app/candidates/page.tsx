@@ -212,7 +212,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
                 Every person here sat down one-on-one with our team.
               </p>
               <p className="fee-strip" style={{ marginBottom: 16 }}>
-                <strong>$5,000 flat fee</strong>, only if you hire. Never a percentage of salary.
+                <strong>$5,000 flat fee</strong>, only if you hire. Never a percentage of salary. <Link href="/billing">Our billing philosophy</Link>
               </p>
             </>
           )}
