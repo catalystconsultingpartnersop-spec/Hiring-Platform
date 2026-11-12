@@ -67,7 +67,7 @@ export default async function WhyPage() {
         </p>
 
         <h2 className={styles.h2}>The outcome.</h2>
-        <div className={styles.steps}>
+        <div className={styles.steps} style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
           <div className={styles.step}>
             <strong>For candidates</strong>
             <span>Work that fits their strengths.</span>
