@@ -47,21 +47,34 @@ export default async function Home() {
       <section className={s.hero}>
         <div className={`wrap ${s.heroGrid}`}>
           <div>
-            <p className={s.kicker}>For business owners with a position to fill</p>
+            <p className={s.eyebrow}>We cracked the code on hiring</p>
             <h1>
-              We cracked the code. <span>Not more candidates. Relevant ones.</span>
+              You don&rsquo;t need more résumés. <span>You need the right person.</span>
             </h1>
-            <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
             <p className={s.lede}>
-              Finding candidates is the easy part. Knowing which one is right for your position is the hard part. That&rsquo;s the part we
-              cracked: we&rsquo;ve sat down with {n ? <b>{n} candidates</b> : "candidates"} and learned what each one is truly great at.
+              We&rsquo;ve sat down with {n ? <b>{n} candidates</b> : "candidates"} and learned what each one is truly great at. So you
+              don&rsquo;t get a pile to sort. You meet the people who fit your position.
             </p>
-            <Cta dark />
+            <div className={s.ctaRow}>
+              <Link className={`btn btn-gold ${s.ctaBtn}`} href="/meet">
+                Talk to our team
+              </Link>
+              <a href="#now" className={s.second}>
+                See who&rsquo;s here <span aria-hidden>↓</span>
+              </a>
+            </div>
+            <p className={s.noteDark}>A short video call, at a time that works for you</p>
           </div>
           {top && (
-            <div className={s.stack}>
-              <span className={s.badge}>{n ? `1 of ${n} ready now` : "Ready now"}</span>
+            <div className={s.scene}>
+              <div className={s.sheets} aria-hidden>
+                {Array.from({ length: 9 }, (_, i) => (
+                  <i key={i} />
+                ))}
+              </div>
+              <span className={s.tagPile}>Easy to get: résumés</span>
               <Link href={`/candidates/${top.id}`} className={s.heroCard}>
+                <span className={s.tagOne}>Hard to find: the right person</span>
                 {top.role_category && <span className={s.role}>{top.role_category}</span>}
                 <p className={s.headline}>{top.headline}</p>
                 <WorksBest c={top} compact />
@@ -74,12 +87,26 @@ export default async function Home() {
             </div>
           )}
         </div>
+        <div className={`wrap ${s.strip}`}>
+          <span>
+            <b>{n ?? "Real"}</b> candidates ready now
+          </span>
+          <span>
+            <b>Every one</b> met by our team
+          </span>
+          <span>
+            <b>Strengths</b> assessed
+          </span>
+          <span>
+            <b>One flat fee,</b> paid the day you hire
+          </span>
+        </div>
       </section>
 
       <section className={s.feel}>
         <div className="wrap">
           <p className={s.label}>Sound familiar?</p>
-          <h2>Finding candidates was never the hard part.</h2>
+          <h2>Getting résumés was never the hard part.</h2>
           <div className={s.ways}>
             <div>
               <div className={s.pile} aria-hidden>
@@ -106,11 +133,12 @@ export default async function Home() {
                 ))}
               </div>
               <b>You called a recruiter.</b>
-              <p>More candidates to consider.</p>
+              <p>More résumés to go through.</p>
             </div>
           </div>
           <p className={s.insight}>
-            Then comes the real work: <b>figuring out which of them is actually relevant to you.</b> And that part lands on your desk.
+            But a résumé isn&rsquo;t a candidate. <b>Finding the one person who&rsquo;s right for your position is the hard part.</b> And
+            that part lands on your desk.
           </p>
         </div>
       </section>
@@ -120,8 +148,9 @@ export default async function Home() {
           <div>
             <p className={s.labelGold}>What we cracked</p>
             <h2>
-              <span>We do that part first.</span>
+              <span>That&rsquo;s the part we cracked.</span>
             </h2>
+            <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
             <p className={s.flipBody}>
               Long before you call, we&rsquo;ve sat down with each candidate, assessed their natural strengths, and understood the kind of
               work they&rsquo;ll thrive in.
@@ -147,7 +176,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className={s.now}>
+      <section id="now" className={s.now}>
         <div className="wrap">
           <p className={s.label}>See for yourself</p>
           <h2>{n ? `${n} candidates, ready right now.` : "Candidates, ready right now."}</h2>
@@ -197,7 +226,7 @@ export default async function Home() {
 
       <section className={s.invite}>
         <div className="wrap">
-          <h2>Need to hire? Start with people we know.</h2>
+          <h2>Need to hire? Meet the right person.</h2>
           <p>Tell our team what you&rsquo;re looking for. We&rsquo;ll tell you who might fit.</p>
           <Cta dark />
           <p className={s.alt}>
