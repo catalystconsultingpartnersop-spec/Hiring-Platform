@@ -6,7 +6,8 @@ import { FormState, requestStaffLink, staffLogin } from "../actions";
 
 const ERRORS: Record<string, string> = {
   expired: "That link has expired or was already used. Sign in below, or ask for a new link.",
-  inactive: "That account has been switched off. Ask Heshy to turn it back on.",
+  // Deliberately the same words as a wrong password: a removed rep isn't told anything.
+  inactive: "That email and password don't match.",
 };
 
 function Errors() {

@@ -14,6 +14,7 @@ import { AddStaffForm } from "./AddStaffForm";
 import { MessageReps } from "./MessageReps";
 import { CopySignIn } from "./CopySignIn";
 import { emailProblems } from "@/lib/emailProblems";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import { EmailProblemFlag } from "@/components/EmailProblemFlag";
 
 type Member = {
@@ -171,9 +172,18 @@ export default async function TeamPage() {
                       ) : (
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                           <form action={setStaffActive.bind(null, m.id, !m.active)}>
-                            <button className={`btn btn-small ${m.active ? "btn-danger" : "btn-ghost"}`} type="submit">
-                              {m.active ? "Switch off" : "Turn back on"}
-                            </button>
+                            {m.active ? (
+                              <ConfirmButton
+                                className="btn btn-small btn-danger"
+                                message={`Remove ${m.full_name || m.email} completely? They lose all access right away and are not told. Their candidates, upcoming calls and owner conversations move to Shloimy.`}
+                              >
+                                Remove completely
+                              </ConfirmButton>
+                            ) : (
+                              <button className="btn btn-small btn-ghost" type="submit">
+                                Turn back on
+                              </button>
+                            )}
                           </form>
                           {m.active && (
                             <form action={setPartner.bind(null, m.id, !m.is_partner)}>

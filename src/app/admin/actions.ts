@@ -734,6 +734,9 @@ export async function setStaffActive(id: string, active: boolean) {
   if (!(await canManage(me, id))) return;
   await db().from("staff").update({ active }).eq("id", id);
   await logActivity(staffActor(me), active ? "staff_reactivated" : "staff_removed", { staff_id: id });
+  // Removed: everything of theirs moves to Shloimy. They are never emailed.
+  if (!active) await (await import("@/lib/removeRep")).handOver(id, staffActor(me)).catch((err) => console.error("hand over", err));
+  revalidatePath("/admin/candidates");
   revalidatePath("/admin/team");
 }
 

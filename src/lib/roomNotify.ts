@@ -1,3 +1,4 @@
+import { isOwnerEmail } from "./session";
 import { db } from "./db";
 import { escapeHtml, sendEmail } from "./email";
 import { getSetting, setSetting } from "./settings";
@@ -52,6 +53,8 @@ export async function emailReply(o: { postId: number; postAuthor: string; text: 
   for (const e of people) {
     if (!e.includes("@") || e === o.by.email.toLowerCase() || o.tagged.includes(e)) continue;
     const t = team.find((m) => m.email.toLowerCase() === e);
+    // Only people on the team today. Someone who was removed never hears about old threads.
+    if (!t && !isOwnerEmail(e)) continue;
     const yours = e === o.postAuthor.toLowerCase();
     await sendEmail({
       to: t?.email ?? e,
