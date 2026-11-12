@@ -18,7 +18,8 @@ function Cta({ dark }: { dark?: boolean }) {
 }
 
 // The front door for a business owner with a seat to fill. In order, they should:
-// get what this is in five seconds (the top), feel understood (the usual way),
+// get what this is in five seconds (the top), feel understood (no obvious place
+// to turn, and no confidence the candidates will be relevant to them),
 // see what's different (we start with the people), see it's real (people here
 // now), know what happens next (three steps), and be invited. One ask throughout.
 export default async function Home() {
@@ -48,12 +49,12 @@ export default async function Home() {
           <div>
             <p className={s.kicker}>For business owners with a position to fill</p>
             <h1>
-              We cracked the code. <span>The right person may already be here.</span>
+              We cracked the code. <span>When you need to hire, now you know where to turn.</span>
             </h1>
             <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
             <p className={s.lede}>
-              We&rsquo;ve sat down with {n ? <b>{n} candidates</b> : "candidates"}, learned what each one is truly great at, and they&rsquo;re
-              ready for their next role. Tell us who you need.
+              We&rsquo;ve sat down with {n ? <b>{n} candidates</b> : "candidates"} and learned what each one is truly great at. So the people
+              you meet here are relevant to your position. Tell us who you need.
             </p>
             <Cta dark />
           </div>
@@ -78,18 +79,15 @@ export default async function Home() {
       <section className={s.feel}>
         <div className="wrap">
           <p className={s.label}>You know the feeling</p>
-          <h2>If hiring feels like a headache, it&rsquo;s not you.</h2>
-          <ol className={s.usual}>
-            <li>You post the opening.</li>
-            <li>Résumés pile up.</li>
-            <li>You interview people you&rsquo;ve never met.</li>
-            <li>
-              You choose, <em>and hope.</em>
-            </li>
-          </ol>
+          <h2>You need to hire. Where do you turn?</h2>
+          <div className={s.thoughts}>
+            <p>&ldquo;I need someone. Where do I even start?&rdquo;</p>
+            <p>&ldquo;Who do I ask?&rdquo;</p>
+            <p>&ldquo;Will the candidates I get even be relevant to me?&rdquo;</p>
+          </div>
           <p className={s.insight}>
-            A résumé tells you where someone has been. <b>It doesn&rsquo;t tell you what they&rsquo;re great at.</b> So even a careful hire
-            can feel like a guess.
+            It&rsquo;s not you. <b>There hasn&rsquo;t been an obvious place to turn,</b> or a way to know that the candidates you&rsquo;ll get
+            fit your position.
           </p>
         </div>
       </section>
@@ -108,7 +106,7 @@ export default async function Home() {
               of work they&rsquo;ll thrive in.
             </p>
             <p className={s.flipBody}>
-              So when you tell us about your position, <b>the getting-to-know part is already done.</b>
+              So when you tell us about your position, <b>we already know who&rsquo;s relevant to you.</b>
             </p>
           </div>
         </div>
@@ -146,8 +144,8 @@ export default async function Home() {
             </li>
             <li>
               <span>2</span>
-              <b>Meet people we know</b>
-              <p>A few who fit, not a pile of résumés.</p>
+              <b>Meet relevant candidates</b>
+              <p>A few people we know who fit your position, not a pile of résumés.</p>
             </li>
             <li>
               <span>3</span>
@@ -164,7 +162,7 @@ export default async function Home() {
 
       <section className={s.invite}>
         <div className="wrap">
-          <h2>Have a position to fill? Let&rsquo;s talk.</h2>
+          <h2>Need to hire? Now you know where to turn.</h2>
           <p>Tell our team what you&rsquo;re looking for. We&rsquo;ll tell you who might fit.</p>
           <Cta dark />
           <p className={s.alt}>
