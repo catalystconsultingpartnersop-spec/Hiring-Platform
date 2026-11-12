@@ -7,11 +7,10 @@ import s from "./home.module.css";
 
 export const dynamic = "force-dynamic";
 
-// The front door for a business owner with a seat to fill. In order, they should:
-// get what this is in five seconds (the top), feel understood (every route starts
-// its search the day you call, so you wait; said with no blame),
-// see what's different (we start with the people), see it's real (people here
-// now), know what happens next (three steps), and be invited. One ask throughout.
+// The front door for a business owner looking to hire. In the order it's seen:
+// 1. the first screen (the whole message, and the one ask), 2. the three steps,
+// 3. why it's different (the search is done before you call), 4. who the
+// candidates are, 5. the invitation. One ask throughout: speak with our team.
 export default async function Home() {
   await keepCandidatesOut();
   const { rows } = await allListed();
@@ -36,15 +35,24 @@ export default async function Home() {
       <section className={s.hero}>
         <div className={`wrap ${s.heroGrid}`}>
           <div>
-            <p className={s.eyebrow}>We cracked the code on hiring</p>
+            <p className={s.eyebrow}>A revolutionary way to hire</p>
             <h1>
-              Looking to hire? <span>We have qualified candidates, vetted and ready to roll.</span>
+              Unimpressed with your hiring options? <span>We built a better one.</span>
             </h1>
-            <p className={s.lede}>
-              We&rsquo;re not starting a search now. <b>We already met them.</b> They&rsquo;re ready, willing and able. Tell us what you need, and <b>you can meet a qualified candidate who&rsquo;s relevant to you within half an hour.</b>
-            </p>
+            <ul className={s.points}>
+              <li>
+                <b>Already met.</b> Our trained career coaches sit down with every candidate.
+              </li>
+              <li>
+                <b>Already looking.</b> Our candidates want a new opportunity now. We don&rsquo;t start hunting when you call.
+              </li>
+              <li>
+                <b>Half an hour.</b> If one matches your position, your first interview can be less than half an hour after your first
+                call with us.
+              </li>
+            </ul>
             <a href="#callback" className={`btn btn-gold ${s.ctaBtn} ${s.onlyPhone}`}>
-              Get a call back
+              Speak with our team
             </a>
             <p className={s.links}>
               <a href="#now" className={s.second}>
@@ -56,8 +64,8 @@ export default async function Home() {
             </p>
           </div>
           <div id="callback" className={s.cb}>
-            <span className={s.tagOne}>Ready, willing and able</span>
-            <h2>Tell us what you need. We&rsquo;ll give you a good match.</h2>
+            <span className={s.tagOne}>Looking to hire?</span>
+            <h2>Speak with a business professional on our team.</h2>
             <CallbackForm />
           </div>
         </div>
@@ -84,13 +92,13 @@ export default async function Home() {
           <ol className={s.steps}>
             <li>
               <span>1</span>
-              <b>Tell us what you need</b>
-              <p>Leave your number and we call you back, or pick a time for a short video call.</p>
+              <b>Tell us the position</b>
+              <p>Leave your number and a business professional on our team calls you back.</p>
             </li>
             <li>
               <span>2</span>
-              <b>Meet relevant candidates</b>
-              <p>A few people we know who fit your position, not a pile of résumés.</p>
+              <b>Meet a match</b>
+              <p>If a candidate matches, your first interview can be less than half an hour after that call.</p>
             </li>
             <li>
               <span>3</span>
@@ -108,105 +116,68 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className={s.feel}>
-        <div className="wrap">
-          <p className={s.label}>Sound familiar?</p>
-          <h2>Usually, the search starts the day you need someone.</h2>
-          <div className={s.ways}>
-            <div>
-              <div className={s.pile} aria-hidden>
-                {Array.from({ length: 14 }, (_, i) => (
-                  <i key={i} />
-                ))}
-              </div>
-              <b>You put an ad in a publication.</b>
-              <p>Then you wait for résumés.</p>
-            </div>
-            <div>
-              <div className={`${s.pile} ${s.bubbles}`} aria-hidden>
-                {Array.from({ length: 7 }, (_, i) => (
-                  <i key={i} />
-                ))}
-              </div>
-              <b>You posted on your status.</b>
-              <p>Then you wait for names.</p>
-            </div>
-            <div>
-              <div className={`${s.pile} ${s.cardsPile}`} aria-hidden>
-                {Array.from({ length: 6 }, (_, i) => (
-                  <i key={i} />
-                ))}
-              </div>
-              <b>You called a recruiter.</b>
-              <p>&ldquo;We&rsquo;ll open the position and start looking.&rdquo;</p>
-            </div>
-          </div>
-          <p className={s.insight}>
-            Every route starts from zero. <b>So you wait, while the position sits open.</b>
-          </p>
-        </div>
-      </section>
-
       <section className={s.flip}>
-        <div className={`wrap ${s.flipGrid}`}>
-          <div>
-            <p className={s.labelGold}>What we cracked</p>
-            <h2>
-              <span>Ours is already done.</span>
-            </h2>
-            <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
-            <p className={s.flipBody}>
-              Long before you call, we&rsquo;ve sat down with each candidate, assessed their natural strengths, and understood the kind of
-              work they&rsquo;ll thrive in.
-            </p>
-            <p className={s.flipBody}>
-              So when you tell us what you need, we&rsquo;re not starting now. They&rsquo;re ready, willing and able.{" "}
-              <b>You can meet a relevant candidate within half an hour.</b>
-            </p>
-          </div>
-          <div className={s.sift} aria-hidden>
-            <div className={s.many}>
-              {Array.from({ length: 24 }, (_, i) => (
-                <i key={i} />
-              ))}
+        <div className="wrap">
+          <p className={s.labelGold}>Why it&rsquo;s revolutionary</p>
+          <h2>
+            <span>The search is done before you call.</span>
+          </h2>
+          <div className={s.versus}>
+            <div className={s.usually}>
+              <small>Usually</small>
+              <ol>
+                <li>You say you&rsquo;re hiring.</li>
+                <li>The position gets opened.</li>
+                <li>The hunt begins.</li>
+                <li>You wait.</li>
+              </ol>
             </div>
-            <span className={s.arrow}>→</span>
-            <div className={s.few}>
-              <i />
-              <i />
-              <i />
-              <small>A few people we know</small>
+            <div className={s.here}>
+              <small>Here</small>
+              <ol>
+                <li>Our candidates are already looking for a new opportunity.</li>
+                <li>Our career coaches have already sat down with each one.</li>
+                <li>You tell us the position.</li>
+                <li>
+                  <b>A match? Your first interview can be within half an hour.</b>
+                </li>
+              </ol>
             </div>
           </div>
         </div>
       </section>
 
       <section id="now" className={s.now}>
-        <div className="wrap">
-          <p className={s.label}>See for yourself</p>
-          <h2>Meet a few of them.</h2>
+        <div className={`wrap ${s.nowGrid}`}>
+          <div>
+            <p className={s.label}>Our candidates</p>
+            <h2>Each one sat down with a career coach.</h2>
+            <p className={s.coach}>
+              Our team of trained career coaches sits with every candidate and aligns them with the work where they provide the most value,
+              based on their strengths and past experience.
+            </p>
+            <p className={s.all}>
+              <Link href="/candidates">Browse them all →</Link>
+            </p>
+          </div>
           <div className={s.people}>
             {rest.map((c) => (
               <Link key={c.id} href={`/candidates/${c.id}`} className={s.person}>
                 {c.role_category && <span className={s.role}>{c.role_category}</span>}
                 <p className={s.headline}>{c.headline}</p>
                 <WorksBest c={c} compact />
-                <span className={s.look}>Take a look →</span>
               </Link>
             ))}
           </div>
-          <p className={s.all}>
-            <Link href="/candidates">Browse them all</Link>
-          </p>
         </div>
       </section>
 
       <section className={s.invite}>
         <div className="wrap">
-          <h2>Looking to hire? Your search can be easy.</h2>
-          <p>Tell us what you need, and we&rsquo;ll give you a good match.</p>
+          <h2>Looking to hire?</h2>
+          <p>Speak with a business professional on our team.</p>
           <a className={`btn btn-gold ${s.ctaBtn}`} href="#callback">
-            Get a call back
+            Speak with our team
           </a>
           <p className={s.noteDark} style={{ marginTop: 12 }}>
             Or <Link href="/meet" style={{ color: "#fff" }}>pick a time for a video call</Link>
