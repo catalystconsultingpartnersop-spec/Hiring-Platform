@@ -10,10 +10,12 @@ export function TimePicker({
   times,
   onBook,
   bookLabel = "Book this time",
+  lengthNote = "Each call is 30 to 45 minutes.",
 }: {
   times: string[];
   onBook: (iso: string, timeZone: string) => Promise<{ ok?: boolean; error?: string }>;
   bookLabel?: string;
+  lengthNote?: string;
 }) {
   // The visitor's zone is only known in the browser; render times once it is.
   const tz = useSyncExternalStore(noop, browserZone, () => "");
@@ -78,7 +80,7 @@ export function TimePicker({
         ))}
       </div>
       <p className="small muted" style={{ marginTop: 10 }}>
-        Times are in your time zone ({zoneName}). Each call is 30 to 45 minutes.
+        Times are in your time zone ({zoneName}). {lengthNote}
       </p>
       {error && (
         <p className="notice notice-bad" role="alert" style={{ marginTop: 12 }}>

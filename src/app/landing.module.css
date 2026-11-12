@@ -1,0 +1,67 @@
+.hero { background: var(--ink); color: #fff; padding: clamp(44px, 7vw, 88px) 0 clamp(44px, 6vw, 72px); }
+.heroGrid { display: grid; grid-template-columns: 1.35fr 1fr; gap: clamp(28px, 5vw, 64px); align-items: center; }
+.kicker { color: var(--marigold); font-weight: 700; letter-spacing: 0.02em; margin: 0 0 14px; }
+.hero h1 { font-size: clamp(36px, 5.2vw, 62px); line-height: 1.05; letter-spacing: -0.03em; margin: 0 0 18px; max-width: 18ch; }
+.lede { font-size: clamp(17px, 1.6vw, 20px); color: #c9d0de; max-width: 40ch; margin: 0 0 26px; }
+.ctaWrap { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.ctaBtn { font-size: 19px !important; padding: 16px 30px !important; }
+.ctaNote { font-size: 14px; color: var(--ink-3); }
+.ctaNoteLight { font-size: 14px; color: #aab3c5; }
+.meetCard { background: #fff; color: var(--ink); border-radius: 22px; padding: 26px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28); }
+.meetTitle { font-size: 22px; font-weight: 800; margin: 16px 0 4px; }
+.meetSub { color: var(--ink-2); margin: 0 0 14px; }
+.meetList { margin: 0 0 18px; padding: 0; list-style: none; display: grid; gap: 8px; }
+.meetList li { padding-left: 26px; position: relative; }
+.meetList li::before { content: "✓"; position: absolute; left: 0; color: #c99400; font-weight: 800; }
+.cardBtn { width: 100%; justify-content: center; }
+
+.why, .how, .vet, .us, .fee, .closing { padding: clamp(48px, 7vw, 84px) 0; }
+.why h2, .how h2, .vet h2, .closing h2, .fee h2 { font-size: clamp(28px, 3.6vw, 40px); letter-spacing: -0.02em; margin: 0 0 10px; }
+.sub { color: var(--ink-2); font-size: 18px; max-width: 52ch; margin: 0 0 28px; }
+.reasons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.reasons div { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 20px; }
+.reasons h3 { margin: 0 0 8px; font-size: 18px; }
+.reasons p { margin: 0; color: var(--ink-2); }
+
+.how { background: #f4f3ee; }
+.steps { list-style: none; counter-reset: s; margin: 24px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.steps li { counter-increment: s; background: #fff; border-radius: 18px; padding: 22px; display: grid; gap: 6px; }
+.steps li::before { content: counter(s); width: 34px; height: 34px; border-radius: 50%; background: var(--marigold); display: grid; place-items: center; font-weight: 800; margin-bottom: 6px; }
+.steps b { font-size: 19px; }
+.steps span { color: var(--ink-2); }
+
+.vetGrid { display: grid; grid-template-columns: 1fr 1.2fr; gap: clamp(24px, 5vw, 60px); }
+.vetList { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.vetList li { border-left: 4px solid var(--marigold); padding: 4px 0 4px 16px; display: grid; gap: 2px; }
+.vetList b { font-size: 18px; }
+.vetList span { color: var(--ink-2); }
+
+.us { background: var(--ink); color: #fff; }
+.label { color: var(--marigold); font-weight: 700; margin: 0 0 18px; }
+.people { display: flex; gap: 34px; flex-wrap: wrap; margin-bottom: 40px; }
+.person { display: flex; gap: 14px; align-items: center; max-width: 380px; }
+.person b { display: block; font-size: 19px; }
+.role { color: #aab3c5; font-size: 14px; }
+.person p { margin: 6px 0 0; color: #c9d0de; font-size: 15px; }
+.mission { font-size: clamp(24px, 3vw, 34px); line-height: 1.25; max-width: 30ch; margin: 0 0 10px; }
+.missionKicker { color: var(--marigold); font-size: 19px; margin: 0; }
+
+.feeGrid { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
+.feeBig { font-size: clamp(54px, 8vw, 88px); font-weight: 800; letter-spacing: -0.03em; color: var(--ink); }
+.fee p { color: var(--ink-2); font-size: 18px; margin: 0; max-width: 46ch; }
+
+.closing { text-align: center; background: #f4f3ee; }
+.closing .ctaWrap { align-items: center; }
+.browse { margin: 26px 0 6px; font-size: 16px; }
+.seeker { color: var(--ink-3); font-size: 14px; margin: 0; }
+
+@media (max-width: 900px) {
+  .heroGrid, .vetGrid { grid-template-columns: 1fr; }
+  .reasons { grid-template-columns: 1fr 1fr; }
+  .steps { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .reasons { grid-template-columns: 1fr; }
+  .ctaBtn { width: 100%; justify-content: center; }
+  .ctaWrap { align-items: stretch; }
+}

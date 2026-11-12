@@ -1,213 +1,170 @@
 import { keepCandidatesOut } from "@/lib/candidateMode";
 import Link from "next/link";
-import { CandidateCard, isNew } from "@/components/CandidateCard";
-import { getTiers, listListed } from "@/lib/catalog";
-import type { FeeTier, PublicCandidate } from "@/lib/db";
-import { feeFor } from "@/lib/format";
-import { nowMs } from "@/lib/time";
-import styles from "./home.module.css";
+import { Faces } from "@/components/Faces";
+import { leaders, MEET_MINUTES } from "@/lib/meetUs";
+import s from "./landing.module.css";
 
 export const dynamic = "force-dynamic";
 
-// Fixed examples for the welcome stack at the top. The real, live
-// candidates appear as soon as the owner starts browsing.
-const example = (id: string, c: Partial<PublicCandidate>): PublicCandidate => ({
-  id,
-  status: "listed",
-  headline: null,
-  role_category: null,
-  industry: null,
-  level: null,
-  location_region: null,
-  work_mode: null,
-  salary_min: null,
-  salary_max: null,
-  strengths: [],
-  working_genius: null,
-  summary: null,
-  highlights: [],
-  fee_override_cents: null,
-  listed_at: null,
-  ...c,
-});
-const SHOWCASE: PublicCandidate[] = [
-  example("ex-1", {
-    headline: "Bookkeeper who finds the mistake everyone else missed",
-    role_category: "Bookkeeping",
-    industry: "Small business",
-    level: "experienced",
-    location_region: "Brooklyn, NY",
-    work_mode: "hybrid",
-    salary_min: 62000,
-    salary_max: 72000,
-    working_genius: "DTWEIG",
-    fee_override_cents: 500000,
-  }),
-  example("ex-2", {
-    headline: "Executive assistant who runs a CEO's week like a control tower",
-    role_category: "Executive assistant",
-    industry: "Real estate",
-    level: "senior",
-    location_region: "Manhattan, NY",
-    work_mode: "on-site",
-    salary_min: 95000,
-    salary_max: 115000,
-    working_genius: "ETDGWI",
-    fee_override_cents: 1000000,
-  }),
-  example("ex-3", {
-    headline: "Beginner with a head for numbers and a hunger to learn",
-    role_category: "Accounting",
-    industry: "Small business",
-    level: "beginner",
-    location_region: "Lakewood, NJ",
-    work_mode: "flexible",
-    salary_min: 42000,
-    salary_max: 50000,
-    working_genius: "WDITGE",
-    fee_override_cents: 500000,
-  }),
-];
+// The front door for business owners. For now the point is to meet us: owners
+// who don't know us yet won't hire from a catalog, so the page builds trust and
+// asks for one thing, a short call. Browsing stays, quietly, at the bottom.
+function Cta({ light }: { light?: boolean }) {
+  return (
+    <div className={s.ctaWrap}>
+      <Link className={`btn btn-gold ${s.ctaBtn}`} href="/meet">
+        Book a call with us →
+      </Link>
+      <span className={light ? s.ctaNoteLight : s.ctaNote}>
+        {MEET_MINUTES} minutes · video or phone · free, no commitment
+      </span>
+    </div>
+  );
+}
 
 export default async function Home() {
   await keepCandidatesOut();
-  let all: PublicCandidate[] = [];
-  let tiers: FeeTier[] = [];
-  try {
-    [all, tiers] = await Promise.all([listListed(), getTiers()]);
-  } catch {
-    // Database not reachable: the page still explains the idea.
-  }
+  const team = await leaders().catch(() => []);
+  const names = team.map((l) => l.first).join(" and ") || "our team";
 
-  const fresh = all.filter(isNew);
-  const feed = [...fresh, ...all.filter((c) => !isNew(c))].slice(0, 12);
-  const card = (c: PublicCandidate) => <CandidateCard key={c.id} c={c} fee={feeFor(c, tiers)} href={`/candidates/${c.id}`} />;
 
   return (
     <>
-      <section className={styles.hero}>
-        <div className={`wrap ${styles.heroGrid}`}>
+      <section className={s.hero}>
+        <div className={`wrap ${s.heroGrid}`}>
           <div>
-            <p className={styles.kicker}>Vetted talent, ready when you are</p>
-            <h1 className={styles.big}>Find the one you&rsquo;re looking for.</h1>
-            <p className={styles.wink}>Or the one you didn&rsquo;t know you needed.</p>
-            <p className={styles.lede}>
-              Scroll through our collection of vetted candidates. Look around, take your time, and see the talent
-              that&rsquo;s available to you.
+            <p className={s.kicker}>For business owners who are hiring</p>
+            <h1>Tell us who you need. We&rsquo;ll introduce you to people who want the job.</h1>
+            <p className={s.lede}>
+              We sit down with every candidate before we list them, so we know who&rsquo;s available, what they&rsquo;re great at, and
+              what work they actually want. Book a short call, tell us about your opening, and meet people who fit.
             </p>
-            <div className={styles.cta}>
-              <Link className="btn btn-gold" href="/candidates">
-                Start browsing
-              </Link>
-            </div>
+            <Cta light />
           </div>
-          <div className={styles.stack} aria-hidden="true">
-            {SHOWCASE.map((c, i) => (
-              <div key={c.id} className={styles[`s${i}`]}>
-                <CandidateCard c={{ ...c, listed_at: new Date(nowMs()).toISOString() }} fee={c.fee_override_cents} />
-              </div>
-            ))}
+          <div className={s.meetCard}>
+            <Faces people={team} size={78} />
+            <p className={s.meetTitle}>Talk to {names}</p>
+            <p className={s.meetSub}>The people behind The Candidate Collection. Real people, not an algorithm.</p>
+            <ul className={s.meetList}>
+              <li>Tell us about the job, in your words</li>
+              <li>Hear exactly how we vet our candidates</li>
+              <li>Get an honest answer: do we have someone?</li>
+            </ul>
+            <Link className={`btn btn-gold ${s.cardBtn}`} href="/meet">
+              Pick a time
+            </Link>
           </div>
         </div>
       </section>
 
-      {feed.length > 0 && (
-        <section className={`${styles.feed} shelf-warm`}>
-          <div className="wrap">
-            <div className={styles.feedHead}>
-              <h2>Meet the candidates</h2>
-              <Link href="/candidates">See everyone ({all.length})</Link>
-            </div>
-            <div className={styles.grid}>{feed.map(card)}</div>
-            <div className={styles.more}>
-              <Link className="btn btn-gold" href="/candidates">
-                Keep scrolling
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
-      <section className={styles.contrast}>
+      <section className={s.why}>
         <div className="wrap">
-          <h2>Hiring, the easy way.</h2>
-          <p className={styles.easySub}>Everything about this is built around your time.</p>
-          <div className={styles.easy}>
+          <h2>Why start with a call?</h2>
+          <p className={s.sub}>Because hiring is about trust. Before you trust us with a hire, you should know who we are.</p>
+          <div className={s.reasons}>
             <div>
-              <h3>See people right away</h3>
-              <p>Open the site and start scrolling. No call to schedule first.</p>
+              <h3>Meet the people behind it</h3>
+              <p>You talk to {names}, not a bot or a sales line. See who you&rsquo;re trusting with your next hire.</p>
             </div>
             <div>
-              <h3>Your business, your call</h3>
-              <p>You know your business best. We&rsquo;re not here to tell you how to run it. We&rsquo;re here to help you find vetted candidates.</p>
+              <h3>Say it in your words</h3>
+              <p>A real conversation about the job, the pace, and the kind of person who&rsquo;d thrive with you. No long forms.</p>
             </div>
             <div>
-              <h3>Nothing to fill out</h3>
-              <p>No forms, no homework, no back-and-forth. Just browse.</p>
+              <h3>Get a straight answer</h3>
+              <p>We tell you honestly whether we have someone right for it. If we do, we line up an interview.</p>
             </div>
             <div>
-              <h3>People who fit</h3>
-              <p>Every person is interviewed, with how they work best spelled out in plain words.</p>
-            </div>
-            <div>
-              <h3>One fair, flat fee</h3>
-              <p>Usually $5,000, and only if you hire. Never a percentage of salary.</p>
+              <h3>See why it&rsquo;s worth it</h3>
+              <p>You hear exactly how we get to know every candidate, and why that makes for a better hire.</p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className={styles.mission} id="mission">
+      <section className={s.how}>
         <div className="wrap">
-          <p className={styles.missionLabel}>Our mission</p>
-          <h2 className={styles.missionLine}>
-            We help people discover their natural strengths and character, so they can find work that truly fits them.
-          </h2>
-          <p className={styles.missionKicker}>And a person in the right job is the best hire you&rsquo;ll ever make.</p>
-          <Link href="/mission" className={styles.missionLink}>
-            Read our mission
-          </Link>
-        </div>
-      </section>
-
-      <section className={styles.scroll}>
-        <div className={`wrap ${styles.scrollGrid}`}>
-          <div>
-            <h2>Candidate scrolling.</h2>
-            <p>
-              Like browsing houses you&rsquo;re not buying yet. Lying in bed at night, thinking about the business,
-              and it hits you: <em>&ldquo;I could really use a graphics person.&rdquo;</em> Open the site and look. No
-              commitment, nobody calls you in the morning.
-            </p>
-            <p>When someone catches your eye, save them. When you&rsquo;re ready, meet them.</p>
-          </div>
-          <ol className={styles.steps}>
+          <h2>How it works</h2>
+          <ol className={s.steps}>
             <li>
-              <strong>Scroll</strong>
-              <span>See what each person is great at, what they&rsquo;ve done and what they want next.</span>
+              <b>Book a call</b>
+              <span>{MEET_MINUTES} minutes with us. Tell us what you&rsquo;re hiring for.</span>
             </li>
             <li>
-              <strong>Meet them, free</strong>
-              <span>See their name, resume and number in a minute. Card on file, nothing charged.</span>
+              <b>We find who fits</b>
+              <span>From people we&rsquo;ve already met, who are available and want your kind of work.</span>
             </li>
             <li>
-              <strong>Hire with one click</strong>
-              <span>One flat fee. You get a receipt and a ready-to-fill offer letter.</span>
+              <b>You interview them</b>
+              <span>Meet them yourself. Hire who you like, when you&rsquo;re ready.</span>
             </li>
           </ol>
         </div>
       </section>
 
-      <section className={styles.closing}>
+      <section className={s.vet}>
+        <div className={`wrap ${s.vetGrid}`}>
+          <div>
+            <h2>Every candidate sits down with us first</h2>
+            <p className={s.sub}>We only list people we&rsquo;ve met. Here&rsquo;s what that means:</p>
+          </div>
+          <ul className={s.vetList}>
+            <li>
+              <b>A one-on-one conversation</b>
+              <span>With someone on our team, about their experience, their strengths and what they&rsquo;re looking for.</span>
+            </li>
+            <li>
+              <b>Our strengths assessment</b>
+              <span>So we know how each person works best, and where they&rsquo;ll shine.</span>
+            </li>
+            <li>
+              <b>The work they actually want</b>
+              <span>You only meet people who are looking for the kind of job you&rsquo;re offering.</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section className={s.us}>
         <div className="wrap">
-          <h2>Your next hire is a scroll away.</h2>
-          <Link className="btn btn-gold" href="/candidates">
-            Start browsing
-          </Link>
-          <p>
-            Questions? <Link href="/contact">Contact us</Link>.
+          <p className={s.label}>Who we are</p>
+          <div className={s.people}>
+            {team.map((l) => (
+              <div key={l.id} className={s.person}>
+                <Faces people={[l]} size={72} />
+                <div>
+                  <b>{l.name}</b>
+                  <span className={s.role}>{l.title}</span>
+                  {(l.line || l.bio) && <p>{l.line || l.bio}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+          <h2 className={s.mission}>
+            We help people discover their natural strengths and character, so they can find work that truly fits them.
+          </h2>
+          <p className={s.missionKicker}>And a person in the right job is the best hire you&rsquo;ll ever make.</p>
+        </div>
+      </section>
+
+      <section className={s.fee}>
+        <div className={`wrap ${s.feeGrid}`}>
+          <div className={s.feeBig}>$5,000</div>
+          <div>
+            <h2>One flat fee, only if you hire.</h2>
+            <p>Never a percentage of salary. The call is free, and nothing is charged until you decide to hire.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className={s.closing}>
+        <div className="wrap">
+          <h2>Hiring? Let&rsquo;s talk.</h2>
+          <Cta />
+          <p className={s.browse}>
+            Prefer to look around first? <Link href="/candidates">Browse candidates</Link>
           </p>
-          <p className={styles.seeker}>
+          <p className={s.seeker}>
             Looking for work yourself? <Link href="/join">Start here</Link>
           </p>
         </div>

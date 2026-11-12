@@ -27,7 +27,7 @@ type Booked = { staff_id: string; starts_at: string; ends_at: string };
 export type Slot = { start: string; reps: string[]; minutes: Record<string, number> };
 
 async function load() {
-  const [{ data: reps }, { data: windows }, { data: booked }, lengths] = await Promise.all([
+  const [{ data: reps }, { data: windows }, { data: booked }, lengths, { data: meetings }] = await Promise.all([
     db().from("staff").select("id, time_zone").eq("active", true),
     db().from("staff_availability").select("staff_id, weekday, start_minute, end_minute"),
     db()
@@ -36,8 +36,13 @@ async function load() {
       .eq("status", "booked")
       .gte("ends_at", new Date().toISOString()),
     callMinutesByRep(),
+    // "Meet us" calls with business owners take the same time.
+    db().from("activity_log").select("details").eq("action", "owner_meeting").gte("details->>ends_at", new Date().toISOString()),
   ]);
-  return { reps: (reps ?? []) as Rep[], windows: (windows ?? []) as Window[], booked: (booked ?? []) as Booked[], lengths };
+  const owner = ((meetings ?? []) as { details: { staff_id: string; starts_at: string; ends_at: string; cancelled?: boolean } }[])
+    .filter((m) => !m.details.cancelled)
+    .map((m) => ({ staff_id: m.details.staff_id, starts_at: m.details.starts_at, ends_at: m.details.ends_at }));
+  return { reps: (reps ?? []) as Rep[], windows: (windows ?? []) as Window[], booked: [...((booked ?? []) as Booked[]), ...owner], lengths };
 }
 
 // A candidate who came through a rep's link (or was added by them) books with
