@@ -57,7 +57,7 @@ export default async function Home() {
             </p>
           </div>
           <div id="callback" className={s.cb}>
-            <span className={s.tagOne}>{n ? `${n} candidates ready now` : "Candidates ready now"}</span>
+            <span className={s.tagOne}>Candidates ready now</span>
             <h2>Tell us the position. We&rsquo;ll call you back.</h2>
             <CallbackForm />
           </div>
@@ -75,6 +75,37 @@ export default async function Home() {
           <span>
             <b>One flat fee,</b> paid the day you hire
           </span>
+        </div>
+      </section>
+
+      <section className={s.plan}>
+        <div className="wrap">
+          <p className={s.label}>How it works</p>
+          <h2>Three steps. You stay in charge.</h2>
+          <ol className={s.steps}>
+            <li>
+              <span>1</span>
+              <b>Tell us the position</b>
+              <p>Leave your number and we call you back, or pick a time for a short video call.</p>
+            </li>
+            <li>
+              <span>2</span>
+              <b>Meet relevant candidates</b>
+              <p>A few people we know who fit your position, not a pile of résumés.</p>
+            </li>
+            <li>
+              <span>3</span>
+              <b>You choose</b>
+              <p>Interview them, take your time, hire who you like.</p>
+            </li>
+          </ol>
+          <p className={s.fee}>
+            <b>One flat fee of $5,000, paid the day you hire.</b> Never a percentage of salary, and nothing at all if you don&rsquo;t hire.{" "}
+            <Link href="/billing">Our billing philosophy →</Link>
+          </p>
+          <p className={s.more}>
+            <Link href="/how-it-works">How it works, and the questions owners ask →</Link>
+          </p>
         </div>
       </section>
 
@@ -154,7 +185,7 @@ export default async function Home() {
       <section id="now" className={s.now}>
         <div className="wrap">
           <p className={s.label}>See for yourself</p>
-          <h2>{n ? `${n} candidates, ready right now.` : "Candidates, ready right now."}</h2>
+          <h2>Meet a few of them.</h2>
           <div className={s.people}>
             {rest.map((c) => (
               <Link key={c.id} href={`/candidates/${c.id}`} className={s.person}>
@@ -167,37 +198,6 @@ export default async function Home() {
           </div>
           <p className={s.all}>
             <Link href="/candidates">Browse them all</Link>
-          </p>
-        </div>
-      </section>
-
-      <section className={s.plan}>
-        <div className="wrap">
-          <p className={s.label}>When you reach out</p>
-          <h2>Three steps. You stay in charge.</h2>
-          <ol className={s.steps}>
-            <li>
-              <span>1</span>
-              <b>Tell us the position</b>
-              <p>Leave your number and we call you back, or pick a time for a short video call.</p>
-            </li>
-            <li>
-              <span>2</span>
-              <b>Meet relevant candidates</b>
-              <p>A few people we know who fit your position, not a pile of résumés.</p>
-            </li>
-            <li>
-              <span>3</span>
-              <b>You choose</b>
-              <p>Interview them, take your time, hire who you like.</p>
-            </li>
-          </ol>
-          <p className={s.fee}>
-            <b>One flat fee of $5,000, paid the day you hire.</b> Never a percentage of salary, and nothing at all if you don&rsquo;t hire.{" "}
-            <Link href="/billing">Our billing philosophy →</Link>
-          </p>
-          <p className={s.more}>
-            <Link href="/how-it-works">How it works, and the questions owners ask →</Link>
           </p>
         </div>
       </section>

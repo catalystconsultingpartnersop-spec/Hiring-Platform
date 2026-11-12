@@ -66,14 +66,14 @@
 .cbDone p { color: var(--ink-2); margin: 6px 0 0; }
 
 /* Understood */
-.feel { background: #f7f4ec; padding: clamp(68px, 9vw, 120px) 0; }
+.feel { background: #fff; padding: clamp(68px, 9vw, 120px) 0; }
 .feel h2, .now h2, .plan h2 { font-size: clamp(32px, 4.2vw, 54px); letter-spacing: -0.035em; line-height: 1.05; margin: 0; max-width: 20ch; }
 .ways { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 38px; }
-.ways > div { background: #fff; border-radius: 20px; padding: 24px 24px 22px; box-shadow: 0 8px 24px rgba(23, 33, 58, 0.06); }
+.ways > div { background: #f7f4ec; border-radius: 20px; padding: 24px 24px 22px; box-shadow: 0 8px 24px rgba(23, 33, 58, 0.06); }
 .ways b { display: block; font-family: var(--display); font-size: clamp(20px, 1.9vw, 23px); letter-spacing: -0.015em; line-height: 1.2; }
 .ways p { margin: 6px 0 0; color: var(--ink-2); font-size: 16.5px; }
 .pile { display: flex; flex-wrap: wrap; gap: 5px; height: 74px; align-content: flex-start; margin-bottom: 18px; overflow: hidden; }
-.pile i { width: 26px; height: 34px; border-radius: 4px; background: #e6e1d3; border-top: 5px solid #d3ccb9; }
+.pile i { width: 26px; height: 34px; border-radius: 4px; background: #ddd6c4; border-top: 5px solid #c9c1ab; }
 .pile i:nth-child(3n) { transform: rotate(4deg); }
 .pile i:nth-child(4n + 1) { transform: rotate(-5deg) translateY(2px); }
 .bubbles i { width: 64px; height: 26px; border-radius: 14px 14px 14px 3px; border-top: 0; background: #dcefe2; }
