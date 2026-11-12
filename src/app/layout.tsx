@@ -88,13 +88,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               </Link>
               <ShortlistLink base={site} />
               {signedIn && <ShortlistSync />}
-              <Link href={P("/join")} className="hide-sm">
+              <Link href={P("/join")} className="hide-sm hide-md">
                 Looking for work?
               </Link>
               <Link href={P("/how-it-works")} className="hide-sm">
                 How it works
               </Link>
-              <Link href={P("/hiring-help")} className="hide-sm">
+              <Link href={P("/hiring-help")} className="hide-sm hide-md">
                 Hiring help
               </Link>
               {signedIn ? (
