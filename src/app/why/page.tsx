@@ -29,10 +29,10 @@ export default async function WhyPage() {
           works the same way: start with an opening, then hunt for someone to fit into it.
         </p>
 
-        <h2 className={styles.h2}>It&rsquo;s a lot like a shidduch.</h2>
+        <h2 className={styles.h2}>Everyone has a place where they belong.</h2>
         <p>
-          You don&rsquo;t find the right match by taking whoever is closest and hoping. Everyone has a place where they belong, and
-          it starts with understanding the person.
+          The right hire isn&rsquo;t whoever happens to be closest. Everyone has a place where they shine, and finding it starts
+          with understanding the person.
         </p>
         <p>
           So many people are in jobs that don&rsquo;t fit them. They never had the chance to figure out what they&rsquo;re good
@@ -69,14 +69,14 @@ export default async function WhyPage() {
           happy to show them to you.
         </p>
         <p>
-          We do charge a fee, a reasonable one. Like a shadchan, a fair fee keeps everyone motivated to do the work right.
+          We do charge a fee, a reasonable one. A fair fee keeps everyone motivated to do the work right.
         </p>
         <p>
           How the fee is paid matters to us just as much. In the usual setup, a big bill comes due 30 or 60 days after the new hire
           starts. That gives the owner a month of looking for reasons it isn&rsquo;t working. It isn&rsquo;t fair to the candidate,
           and it isn&rsquo;t good for the hire.
         </p>
-        <p className={styles.punch}>A marriage works because the commitment is complete from day one. Trial periods rarely do.</p>
+        <p className={styles.punch}>A hire works when the commitment is complete from day one. Trial periods rarely do.</p>
         <p>
           So with us, you pay when you decide to hire. By then you&rsquo;ve met them, interviewed them, checked references, and
           you&rsquo;re committed to making it work. One flat, reasonable fee, and it&rsquo;s done. When your new hire walks in on the

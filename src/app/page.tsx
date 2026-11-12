@@ -100,11 +100,11 @@ export default async function Home() {
         <div className={`wrap ${s.ideaGrid}`}>
           <div>
             <p className={s.eyebrow}>The idea behind it</p>
-            <h2>Hiring is a lot like a shidduch.</h2>
+            <h2>Everyone has a place where they shine.</h2>
           </div>
           <div>
             <p>
-              You don&rsquo;t find the right match by grabbing whoever happens to be available. Everyone has a place where they shine.
+              The right hire isn&rsquo;t whoever happens to be available. It&rsquo;s the person whose strengths fit the work.
             </p>
             <p>
               So we start with the person. We sit with every candidate, understand their strengths and what they really want, and

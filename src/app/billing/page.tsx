@@ -31,7 +31,7 @@ export default async function BillingPage() {
 
         <h2 className={styles.h2}>Why charge at all?</h2>
         <p>
-          Think of a shadchan. A fair fee keeps everyone motivated to do the work well: getting to know every candidate, and
+          A fair fee keeps everyone motivated to do the work well: getting to know every candidate, and
           growing the collection with great people.
         </p>
 
@@ -40,7 +40,7 @@ export default async function BillingPage() {
           Because a new hire has the best chance of succeeding when both sides are all in from day one. When a bill is due weeks
           after someone starts, those first weeks quietly become a trial. Everyone is still deciding.
         </p>
-        <p className={styles.punch}>A marriage works because the commitment is complete from day one. A hire is the same.</p>
+        <p className={styles.punch}>A hire works best when the commitment is complete from day one.</p>
         <p>
           By the time you decide to hire, you&rsquo;ve met them, interviewed them, and checked references. You pay the fee, and
           it&rsquo;s done. When your new hire walks in, there&rsquo;s nothing hanging over either of you. Just the work.
