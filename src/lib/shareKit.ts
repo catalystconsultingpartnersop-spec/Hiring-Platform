@@ -26,7 +26,7 @@ export function ownerMessage(ref?: string | null) {
 
 // The teaser: the new front-page message, one link, meant to make an owner curious.
 export function ownerTeaser(ref?: string | null) {
-  return `Getting résumés is easy. Finding the right person is the hard part.\n\nWe cracked that part. We sit down with every candidate and learn what they're truly great at, so you meet the people who fit your position.\n\nSee for yourself: ${shareLink(ref, "home")}`;
+  return `Hiring takes real effort. And after all of it, you're holding a pile of résumés, still wondering who's actually right for you.\n\nWe cracked that part. We sit down with every candidate and learn what they're truly great at, so you meet the people who fit your position.\n\nSee for yourself: ${shareLink(ref, "home")}`;
 }
 
 // The candidate side: a warm note from a rep to their network.

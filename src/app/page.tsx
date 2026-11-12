@@ -72,9 +72,9 @@ export default async function Home() {
                   <i key={i} />
                 ))}
               </div>
-              <span className={s.tagPile}>Easy to get: résumés</span>
+              <span className={s.tagPile}>What you get: résumés</span>
               <Link href={`/candidates/${top.id}`} className={s.heroCard}>
-                <span className={s.tagOne}>Hard to find: the right person</span>
+                <span className={s.tagOne}>What you need: the right person</span>
                 {top.role_category && <span className={s.role}>{top.role_category}</span>}
                 <p className={s.headline}>{top.headline}</p>
                 <WorksBest c={top} compact />
@@ -106,7 +106,7 @@ export default async function Home() {
       <section className={s.feel}>
         <div className="wrap">
           <p className={s.label}>Sound familiar?</p>
-          <h2>Getting résumés was never the hard part.</h2>
+          <h2>All that effort, and you&rsquo;re holding a pile of résumés.</h2>
           <div className={s.ways}>
             <div>
               <div className={s.pile} aria-hidden>
@@ -115,7 +115,7 @@ export default async function Home() {
                 ))}
               </div>
               <b>You put an ad in a publication.</b>
-              <p>Résumés came in. Plenty of them.</p>
+              <p>You waited. Résumés came in.</p>
             </div>
             <div>
               <div className={`${s.pile} ${s.bubbles}`} aria-hidden>
@@ -124,7 +124,7 @@ export default async function Home() {
                 ))}
               </div>
               <b>You posted on your status.</b>
-              <p>Good people sent you names.</p>
+              <p>You asked around. Good people sent names.</p>
             </div>
             <div>
               <div className={`${s.pile} ${s.cardsPile}`} aria-hidden>
@@ -133,12 +133,12 @@ export default async function Home() {
                 ))}
               </div>
               <b>You called a recruiter.</b>
-              <p>More résumés to go through.</p>
+              <p>You made the calls. More résumés.</p>
             </div>
           </div>
           <p className={s.insight}>
-            But a résumé isn&rsquo;t a candidate. <b>Finding the one person who&rsquo;s right for your position is the hard part.</b> And
-            that part lands on your desk.
+            And now the real question: <b>which of these people is actually relevant to you?</b> A résumé doesn&rsquo;t say. So the
+            sorting lands on your desk.
           </p>
         </div>
       </section>
