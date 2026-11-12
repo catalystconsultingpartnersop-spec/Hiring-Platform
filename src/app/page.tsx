@@ -60,9 +60,6 @@ export default async function Home() {
             <span className={s.tagOne}>{n ? `${n} candidates ready now` : "Candidates ready now"}</span>
             <h2>Tell us the position. We&rsquo;ll call you back.</h2>
             <CallbackForm />
-            <p className={s.cbNote}>
-              <b>No one who fits?</b> We&rsquo;ll tell you straight, and we can look.
-            </p>
           </div>
         </div>
         <div className={`wrap ${s.strip}`}>
@@ -133,8 +130,8 @@ export default async function Home() {
               work they&rsquo;ll thrive in.
             </p>
             <p className={s.flipBody}>
-              So when you tell us the position, we look through people we already know, right then. <b>If someone fits, you could be
-              interviewing them within half an hour.</b> If no one does, we&rsquo;ll tell you straight, and we can look.
+              So when you tell us the position, we look through people we already know, right then. <b>You could be interviewing someone within
+              half an hour.</b>
             </p>
           </div>
           <div className={s.sift} aria-hidden>
@@ -208,7 +205,7 @@ export default async function Home() {
       <section className={s.invite}>
         <div className="wrap">
           <h2>Need to hire? The search is already done.</h2>
-          <p>Tell us the position. We&rsquo;ll tell you who fits, or tell you straight if no one does.</p>
+          <p>Tell us the position. We&rsquo;ll tell you who fits.</p>
           <a className={`btn btn-gold ${s.ctaBtn}`} href="#callback">
             Get a call back
           </a>
