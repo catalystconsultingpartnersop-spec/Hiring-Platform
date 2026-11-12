@@ -38,11 +38,10 @@ export default async function Home() {
           <div>
             <p className={s.eyebrow}>We cracked the code on hiring</p>
             <h1>
-              Need to hire? <span>The search is already done.</span>
+              Looking to hire? <span>We have qualified candidates, vetted and ready to roll.</span>
             </h1>
             <p className={s.lede}>
-              We&rsquo;re not starting a search now. <b>We already met our candidates.</b> They&rsquo;re vetted, and they&rsquo;re ready, willing
-              and able. Tell us what you need, and <b>you can meet a qualified candidate who&rsquo;s relevant to you within half an hour.</b>
+              We&rsquo;re not starting a search now. <b>We already met them.</b> They&rsquo;re ready, willing and able. Tell us what you need, and <b>you can meet a qualified candidate who&rsquo;s relevant to you within half an hour.</b>
             </p>
             <a href="#callback" className={`btn btn-gold ${s.ctaBtn} ${s.onlyPhone}`}>
               Get a call back
@@ -204,7 +203,7 @@ export default async function Home() {
 
       <section className={s.invite}>
         <div className="wrap">
-          <h2>Need to hire? Your search can be easy.</h2>
+          <h2>Looking to hire? Your search can be easy.</h2>
           <p>Tell us what you need, and we&rsquo;ll give you a good match.</p>
           <a className={`btn btn-gold ${s.ctaBtn}`} href="#callback">
             Get a call back
