@@ -74,3 +74,27 @@
   .doubtBody { font-size: 16.5px; }
   .feeGrid { flex-direction: column; align-items: flex-start; gap: 10px; }
 }
+
+/* The unveiling: one idea at a time, down a gold line. */
+.reveal { padding: clamp(64px, 8vw, 104px) 0; }
+.revealTitle { font-size: clamp(30px, 3.8vw, 46px); letter-spacing: -0.025em; margin: 0; }
+.reveals { list-style: none; counter-reset: r; margin: 44px 0 0; padding: 0 0 0 0; max-width: 780px; position: relative; }
+.reveals::before { content: ""; position: absolute; left: 21px; top: 10px; bottom: 10px; width: 2px; background: linear-gradient(var(--marigold), rgba(242, 179, 0, 0.15)); }
+.reveals li { counter-increment: r; position: relative; padding: 0 0 34px 72px; display: grid; gap: 6px; }
+.reveals li:last-child { padding-bottom: 0; }
+.reveals li::before { content: counter(r); position: absolute; left: 0; top: -4px; width: 44px; height: 44px; border-radius: 50%; background: var(--ink); color: var(--marigold); font-weight: 800; font-size: 18px; display: grid; place-items: center; box-shadow: 0 0 0 6px #fff; }
+.reveals b { font-size: clamp(21px, 2.3vw, 27px); letter-spacing: -0.015em; line-height: 1.2; }
+.reveals span { color: var(--ink-2); font-size: 17.5px; line-height: 1.55; }
+.reveals a { font-weight: 700; color: var(--ink); text-underline-offset: 3px; }
+.more { list-style: none; padding: 0; margin: 6px auto 26px; display: grid; gap: 10px; justify-content: center; text-align: left; }
+.more li { padding-left: 28px; position: relative; font-size: 18px; color: #fff; }
+.more li::before { content: "?"; position: absolute; left: 0; top: 1px; width: 19px; height: 19px; border-radius: 50%; background: var(--marigold); color: var(--ink); font-size: 12px; font-weight: 900; display: grid; place-items: center; }
+.doubt .story { margin-top: 20px; }
+@media (max-width: 640px) {
+  .reveal { padding: 52px 0; }
+  .reveals { margin-top: 30px; }
+  .reveals::before { left: 17px; }
+  .reveals li { padding: 0 0 28px 56px; }
+  .reveals li::before { width: 36px; height: 36px; font-size: 16px; }
+  .more li { font-size: 16.5px; }
+}
