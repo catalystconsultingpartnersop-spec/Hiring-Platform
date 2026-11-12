@@ -89,8 +89,9 @@ export function MeetFlow({ times }: { times: string[] }) {
             <input className="input" type="tel" value={r.phone} onChange={set("phone")} autoComplete="tel" />
           </label>
         </div>
-        <label className={s.tick}>
-          <input type="checkbox" checked={r.phoneCall} onChange={(ev) => setR({ ...r, phoneCall: ev.target.checked })} /> I&rsquo;d rather talk by phone than video
+        <label className={`${s.tick} small muted`}>
+          <input type="checkbox" checked={r.phoneCall} onChange={(ev) => setR({ ...r, phoneCall: ev.target.checked })} /> We&rsquo;ll meet by
+          video (Google Meet). Prefer a phone call instead?
         </label>
       </section>
 

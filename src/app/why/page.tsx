@@ -40,11 +40,10 @@ export default async function WhyPage() {
           where they stay. They aren&rsquo;t happy, and neither are the people they work for.
         </p>
 
-        <h2 className={styles.h2}>What a business owner usually gets.</h2>
+        <h2 className={styles.h2}>What business owners really want.</h2>
         <p>
-          When you have a position to fill, the options aren&rsquo;t great. You can pay a lot of money to someone who will also tell
-          you how to run your business. Or you can post in community chats and WhatsApp groups, get a pile of résumés, and have no
-          idea where to start.
+          When you have a position to fill, it&rsquo;s hard to know where to start. You post in community chats and WhatsApp groups
+          and get a pile of résumés. Or you bring in outside help, and with it comes a big fee and plenty of advice.
         </p>
         <p className={styles.punch}>Most owners don&rsquo;t want a lot of advice. They want options.</p>
         <p>&ldquo;I have a position open. Show me some people who fit.&rdquo;</p>
@@ -55,8 +54,8 @@ export default async function WhyPage() {
           role, the right seat, the right environment. Their experience counts too, of course.
         </p>
         <p>
-          So when you tell us what you need, we don&rsquo;t go out searching. If we have the right person, they&rsquo;re already
-          here, met and checked, like a checked esrog. <strong>Browse them yourself, or let us help you choose.</strong>
+          So when you tell us what you need, we don&rsquo;t go out searching. If we have someone who fits, we&rsquo;ve already
+          met them. <strong>Browse them yourself, or let us help you choose.</strong>
         </p>
         <p>
           We don&rsquo;t pull people out of their jobs. Candidates come to us because they want to make a move, and we keep
@@ -73,8 +72,8 @@ export default async function WhyPage() {
         </p>
         <p>
           How the fee is paid matters to us just as much. In the usual setup, a big bill comes due 30 or 60 days after the new hire
-          starts. That gives the owner a month of looking for reasons it isn&rsquo;t working. It isn&rsquo;t fair to the candidate,
-          and it isn&rsquo;t good for the hire.
+          starts. Those first weeks become a trial, with everyone still deciding. We&rsquo;d rather a new hire start with everyone
+          all in.
         </p>
         <p className={styles.punch}>A hire works when the commitment is complete from day one. Trial periods rarely do.</p>
         <p>
@@ -91,7 +90,7 @@ export default async function WhyPage() {
       <section className={styles.closing}>
         <div className="wrap">
           <h2>A revolutionary way of hiring. Let&rsquo;s talk.</h2>
-          <p>A short call with our founders. Tell us who you need, and see who&rsquo;s already here.</p>
+          <p>A short video call with our founders. Tell us who you need, and hear what we have to offer.</p>
           <div className={styles.actions}>
             <Link className="btn btn-gold" href="/meet">
               Meet the founders

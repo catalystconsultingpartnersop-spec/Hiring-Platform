@@ -10,7 +10,7 @@ function Cta({ light, center }: { light?: boolean; center?: boolean }) {
       <Link className={`btn btn-gold ${s.ctaBtn}`} href="/meet">
         Meet the founders
       </Link>
-      <span className={light ? s.ctaNoteLight : s.ctaNote}>A short call with our founders · video or phone</span>
+      <span className={light ? s.ctaNoteLight : s.ctaNote}>A short video call with our founders</span>
     </div>
   );
 }
@@ -40,7 +40,7 @@ export default async function Home() {
           <div className={s.familiar}>
             <p className={s.familiarTitle}>Hiring right now?</p>
             <p className={s.familiarSub}>
-              Come hear what we have to offer, in a short call with our founders.
+              Come hear what we have to offer, in a short video call with our founders.
             </p>
             <ul>
               <li>Tell us about your position</li>
@@ -87,7 +87,6 @@ export default async function Home() {
           <p className={s.doubtLead}>It&rsquo;s easier to explain in a conversation.</p>
           <p className={s.doubtBody}>
             Tell us about the position you&rsquo;re hiring for, and we&rsquo;ll walk you through how we work and who might be a fit.
-            {" "}A short call with our founders.
           </p>
           <Cta light center />
         </div>

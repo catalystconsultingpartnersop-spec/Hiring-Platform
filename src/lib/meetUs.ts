@@ -98,7 +98,7 @@ export async function bookMeeting(startIso: string, r: MeetRequest, ownerTz: str
       kit.p(
         r.phoneCall
           ? `${e(names)} will call you at ${e(r.phone)}.`
-          : `A ${minutes}-minute video call with ${e(names)}. We'll hear about your opening, tell you how we work, and tell you honestly whether we have someone for it.`,
+          : `A ${minutes}-minute video call with ${e(names)}. We'll hear about your opening, walk you through how we work, and look at who might be a fit.`,
       ) +
       (link && !r.phoneCall ? kit.button(link, "Join the call") : "") +
       kit.quiet("Need a different time? Just reply to this email."),
