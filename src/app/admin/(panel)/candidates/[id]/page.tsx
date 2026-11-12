@@ -56,7 +56,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
 
   const { data: unlocks } = await db()
     .from("unlocks")
-    .select("id, signed_at, owners(company, email)")
+    .select("id, signed_at, owner_id, owners(company, email)")
     .eq("candidate_id", id)
     .order("signed_at", { ascending: false });
 
@@ -127,9 +127,12 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         {(unlocks ?? []).length > 0 && (
           <p style={{ marginTop: 10 }}>
             Signed for by:{" "}
-            {(unlocks as unknown as { id: string; signed_at: string; owners: { company: string } }[])
-              .map((u) => `${u.owners.company} (${dateShort(u.signed_at)})`)
-              .join(", ")}
+            {(unlocks as unknown as { id: string; signed_at: string; owner_id: string; owners: { company: string | null; email: string } }[]).map((u, i) => (
+              <span key={u.id}>
+                {i > 0 && ", "}
+                <Link prefetch={false} href={`/admin/clients/${u.owner_id}`}>{u.owners.company || u.owners.email}</Link> ({dateShort(u.signed_at)})
+              </span>
+            ))}
           </p>
         )}
       </div>

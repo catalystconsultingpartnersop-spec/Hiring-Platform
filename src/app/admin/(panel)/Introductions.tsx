@@ -37,7 +37,7 @@ export async function Introductions({ rows, now, title = "Introductions in progr
                     <Link prefetch={false} href={`/admin/candidates/${a.candidate_id}`}>{a.candidates.full_name}</Link>
                   </td>
                   <td>
-                    {a.owners.company}
+                    <Link prefetch={false} href={`/admin/clients/${(a as AgreementRow & { owner_id: string }).owner_id}`}>{a.owners.company || a.owners.email}</Link>
                     <div className="small muted">
                       {a.owners.full_name}
                       {a.owners.phone ? `, ${a.owners.phone}` : ""}
