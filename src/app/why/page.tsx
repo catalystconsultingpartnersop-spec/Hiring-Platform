@@ -17,74 +17,71 @@ export default async function WhyPage() {
       <section className={styles.hero}>
         <div className="wrap">
           <p className={styles.label}>Our story</p>
-          <h1>Why we started The Candidate Collection.</h1>
-          <p className={styles.lead}>Hiring was frustrating for everyone. So we turned it around.</p>
+          <h1>Why hiring needed a new model.</h1>
+          <p className={styles.lead}>What isn&rsquo;t working in hiring today, and the model we built in response.</p>
         </div>
       </section>
 
       <article className={`wrap ${styles.body}`}>
+        <h2 className={styles.h2}>Hiring starts with the position.</h2>
         <p>
-          I started The Candidate Collection because I was frustrated with the way hiring works. And I wasn&rsquo;t the only one.
-          Candidates feel no one is really listening to them. Business owners get told how to run their business. And most hiring
-          works the same way: start with an opening, then hunt for someone to fit into it.
+          Most hiring works backward from an opening. Write a job description, collect résumés, screen for past titles and
+          industries, interview the closest matches. It&rsquo;s a reasonable process, but it measures the wrong thing. A résumé
+          shows where someone has been. It says very little about where they&rsquo;ll do their best work.
         </p>
 
-        <h2 className={styles.h2}>Everyone has a place where they belong.</h2>
+        <h2 className={styles.h2}>Mismatches are expensive.</h2>
         <p>
-          The right hire isn&rsquo;t whoever happens to be closest. Everyone has a place where they shine, and finding it starts
-          with understanding the person.
-        </p>
-        <p>
-          So many people are in jobs that don&rsquo;t fit them. They never had the chance to figure out what they&rsquo;re good
-          at, so they end up doing work outside their strengths. Their résumé says they did this and that in one industry, so that&rsquo;s
-          where they stay. They aren&rsquo;t happy, and neither are the people they work for.
+          Many people are working outside their strengths, often because their résumé kept them in one role or one industry. They
+          underperform, they move on, and the position opens again. For the business, each mismatch costs time, money and momentum.
         </p>
 
-        <h2 className={styles.h2}>What business owners really want.</h2>
+        <h2 className={styles.h2}>Owners need options, not advice.</h2>
         <p>
-          When you have a position to fill, it&rsquo;s hard to know where to start. You post in community chats and WhatsApp groups
-          and get a pile of résumés. Or you bring in outside help, and with it comes a big fee and plenty of advice.
+          Business owners know their businesses. What they need is a short list of qualified people who actually want the work.
+          Today the choice is usually between a stack of unscreened résumés and a costly search. Neither reliably delivers that.
         </p>
-        <p className={styles.punch}>Most owners don&rsquo;t want a lot of advice. They want options.</p>
-        <p>&ldquo;I have a position open. Show me some people who fit.&rdquo;</p>
+        <p className={styles.punch}>So we reversed the order: start with the person, not the position.</p>
 
-        <h2 className={styles.h2}>So we did the opposite.</h2>
+        <h2 className={styles.h2}>How our model works.</h2>
         <p>
-          Candidates come to us. We sit with each one, understand their skills, and help them see where they belong: the right
-          role, the right seat, the right environment. Their experience counts too, of course.
+          Candidates come to us first. We sit down with each one, assess their strengths, and learn what kind of work they want and
+          where they&rsquo;ll do it well. Experience still matters. It&rsquo;s one part of the picture, not the whole of it.
         </p>
         <p>
-          So when you tell us what you need, we don&rsquo;t go out searching. If we have someone who fits, we&rsquo;ve already
-          met them. <strong>Browse them yourself, or let us help you choose.</strong>
+          The result is a collection of candidates we already know. When an owner tells us about a position, we aren&rsquo;t
+          starting a search. We introduce people we&rsquo;ve already met, who are available and looking for that kind of work.
+          Owners can browse on their own, or ask us to help narrow it down.
+        </p>
+        <p>We don&rsquo;t recruit people out of their jobs. Candidates come to us because they&rsquo;re ready for a move.</p>
+
+        <h2 className={styles.h2}>Why the fee is structured this way.</h2>
+        <p>
+          Because we aren&rsquo;t running a separate search for each client, a percentage of salary doesn&rsquo;t make sense. We
+          charge one flat fee, shown up front on every candidate&rsquo;s profile.
         </p>
         <p>
-          We don&rsquo;t pull people out of their jobs. Candidates come to us because they want to make a move, and we keep
-          growing the collection, always looking for more great people.
+          The fee is due when the owner decides to hire, not weeks later. A delayed invoice turns the first month into an
+          evaluation period, which works against the new hire. Paying at the point of decision means both sides start fully
+          committed, and that gives the hire the best chance to succeed. <Link href="/billing">Our billing philosophy</Link>
         </p>
 
-        <h2 className={styles.h2}>Why our fee works the way it does.</h2>
-        <p>
-          We don&rsquo;t need big percentages. We don&rsquo;t go out hunting on your behalf. We have the candidates, and we&rsquo;re
-          happy to show them to you.
-        </p>
-        <p>
-          We do charge a fee, a reasonable one. A fair fee keeps everyone motivated to do the work right.
-        </p>
-        <p>
-          How the fee is paid matters to us just as much. In the usual setup, a big bill comes due 30 or 60 days after the new hire
-          starts. Those first weeks become a trial, with everyone still deciding. We&rsquo;d rather a new hire start with everyone
-          all in.
-        </p>
-        <p className={styles.punch}>A hire works when the commitment is complete from day one. Trial periods rarely do.</p>
-        <p>
-          So with us, you pay when you decide to hire. By then you&rsquo;ve met them, interviewed them, checked references, and
-          you&rsquo;re committed to making it work. One flat, reasonable fee, and it&rsquo;s done. When your new hire walks in on the
-          first day, there&rsquo;s no bill hanging over either of you. Just the work, and the best possible start.
-        </p>
-        <p>
-          <strong>It&rsquo;s healthier for everyone.</strong> <Link href="/billing">More on our billing philosophy</Link>
-        </p>
-        <p className={styles.sign}>Heshy, founder</p>
+        <h2 className={styles.h2}>The outcome.</h2>
+        <div className={styles.steps}>
+          <div className={styles.step}>
+            <strong>For candidates</strong>
+            <span>Work that fits their strengths.</span>
+          </div>
+          <div className={styles.step}>
+            <strong>For owners</strong>
+            <span>Fewer, better options, and every decision stays theirs.</span>
+          </div>
+          <div className={styles.step}>
+            <strong>For the hire</strong>
+            <span>A start on solid ground, with everyone committed.</span>
+          </div>
+        </div>
+        <p className={styles.sign}>The founders of The Candidate Collection</p>
       </article>
 
       <section className={styles.closing}>
