@@ -9,7 +9,7 @@ import s from "./meet.module.css";
 const WHEN = ["As soon as possible", "Within a month", "Just exploring"];
 
 export function MeetFlow({ times }: { times: string[] }) {
-  const [r, setR] = useState<MeetRequest>({ name: "", business: "", email: "", phone: "", role: "", town: "", when: "", notes: "", phoneCall: false });
+  const [r, setR] = useState<MeetRequest>({ minutes: 20, name: "", business: "", email: "", phone: "", role: "", town: "", when: "", notes: "", phoneCall: false });
   const [done, setDone] = useState<null | { when?: string; link?: string; phoneCall?: boolean; asked?: boolean }>(null);
   const [err, setErr] = useState("");
   const [pending, start] = useTransition();
@@ -98,13 +98,23 @@ export function MeetFlow({ times }: { times: string[] }) {
         <h2>
           <span>3</span> Pick a time
         </h2>
+        <div className={s.chips} style={{ margin: "0 0 14px" }}>
+          <span className="small muted" style={{ alignSelf: "center" }}>
+            How long?
+          </span>
+          {[10, 20, 30].map((m) => (
+            <button key={m} type="button" className={r.minutes === m ? "chip chip-on" : "chip"} onClick={() => setR({ ...r, minutes: m })}>
+              {m} minutes
+            </button>
+          ))}
+        </div>
         {!ready ? (
           <p className="muted small">Fill in the role, your name and email above, and the open times show here.</p>
         ) : times.length ? (
           <TimePicker
             times={times}
             bookLabel="Book my call"
-            lengthNote="The call is 30 minutes."
+            lengthNote={`The call is ${r.minutes} minutes.`}
             onBook={async (iso, tz) => {
               const res = await bookMeetUs(iso, tz, r);
               if ("ok" in res && res.ok) setDone({ when: res.when, link: res.link, phoneCall: res.phoneCall });

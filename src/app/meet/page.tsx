@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { meetTimes, MEET_MINUTES } from "@/lib/meetUs";
+import { meetTimes } from "@/lib/meetUs";
 import { MeetFlow } from "./MeetFlow";
 import s from "./meet.module.css";
 
@@ -14,7 +14,7 @@ export default async function MeetPage() {
         <div>
           <h1>Meet the founders</h1>
           <p>
-            A {MEET_MINUTES}-minute conversation with our founders. Tell us about the role and hear what we have to offer.
+            A short call with our founders. Tell us about the role and hear what we have to offer. Pick how long works for you.
           </p>
         </div>
       </div>

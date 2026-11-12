@@ -1,6 +1,5 @@
 import { keepCandidatesOut } from "@/lib/candidateMode";
 import Link from "next/link";
-import { MEET_MINUTES } from "@/lib/meetUs";
 import s from "./landing.module.css";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +10,7 @@ function Cta({ light, center }: { light?: boolean; center?: boolean }) {
       <Link className={`btn btn-gold ${s.ctaBtn}`} href="/meet">
         Meet the founders
       </Link>
-      <span className={light ? s.ctaNoteLight : s.ctaNote}>A {MEET_MINUTES}-minute call with our founders · video or phone</span>
+      <span className={light ? s.ctaNoteLight : s.ctaNote}>A short call with our founders · video or phone</span>
     </div>
   );
 }
@@ -33,16 +32,15 @@ export default async function Home() {
             </h1>
             <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
             <p className={s.lede}>
-              Hiring usually starts with the opening. We start with the person. We sit down with every candidate, learn their
-              strengths and what they&rsquo;re truly looking for, so when you&rsquo;re ready to hire, we can introduce you to people
-              who already fit.
+              Here&rsquo;s how: we get to know our candidates first. Their strengths, how they work, and what they&rsquo;re really
+              looking for. So when you&rsquo;re hiring, we can introduce you to people who fit.
             </p>
             <Cta light />
           </div>
           <div className={s.familiar}>
             <p className={s.familiarTitle}>Hiring right now?</p>
             <p className={s.familiarSub}>
-              Come hear what we have to offer, in a {MEET_MINUTES}-minute conversation with our founders.
+              Come hear what we have to offer, in a short call with our founders.
             </p>
             <ul>
               <li>Tell us about your position</li>
@@ -89,7 +87,7 @@ export default async function Home() {
           <p className={s.doubtLead}>It&rsquo;s easier to explain in a conversation.</p>
           <p className={s.doubtBody}>
             Tell us about the position you&rsquo;re hiring for, and we&rsquo;ll walk you through how we work and who might be a fit.
-            {" "}{MEET_MINUTES} minutes with our founders.
+            {" "}A short call with our founders.
           </p>
           <Cta light center />
         </div>

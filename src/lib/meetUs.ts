@@ -12,7 +12,7 @@ import { COMPANY_TZ, formatInZone } from "./time";
 // company (Heshy and the partner). Times come from their weekly hours, minus calls
 // they already have. Kept in activity_log ("owner_meeting"), no new tables.
 
-export const MEET_MINUTES = 30;
+export const MEET_LENGTHS = [10, 20, 30] as const;
 
 export type Leader = { id: string; email: string; name: string; first: string; title: string; line: string | null; bio: string | null; photo: string | null };
 
@@ -43,7 +43,7 @@ export async function meetTimes(): Promise<{ start: string; hosts: string[] }[]>
     .filter((s) => s.hosts.length);
 }
 
-export type MeetRequest = { name: string; business: string; email: string; phone: string; role: string; town: string; when: string; notes: string; phoneCall: boolean };
+export type MeetRequest = { minutes?: number; name: string; business: string; email: string; phone: string; role: string; town: string; when: string; notes: string; phoneCall: boolean };
 
 export async function bookMeeting(startIso: string, r: MeetRequest, ownerTz: string) {
   const slot = (await meetTimes()).find((s) => s.start === new Date(startIso).toISOString());
@@ -51,7 +51,8 @@ export async function bookMeeting(startIso: string, r: MeetRequest, ownerTz: str
   const team = await leaders();
   // Heshy hosts when he's free, otherwise the partner. Both are invited.
   const host = team.find((l) => slot.hosts.includes(l.id))!;
-  const ends = new Date(Date.parse(slot.start) + MEET_MINUTES * 60e3).toISOString();
+  const minutes = MEET_LENGTHS.includes(r.minutes as 10) ? (r.minutes as number) : 20;
+  const ends = new Date(Date.parse(slot.start) + minutes * 60e3).toISOString();
 
   let link = "";
   let space: string | null = null;
@@ -97,7 +98,7 @@ export async function bookMeeting(startIso: string, r: MeetRequest, ownerTz: str
       kit.p(
         r.phoneCall
           ? `${e(names)} will call you at ${e(r.phone)}.`
-          : `A ${MEET_MINUTES}-minute video call with ${e(names)}. We'll hear about your opening, tell you how we work, and tell you honestly whether we have someone for it.`,
+          : `A ${minutes}-minute video call with ${e(names)}. We'll hear about your opening, tell you how we work, and tell you honestly whether we have someone for it.`,
       ) +
       (link && !r.phoneCall ? kit.button(link, "Join the call") : "") +
       kit.quiet("Need a different time? Just reply to this email."),
@@ -115,6 +116,7 @@ export async function bookMeeting(startIso: string, r: MeetRequest, ownerTz: str
         kit.big(`${e(r.name)}${r.business ? `, ${e(r.business)}` : ""} booked a call`) +
         kit.facts([
           ["When", whenUs + (l.id === host.id ? " (you're hosting)" : "")],
+          ["Length", `${minutes} minutes`],
           ["Hiring for", r.role ? e(r.role) : null],
           ["Where", r.town ? e(r.town) : null],
           ["Needs someone", r.when ? e(r.when) : null],

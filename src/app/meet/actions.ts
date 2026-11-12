@@ -8,7 +8,7 @@ import { validTimeZone } from "@/lib/time";
 
 function clean(r: MeetRequest): MeetRequest | string {
   const t = (s: unknown, n = 200) => String(s ?? "").trim().slice(0, n);
-  const out = { name: t(r.name), business: t(r.business), email: t(r.email).toLowerCase(), phone: t(r.phone, 40), role: t(r.role), town: t(r.town), when: t(r.when, 60), notes: t(r.notes, 1000), phoneCall: !!r.phoneCall };
+  const out = { name: t(r.name), business: t(r.business), email: t(r.email).toLowerCase(), phone: t(r.phone, 40), role: t(r.role), town: t(r.town), when: t(r.when, 60), notes: t(r.notes, 1000), phoneCall: !!r.phoneCall, minutes: [10, 20, 30].includes(Number(r.minutes)) ? Number(r.minutes) : 20 };
   if (!out.role) return "Tell us what you're hiring for.";
   if (out.name.length < 2) return "Add your name.";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(out.email)) return "That email doesn't look quite right.";
