@@ -118,8 +118,8 @@ export async function writeTeamCallNotes() {
     }
     if (!key) continue;
     const prompt = `This is the transcript of a team call at a hiring company (reps who meet job candidates, and people who find business owners). Write short notes for the team.
-Answer with JSON only: {"bullets":["3 to 6 short lines: what was discussed and decided"],"actions":[{"who":"first name","what":"short task"}],"candidates":["full names of any candidates discussed"]}
-Plain, warm, short. No dollar amounts or commissions.${c.agenda.length ? `
+Answer with JSON only: {"bullets":["3 to 6 pointers"],"actions":[{"who":"first name","what":"short task"}],"candidates":["full names of any candidates discussed"]}
+Pointers, not sentences: each bullet is at most 10 words, like "Tableau gets Matia for production manager" or "Profiles need a more personal touch". Each action is at most 8 words. No dollar amounts or commissions.${c.agenda.length ? `
 The call had this agenda. Follow its order in the bullets, one line per item saying what was decided. If an item wasn't covered, add a line "Not covered: <item>".
 ${c.agenda.map((a, i) => `${i + 1}. ${a}`).join("\n")}` : ""}
 
