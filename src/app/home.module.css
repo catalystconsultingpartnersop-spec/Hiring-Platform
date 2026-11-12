@@ -65,6 +65,9 @@
 .cbDone b { font-family: var(--display); font-size: 24px; }
 .cbDone p { color: var(--ink-2); margin: 6px 0 0; }
 
+.hero .wink { margin: 26px 0 0; font-style: normal; font-family: var(--display); font-weight: 700; font-size: clamp(21px, 2.1vw, 27px); letter-spacing: -0.015em; line-height: 1.25; }
+.hero .wink + .lede { margin-top: 12px; }
+
 /* Understood */
 .feel { background: #fff; padding: clamp(68px, 9vw, 120px) 0; }
 .feel h2, .now h2, .plan h2 { font-size: clamp(32px, 4.2vw, 54px); letter-spacing: -0.035em; line-height: 1.05; margin: 0; max-width: 20ch; }
