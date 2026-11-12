@@ -41,8 +41,8 @@ export default async function Home() {
               Need to hire? <span>The search is already done.</span>
             </h1>
             <p className={s.lede}>
-              We&rsquo;ve already sat down with {n ? <b>{n} candidates</b> : "candidates"} and learned what each one is truly great at. Tell
-              us the position, and <b>you could be interviewing someone within half an hour of our call.</b>
+              We&rsquo;re not starting a search now. <b>We already met our candidates.</b> They&rsquo;re vetted, and they&rsquo;re ready, willing
+              and able. Tell us what you need, and <b>you can meet a qualified candidate who&rsquo;s relevant to you within half an hour.</b>
             </p>
             <a href="#callback" className={`btn btn-gold ${s.ctaBtn} ${s.onlyPhone}`}>
               Get a call back
@@ -57,8 +57,8 @@ export default async function Home() {
             </p>
           </div>
           <div id="callback" className={s.cb}>
-            <span className={s.tagOne}>Candidates ready now</span>
-            <h2>Tell us the position. We&rsquo;ll call you back.</h2>
+            <span className={s.tagOne}>Ready, willing and able</span>
+            <h2>Tell us what you need. We&rsquo;ll give you a good match.</h2>
             <CallbackForm />
           </div>
         </div>
@@ -85,7 +85,7 @@ export default async function Home() {
           <ol className={s.steps}>
             <li>
               <span>1</span>
-              <b>Tell us the position</b>
+              <b>Tell us what you need</b>
               <p>Leave your number and we call you back, or pick a time for a short video call.</p>
             </li>
             <li>
@@ -161,8 +161,8 @@ export default async function Home() {
               work they&rsquo;ll thrive in.
             </p>
             <p className={s.flipBody}>
-              So when you tell us the position, we look through people we already know, right then. <b>You could be interviewing someone within
-              half an hour.</b>
+              So when you tell us what you need, we&rsquo;re not starting now. They&rsquo;re ready, willing and able.{" "}
+              <b>You can meet a relevant candidate within half an hour.</b>
             </p>
           </div>
           <div className={s.sift} aria-hidden>
@@ -204,8 +204,8 @@ export default async function Home() {
 
       <section className={s.invite}>
         <div className="wrap">
-          <h2>Need to hire? The search is already done.</h2>
-          <p>Tell us the position. We&rsquo;ll tell you who fits.</p>
+          <h2>Need to hire? Your search can be easy.</h2>
+          <p>Tell us what you need, and we&rsquo;ll give you a good match.</p>
           <a className={`btn btn-gold ${s.ctaBtn}`} href="#callback">
             Get a call back
           </a>
