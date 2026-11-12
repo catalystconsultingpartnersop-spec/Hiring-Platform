@@ -49,7 +49,7 @@ export default async function HowItWorks() {
   const working: QA[] = [
     [
       "What happens on the call with your team?",
-      "It's a short video call on Google Meet, and you pick the length: 10, 20 or 30 minutes. A phone call works too. You tell us about the position, we explain how we work, and we tell you who might fit.",
+      "Leave your number on the front page and we call you back. Or pick a time for a short video call on Google Meet: 10, 20 or 30 minutes. You tell us about the position, we explain how we work, and we tell you who we have.",
     ],
     [
       "What do I sign?",
@@ -110,7 +110,7 @@ export default async function HowItWorks() {
       <section className={s.hero}>
         <div className="wrap">
           <p className={s.label}>How it works</p>
-          <h1>We know our candidates. That&rsquo;s the whole idea.</h1>
+          <h1>We already met the candidates. That&rsquo;s the whole idea.</h1>
           <p className={s.lead}>What we do, how it works step by step, who we are, and straight answers to the questions owners ask.</p>
         </div>
       </section>
@@ -123,12 +123,12 @@ export default async function HowItWorks() {
           </div>
           <div className={s.whatBody}>
             <p>
-              A résumé isn&rsquo;t a candidate. So we don&rsquo;t collect résumés. We sit down with people who are ready for their next role,
-              go through their experience, have them take a career strengths assessment, and learn what kind of work fits them.
+              We don&rsquo;t start searching the day you call. We sit down with people who are ready for their next role, go through their
+              experience, have them take a career strengths assessment, and learn what kind of work fits them.
             </p>
             <p>
-              <b>That&rsquo;s The Candidate Collection:</b> {n ? `${n} people` : "people"} we know, ready now. When you have a position to
-              fill, you tell us about it, and you meet the ones who fit.
+              <b>That&rsquo;s The Candidate Collection:</b> {n ? `${n} people` : "people"} we know, ready now. Tell us what you need, and
+              half an hour later you can have a qualified candidate to consider.
             </p>
           </div>
         </div>
@@ -141,7 +141,7 @@ export default async function HowItWorks() {
           <ol className={s.steps}>
             <li>
               <b>Talk to our team</b>
-              <p>A short video call. Tell us about the position and the kind of person who&rsquo;d thrive in it.</p>
+              <p>Leave your number and we call you back, or pick a time for a short video call.</p>
             </li>
             <li>
               <b>See who fits</b>
@@ -200,11 +200,13 @@ export default async function HowItWorks() {
       <section className={s.close}>
         <div className="wrap">
           <h2>Another question? Ask us.</h2>
-          <p>Tell our team what you&rsquo;re looking for. We&rsquo;ll tell you who might fit.</p>
-          <Link className={`btn btn-gold ${s.closeBtn}`} href="/meet">
+          <p>Tell us what you need, and hear who we have.</p>
+          <Link className={`btn btn-gold ${s.closeBtn}`} href="/#callback">
             Talk to our team
           </Link>
-          <span>A short video call, at a time that works for you</span>
+          <span>
+            We call you back. Or <Link href="/meet">pick a time for a video call</Link>
+          </span>
         </div>
       </section>
     </>

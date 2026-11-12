@@ -1,4 +1,5 @@
 /* Front page. One idea per section, headings that tell the story on their own. */
+.hero h1, .plan h2, .feel h2, .flip h2, .now h2, .invite h2, .cb h2 { text-wrap: balance; }
 .kicker, .label, .labelGold { font-weight: 700; font-size: 13.5px; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 16px; }
 .kicker, .labelGold { color: var(--marigold); }
 .label { color: #a87a00; }
@@ -128,7 +129,7 @@
 
 /* Invitation */
 .invite { background: radial-gradient(900px 420px at 50% 120%, #2a3656 0%, transparent 60%), var(--ink); color: #fff; padding: clamp(80px, 11vw, 136px) 0; text-align: center; }
-.invite h2 { font-size: clamp(36px, 5vw, 64px); letter-spacing: -0.04em; line-height: 1.04; margin: 0 auto; max-width: 18ch; }
+.invite h2 { font-size: clamp(36px, 5vw, 64px); letter-spacing: -0.04em; line-height: 1.04; margin: 0 auto; max-width: 22ch; }
 .invite h2 + p { font-size: clamp(18px, 1.9vw, 23px); color: #d3d9e5; margin: 20px auto 34px; max-width: 32ch; }
 .invite .cta { justify-items: center; }
 .alt { margin: 34px 0 0; font-size: 15px; color: #aab3c6; }

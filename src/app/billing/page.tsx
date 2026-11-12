@@ -71,7 +71,7 @@ export default async function BillingPage() {
         <div className="wrap">
           <h2>Questions about how it works? We&rsquo;re here to talk.</h2>
           <div className={styles.actions}>
-            <Link className="btn btn-gold" href="/meet">
+            <Link className="btn btn-gold" href="/#callback">
               Talk to our team
             </Link>
             <Link className={`btn btn-ghost ${styles.light}`} href="/how-it-works">

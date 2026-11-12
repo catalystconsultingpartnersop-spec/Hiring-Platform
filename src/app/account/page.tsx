@@ -9,7 +9,7 @@ import { HiringFor } from "./HiringFor";
 import { OwnerMatchNote } from "@/components/OwnerMatchNote";
 import { ownerPositions } from "@/lib/ownerMatches";
 import { bigStepIndex, loadPath, pathState, Stage } from "@/lib/path";
-import { COMPANY_TZ, formatInZone } from "@/lib/time";
+import { COMPANY_TZ, formatInZone, nowMs as now } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +37,7 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
   // Candidates they passed on go to the bottom.
   const rows = [...all.filter((r) => !r.passed_at), ...all.filter((r) => r.passed_at)];
   const paths = await loadPath(all.map((r) => r.id));
-  const nowMs = Date.now();
+  const nowMs = now();
   const cards = rows.map((r) => {
     const hire = [...r.hires].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
     const st = pathState(r, paths, { hireStatus: hire?.status, candidateStatus: r.candidates.status, nowMs });
