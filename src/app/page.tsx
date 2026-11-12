@@ -17,9 +17,8 @@ function Cta({ light, center }: { light?: boolean; center?: boolean }) {
 }
 
 // The front door for business owners. The feeling we're after, in order:
-// understood ("that's exactly my experience"), relieved ("finally"), a little
-// skeptical ("too good to be true... who's behind this?"), and curious enough
-// to meet the founders. One ask, everywhere: meet us. Browsing stays at the bottom.
+// understood, then curious, then invited: we're offering a service, come hear
+// what it is. One ask, everywhere: meet the founders. Browsing stays at the bottom.
 export default async function Home() {
   await keepCandidatesOut();
 
@@ -34,21 +33,21 @@ export default async function Home() {
             </h1>
             <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
             <p className={s.lede}>
-              The secret? We start with the person, not the position. Every candidate sits down with us first, so when you tell us who
-              you need, the right people are already here. Available, and looking for exactly this kind of work.
+              Here&rsquo;s the idea: we start with the person, not the position. We sit down with candidates first and get to know
+              their strengths and what they&rsquo;re looking for. So when you tell us who you need, we can introduce you to people who
+              fit.
             </p>
             <Cta light />
           </div>
           <div className={s.familiar}>
             <p className={s.familiarTitle}>Hiring right now?</p>
             <p className={s.familiarSub}>
-              Then let&rsquo;s talk. You have the need, we have the solution. {MEET_MINUTES} minutes with our founders is all it takes
-              to see it for yourself.
+              Come hear what we have to offer. A relaxed {MEET_MINUTES}-minute conversation with our founders.
             </p>
             <ul>
-              <li>Tell us about the position</li>
-              <li>Hear exactly how it works</li>
-              <li>Find out who we already have for you</li>
+              <li>Tell us about your position</li>
+              <li>Hear how we work</li>
+              <li>See who might be a fit</li>
               <li>No pressure, no commitment</li>
             </ul>
             <Link className={`btn btn-gold ${s.cardBtn}`} href="/meet">
@@ -60,16 +59,16 @@ export default async function Home() {
 
       <section className={s.offer}>
         <div className="wrap">
-          <p className={s.eyebrow}>Here&rsquo;s the new way</p>
-          <h2>You tell us the position. The right people are already here.</h2>
+          <p className={s.eyebrow}>What we offer</p>
+          <h2>Candidates we&rsquo;ve gotten to know, introduced to you.</h2>
           <ol className={s.steps}>
             <li>
               <b>Tell us who you need</b>
               <span>The role, the place, the kind of person who&rsquo;d thrive with you.</span>
             </li>
             <li>
-              <b>Meet people we already know</b>
-              <span>Every candidate has sat down with us. They&rsquo;re available, and they want exactly this kind of work.</span>
+              <b>Meet people we know</b>
+              <span>Candidates who have sat down with us and are looking for this kind of work.</span>
             </li>
             <li>
               <b>Hire who you like</b>
@@ -86,11 +85,11 @@ export default async function Home() {
 
       <section className={s.doubt}>
         <div className="wrap">
-          <h2>Sounds too good to be true?</h2>
-          <p className={s.doubtLead}>We get that. It&rsquo;s exactly why we&rsquo;d like to meet you.</p>
+          <h2>Come hear what we have to offer.</h2>
+          <p className={s.doubtLead}>It&rsquo;s easier to explain in a conversation.</p>
           <p className={s.doubtBody}>
-            You have a position to fill, and we say we&rsquo;ve solved the hardest part. Spend {MEET_MINUTES} minutes with our
-            founders, tell us who you need, and see for yourself.
+            Tell us about the position you&rsquo;re hiring for, and we&rsquo;ll walk you through how we work and who might be a fit.
+            {" "}{MEET_MINUTES} minutes with our founders, no pressure.
           </p>
           <Cta light center />
         </div>
@@ -108,7 +107,7 @@ export default async function Home() {
             </p>
             <p>
               So we start with the person. We sit with every candidate, understand their strengths and what they really want, and
-              help them see where they belong. When your position comes along, the fit is already there.
+              help them see where they belong. So when a position comes along, we have a good sense of who might fit.
             </p>
             <Link href="/why" className={s.storyDark}>
               Read our story →
@@ -130,7 +129,7 @@ export default async function Home() {
 
       <section className={s.closing}>
         <div className="wrap">
-          <h2>Who&rsquo;s behind this? Come find out.</h2>
+          <h2>We&rsquo;d love to meet you.</h2>
           <Cta center />
           <p className={s.browse}>
             Rather look around first? <Link href="/candidates">Browse candidates</Link>
