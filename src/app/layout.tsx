@@ -21,9 +21,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: brandName(),
-    title: "Dear business owner, unimpressed with your hiring options?",
-    description: "We’re business owners too. See the hiring experience we built: candidates met and coached first, and you choose for yourself.",
-    images: [{ url: "/share/og.png", width: 1200, height: 630, alt: "Dear business owner, unimpressed with your hiring options?" }],
+    title: "We cracked the code. We found the solution to the hiring pain.",
+    description: "A revolutionary way of hiring. A collection of candidates ready for their next role. Meet the team.",
+    images: [{ url: "/share/og.png", width: 1200, height: 630, alt: "We cracked the code. We found the solution to the hiring pain." }],
   },
   twitter: { card: "summary_large_image", images: ["/share/og.png"] },
   // Proves to Google Search Console that we own the site.

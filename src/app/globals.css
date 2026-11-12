@@ -543,20 +543,21 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
 }
 
 /* Logo, used everywhere */
-.logo { display: inline-flex; align-items: flex-start; gap: 10px; color: var(--ink); }
-.logo-mark { width: 14px; height: 14px; border-radius: 4px; background: var(--marigold); flex: none; margin-top: 5px; }
+.logo { display: inline-flex; align-items: center; gap: 9px; color: var(--ink); }
+.logo-mark { width: 30px; height: 30px; flex: none; color: var(--ink); }
+.site-footer .logo-mark { color: #fff; }
 .logo-text { display: flex; flex-direction: column; line-height: 1.1; }
 .logo-name { font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: -0.02em; white-space: nowrap; }
 .logo-tag { font-family: var(--text); font-size: 12px; font-weight: 500; color: var(--ink-3); letter-spacing: 0.01em; margin-top: 2px; white-space: nowrap; }
 .logo-lg .logo-name { font-size: 24px; }
-.logo-lg .logo-mark { width: 16px; height: 16px; margin-top: 6px; }
+.logo-lg .logo-mark { width: 36px; height: 36px; }
 .logo-lg .logo-tag { font-size: 13px; }
 .letterhead { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding-bottom: 16px; margin-bottom: 22px; border-bottom: 2px solid var(--marigold); }
 .letterhead-right { font-size: 13px; color: var(--ink-2); text-align: right; line-height: 1.5; }
 @media (max-width: 480px) {
   .logo-name { font-size: 16px; }
   .logo-tag { display: none; }
-  .logo-mark { width: 10px; height: 10px; }
+  .logo-mark { width: 24px; height: 24px; }
 }
 
 /* Phone: main action pinned to the bottom */

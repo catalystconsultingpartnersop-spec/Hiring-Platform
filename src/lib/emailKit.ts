@@ -20,7 +20,7 @@ function logo() {
   const i = name.lastIndexOf(" ");
   const words = i > 0 ? `${esc(name.slice(0, i))} <span style="color:#c99600">${esc(name.slice(i + 1))}</span>` : esc(name);
   return `<table role="presentation" cellpadding="0" cellspacing="0"><tr>
-<td style="vertical-align:top;padding:6px 10px 0 0"><div style="width:13px;height:13px;border-radius:4px;background:${GOLD}"></div></td>
+<td style="vertical-align:middle;padding:0 9px 0 0"><img src="${siteUrl()}/share/logo-mark.png" width="28" height="28" alt="" style="display:block;border:0"></td>
 <td style="font-family:Arial,Helvetica,sans-serif;font-weight:800;font-size:19px;letter-spacing:-0.3px;color:${INK}">${words}</td>
 </tr></table>`;
 }
