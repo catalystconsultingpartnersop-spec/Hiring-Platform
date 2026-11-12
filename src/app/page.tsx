@@ -1,4 +1,5 @@
 import { keepCandidatesOut } from "@/lib/candidateMode";
+import { db } from "@/lib/db";
 import Link from "next/link";
 import s from "./landing.module.css";
 
@@ -8,9 +9,9 @@ function Cta({ light, center }: { light?: boolean; center?: boolean }) {
   return (
     <div className={`${s.ctaWrap} ${center ? s.center : ""}`}>
       <Link className={`btn btn-gold ${s.ctaBtn}`} href="/meet">
-        Meet the team
+        Get in touch
       </Link>
-      <span className={light ? s.ctaNoteLight : s.ctaNote}>A short video call with our team</span>
+      <span className={light ? s.ctaNoteLight : s.ctaNote}>Tell our team what you&rsquo;re looking for</span>
     </div>
   );
 }
@@ -20,37 +21,41 @@ function Cta({ light, center }: { light?: boolean; center?: boolean }) {
 // what it is. One ask, everywhere: meet the team. Browsing stays at the bottom.
 export default async function Home() {
   await keepCandidatesOut();
+  // The real number of candidates ready right now, never a made-up one.
+  const { count } = await db().from("candidates").select("id", { count: "exact", head: true }).eq("status", "listed");
+  const n = (count ?? 0) >= 10 ? count : null;
 
   return (
     <>
       <section className={s.hero}>
         <div className={`wrap ${s.heroGrid}`}>
           <div>
-            <p className={s.kicker}>A revolutionary way of hiring</p>
+            <p className={s.kicker}>A revolutionary way to hire</p>
             <h1>
               We cracked the code. <span className={s.gold}>We found the solution to the hiring pain.</span>
             </h1>
             <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
             <p className={s.lede}>
-              Here&rsquo;s how: we&rsquo;ve built a collection of candidates who are ready for their next role. We know what they do
-              best and what they&rsquo;re looking for. So when you have a position to fill, there&rsquo;s a
-              good chance the right person is already here.
+              {n ? <b>{n} qualified candidates</b> : <b>Qualified candidates</b>} are ready for their next role right now. Each one has had
+              their natural work strengths and experience assessed, and has a clear picture of the value they uniquely bring to a company.
+            </p>
+            <p className={s.lede}>
+              Tell our team what you&rsquo;re looking for. We&rsquo;ve already vetted them, so you could be talking to the right candidate
+              within half an hour of reaching out.
             </p>
             <Cta light />
           </div>
           <div className={s.familiar}>
-            <p className={s.familiarTitle}>Hiring right now?</p>
-            <p className={s.familiarSub}>
-              Come hear what we have to offer, in a short video call with our team.
-            </p>
+            <p className={s.familiarTitle}>{n ? `${n} candidates ready now` : "Candidates ready now"}</p>
+            <p className={s.familiarSub}>What you get when you reach out:</p>
             <ul>
-              <li>Tell us about your position</li>
-              <li>Hear how we work</li>
-              <li>See who might be a fit</li>
-              <li>Ask us anything</li>
+              <li>Natural work strengths assessed</li>
+              <li>Experience reviewed</li>
+              <li>Already vetted by our team</li>
+              <li>One flat fee, only when you hire</li>
             </ul>
             <Link className={`btn btn-gold ${s.cardBtn}`} href="/meet">
-              Choose a time
+              Get in touch
             </Link>
           </div>
         </div>
@@ -84,10 +89,10 @@ export default async function Home() {
 
       <section className={s.doubt}>
         <div className="wrap">
-          <h2>Come hear what we have to offer.</h2>
-          <p className={s.doubtLead}>It&rsquo;s easier to explain in a conversation.</p>
+          <h2>Hiring made easier, more accurate and more efficient than ever.</h2>
           <p className={s.doubtBody}>
-            Tell us about the position you&rsquo;re hiring for, and we&rsquo;ll walk you through how we work and who might be a fit.
+            Tell us about the position you&rsquo;re hiring for. We&rsquo;ll match it with candidates we already know, and you could be
+            talking to one of them within half an hour.
           </p>
           <Cta light center />
         </div>
@@ -124,7 +129,7 @@ export default async function Home() {
 
       <section className={s.closing}>
         <div className="wrap">
-          <h2>We&rsquo;d love to meet you.</h2>
+          <h2>Reach out. Let&rsquo;s find your next hire.</h2>
           <Cta center />
           <p className={s.browse}>
             Rather look around first? <Link href="/candidates">Browse candidates</Link>
