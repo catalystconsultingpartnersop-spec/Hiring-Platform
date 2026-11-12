@@ -32,8 +32,8 @@ export default async function Home() {
             </h1>
             <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
             <p className={s.lede}>
-              Here&rsquo;s how: we&rsquo;ve built a collection of candidates who are ready for their next role. Because our focus is on
-              them, we know what they do best and what they&rsquo;re looking for. So when you have a position to fill, there&rsquo;s a
+              Here&rsquo;s how: we&rsquo;ve built a collection of candidates who are ready for their next role. We know what they do
+              best and what they&rsquo;re looking for. So when you have a position to fill, there&rsquo;s a
               good chance the right person is already here.
             </p>
             <Cta light />
