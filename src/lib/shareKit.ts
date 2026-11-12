@@ -24,6 +24,11 @@ export function ownerMessage(ref?: string | null) {
   return `If hiring has ever felt like more work than it should be, this is for you.\n\nTake a look: ${shareLink(ref, "home")}\n\nWhy we built it: ${shareLink(ref, "why")}`;
 }
 
+// The teaser: the new front-page message, one link, meant to make an owner curious.
+export function ownerTeaser(ref?: string | null) {
+  return `Getting résumés is easy. Finding the right person is the hard part.\n\nWe cracked that part. We sit down with every candidate and learn what they're truly great at, so you meet the people who fit your position.\n\nSee for yourself: ${shareLink(ref, "home")}`;
+}
+
 // The candidate side: a warm note from a rep to their network.
 export function candidateLink(ref?: string | null) {
   const r = ref ? refSlug(ref) : "";

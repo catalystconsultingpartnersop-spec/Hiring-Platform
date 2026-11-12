@@ -3,7 +3,7 @@ import { KitView } from "@/components/ShareTools";
 import { db } from "@/lib/db";
 import { siteUrl } from "@/lib/format";
 import { requireStaff } from "@/lib/session";
-import { candidateLink, candidateMessage, ownerMessage, refSlug, shareLink } from "@/lib/shareKit";
+import { candidateLink, candidateMessage, ownerMessage, ownerTeaser, refSlug, shareLink } from "@/lib/shareKit";
 import { NetworkerLink } from "./NetworkerLink";
 import { CandidateSide } from "./CandidateSide";
 import { candidatesSeeBusiness } from "@/lib/candidateMode";
@@ -46,6 +46,11 @@ export default async function ShareKit() {
         Know someone who owns a business? Send them this
         {owners?.length ? `. ${owners.length} owner${owners.length === 1 ? " has" : "s have"} joined through you so far` : ""}.
       </p>
+      <h3 style={{ fontSize: 17, margin: "0 0 12px" }}>
+        The teaser <span className="tag tag-gold">New</span>
+      </h3>
+      <KitView message={ownerTeaser(ref)} link={link} image="/share/owner-teaser.png" />
+      <h3 style={{ fontSize: 17, margin: "40px 0 12px" }}>The letter</h3>
       <KitView message={ownerMessage(ref)} link={link} image="/share/owner-card.png" />
       {admin && (
         <section className="panel" style={{ marginTop: 32 }}>

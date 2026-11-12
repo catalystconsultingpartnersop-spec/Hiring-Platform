@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { KitView } from "@/components/ShareTools";
 import { brandName } from "@/lib/format";
-import { candidateLink, candidateMessage, ownerMessage, refSlug, shareLink } from "@/lib/shareKit";
+import { candidateLink, candidateMessage, ownerMessage, ownerTeaser, refSlug, shareLink } from "@/lib/shareKit";
 
 export const metadata: Metadata = {
   title: `Share ${brandName()}`,
@@ -23,6 +23,11 @@ export default async function SharePage({ searchParams }: PageProps<"/share">) {
           they make this year.
         </p>
       </div>
+      <h3 style={{ fontSize: 17, margin: "0 0 12px" }}>
+        The teaser <span className="tag tag-gold">New</span>
+      </h3>
+      <KitView message={ownerTeaser(ref)} link={link} image="/share/owner-teaser.png" />
+      <h3 style={{ fontSize: 17, margin: "40px 0 12px" }}>The letter</h3>
       <KitView message={ownerMessage(ref)} link={link} image="/share/owner-card.png" />
       <h2 style={{ fontSize: 26, margin: "56px 0 6px" }}>Know someone looking for work?</h2>
       <p className="muted" style={{ margin: "0 0 18px" }}>
