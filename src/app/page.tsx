@@ -29,12 +29,17 @@ export default async function Home() {
         <div className={`wrap ${s.heroGrid}`}>
           <div>
             <p className={s.kicker}>For business owners who are hiring</p>
-            <h1>Tell us who you need. Meet people who want the job.</h1>
+            <h1>
+              A revolutionary way of hiring. <span className={s.gold}>We finally cracked the code.</span>
+            </h1>
             <p className={s.lede}>
-              We interview every candidate one-on-one before they&rsquo;re listed. Share your opening on a short call with our founders,
-              and we&rsquo;ll introduce you to people who are available and right for the role.
+              We get to know every candidate before they&rsquo;re listed. So when you tell us who you need, the right people are already
+              here: available, and looking for exactly this kind of work.
             </p>
             <Cta light />
+            <Link href="/why" className={s.story}>
+              Why we started this →
+            </Link>
           </div>
           <div className={s.meetCard}>
             <p className={s.meetTitle}>Speak with our founders</p>

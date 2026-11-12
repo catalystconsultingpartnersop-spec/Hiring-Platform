@@ -1,7 +1,10 @@
 .hero { background: radial-gradient(1200px 500px at 85% -10%, #2a3656 0%, transparent 60%), var(--ink); color: #fff; padding: clamp(56px, 8vw, 104px) 0 clamp(56px, 7vw, 92px); }
 .heroGrid { display: grid; grid-template-columns: 1.3fr 1fr; gap: clamp(32px, 6vw, 80px); align-items: center; }
 .kicker { color: var(--marigold); font-weight: 700; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 18px; }
-.hero h1 { font-size: clamp(38px, 5.2vw, 64px); line-height: 1.04; letter-spacing: -0.035em; margin: 0 0 22px; max-width: 15ch; }
+.hero h1 { font-size: clamp(38px, 5vw, 62px); line-height: 1.05; letter-spacing: -0.035em; margin: 0 0 22px; max-width: 16ch; }
+.gold { color: var(--marigold); display: block; }
+.story { display: inline-block; margin-top: 22px; color: #fff; font-weight: 600; text-decoration: underline; text-decoration-color: rgba(255,255,255,.35); text-underline-offset: 4px; }
+.story:hover { text-decoration-color: var(--marigold); }
 .lede { font-size: clamp(17px, 1.5vw, 19.5px); line-height: 1.6; color: #c9d0de; max-width: 44ch; margin: 0 0 32px; }
 .ctaWrap { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
 .ctaBtn { font-size: 18px !important; padding: 17px 34px !important; box-shadow: 0 10px 28px rgba(242, 179, 0, 0.28); }

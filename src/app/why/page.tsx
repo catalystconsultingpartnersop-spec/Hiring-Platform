@@ -1,96 +1,103 @@
 import { keepCandidatesOut } from "@/lib/candidateMode";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { brandName } from "@/lib/format";
 import styles from "./why.module.css";
 
 export const metadata: Metadata = {
-  title: "Why we started",
-  description: "We're business owners. We built the hiring experience we always wanted: browse candidates who were met and coached, and choose for yourself.",
+  title: "Our story",
+  description: "Why we started The Candidate Collection: get to know candidates first, give owners real options, and a fee that sets every hire up to succeed.",
 };
 
-// The landing page for the owner teaser: our story, what's different, and
-// what we won't do, told from the business owner's side.
+// Our story, in Heshy's words: why hiring frustrates everyone, what we do
+// differently, and why the fee works the way it does.
 export default async function WhyPage() {
   await keepCandidatesOut();
   return (
     <>
       <section className={styles.hero}>
         <div className="wrap">
-          <p className={styles.label}>Why we started</p>
-          <h1>We built the hiring experience we always wanted.</h1>
-          <p className={styles.lead}>
-            We&rsquo;re business owners. Every time we hired, we spent more time answering questions than meeting people. So we
-            changed the order.
-          </p>
+          <p className={styles.label}>Our story</p>
+          <h1>Why we started The Candidate Collection.</h1>
+          <p className={styles.lead}>Hiring was frustrating for everyone. So we turned it around.</p>
         </div>
       </section>
 
       <article className={`wrap ${styles.body}`}>
-        <h2 className={styles.h2}>Hiring was backwards.</h2>
         <p>
-          You know the routine. A call to explain what you need. A meeting to explain it again. A checklist, a questionnaire, a
-          &ldquo;quick review&rdquo; of how you run things, from someone who met you that morning. Then the fee. Then weeks of
-          wondering if you got it right.
-        </p>
-        <p className={styles.punch}>By the time we met a single candidate, we&rsquo;d been interviewed more than they had.</p>
-        <p>
-          We know our businesses. We know what we need and who we need. <strong>We wanted good people, and the freedom to
-          choose.</strong>
+          I started The Candidate Collection because I was frustrated with the way hiring works. And I wasn&rsquo;t the only one.
+          Candidates feel no one is really listening to them. Business owners get told how to run their business. And most hiring
+          works the same way: start with an opening, then hunt for someone to fit into it.
         </p>
 
-        <h2 className={styles.h2}>So we flipped it.</h2>
-        <p>The candidate does the work up front. You do the choosing.</p>
-        <div className={styles.steps}>
-          <div className={styles.step}>
-            <strong>We sit with every candidate first.</strong>
-            <span>
-              A real conversation with one of our reps. They discover their natural strengths and the role they belong in, before
-              you ever see them.
-            </span>
-          </div>
-          <div className={styles.step}>
-            <strong>You see the fit before the name.</strong>
-            <span>Strengths, experience, pay range and what they&rsquo;re looking for, on one page. Browse as long as you like.</span>
-          </div>
-          <div className={styles.step}>
-            <strong>You choose. Directly.</strong>
-            <span>Sign once to see who they are, with your card on file and nothing charged. Then call them yourself.</span>
-          </div>
-          <div className={styles.step}>
-            <strong>One flat fee, only if you hire.</strong>
-            <span>You see the fee before you sign. No percentages, no surprises.</span>
-          </div>
-        </div>
+        <h2 className={styles.h2}>It&rsquo;s a lot like a shidduch.</h2>
+        <p>
+          You don&rsquo;t find the right match by taking whoever is closest and hoping. Everyone has a place where they belong, and
+          it starts with understanding the person.
+        </p>
+        <p>
+          So many people are in jobs that don&rsquo;t fit them. They never had the chance to figure out what they&rsquo;re good
+          at, so they end up doing work outside their strengths. Their résumé says they did this and that in one industry, so that&rsquo;s
+          where they stay. They aren&rsquo;t happy, and neither are the people they work for.
+        </p>
 
-        <section className={styles.works}>
-          <h2>Why it works</h2>
-          <p>
-            Our candidates have been coached to understand where they shine and what role they belong in. When someone who knows
-            what they&rsquo;re looking for meets an owner who knows what they need, that&rsquo;s a setup for success.
-          </p>
-        </section>
+        <h2 className={styles.h2}>What a business owner usually gets.</h2>
+        <p>
+          When you have a position to fill, the options aren&rsquo;t great. You can pay a lot of money to someone who will also tell
+          you how to run your business. Or you can post in community chats and WhatsApp groups, get a pile of résumés, and have no
+          idea where to start.
+        </p>
+        <p className={styles.punch}>Most owners don&rsquo;t want a lot of advice. They want options.</p>
+        <p>&ldquo;I have a position open. Show me some people who fit.&rdquo;</p>
 
-        <h2 className={styles.h2}>What we won&rsquo;t do</h2>
-        <ul className={styles.wont}>
-          <li>Ask you to sit through an intake call before you can see anyone.</li>
-          <li>Hand you checklists and homework.</li>
-          <li>Tell you how to run your business, or who you should hire.</li>
-          <li>Charge you anything unless you hire.</li>
-        </ul>
-        <p className={styles.sign}>The founders of {brandName()}</p>
+        <h2 className={styles.h2}>So we did the opposite.</h2>
+        <p>
+          Candidates come to us. We sit with each one, understand their skills, and help them see where they belong: the right
+          role, the right seat, the right environment. Their experience counts too, of course.
+        </p>
+        <p>
+          So when you tell us what you need, we don&rsquo;t go out searching. If we have the right person, they&rsquo;re already
+          here, met and checked, like a checked esrog. <strong>Browse them yourself, or let us help you choose.</strong>
+        </p>
+        <p>
+          We don&rsquo;t pull people out of their jobs. Candidates come to us because they want to make a move, and we keep
+          growing the collection, always looking for more great people.
+        </p>
+
+        <h2 className={styles.h2}>Why our fee works the way it does.</h2>
+        <p>
+          We don&rsquo;t need big percentages. We don&rsquo;t go out hunting on your behalf. We have the candidates, and we&rsquo;re
+          happy to show them to you.
+        </p>
+        <p>
+          We do charge a fee, a reasonable one. Like a shadchan, a fair fee keeps everyone motivated to do the work right.
+        </p>
+        <p>
+          How the fee is paid matters to us just as much. In the usual setup, a big bill comes due 30 or 60 days after the new hire
+          starts. That gives the owner a month of looking for reasons it isn&rsquo;t working. It isn&rsquo;t fair to the candidate,
+          and it isn&rsquo;t good for the hire.
+        </p>
+        <p className={styles.punch}>A marriage works because the commitment is complete from day one. Trial periods rarely do.</p>
+        <p>
+          So with us, you pay when you decide to hire. By then you&rsquo;ve met them, interviewed them, checked references, and
+          you&rsquo;re committed to making it work. One flat, reasonable fee, and it&rsquo;s done. When your new hire walks in on the
+          first day, there&rsquo;s no bill hanging over either of you. Just the work, and the best possible start.
+        </p>
+        <p>
+          <strong>It&rsquo;s healthier for everyone.</strong>
+        </p>
+        <p className={styles.sign}>Heshy, founder</p>
       </article>
 
       <section className={styles.closing}>
         <div className="wrap">
-          <h2>It&rsquo;s your business. Pick your people.</h2>
-          <p>Free to browse. No account needed to look around.</p>
+          <h2>A revolutionary way of hiring. Let&rsquo;s talk.</h2>
+          <p>A short call with our founders. Tell us who you need, and see who&rsquo;s already here.</p>
           <div className={styles.actions}>
-            <Link className="btn btn-gold" href="/candidates">
-              Browse candidates
+            <Link className="btn btn-gold" href="/meet">
+              Schedule a call
             </Link>
-            <Link className={`btn btn-ghost ${styles.light}`} href="/mission">
-              Our mission for candidates
+            <Link className={`btn btn-ghost ${styles.light}`} href="/candidates">
+              Browse candidates
             </Link>
           </div>
         </div>
