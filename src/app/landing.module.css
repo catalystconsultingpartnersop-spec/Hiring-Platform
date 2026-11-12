@@ -18,6 +18,13 @@
 .familiar li::before { content: "✓"; position: absolute; left: 0; top: 0; width: 20px; height: 20px; border-radius: 50%; background: #fff3cf; color: #a87a00; font-size: 12px; font-weight: 900; display: grid; place-items: center; }
 .familiarSub { color: var(--ink-2); margin: -8px 0 18px; line-height: 1.5; }
 .cardBtn { width: 100%; justify-content: center; margin-top: 22px; padding: 14px !important; }
+.best { font-size: clamp(16px, 1.4vw, 18px); line-height: 1.55; color: #fff; max-width: 42ch; margin: 0 0 30px; padding: 14px 18px; border-left: 4px solid var(--marigold); background: rgba(255, 255, 255, 0.06); border-radius: 0 12px 12px 0; }
+.best b { color: var(--marigold); }
+.stats { display: grid; gap: 18px; margin-bottom: 22px; }
+.stats div { display: grid; gap: 2px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.stats div:last-child { border-bottom: 0; padding-bottom: 0; }
+.stats strong { font-size: 40px; line-height: 1; font-weight: 800; letter-spacing: -0.03em; }
+.stats span { color: var(--ink-2); font-size: 15px; }
 .familiarFoot { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--line); font-weight: 700; }
 
 .offer, .doubt, .idea, .fee, .closing { padding: clamp(64px, 8vw, 104px) 0; }

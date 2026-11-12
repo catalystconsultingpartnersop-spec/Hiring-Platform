@@ -9,9 +9,9 @@ function Cta({ light, center }: { light?: boolean; center?: boolean }) {
   return (
     <div className={`${s.ctaWrap} ${center ? s.center : ""}`}>
       <Link className={`btn btn-gold ${s.ctaBtn}`} href="/meet">
-        Get in touch
+        Tell us who you need
       </Link>
-      <span className={light ? s.ctaNoteLight : s.ctaNote}>Tell our team what you&rsquo;re looking for</span>
+      <span className={light ? s.ctaNoteLight : s.ctaNote}>Our team takes it from there</span>
     </div>
   );
 }
@@ -32,30 +32,37 @@ export default async function Home() {
           <div>
             <p className={s.kicker}>A revolutionary way to hire</p>
             <h1>
-              We cracked the code. <span className={s.gold}>We found the solution to the hiring pain.</span>
+              We cracked the code.{" "}
+              <span className={s.gold}>{n ? `${n} qualified candidates, ready when you are.` : "Qualified candidates, ready when you are."}</span>
             </h1>
             <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
             <p className={s.lede}>
-              {n ? <b>{n} qualified candidates</b> : <b>Qualified candidates</b>} are ready for their next role right now. Each one has had
-              their natural work strengths and experience assessed, and has a clear picture of the value they uniquely bring to a company.
+              Every one has had their natural work strengths and experience assessed. They know exactly what they bring to a company,
+              and we know exactly where they&rsquo;d fit.
             </p>
-            <p className={s.lede}>
-              Tell our team what you&rsquo;re looking for. We&rsquo;ve already vetted them, so you could be talking to the right candidate
-              within half an hour of reaching out.
+            <p className={s.best}>
+              <b>The best part:</b> our team has already vetted them. Tell us who you&rsquo;re looking for, and you could be talking to the
+              right candidate within half an hour.
             </p>
             <Cta light />
           </div>
           <div className={s.familiar}>
-            <p className={s.familiarTitle}>{n ? `${n} candidates ready now` : "Candidates ready now"}</p>
-            <p className={s.familiarSub}>What you get when you reach out:</p>
-            <ul>
-              <li>Natural work strengths assessed</li>
-              <li>Experience reviewed</li>
-              <li>Already vetted by our team</li>
-              <li>One flat fee, only when you hire</li>
-            </ul>
+            <div className={s.stats}>
+              <div>
+                <strong>{n ?? "✓"}</strong>
+                <span>qualified candidates ready now</span>
+              </div>
+              <div>
+                <strong>30 min</strong>
+                <span>from reaching out to your first conversation</span>
+              </div>
+              <div>
+                <strong>$5,000</strong>
+                <span>one flat fee, only when you hire</span>
+              </div>
+            </div>
             <Link className={`btn btn-gold ${s.cardBtn}`} href="/meet">
-              Get in touch
+              Tell us who you need
             </Link>
           </div>
         </div>
@@ -89,10 +96,10 @@ export default async function Home() {
 
       <section className={s.doubt}>
         <div className="wrap">
-          <h2>Hiring made easier, more accurate and more efficient than ever.</h2>
+          <h2>Easier. More accurate. More efficient.</h2>
           <p className={s.doubtBody}>
-            Tell us about the position you&rsquo;re hiring for. We&rsquo;ll match it with candidates we already know, and you could be
-            talking to one of them within half an hour.
+            That&rsquo;s hiring when the candidates are already known. Tell us about your position, and we&rsquo;ll introduce you to the
+            people who fit it.
           </p>
           <Cta light center />
         </div>
