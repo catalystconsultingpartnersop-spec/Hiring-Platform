@@ -33,20 +33,19 @@ export default async function Home() {
               A revolutionary way of hiring. <span className={s.gold}>We finally cracked the code.</span>
             </h1>
             <p className={s.lede}>
-              You know your business. You don&rsquo;t need someone telling you how to run it, and you don&rsquo;t need another pile
-              of résumés. You need the right person.
+              You know your business, and you know the kind of person you need. Chances are, we&rsquo;ve already met them. Let us introduce you.
             </p>
             <Cta light />
           </div>
           <div className={s.familiar}>
-            <p className={s.familiarTitle}>Sound familiar?</p>
+            <p className={s.familiarTitle}>Hiring, the way it should feel</p>
             <ul>
-              <li>You posted in every chat and group, and got a pile of résumés. Now what?</li>
-              <li>You paid a big fee, and got advice on how to run your business.</li>
-              <li>You interviewed people who didn&rsquo;t really want the job.</li>
-              <li>Then a bill showed up 30 days after they started.</li>
+              <li>A few great options, not a pile of résumés</li>
+              <li>People who actually want this kind of work</li>
+              <li>Your business, your call</li>
+              <li>One fair fee, paid the day you hire</li>
             </ul>
-            <p className={s.familiarFoot}>We&rsquo;ve been there too. That&rsquo;s why we built this.</p>
+            <p className={s.familiarFoot}>We&rsquo;re business owners too. We built what we always wanted.</p>
           </div>
         </div>
       </section>
@@ -70,10 +69,10 @@ export default async function Home() {
             </li>
           </ol>
           <ul className={s.nos}>
-            <li>No percentages of salary</li>
-            <li>No bill hanging over the first 30 days</li>
-            <li>No advice on how to run your business</li>
-            <li>No piles of résumés</li>
+            <li>One flat fee</li>
+            <li>Paid when you hire</li>
+            <li>Only people who want the job</li>
+            <li>You make every decision</li>
           </ul>
         </div>
       </section>
@@ -118,8 +117,8 @@ export default async function Home() {
             <div>
               <h2>Once. When you hire.</h2>
               <p>
-                No bill due 30 days later, no reason to second-guess. When your new hire walks in on day one, you&rsquo;re both all
-                in. That&rsquo;s how a hire succeeds.
+                Paid the day you decide to hire, and then it&rsquo;s done. When your new hire walks in on day one, you&rsquo;re both
+                all in. That&rsquo;s how a hire succeeds.
               </p>
             </div>
           </div>
