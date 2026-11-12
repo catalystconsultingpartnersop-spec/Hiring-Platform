@@ -34,19 +34,21 @@ export default async function Home() {
             </h1>
             <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
             <p className={s.lede}>
-              You know your business, and you know the kind of person you need. Chances are, we&rsquo;ve already met them. Let us introduce you.
+              The secret? We start with the person, not the position. Every candidate sits down with us first, so when you tell us who
+              you need, the right people are already here. Available, and looking for exactly this kind of work.
             </p>
             <Cta light />
           </div>
           <div className={s.familiar}>
-            <p className={s.familiarTitle}>We&rsquo;re here to talk.</p>
+            <p className={s.familiarTitle}>Hiring right now?</p>
             <p className={s.familiarSub}>
-              Behind The Candidate Collection are real people, and we&rsquo;d like to hear from you.
+              Then let&rsquo;s talk. You have the need, we have the solution. {MEET_MINUTES} minutes with our founders is all it takes
+              to see it for yourself.
             </p>
             <ul>
-              <li>Talk with the founders themselves</li>
-              <li>We listen first: your business, your position</li>
-              <li>Ask us anything, see if it&rsquo;s right for you</li>
+              <li>Tell us about the position</li>
+              <li>Hear exactly how it works</li>
+              <li>Find out who we already have for you</li>
               <li>No pressure, no commitment</li>
             </ul>
             <Link className={`btn btn-gold ${s.cardBtn}`} href="/meet">
@@ -56,54 +58,72 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className={s.reveal}>
+      <section className={s.offer}>
         <div className="wrap">
-          <p className={s.eyebrow}>So what&rsquo;s the secret?</p>
-          <h2 className={s.revealTitle}>It&rsquo;s simpler than you think.</h2>
-          <ol className={s.reveals}>
+          <p className={s.eyebrow}>Here&rsquo;s the new way</p>
+          <h2>You tell us the position. The right people are already here.</h2>
+          <ol className={s.steps}>
             <li>
-              <b>We start with the person, not the position.</b>
-              <span>
-                Every candidate sits down with us first. We learn their strengths, how they work, and what they really want to
-                do.
-              </span>
+              <b>Tell us who you need</b>
+              <span>The role, the place, the kind of person who&rsquo;d thrive with you.</span>
             </li>
             <li>
-              <b>So the right people are already here.</b>
-              <span>When you tell us about your position, we don&rsquo;t go searching. We already know who fits.</span>
+              <b>Meet people we already know</b>
+              <span>Every candidate has sat down with us. They&rsquo;re available, and they want exactly this kind of work.</span>
             </li>
             <li>
-              <b>And they actually want this kind of work.</b>
-              <span>No convincing, no settling. You meet people who are looking for exactly what you&rsquo;re offering.</span>
-            </li>
-            <li>
-              <b>You stay in charge.</b>
-              <span>Your business, your call. We introduce, you choose.</span>
-            </li>
-            <li>
-              <b>One flat $5,000 fee, paid the day you hire.</b>
-              <span>
-                So from the first day, you&rsquo;re both all in. <Link href="/billing">Our billing philosophy</Link>
-              </span>
+              <b>Hire who you like</b>
+              <span>Meet them, interview them, take your time. One flat fee, only when you hire.</span>
             </li>
           </ol>
+          <ul className={s.nos}>
+            <li>A few great options, not a pile of résumés</li>
+            <li>People who want this kind of work</li>
+            <li>Your business, your call</li>
+          </ul>
         </div>
       </section>
 
       <section className={s.doubt}>
         <div className="wrap">
           <h2>Sounds too good to be true?</h2>
-          <p className={s.doubtLead}>We get that. And there&rsquo;s more to it.</p>
-          <ul className={s.more}>
-            <li>How we get to know every candidate</li>
-            <li>Why hiring works a lot like a shidduch</li>
-            <li>Why we bill the way we do</li>
-            <li>Who we already have for your position</li>
-          </ul>
-          <p className={s.doubtBody}>We&rsquo;d love to tell you the rest. Spend {MEET_MINUTES} minutes with our founders and see for yourself.</p>
+          <p className={s.doubtLead}>We get that. It&rsquo;s exactly why we&rsquo;d like to meet you.</p>
+          <p className={s.doubtBody}>
+            You have a position to fill, and we say we&rsquo;ve solved the hardest part. Spend {MEET_MINUTES} minutes with our
+            founders, tell us who you need, and see for yourself.
+          </p>
           <Cta light center />
-          <Link href="/why" className={s.story}>
-            Or read our story first →
+        </div>
+      </section>
+
+      <section className={s.idea}>
+        <div className={`wrap ${s.ideaGrid}`}>
+          <div>
+            <p className={s.eyebrow}>The idea behind it</p>
+            <h2>Hiring is a lot like a shidduch.</h2>
+          </div>
+          <div>
+            <p>
+              You don&rsquo;t find the right match by grabbing whoever happens to be available. Everyone has a place where they shine.
+            </p>
+            <p>
+              So we start with the person. We sit with every candidate, understand their strengths and what they really want, and
+              help them see where they belong. When your position comes along, the fit is already there.
+            </p>
+            <Link href="/why" className={s.storyDark}>
+              Read our story →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className={s.fee}>
+        <div className={`wrap ${s.feeLine}`}>
+          <p>
+            <b>One flat fee of $5,000, paid the day you hire.</b> Never a percentage of salary, and nothing at all if you don&rsquo;t hire.
+          </p>
+          <Link href="/billing" className={s.storyDark}>
+            Our billing philosophy →
           </Link>
         </div>
       </section>
