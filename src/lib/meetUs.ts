@@ -4,7 +4,7 @@ import { escapeHtml as e, sendEmail } from "./email";
 import { kit } from "./emailKit";
 import { callIcs } from "./ics";
 import { isCheckAccount, isOwnerEmail } from "./session";
-import { openSlots } from "./slots";
+import { openOwnerSlots } from "./slots";
 import { bioFor } from "./staffBios";
 import { COMPANY_TZ, formatInZone } from "./time";
 
@@ -38,7 +38,7 @@ export async function leaders(): Promise<Leader[]> {
 // Open times when at least one of them is free.
 export async function meetTimes(): Promise<{ start: string; hosts: string[] }[]> {
   const ids = new Set((await leaders()).map((l) => l.id));
-  return (await openSlots())
+  return (await openOwnerSlots())
     .map((s) => ({ start: s.start, hosts: s.reps.filter((r) => ids.has(r)) }))
     .filter((s) => s.hosts.length);
 }

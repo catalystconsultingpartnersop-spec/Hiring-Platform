@@ -56,3 +56,14 @@
 @media (max-width: 560px) {
   .day { grid-template-columns: 1fr; gap: 6px; }
 }
+
+.switches { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; margin: 0 0 16px; }
+.switches h2 { font-size: 17px; margin: 0 0 8px; }
+.switchRow { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--line); cursor: pointer; }
+.switchRow input { appearance: none; flex: none; width: 44px; height: 26px; border-radius: 999px; background: #c9cfdc; position: relative; cursor: pointer; margin: 2px 0 0; transition: background 0.15s; }
+.switchRow input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.15s; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); }
+.switchRow input:checked { background: var(--moss); }
+.switchRow input:checked::after { transform: translateX(18px); }
+.switchRow b { display: block; font-size: 15.5px; }
+.switchRow small { color: var(--ink-2); font-size: 13.5px; }
+.switchNote { margin: 8px 0 0; font-size: 13.5px; color: #8a5a00; }

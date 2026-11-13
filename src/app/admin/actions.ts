@@ -1838,3 +1838,17 @@ export async function saveRepTake(candidateId: string, take: string): Promise<{ 
   await logActivity(staffActor(me), "rep_take_saved", { candidate_id: candidateId, chars: t.length });
   return { ok: true };
 }
+
+// "Candidates can book me" / "Business owners can book me" on My hours.
+export async function setBookMe(kind: "candidates" | "owners", on: boolean) {
+  const me = await requireStaff();
+  if (!me.id) return;
+  if (kind === "owners" && !me.manager) return;
+  const { bookMeSettings } = await import("@/lib/slots");
+  const { setSetting } = await import("@/lib/settings");
+  const all = await bookMeSettings();
+  all[me.id] = { ...all[me.id], [kind]: on };
+  await setSetting("book_me", all);
+  await logActivity(staffActor(me), "book_me_changed", { kind, on });
+  revalidatePath("/admin/hours");
+}

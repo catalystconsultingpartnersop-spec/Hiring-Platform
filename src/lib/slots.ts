@@ -2,6 +2,24 @@ import { db } from "./db";
 import { getSetting } from "./settings";
 import { callsInBlock } from "./blocks";
 import { nextDates, validTimeZone, zonedToUtc } from "./time";
+import { isOwnerEmail } from "./session";
+
+// Who can book each person. Same weekly hours, with a switch for each group:
+// candidates (onboarding calls) and business owners (Meet the team calls).
+// Until someone changes theirs: reps take candidates; Shloimy (the partner) takes
+// both; Heshy takes neither, so everything goes to Shloimy first.
+export type BookKind = "candidates" | "owners";
+export type BookMe = Record<string, { candidates?: boolean; owners?: boolean }>;
+export async function bookMeSettings(): Promise<BookMe> {
+  const v = await getSetting<BookMe>("book_me", {});
+  return v && typeof v === "object" ? v : {};
+}
+export function takes(map: BookMe, s: { id: string; email?: string | null; is_partner?: boolean | null }, kind: BookKind): boolean {
+  const set = map[s.id]?.[kind];
+  if (typeof set === "boolean") return set;
+  const heshy = isOwnerEmail(s.email ?? "");
+  return kind === "candidates" ? !heshy : !!s.is_partner && !heshy;
+}
 
 // Open onboarding-call times, built from every active rep's weekly hours minus
 // the calls they already have.
@@ -20,15 +38,15 @@ export function lengthFor(map: Record<string, number>, staffId: string) {
 const MIN_NOTICE_HOURS = 12;
 const DAYS_AHEAD = 14;
 
-type Rep = { id: string; time_zone: string | null };
+type Rep = { id: string; time_zone: string | null; email: string | null; is_partner: boolean | null };
 type Window = { staff_id: string; weekday: number; start_minute: number; end_minute: number };
 type Booked = { staff_id: string; starts_at: string; ends_at: string };
 
 export type Slot = { start: string; reps: string[]; minutes: Record<string, number> };
 
 async function load() {
-  const [{ data: reps }, { data: windows }, { data: booked }, lengths, { data: meetings }] = await Promise.all([
-    db().from("staff").select("id, time_zone").eq("active", true),
+  const [{ data: reps }, { data: windows }, { data: booked }, lengths, { data: meetings }, bookMe] = await Promise.all([
+    db().from("staff").select("id, time_zone, email, is_partner").eq("active", true),
     db().from("staff_availability").select("staff_id, weekday, start_minute, end_minute"),
     db()
       .from("onboarding_calls")
@@ -38,11 +56,12 @@ async function load() {
     callMinutesByRep(),
     // "Meet us" calls with business owners take the same time.
     db().from("activity_log").select("details").eq("action", "owner_meeting").gte("details->>ends_at", new Date().toISOString()),
+    bookMeSettings(),
   ]);
   const owner = ((meetings ?? []) as { details: { staff_id: string; starts_at: string; ends_at: string; cancelled?: boolean } }[])
     .filter((m) => !m.details.cancelled)
     .map((m) => ({ staff_id: m.details.staff_id, starts_at: m.details.starts_at, ends_at: m.details.ends_at }));
-  return { reps: (reps ?? []) as Rep[], windows: (windows ?? []) as Window[], booked: [...((booked ?? []) as Booked[]), ...owner], lengths };
+  return { reps: (reps ?? []) as Rep[], windows: (windows ?? []) as Window[], booked: [...((booked ?? []) as Booked[]), ...owner], lengths, bookMe };
 }
 
 // A candidate who came through a rep's link (or was added by them) books with
@@ -50,17 +69,29 @@ async function load() {
 // If their rep takes calls (has hours set), they only ever see that rep's
 // times, even when the rep is fully booked, so nobody else takes their candidate.
 export async function openSlots(preferRep?: string | null): Promise<Slot[]> {
-  const all = await allOpenSlots();
+  const all = await allOpenSlots("candidates");
   if (!preferRep) return all;
   const mine = all.filter((s) => s.reps.includes(preferRep)).map((s) => ({ ...s, reps: [preferRep] }));
   if (mine.length) return mine;
-  const { count } = await db().from("staff_availability").select("staff_id", { count: "exact", head: true }).eq("staff_id", preferRep);
+  // Their rep has hours but no open time left: show none (they can ask for another
+  // time). A rep with no hours, or one who isn't taking candidates, opens it to everyone.
+  const [{ count }, { data: rep }, bookMe] = await Promise.all([
+    db().from("staff_availability").select("staff_id", { count: "exact", head: true }).eq("staff_id", preferRep),
+    db().from("staff").select("id, email, is_partner").eq("id", preferRep).maybeSingle(),
+    bookMeSettings(),
+  ]);
+  if (rep && !takes(bookMe, rep as { id: string; email: string; is_partner: boolean | null }, "candidates")) return all;
   return count ? [] : all;
 }
 
-async function allOpenSlots(): Promise<Slot[]> {
+// Times business owners can book: only people who switched "Business owners" on.
+export async function openOwnerSlots(): Promise<Slot[]> {
+  return allOpenSlots("owners");
+}
+
+async function allOpenSlots(kind: BookKind): Promise<Slot[]> {
   try {
-    const { reps, windows, booked, lengths } = await load();
+    const { reps, windows, booked, lengths, bookMe } = await load();
     const earliest = Date.now() + MIN_NOTICE_HOURS * 3600e3;
     const byStart = new Map<number, { reps: string[]; minutes: Record<string, number> }>();
 
@@ -68,6 +99,7 @@ async function allOpenSlots(): Promise<Slot[]> {
       const tz = validTimeZone(rep.time_zone);
       const mine = windows.filter((w) => w.staff_id === rep.id);
       if (!mine.length) continue;
+      if (!takes(bookMe, rep, kind)) continue;
       const len = lengthFor(lengths, rep.id);
       const busy = booked
         .filter((b) => b.staff_id === rep.id)
