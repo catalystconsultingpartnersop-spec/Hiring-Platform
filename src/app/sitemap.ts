@@ -24,6 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     page("/apply", 0.6),
     page("/contact", 0.4),
     page("/privacy", 0.2),
+    page("/terms", 0.2),
     ...ARTICLES.map((a) => page(`/hiring-help/articles/${a.slug}`, 0.5)),
     ...CAREER_ARTICLES.map((a) => page(`/join/help/${a.slug}`, 0.5)),
     ...listed.map((id) => page(`/candidates/${id}`, 0.6)),

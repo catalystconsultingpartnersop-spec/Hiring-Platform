@@ -152,6 +152,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <span style={{ display: "inline-flex", gap: 16 }}>
               {/* Someone hiring who arrived through a candidate link can always get to the business side. */}
               {onlyCandidate && <Link href={P("/candidates?for=business")}>Hiring? Browse candidates</Link>}
+              <Link href={P("/terms")}>Terms</Link>
               <Link href={P("/privacy")}>Privacy</Link>
             </span>
           </div>
