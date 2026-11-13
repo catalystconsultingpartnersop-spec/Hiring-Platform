@@ -21,7 +21,18 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
   const [token, setToken] = useState(() => Math.random().toString(36).slice(2, 10));
   const sentLink = `${link}${link.includes("?") ? "&" : "?"}s=${token}`;
 
-  const preset = `Hi${name.trim() ? ` ${name.trim()}` : ""}, ${mine ? "someone I've been working with came to mind for you" : "someone came to mind for you"}:\n${headline}\n\nTake a look: ${sentLink}\n\nLooking is free, and you only pay if you hire.\n${repFirst}`;
+  const preset = `Hi${name.trim() ? ` ${name.trim()}` : ""}, I thought of you. ${mine ? "I sat down with this candidate myself" : "Our team sat down with this candidate"}, and I think they could be a real fit for you:\n\n${headline}\n\nTheir profile: ${sentLink}\n\nHappy to tell you more about them.\n${repFirst}`;
+  // Just the link, with nothing else: for writing your own words anywhere.
+  const cleanLink = `https://${link.replace(/^https?:\/\//, "")}`;
+  const [did, setDid] = useState<"link" | "msg" | null>(null);
+  const copyText = (what: "link" | "msg", text: string) =>
+    navigator.clipboard?.writeText(text).then(
+      () => {
+        setDid(what);
+        setTimeout(() => setDid(null), 2500);
+      },
+      () => null,
+    );
   const message = edited ?? preset;
   const isEmail = contact.includes("@");
   const digits = contact.replace(/\D/g, "");
@@ -76,9 +87,14 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
             </div>
           </div>
         </div>
-        <button type="button" className="btn btn-gold" onClick={() => setOpen(true)}>
-          Suggest {first} →
-        </button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button type="button" className="btn btn-ghost" style={{ color: "#fff", background: "rgba(255,255,255,0.12)", borderColor: "rgba(255,255,255,0.45)" }} onClick={() => copyText("link", cleanLink)}>
+            {did === "link" ? "Link copied ✓" : "🔗 Copy link"}
+          </button>
+          <button type="button" className="btn btn-gold" onClick={() => setOpen(true)}>
+            Suggest {first} →
+          </button>
+        </div>
       </section>
     );
 
@@ -139,15 +155,21 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
     <section className="panel" style={{ marginTop: 18, borderColor: "var(--marigold)" }}>
       <h2 style={{ fontSize: 18, margin: "0 0 4px" }}>💡 Pass this profile to someone you know</h2>
       <p className="small muted" style={{ margin: "0 0 10px" }}>
-        They see the anonymous profile, no name until they sign. One message, then you&rsquo;re done.
+        They see the anonymous profile, no name until they sign. Send it from here, or copy it and send it your own way.
       </p>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", background: "var(--wash)", borderRadius: 12, padding: "10px 12px", margin: "0 0 12px" }}>
+        <code style={{ fontSize: 13.5, overflowWrap: "anywhere", flex: "1 1 220px" }}>{cleanLink.replace(/^https:\/\//, "")}</code>
+        <button type="button" className="btn btn-small btn-ghost" onClick={() => copyText("link", cleanLink)}>
+          {did === "link" ? "Link copied ✓" : "🔗 Copy just the link"}
+        </button>
+      </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>
         <label className="field" style={{ margin: 0 }}>
           <span>Who&rsquo;s it for?</span>
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Yossi" />
         </label>
         <label className="field" style={{ margin: 0 }}>
-          <span>Email or phone</span>
+          <span>Email or phone <span className="muted" style={{ fontWeight: 400 }}>(only to send from here)</span></span>
           <input
             className="input"
             value={contact}
@@ -161,7 +183,7 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
       </div>
       <label className="field" style={{ marginTop: 6 }}>
         <span>Message (ready to go, change anything)</span>
-        <textarea className="textarea" rows={8} value={message} onChange={(e) => setEdited(e.target.value)} />
+        <textarea className="textarea" rows={10} value={message} onChange={(e) => setEdited(e.target.value)} />
       </label>
       {state?.error && <p className="notice notice-bad small">{state.error}</p>}
       {state?.already && (
@@ -184,6 +206,9 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
             {pending && channel === ch ? "Sending…" : l}
           </button>
         ))}
+        <button type="button" className="btn btn-ghost btn-small" onClick={() => copyText("msg", message)}>
+          {did === "msg" ? "Message copied ✓" : "📋 Copy whole message"}
+        </button>
         <button type="button" className="btn btn-ghost btn-small" onClick={() => setOpen(false)}>
           Cancel
         </button>

@@ -32,7 +32,12 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: PageProps<"/candidates/[id]">) {
   const { id } = await params;
   const c = await getListed(id);
-  return c ? { title: c.headline ?? "Candidate", description: c.summary?.slice(0, 160) ?? undefined } : { title: "Candidate" };
+  if (!c) return { title: "Candidate" };
+  const title = c.headline ?? "Candidate";
+  const description = c.summary?.slice(0, 160) ?? undefined;
+  // A clean preview when the link is pasted in WhatsApp or a text: just the candidate's
+  // headline and a line about them, with no marketing picture attached.
+  return { title, description, openGraph: { title, description, images: [] }, twitter: { card: "summary", title, description, images: [] } };
 }
 
 export default async function CandidatePage({ params, searchParams }: PageProps<"/candidates/[id]">) {

@@ -1736,7 +1736,7 @@ export async function pointCandidate(
       .join("");
     const r = await sendEmail({
       to: contact,
-      subject: c.headline ? `Someone came to mind for you: ${c.headline}` : "Someone came to mind for you",
+      subject: c.headline ? `Thought of you: ${c.headline}` : "A candidate I thought of for you",
       audience: "personal",
       fromName: me.name || undefined,
       replyTo: me.email,
