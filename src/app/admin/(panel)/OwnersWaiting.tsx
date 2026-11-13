@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { ownerLeads } from "@/lib/ownerLeads";
+import { declineText, ownerLeads } from "@/lib/ownerLeads";
+import { requireStaff } from "@/lib/session";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import { nowMs } from "@/lib/time";
-import { markLeadCalled } from "./waiting/actions";
+import { declineBookedCall, markLeadCalled } from "./waiting/actions";
 import s from "./waiting/waiting.module.css";
 
 const ago = (ms: number) => {
@@ -20,7 +22,8 @@ const when = (iso: string) => new Date(iso).toLocaleString("en-US", { weekday: "
 // their home page, and in full on /admin/waiting.
 export async function OwnersWaiting({ full = false }: { full?: boolean }) {
   const now = nowMs();
-  const { waiting, called, booked } = await ownerLeads(now);
+  const { waiting, called, booked, declinedCalls } = await ownerLeads(now);
+  const me = await requireStaff();
   if (!full && !waiting.length && !booked.length) return null;
   return (
     <section className={`${s.box} ${waiting.length ? s.hot : ""}`}>
@@ -34,7 +37,7 @@ export async function OwnersWaiting({ full = false }: { full?: boolean }) {
           </Link>
         )}
       </div>
-      {waiting.length === 0 && <p className={s.clear}>✓ Nobody is waiting. Every request has been called.</p>}
+      {waiting.length === 0 && <p className={s.clear}>✓ Nobody is waiting. Every request has been handled.</p>}
       {waiting.map((l) => {
         const waited = now - Date.parse(l.at);
         return (
@@ -74,6 +77,9 @@ export async function OwnersWaiting({ full = false }: { full?: boolean }) {
             <form action={markLeadCalled.bind(null, l.id)} className={s.done}>
               <input className="input" name="note" placeholder="Note (optional): what they said" />
               <button className="btn btn-small">✓ I called them</button>
+              <button className="btn btn-small btn-ghost" name="outcome" value="declined">
+                Not calling back
+              </button>
             </form>
           </div>
         );
@@ -111,6 +117,19 @@ export async function OwnersWaiting({ full = false }: { full?: boolean }) {
                   </Link>
                 )}
               </div>
+              <details className={s.decline}>
+                <summary>Decline this call</summary>
+                <form action={declineBookedCall.bind(null, m.id)}>
+                  <p className="small muted" style={{ margin: "0 0 6px" }}>
+                    {m.email ? `This goes to ${m.email}. Change any word.` : "We have no email for them, so call or text to let them know."} The call comes off the calendar and the time
+                    opens up again.
+                  </p>
+                  <textarea className="textarea" name="message" rows={9} defaultValue={declineText(m.name, me.name || "")} />
+                  <ConfirmButton className="btn btn-small btn-danger" message={`Decline the call with ${m.name}? ${m.email ? "They'll be emailed now." : ""}`}>
+                    Send and cancel the call
+                  </ConfirmButton>
+                </form>
+              </details>
             </div>
           ))}
         </>
@@ -118,7 +137,7 @@ export async function OwnersWaiting({ full = false }: { full?: boolean }) {
 
       {full && (
         <>
-          <h3 className={s.sub}>✓ Called in the last 7 days</h3>
+          <h3 className={s.sub}>Handled in the last 7 days</h3>
           {called.length === 0 && <p className="small muted">Nothing yet.</p>}
           {called.map((l) => (
             <div key={l.id} className={`${s.row} ${s.was}`}>
@@ -131,10 +150,32 @@ export async function OwnersWaiting({ full = false }: { full?: boolean }) {
                   Hiring for: {l.role || "not said"}
                   {l.phone ? ` · ${l.phone}` : ""}
                 </span>
-                <span className={s.ok}>
-                  Called by {l.done!.by.split(" ")[0]}, {when(l.done!.at)} ({ago(Date.parse(l.done!.at) - Date.parse(l.at))} after they asked)
-                </span>
+                {l.done!.declined ? (
+                  <span className={s.no}>
+                    Not called. {l.done!.by.split(" ")[0]} chose not to call back, {when(l.done!.at)}
+                  </span>
+                ) : (
+                  <span className={s.ok}>
+                    Called by {l.done!.by.split(" ")[0]}, {when(l.done!.at)} ({ago(Date.parse(l.done!.at) - Date.parse(l.at))} after they asked)
+                  </span>
+                )}
                 {l.done!.note && <span>“{l.done!.note}”</span>}
+              </div>
+            </div>
+          ))}
+          {declinedCalls.map((m) => (
+            <div key={m.id} className={`${s.row} ${s.was}`}>
+              <div className={s.who}>
+                <b>
+                  {m.name}
+                  {m.business ? `, ${m.business}` : ""}
+                </b>
+                <span>
+                  Hiring for: {m.role || "not said"} · video call for {when(m.starts_at)}
+                </span>
+                <span className={s.no}>
+                  Call declined by {m.declined!.by.split(" ")[0]}. {m.email ? "They were emailed." : "No email on file, so let them know by phone."}
+                </span>
               </div>
             </div>
           ))}

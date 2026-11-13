@@ -18,20 +18,20 @@ export type Lead = {
   role: string;
   phone: string | null;
   email: string | null;
-  done: { at: string; by: string; note: string | null } | null;
+  done: { at: string; by: string; note: string | null; declined: boolean } | null;
 };
-export type Booked = { id: string; starts_at: string; minutes: number; name: string; business: string | null; role: string; phone: string | null; email: string | null; link: string | null; phoneCall: boolean };
+export type Booked = { id: string; token: string | null; owner_tz: string | null; staff_id: string | null; declined?: { at: string; by: string } | null; starts_at: string; minutes: number; name: string; business: string | null; role: string; phone: string | null; email: string | null; link: string | null; phoneCall: boolean };
 
 const DAY = 864e5;
 
-export async function ownerLeads(nowMs: number): Promise<{ waiting: Lead[]; called: Lead[]; booked: Booked[] }> {
+export async function ownerLeads(nowMs: number): Promise<{ waiting: Lead[]; called: Lead[]; booked: Booked[]; declinedCalls: Booked[] }> {
   const since = new Date(nowMs - 30 * DAY).toISOString();
   const [{ data: reqs }, { data: dones }, { data: meets }] = await Promise.all([
     db().from("activity_log").select("id, at, action, details").in("action", ["owner_callback_request", "owner_meeting_request"]).gte("at", since).order("at", { ascending: false }),
     db().from("activity_log").select("at, details").eq("action", "owner_lead_done").gte("at", since),
     db().from("activity_log").select("id, details").eq("action", "owner_meeting").gte("details->>ends_at", new Date(nowMs).toISOString()),
   ]);
-  const done = new Map(((dones ?? []) as { at: string; details: { lead_id: string; by: string; note?: string | null } }[]).map((d) => [String(d.details.lead_id), { at: d.at, by: d.details.by, note: d.details.note ?? null }]));
+  const done = new Map(((dones ?? []) as { at: string; details: { lead_id: string; by: string; note?: string | null; outcome?: string } }[]).map((d) => [String(d.details.lead_id), { at: d.at, by: d.details.by, note: d.details.note ?? null, declined: d.details.outcome === "declined" }]));
   const leads = ((reqs ?? []) as { id: number | string; at: string; action: string; details: Record<string, string | undefined> }[]).map(
     (r): Lead => ({
       id: String(r.id),
@@ -45,17 +45,20 @@ export async function ownerLeads(nowMs: number): Promise<{ waiting: Lead[]; call
       done: done.get(String(r.id)) ?? null,
     }),
   );
-  const booked = ((meets ?? []) as { id: number | string; details: Record<string, unknown> }[])
+  const all = ((meets ?? []) as { id: number | string; details: Record<string, unknown> }[])
     .map((m): Booked => {
       const d = m.details as Record<string, string | undefined>;
       const mins = Math.round((Date.parse(d.ends_at ?? "") - Date.parse(d.starts_at ?? "")) / 60e3);
-      return { id: String(m.id), starts_at: d.starts_at ?? "", minutes: mins || 20, name: d.name ?? "", business: d.business || null, role: d.role ?? "", phone: d.phone || null, email: d.email || null, link: d.link || null, phoneCall: !!m.details.phoneCall };
+      const dec = m.details.cancelled ? { at: d.declined_at ?? "", by: d.declined_by ?? "" } : null;
+      return { id: String(m.id), token: d.token || null, owner_tz: d.owner_tz || null, staff_id: d.staff_id || null, declined: dec, starts_at: d.starts_at ?? "", minutes: mins || 20, name: d.name ?? "", business: d.business || null, role: d.role ?? "", phone: d.phone || null, email: d.email || null, link: d.link || null, phoneCall: !!m.details.phoneCall };
     })
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  const booked = all.filter((m) => !m.declined);
   return {
     waiting: leads.filter((l) => !l.done).sort((a, b) => a.at.localeCompare(b.at)),
     called: leads.filter((l) => l.done && nowMs - Date.parse(l.done.at) < 7 * DAY),
     booked,
+    declinedCalls: all.filter((m) => m.declined),
   };
 }
 
@@ -101,4 +104,40 @@ export async function chaseWaitingCallbacks(nowMs: number) {
     n++;
   }
   return n;
+}
+
+// The ready words when we decline a booked call. Whoever declines can change them.
+export function declineText(ownerName: string, by: string) {
+  const first = (n: string) => n.trim().split(" ")[0] || "there";
+  return `Hi ${first(ownerName)},\n\nThank you for booking a call with us. After looking at what you're hiring for, we don't think we're the right ones to help with this position, so we're cancelling the call rather than take up your time.\n\nWe wish you the best with the search, and you're always welcome to browse our candidates.\n\n${first(by)}\nThe Candidate Collection`;
+}
+
+// Decline a booked video call: tell the owner kindly, cancel it in everyone's
+// calendar, and open the time back up.
+export async function declineMeeting(meetingId: string, message: string, by: { name: string; email: string }) {
+  const { data } = await db().from("activity_log").select("id, details").eq("id", meetingId).eq("action", "owner_meeting").maybeSingle();
+  const d = data?.details as (Record<string, string | undefined> & { cancelled?: boolean }) | undefined;
+  if (!data || !d) return { error: "We couldn't find that call." };
+  if (d.cancelled) return { ok: true as const };
+  await db().from("activity_log").update({ details: { ...d, cancelled: true, declined_by: by.name, declined_at: new Date().toISOString() } }).eq("id", data.id);
+  const { callIcs } = await import("./ics");
+  const { formatInZone, COMPANY_TZ } = await import("./time");
+  const ics = d.starts_at && d.ends_at && d.token ? callIcs({ uid: `meet-${d.token}@thecandidatecollection.com`, start: d.starts_at, end: d.ends_at, title: "Cancelled: call with The Candidate Collection", description: "This call was cancelled.", cancelled: true }) : null;
+  const attachments = ics ? [{ filename: "cancelled.ics", content: Buffer.from(ics) }] : undefined;
+  const paras = message.trim().split(/\n\s*\n/).map((p) => kit.p(e(p.trim()).replace(/\n/g, "<br>"))).join("");
+  let sent = true;
+  if (d.email) {
+    const r = await sendEmail({ to: d.email, subject: `About our call${d.starts_at ? ` on ${formatInZone(d.starts_at, d.owner_tz || COMPANY_TZ)}` : ""}`, audience: "owner", html: paras, replyTo: by.email, fromName: by.name, attachments }).catch(() => ({ ok: false }));
+    sent = !!(r as { ok?: boolean }).ok;
+  }
+  for (const l of await leaders().catch(() => []))
+    await sendEmail({
+      to: l.email,
+      subject: `Cancelled: call with ${d.business || d.name}`,
+      audience: "team",
+      html: kit.big(`${e(by.name.split(" ")[0])} declined the call with ${e(d.name ?? "")}`) + kit.p(`${d.starts_at ? e(formatInZone(d.starts_at, COMPANY_TZ)) : ""}. The owner was told, and the time is open again.`) + kit.quiet("Open the attached file to take it off your calendar, if your calendar hasn't already."),
+      attachments,
+    }).catch(() => null);
+  await logActivity(`staff:${by.email}`, "owner_meeting_declined", { meeting_id: meetingId, owner_emailed: sent });
+  return { ok: true as const, emailed: sent };
 }

@@ -18,3 +18,7 @@
 .done { display: flex; gap: 8px; flex-wrap: wrap; }
 .done input { flex: 1 1 220px; min-width: 0; }
 .was { opacity: 0.9; }
+.who .no { color: var(--ink-2); font-weight: 600; }
+.decline summary { cursor: pointer; font-size: 13.5px; color: var(--ink-2); text-decoration: underline; width: fit-content; }
+.decline form { display: grid; gap: 8px; margin-top: 8px; justify-items: start; }
+.decline textarea { width: 100%; font: inherit; font-size: 14.5px; }
