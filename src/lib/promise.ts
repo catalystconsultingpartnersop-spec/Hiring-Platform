@@ -50,6 +50,19 @@ export async function requestPromise(candidateId: string, listOnSign: boolean) {
 }
 
 const DAY = 864e5;
+const EVERY = 14; // days between "still looking?" emails
+
+// How many check-ins in a row this candidate hasn't answered.
+async function unansweredAsks(c: { id: string; last_checkin_at?: string | null }) {
+  // Counting starts over after an answer, or after a pause (so a profile that
+  // was put back isn't paused again the next morning).
+  const { data: p } = await db().from("activity_log").select("at").eq("action", "candidate_auto_paused").eq("details->>candidate", refCode(c.id)).order("at", { ascending: false }).limit(1);
+  const from = [c.last_checkin_at, (p?.[0] as { at: string } | undefined)?.at].filter((d): d is string => !!d).sort().pop();
+  let q = db().from("activity_log").select("id", { count: "exact", head: true }).eq("action", "candidate_checkin_sent").eq("details->>candidate", refCode(c.id));
+  if (from) q = q.gt("at", from);
+  const { count } = await q;
+  return count ?? 0;
+}
 
 // Profiles used to wait for the candidate's signature before going live. They
 // don't anymore, so anyone still waiting goes live now.
@@ -70,7 +83,9 @@ export async function releaseWaitingProfiles() {
 }
 
 // Run once a day (from the daily cron): each listed candidate gets a personal
-// "still looking?" email from their rep about once a month. Replies go to the rep.
+// "still looking?" email from their rep every two weeks. Replies go to the rep.
+// Two in a row with no answer: the profile is paused on its own, and one tap
+// brings it back.
 // (Asking already-live candidates to sign the agreement is done by reps, one by
 // one, from the candidate's profile.)
 export async function dailyCandidateCheckins() {
@@ -78,7 +93,7 @@ export async function dailyCandidateCheckins() {
   const { data, error } = await db().from("candidates").select("*").eq("status", "listed");
   if (error || !data) return sent;
   const now = Date.now();
-  const since = new Date(now - 30 * DAY).toISOString();
+  const since = new Date(now - EVERY * DAY).toISOString();
 
   // Anyone actively engaged is left alone: an introduction in progress, a
   // recent or upcoming onboarding call, or a recent message to us.
@@ -100,9 +115,11 @@ export async function dailyCandidateCheckins() {
     if (!("checkin_sent_at" in c)) break; // the database hasn't been updated yet
     try {
       if (busy.has(c.id)) continue;
-      // Quiet for 30 days: no check-in, answer or profile update in that time.
+      // Quiet for two weeks: no check-in, answer or profile update in that time.
       const last = Math.max(...[c.listed_at, c.updated_at, c.last_checkin_at, c.checkin_sent_at].map((d) => (d ? Date.parse(d) : 0)));
-      if (!last || last > now - 30 * DAY || sent.checkin >= 40) continue;
+      if (!last || last > now - EVERY * DAY || sent.checkin >= 40) continue;
+      // Already asked twice with no answer: no third ask, the pause below takes over.
+      if ((await unansweredAsks(c)) >= 2) continue;
       const rep = await repFor(c.id);
       await sendEmail({
         to: c.email,
@@ -116,6 +133,7 @@ export async function dailyCandidateCheckins() {
         fromName: rep?.active ? rep.full_name ?? undefined : undefined,
       });
       await db().from("candidates").update({ checkin_sent_at: new Date().toISOString() }).eq("id", c.id);
+      await logActivity("system", "candidate_checkin_sent", { candidate: refCode(c.id) });
       sent.checkin++;
     } catch (e) {
       console.error("candidate check-in failed", c.id, e);
@@ -157,6 +175,46 @@ export async function dailyCandidateCheckins() {
     }
   }
 
-  if (sent.checkin || nudged) await logActivity("system", "candidate_checkins", { ...sent, repsNudged: nudged });
-  return { ...sent, repsNudged: nudged };
+  // Two check-ins in a row with no answer, and a week since the second: pause
+  // the profile so employers only see people who are really looking. The
+  // candidate gets a one-tap way back, and their rep is told.
+  let paused = 0;
+  for (const c of data as Row[]) {
+    if (!("checkin_sent_at" in c) || !c.checkin_sent_at || busy.has(c.id)) continue;
+    const askedAt = Date.parse(c.checkin_sent_at);
+    const answered = c.last_checkin_at && Date.parse(c.last_checkin_at) >= askedAt;
+    if (answered || askedAt > now - 7 * DAY) continue;
+    try {
+      if ((await unansweredAsks(c)) < 2) continue;
+      await db().from("candidates").update({ status: "paused", self_paused_at: new Date().toISOString() }).eq("id", c.id).eq("status", "listed");
+      await logActivity("system", "candidate_auto_paused", { candidate: refCode(c.id) });
+      const rep = await repFor(c.id);
+      await sendEmail({
+        to: c.email,
+        ...candMail.autoPaused({ name: c.full_name, rep: rep?.active ? rep.full_name : null, back: candidateLinkTo(c.id, "looking"), hired: candidateLinkTo(c.id, "hired") }),
+        replyTo: rep?.active ? rep.email : undefined,
+        fromName: rep?.active ? rep.full_name ?? undefined : undefined,
+      });
+      const to = rep?.active ? rep.email : process.env.ADMIN_EMAIL;
+      if (to)
+        await sendEmail({
+          to,
+          subject: `${c.full_name}'s profile was paused (no answer to two check-ins)`,
+          html: `<p>We asked <strong>${escapeHtml(c.full_name)}</strong> twice if they're still looking for work, and didn't hear back, so their profile is hidden from employers for now.</p>
+<p>They got an email with one button to put it back. You can also turn it back on yourself from their profile.</p>
+<p><a href="${teamUrl()}/admin/candidates/${c.id}">Open their profile</a></p>`,
+          replyTo: c.email,
+        });
+      paused++;
+    } catch (e) {
+      console.error("auto-pause failed", c.id, e);
+    }
+  }
+  if (paused) {
+    const { clearCatalog } = await import("./catalog");
+    clearCatalog();
+  }
+
+  if (sent.checkin || nudged || paused) await logActivity("system", "candidate_checkins", { ...sent, repsNudged: nudged, paused });
+  return { ...sent, repsNudged: nudged, paused };
 }

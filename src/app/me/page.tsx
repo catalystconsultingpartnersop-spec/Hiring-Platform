@@ -12,7 +12,9 @@ import { currentCandidateId, signedToken } from "@/lib/session";
 import { formatInZone, nowMs } from "@/lib/time";
 import { loadPath, pathState } from "@/lib/path";
 import { hideMyProfile, showMyProfile, signOutCandidate } from "./actions";
+import { candidateUrl } from "@/lib/format";
 import { Intro, Intros } from "./Intros";
+import { TellAFriend } from "./TellAFriend";
 import styles from "./me.module.css";
 
 export const dynamic = "force-dynamic";
@@ -308,6 +310,8 @@ export default async function MyPage({ searchParams }: PageProps<"/me">) {
               </p>
             </div>
           )}
+
+          <TellAFriend link={`${candidateUrl()}/join`} />
 
           <form action={signOutCandidate}>
             <button className="linkish small" type="submit" style={{ marginTop: 4 }}>

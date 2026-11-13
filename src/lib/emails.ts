@@ -280,6 +280,21 @@ export const candidate = {
       p(o.rep ? `Warmly,<br>${esc(o.rep)}` : "Warmly,<br>Your team at The Candidate Collection"),
   }),
 
+  autoPaused: (o: { name: string; rep: string | null; back: string; hired: string }): Mail => ({
+    audience: o.rep ? "personal" : "candidate",
+    subject: `${first(o.name)}, are you still looking?`,
+    html:
+      hi(o.name) +
+      p("We checked in a couple of times and didn't hear back, so we've hidden your profile from employers for now. That way, employers only see people who are ready to talk.") +
+      p("Still looking? One tap puts you right back.") +
+      `<p style="margin:18px 0 8px">` +
+      `<a href="${o.back}" style="display:inline-block;background:#f2b300;color:#17213a;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0">Yes, put my profile back</a>` +
+      `<a href="${o.hired}" style="display:inline-block;background:#17213a;color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 0 8px">I got hired</a>` +
+      `</p>` +
+      p("Either way, I'm here if you need anything. Just reply to this email.") +
+      p(o.rep ? `Warmly,<br>${esc(o.rep)}` : "Warmly,<br>Your team at The Candidate Collection"),
+  }),
+
   pageLink: (o: { name: string; link: string }): Mail => ({
     audience: "candidate",
     subject: "Your candidate page",
