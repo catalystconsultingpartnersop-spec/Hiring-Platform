@@ -49,8 +49,9 @@ export async function bookMeeting(startIso: string, r: MeetRequest, ownerTz: str
   const slot = (await meetTimes()).find((s) => s.start === new Date(startIso).toISOString());
   if (!slot) return { error: "That time was just taken. Pick another one." };
   const team = await leaders();
-  // Heshy hosts when he's free, otherwise the partner. Both are invited.
-  const host = team.find((l) => slot.hosts.includes(l.id))!;
+  // Shloimy (the partner) hosts when he's free. Heshy is second. Both are invited.
+  const free = team.filter((l) => slot.hosts.includes(l.id));
+  const host = free.find((l) => !isOwnerEmail(l.email)) ?? free[0];
   const minutes = MEET_LENGTHS.includes(r.minutes as 10) ? (r.minutes as number) : 20;
   const ends = new Date(Date.parse(slot.start) + minutes * 60e3).toISOString();
 
