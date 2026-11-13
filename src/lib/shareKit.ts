@@ -21,7 +21,7 @@ export function shareLink(ref?: string | null, to: "home" | "why" = "home") {
 }
 
 export function ownerMessage(ref?: string | null) {
-  return `If hiring has ever felt like more work than it should be, this is for you.\n\nTake a look: ${shareLink(ref, "home")}\n\nWhy we built it: ${shareLink(ref, "why")}`;
+  return `If hiring has ever felt like more work than it should be, this is for you.\n\nTake a look: ${shareLink(ref, "home")}\n\nHow it works: ${siteUrl()}/how-it-works${ref ? `?r=${refSlug(ref)}` : ""}`;
 }
 
 // The teaser: the new front-page message, one link, meant to make an owner curious.

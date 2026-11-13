@@ -82,7 +82,7 @@ export default async function UnlockPage({ params, searchParams }: PageProps<"/c
             <h2>The agreement, in plain English</h2>
             <ul>
               <li>
-                <b>Meeting them is free.</b> Talk, interview, take your time.
+                <b>Meet them first.</b> Talk, interview, take your time. Nothing is charged.
               </li>
               <li>
                 <b>{candidateFee}, only if you hire.</b> Once, never a percentage of salary. We charge it when you tell us

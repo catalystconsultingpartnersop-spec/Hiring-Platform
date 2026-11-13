@@ -293,7 +293,7 @@ function Teaser({
                   {rep.bio?.line && <span className={styles.perkBio}>{rep.bio.line}</span>}
                 </li>
               )}
-              <li>Talking and interviewing are free</li>
+              <li>Talk and interview first. You pay only if you hire</li>
             </ul>
             <div className={styles.dealNums}>
               <div>

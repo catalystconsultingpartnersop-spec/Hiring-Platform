@@ -19,8 +19,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <div className="wrap narrow" style={{ maxWidth: 460 }}>
       <div className="page-head">
-        <h1>{sp.mode === "create" || (sp.mode !== "signin" && next.includes("/unlock")) ? "Create your free account" : "Welcome back"}</h1>
-        <p>For business owners. Browse free; sign in to see who a candidate is.</p>
+        <h1>{sp.mode === "create" || (sp.mode !== "signin" && next.includes("/unlock")) ? "Create your account" : "Welcome back"}</h1>
+        <p>For business owners. Anyone can browse; sign in to see who a candidate is.</p>
       </div>
       {error && (
         <p className="notice notice-bad" role="alert" style={{ marginBottom: 20 }}>

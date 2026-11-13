@@ -98,7 +98,7 @@ export function LoginForm({ next, startMode = "signin" }: { next: string; startM
             {creating ? "Creating your account…" : "Create account"}
           </button>
           <p className="small muted" style={{ marginTop: 10, textAlign: "center" }}>
-            Free. You only pay a flat fee if you hire someone.
+            You only pay a flat fee if you hire someone.
           </p>
         </form>
       )}
