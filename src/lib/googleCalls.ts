@@ -163,6 +163,42 @@ export async function roomArtifacts(space: string) {
   return out;
 }
 
+// Links to what Google saved for a Meet room: the video, the transcript and Gemini's
+// notes, as they sit in Drive. Only ever shown to Heshy.
+export type CallFiles = { started: string | null; videos: string[]; transcripts: string[]; notes: string[]; pending: boolean };
+export async function roomFileLinks(space: string): Promise<CallFiles[] | null> {
+  const token = await accessToken();
+  if (!token) return null;
+  const get = async (url: string) => {
+    const r = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
+    if (!r.ok) throw new Error(`Google Meet said no (${r.status})`);
+    return r.json();
+  };
+  if (/^spaces\/[a-z]{3}-[a-z]{4}-[a-z]{3}$/.test(space)) space = ((await get(`https://meet.googleapis.com/v2/${space}`)) as { name: string }).name;
+  const recs = (await get(`https://meet.googleapis.com/v2/conferenceRecords?filter=${encodeURIComponent(`space.name="${space}"`)}`)) as {
+    conferenceRecords?: { name: string; startTime?: string }[];
+  };
+  type Item = { state?: string; driveDestination?: { exportUri?: string }; docsDestination?: { exportUri?: string } };
+  const out: CallFiles[] = [];
+  for (const c of recs.conferenceRecords ?? []) {
+    const [r, tr, n] = (await Promise.all([
+      get(`https://meet.googleapis.com/v2/${c.name}/recordings`).catch(() => ({})),
+      get(`https://meet.googleapis.com/v2/${c.name}/transcripts`).catch(() => ({})),
+      get(`https://meet.googleapis.com/v2/${c.name}/smartNotes`).catch(() => ({})),
+    ])) as [{ recordings?: Item[] }, { transcripts?: Item[] }, { smartNotes?: Item[] }];
+    const all = [...(r.recordings ?? []), ...(tr.transcripts ?? []), ...(n.smartNotes ?? [])];
+    const links = (xs: Item[] | undefined) => (xs ?? []).map((x) => x.driveDestination?.exportUri ?? x.docsDestination?.exportUri ?? "").filter((u) => /^https:\/\/(drive|docs)\.google\.com\//.test(u));
+    out.push({
+      started: c.startTime ?? null,
+      videos: links(r.recordings),
+      transcripts: links(tr.transcripts),
+      notes: links(n.smartNotes),
+      pending: all.some((x) => x.state && x.state !== "FILE_GENERATED"),
+    });
+  }
+  return out;
+}
+
 // The full transcript of every call held in a Meet room, as "Name: words" lines.
 // Returns null while Google is still working on it.
 export async function roomTranscript(space: string): Promise<string | null> {

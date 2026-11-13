@@ -1223,6 +1223,30 @@ export async function makeTestRoom(cohost?: string): Promise<{ link?: string; er
 
 // What Google actually saved for some calls (for the Calls page and the candidate page).
 export type RecStatus = "recorded" | "processing" | "not_recorded" | "no_call_yet" | "unknown" | "upcoming";
+// The video, transcript and notes of a candidate's calls, in Google Drive.
+// For Heshy only: no rep and no partner ever gets these links.
+export async function ownerCallFiles(candidateId: string): Promise<{ error?: string; calls?: { when: string | null; videos: string[]; transcripts: string[]; notes: string[]; pending: boolean }[] }> {
+  const me = await requireStaff();
+  if (!me.owner) return { error: "Only Heshy can open recordings." };
+  if (!/^[0-9a-f-]{36}$/i.test(candidateId)) return { error: "Something went wrong." };
+  const { data } = await db().from("onboarding_calls").select("meet_space, starts_at, status").eq("candidate_id", candidateId).neq("status", "cancelled").order("starts_at", { ascending: false });
+  const rooms = ((data ?? []) as { meet_space: string | null; starts_at: string }[]).filter((k) => k.meet_space);
+  if (!rooms.length) return { calls: [] };
+  const { roomFileLinks } = await import("@/lib/googleCalls");
+  const calls: NonNullable<Awaited<ReturnType<typeof ownerCallFiles>>["calls"]> = [];
+  try {
+    for (const k of rooms) {
+      const files = await roomFileLinks(k.meet_space!);
+      if (!files) return { error: "Google isn't connected. Connect it in Settings." };
+      for (const f of files) calls.push({ when: f.started ?? k.starts_at, videos: f.videos, transcripts: f.transcripts, notes: f.notes, pending: f.pending });
+    }
+  } catch (e) {
+    return { error: `Couldn't reach Google just now. ${(e as Error).message}` };
+  }
+  await logActivity(staffActor(me), "recording_links_opened", { candidate_id: candidateId });
+  return { calls };
+}
+
 export async function recordingStatuses(callIds: string[]): Promise<Record<string, RecStatus>> {
   const me = await requireStaff();
   const ids = callIds.filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 30);

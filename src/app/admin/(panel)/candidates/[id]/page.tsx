@@ -2,6 +2,7 @@ import { refSlug } from "@/lib/shareKit";
 import { requireStaff } from "@/lib/session";
 import { PointToOwner } from "./PointToOwner";
 import { Suggested } from "./Suggested";
+import { OwnerRecordings } from "./OwnerRecordings";
 import { GoldBadge } from "./GoldBadge";
 import { goldOf } from "@/lib/gold";
 import { pathCtx, phoneLinks, pickNudgeText } from "@/lib/pathEmails";
@@ -140,6 +141,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         <PointToOwner candidateId={c.id} headline={c.headline} link={`${siteUrl().replace(/^https?:\/\//, "")}/c/${refCode(c.id)}${me.name ? `?r=${refSlug(me.name.split(" ")[0])}` : ""}`} repFirst={(me.name || "").split(" ")[0]} mine={canEdit && !me.manager} first={c.full_name.split(" ")[0]} gold={!!goldOf(c as unknown as { status: string; application: Record<string, unknown> | null })} />
       )}
       <Suggested candidateId={c.id} link={`${siteUrl().replace(/^https?:\/\//, "")}/c/${refCode(c.id)}${me.name ? `?r=${refSlug(me.name.split(" ")[0])}` : ""}`} repFirst={(me.name || "").split(" ")[0]} first={c.full_name.split(" ")[0]} myEmail={me.email} />
+      {me.owner && <OwnerRecordings candidateId={c.id} />}
       <p className="small" style={{ margin: "6px 0 0" }}>
         <Link href={`/admin/room?spot=${c.id}`}>⭐ Post {c.full_name.split(" ")[0]} to the Team Room</Link>
       </p>
