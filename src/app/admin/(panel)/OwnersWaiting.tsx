@@ -124,7 +124,7 @@ export async function OwnersWaiting({ full = false }: { full?: boolean }) {
                     {m.email ? `This goes to ${m.email}. Change any word.` : "We have no email for them, so call or text to let them know."} The call comes off the calendar and the time
                     opens up again.
                   </p>
-                  <textarea className="textarea" name="message" rows={9} defaultValue={declineText(m.name, me.name || "")} />
+                  <textarea className="textarea" name="message" rows={13} defaultValue={declineText(m.name, me.name || "", new Date(m.starts_at).toLocaleDateString("en-US", { weekday: "long", timeZone: "America/New_York" }))} />
                   <ConfirmButton className="btn btn-small btn-danger" message={`Decline the call with ${m.name}? ${m.email ? "They'll be emailed now." : ""}`}>
                     Send and cancel the call
                   </ConfirmButton>

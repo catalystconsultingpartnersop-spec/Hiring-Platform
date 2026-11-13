@@ -107,9 +107,9 @@ export async function chaseWaitingCallbacks(nowMs: number) {
 }
 
 // The ready words when we decline a booked call. Whoever declines can change them.
-export function declineText(ownerName: string, by: string) {
+export function declineText(ownerName: string, by: string, whenText: string) {
   const first = (n: string) => n.trim().split(" ")[0] || "there";
-  return `Hi ${first(ownerName)},\n\nThank you for booking a call with us. After looking at what you're hiring for, we don't think we're the right ones to help with this position, so we're cancelling the call rather than take up your time.\n\nWe wish you the best with the search, and you're always welcome to browse our candidates.\n\n${first(by)}\nThe Candidate Collection`;
+  return `Hi ${first(ownerName)},\n\nThank you for reaching out and booking a call with us. We appreciate you thinking of us.\n\nWe need to cancel our call${whenText ? ` on ${whenText}` : ""}, and we're sorry for the change. At the moment we aren't able to give your search the attention it deserves.\n\nYou're always welcome to browse our candidates on the site, and if someone catches your eye, we'd be glad to hear from you.\n\nWishing you much success with the hire.\n\n${first(by)}\nThe Candidate Collection`;
 }
 
 // Decline a booked video call: tell the owner kindly, cancel it in everyone's
@@ -140,4 +140,34 @@ export async function declineMeeting(meetingId: string, message: string, by: { n
     }).catch(() => null);
   await logActivity(`staff:${by.email}`, "owner_meeting_declined", { meeting_id: meetingId, owner_emailed: sent });
   return { ok: true as const, emailed: sent };
+}
+
+// An owner asks for a call back: from the front page form, or from Meet the team
+// when no time suits them. Lands on the waiting list and goes to Shloimy.
+export async function fileCallback(o: { role: string; name: string; phone: string; email?: string; business?: string; from: "home" | "meet" }) {
+  await logActivity(`public:${o.phone}`, "owner_callback_request", { role: o.role, name: o.name, phone: o.phone, email: o.email || undefined, business: o.business || undefined, from: o.from });
+  await db()
+    .from("positions")
+    .insert({ title: o.role, company: o.business || null, source: "callback", contact_name: o.name, contact_email: o.email || null, needs: `Call back: ${o.phone}`, added_by: "callback" })
+    .then(
+      () => null,
+      () => null,
+    );
+  for (const l of await callbackAnswerers())
+    await sendEmail({
+      to: l.email,
+      subject: `Call back: ${o.name}, hiring for ${o.role}`,
+      audience: "team",
+      html:
+        kit.big(`${e(o.name)} wants a call back`) +
+        kit.facts([
+          ["Hiring for", e(o.role)],
+          ["Business", o.business ? e(o.business) : null],
+          ["Phone", e(o.phone)],
+          ["Email", o.email ? e(o.email) : null],
+        ]) +
+        kit.button(`${teamUrl()}/admin/candidates?q=${encodeURIComponent(o.role)}`, "Search the collection for this") +
+        kit.button(`${teamUrl()}/admin/waiting`, "Mark them as called") +
+        kit.quiet("The front page says they can have a candidate to consider half an hour later. If no one fits, tell them straight, and that we can look."),
+    }).catch(() => null);
 }

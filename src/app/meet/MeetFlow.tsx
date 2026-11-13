@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { TimePicker } from "@/components/TimePicker";
 import type { MeetRequest } from "@/lib/meetUs";
-import { askForCall, bookMeetUs } from "./actions";
+import { bookMeetUs, callMeInstead } from "./actions";
 import s from "./meet.module.css";
 
 const WHEN = ["As soon as possible", "Within a month", "Just exploring"];
@@ -22,8 +22,8 @@ export function MeetFlow({ times }: { times: string[] }) {
         <p className={s.check}>✓</p>
         {done.asked ? (
           <>
-            <h2>Thanks, {r.name.split(" ")[0]}.</h2>
-            <p>We&rsquo;ll reach out to set a time that works for you.</p>
+            <h2>Got it, {r.name.split(" ")[0]}. We&rsquo;ll call you.</h2>
+            <p>As soon as possible, at {r.phone}.</p>
           </>
         ) : (
           <>
@@ -123,25 +123,30 @@ export function MeetFlow({ times }: { times: string[] }) {
             }}
           />
         ) : (
-          <div>
-            <p className="small">No open times this week. Leave your details and we&rsquo;ll reach out to set one up.</p>
-            {err && <p className="notice notice-bad small">{err}</p>}
-            <button
-              type="button"
-              className="btn btn-gold"
-              disabled={pending}
-              onClick={() =>
-                start(async () => {
-                  const res = await askForCall(r);
-                  if ("ok" in res) setDone({ asked: true });
-                  else setErr(res.error);
-                })
-              }
-            >
-              {pending ? "Sending…" : "Ask for a call"}
-            </button>
-          </div>
+          <p className="small">No open times this week.</p>
         )}
+        <div id="callback-instead" className={s.instead}>
+          <div>
+            <b>{times.length ? "Don\u2019t see a time that works for you?" : "We\u2019ll call you instead."}</b>
+            <span>Request a call back, and we&rsquo;ll call you as soon as possible.</span>
+          </div>
+          <button
+            type="button"
+            className={times.length ? "btn btn-ghost" : "btn btn-gold"}
+            disabled={pending}
+            onClick={() =>
+              start(async () => {
+                setErr("");
+                const res = await callMeInstead(r);
+                if ("ok" in res) setDone({ asked: true });
+                else setErr(res.error);
+              })
+            }
+          >
+            {pending ? "Sending…" : "Request a call back"}
+          </button>
+          {err && <p className={`notice notice-bad small ${s.insteadErr}`}>{err}</p>}
+        </div>
       </section>
     </div>
   );

@@ -17,6 +17,9 @@ export default async function MeetPage() {
             A short video call with the people who met the candidates. Tell us about your position, and we&rsquo;ll tell you who might fit.
             Pick how long works for you.
           </p>
+          <p style={{ marginTop: 10 }}>
+            <a href="#callback-instead">Rather we just call you? Request a call back ↓</a>
+          </p>
         </div>
       </div>
       <MeetFlow times={times.map((t) => t.start)} />

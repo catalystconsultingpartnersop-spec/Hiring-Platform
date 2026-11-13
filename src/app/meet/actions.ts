@@ -36,3 +36,17 @@ export async function askForCall(r: MeetRequest) {
   ).catch(() => null);
   return { ok: true as const };
 }
+
+// "Don't see a time that works? Request a call back." Skips scheduling: they go on
+// the waiting list and Shloimy calls them.
+export async function callMeInstead(r: MeetRequest) {
+  const t = (s: string, n = 120) => String(s ?? "").trim().slice(0, n);
+  const role = t(r.role), name = t(r.name), phone = t(r.phone, 40), email = t(r.email, 200).toLowerCase(), business = t(r.business);
+  if (!role) return { error: "Tell us what you're hiring for, in step 1." };
+  if (name.length < 2) return { error: "Add your name, in step 2." };
+  if (phone.replace(/\D/g, "").length < 10) return { error: "Add the phone number we should call, in step 2." };
+  if (!(await allow("callback", 5, 60))) return { error: SLOW_DOWN };
+  const { fileCallback } = await import("@/lib/ownerLeads");
+  await fileCallback({ role, name, phone, email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : undefined, business, from: "meet" });
+  return { ok: true as const };
+}
