@@ -14,9 +14,9 @@ import { candidateOnly } from "@/lib/candidateMode";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
-  title: { default: `${brandName()} — browse coached, assessed candidates`, template: `%s | ${brandName()}` },
+  title: { default: `${brandName()} | A revolutionary way to hire`, template: `%s | ${brandName()}` },
   description:
-    "Browse candidates who have been coached and assessed. Sign to see who they are. Pay one flat fee when you decide to hire.",
+    "Looking to hire? We already met your next candidate. Tell us what you need, and half an hour later you can have a qualified candidate to consider.",
   // The picture that shows when someone pastes our link (WhatsApp, iMessage, LinkedIn, email).
   openGraph: {
     type: "website",

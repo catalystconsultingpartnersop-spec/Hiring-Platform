@@ -8,7 +8,7 @@ import styles from "../../../hiring-help/help.module.css";
 
 export async function generateMetadata({ params }: PageProps<"/join/help/[slug]">): Promise<Metadata> {
   const a = getCareerArticle((await params).slug);
-  return a ? { title: "${a.title}", description: a.blurb } : {};
+  return a ? { title: a.title, description: a.blurb } : {};
 }
 
 export function generateStaticParams() {
