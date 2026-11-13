@@ -21,6 +21,8 @@ export async function GET(req: NextRequest) {
   await ownerDayEmails().catch((e) => console.error("owner day emails", e));
   const { overdueAlerts } = await import("@/lib/ownerMessages");
   await overdueAlerts().catch(() => null);
+  const { chaseWaitingCallbacks } = await import("@/lib/ownerLeads");
+  await chaseWaitingCallbacks(Date.now()).catch((e) => console.error("waiting call-backs", e));
   const r = await draftFinishedCalls({ withinHours: 6 }).catch(() => ({ drafted: 0 }));
   return NextResponse.json({ ...r, ...reminders, ...stalls });
 }

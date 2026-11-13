@@ -3,8 +3,8 @@
 import { db, logActivity } from "@/lib/db";
 import { escapeHtml as e, sendEmail } from "@/lib/email";
 import { kit } from "@/lib/emailKit";
-import { siteUrl } from "@/lib/format";
-import { leaders } from "@/lib/meetUs";
+import { teamUrl } from "@/lib/format";
+import { callbackAnswerers } from "@/lib/ownerLeads";
 import { allow, SLOW_DOWN } from "@/lib/throttle";
 
 export type CallbackState = { ok?: boolean; error?: string; phone?: string };
@@ -30,8 +30,10 @@ export async function requestCallback(_: CallbackState, form: FormData): Promise
       () => null,
       () => null,
     );
-  const search = `${siteUrl()}/admin/candidates?q=${encodeURIComponent(role)}`;
-  for (const l of await leaders().catch(() => []))
+  const search = `${teamUrl()}/admin/candidates?q=${encodeURIComponent(role)}`;
+  // Shloimy answers call-backs. Heshy sees them on the waiting list, and both are
+  // emailed if one is still unanswered after half an hour.
+  for (const l of await callbackAnswerers())
     await sendEmail({
       to: l.email,
       subject: `Call back: ${name}, hiring for ${role}`,
@@ -43,6 +45,7 @@ export async function requestCallback(_: CallbackState, form: FormData): Promise
           ["Phone", e(phone)],
         ]) +
         kit.button(search, "Search the collection for this") +
+        kit.button(`${teamUrl()}/admin/waiting`, "Mark them as called") +
         kit.quiet("The front page says they could be interviewing someone within half an hour of our call. If no one fits, tell them straight, and that we can look."),
     }).catch(() => null);
   return { ok: true, phone };

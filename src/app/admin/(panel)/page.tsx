@@ -12,6 +12,7 @@ import { EmailCheck } from "./EmailCheck";
 import { Introductions } from "./Introductions";
 import { RepDashboard } from "./RepDashboard";
 import { MessagesWaiting } from "./MessagesWaiting";
+import { OwnersWaiting } from "./OwnersWaiting";
 import styles from "./admin.module.css";
 
 export const dynamic = "force-dynamic";
@@ -111,6 +112,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
       <div className="page-head" style={{ paddingBottom: 0 }}>
         <h1>Dashboard</h1>
       </div>
+      <OwnersWaiting />
       {dbError && (
         <div className="notice notice-bad" role="alert" style={{ marginTop: 12 }}>
           <strong>The database connection isn&rsquo;t working.</strong> Error:{" "}
