@@ -40,10 +40,9 @@ export default async function Home() {
             <h1>
               Looking to hire? <span>We already met your next candidate.</span>
             </h1>
-            <p className={s.wink}>Qualified, vetted and ready to roll.</p>
+            <p className={s.wink}>Qualified. Vetted. Ready to roll.</p>
             <p className={s.lede}>
-              We&rsquo;re not starting a search now. Our candidates are ready, willing and able. Tell us what you need, and{" "}
-              <b>half an hour later you can have a qualified candidate to consider.</b>
+              Tell us what you need. <b>Half an hour later, you can have a candidate to consider.</b>
             </p>
             <a href="#callback" className={`btn btn-gold ${s.ctaBtn} ${s.onlyPhone}`}>
               Talk to our team
@@ -52,15 +51,14 @@ export default async function Home() {
               <a href="#now" className={s.second}>
                 See who&rsquo;s here <span aria-hidden>↓</span>
               </a>
-              <Link href="/meet" className={s.second}>
-                Or pick a time for a video call
-              </Link>
             </p>
           </div>
           <div id="callback" className={s.cb}>
-            <span className={s.tagOne}>Ready, willing and able</span>
-            <h2>Tell us what you need. Hear who we have.</h2>
+            <h2>Tell us what you need.</h2>
             <CallbackForm />
+            <p className={s.cbAlt}>
+              Or <Link href="/meet">pick a time for a video call</Link>
+            </p>
           </div>
         </div>
         <div className={`wrap ${s.strip}`}>
@@ -71,10 +69,7 @@ export default async function Home() {
             <b>Every one</b> met by our team
           </span>
           <span>
-            <b>Strengths</b> assessed
-          </span>
-          <span>
-            <b>One flat fee,</b> paid the day you hire
+            <b>One flat fee</b>
           </span>
         </div>
       </section>
