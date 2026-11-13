@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Visits } from "@/components/Visits";
 import Link from "next/link";
 import { headers } from "next/headers";
 import "@fontsource-variable/bricolage-grotesque";
@@ -157,6 +158,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             </span>
           </div>
         </footer>
+        <Visits />
       </body>
     </html>
   );

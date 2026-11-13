@@ -4,7 +4,7 @@ import { brandName } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Privacy policy" };
 
-const UPDATED = "October 28, 2026";
+const UPDATED = "November 13, 2026";
 
 export default function PrivacyPage() {
   const brand = brandName();
@@ -37,7 +37,8 @@ export default function PrivacyPage() {
       </p>
       <p>
         <strong>Automatically:</strong> basic technical information such as your IP address and browser, used to keep
-        the site secure and to record agreements.
+        the site secure and to record agreements. We also count page visits to see how the site is used. That
+        counting uses no cookies and doesn&rsquo;t identify you.
       </p>
 
       <h2>How we use it</h2>

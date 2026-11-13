@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { track } from "@vercel/analytics";
 import { TimePicker } from "@/components/TimePicker";
 import type { MeetRequest } from "@/lib/meetUs";
 import { bookMeetUs, callMeInstead } from "./actions";
@@ -118,7 +119,10 @@ export function MeetFlow({ times }: { times: string[] }) {
             lengthNote={`The call is ${r.minutes} minutes.`}
             onBook={async (iso, tz) => {
               const res = await bookMeetUs(iso, tz, r);
-              if ("ok" in res && res.ok) setDone({ when: res.when, link: res.link, phoneCall: res.phoneCall });
+              if ("ok" in res && res.ok) {
+                track("Video call booked");
+                setDone({ when: res.when, link: res.link, phoneCall: res.phoneCall });
+              }
               return res;
             }}
           />

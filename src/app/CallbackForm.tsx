@@ -1,11 +1,17 @@
 "use client";
 
-import { useActionState } from "react";
+import { track } from "@vercel/analytics";
+import { useActionState, useEffect, useRef } from "react";
 import { requestCallback, type CallbackState } from "./callback";
 import s from "./home.module.css";
 
 export function CallbackForm() {
   const [state, action, pending] = useActionState<CallbackState, FormData>(requestCallback, {});
+  // Where owners drop off: started the form, then sent it.
+  const started = useRef(false);
+  useEffect(() => {
+    if (state.ok) track("Callback sent");
+  }, [state.ok]);
   if (state.ok)
     return (
       <div className={s.cbDone}>
@@ -15,7 +21,15 @@ export function CallbackForm() {
       </div>
     );
   return (
-    <form action={action} className={s.cbForm}>
+    <form
+      action={action}
+      className={s.cbForm}
+      onFocus={() => {
+        if (started.current) return;
+        started.current = true;
+        track("Callback started");
+      }}
+    >
       <label>
         <span>The position</span>
         <input className="input" name="role" placeholder="e.g. Office manager, bookkeeper, sales" required />
