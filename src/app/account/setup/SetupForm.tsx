@@ -1,5 +1,6 @@
 "use client";
 
+import { TextConsent } from "@/components/TextConsent";
 import { useActionState } from "react";
 import { saveSetup, SetupState } from "../actions";
 
@@ -10,11 +11,13 @@ export function SetupForm({
   owner,
   needsPassword,
   resetting,
+  textOk,
 }: {
   next: string;
   owner: Basics;
   needsPassword: boolean;
   resetting: boolean;
+  textOk?: boolean;
 }) {
   const [state, action, pending] = useActionState<SetupState, FormData>(saveSetup, {});
   return (
@@ -32,6 +35,7 @@ export function SetupForm({
         <span>Phone (optional)</span>
         <input className="input" name="phone" type="tel" defaultValue={owner.phone ?? ""} autoComplete="tel" />
       </label>
+      <TextConsent defaultChecked={textOk} />
       <input type="email" name="email" value={owner.email} autoComplete="username" readOnly hidden />
       <label className="field">
         <span>

@@ -1,5 +1,6 @@
 "use client";
 
+import { TextConsent } from "@/components/TextConsent";
 import { useState, useTransition } from "react";
 import { track } from "@vercel/analytics";
 import { TimePicker } from "@/components/TimePicker";
@@ -90,6 +91,7 @@ export function MeetFlow({ times }: { times: string[] }) {
             <input className="input" type="tel" value={r.phone} onChange={set("phone")} autoComplete="tel" />
           </label>
         </div>
+        {r.phone.replace(/\D/g, "").length >= 10 && <TextConsent checked={!!r.textOk} onChange={(on) => setR({ ...r, textOk: on })} />}
         <label className={`${s.tick} small muted`}>
           <input type="checkbox" checked={r.phoneCall} onChange={(ev) => setR({ ...r, phoneCall: ev.target.checked })} /> We&rsquo;ll meet by
           video (Google Meet). Prefer a phone call instead?

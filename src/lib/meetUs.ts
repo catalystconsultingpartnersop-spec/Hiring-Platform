@@ -43,7 +43,7 @@ export async function meetTimes(): Promise<{ start: string; hosts: string[] }[]>
     .filter((s) => s.hosts.length);
 }
 
-export type MeetRequest = { minutes?: number; name: string; business: string; email: string; phone: string; role: string; town: string; when: string; notes: string; phoneCall: boolean };
+export type MeetRequest = { minutes?: number; name: string; business: string; email: string; phone: string; role: string; town: string; when: string; notes: string; phoneCall: boolean; textOk?: boolean };
 
 export async function bookMeeting(startIso: string, r: MeetRequest, ownerTz: string) {
   const slot = (await meetTimes()).find((s) => s.start === new Date(startIso).toISOString());
@@ -108,6 +108,9 @@ export async function bookMeeting(startIso: string, r: MeetRequest, ownerTz: str
   }).catch(() => null);
 
   const whenUs = formatInZone(slot.start, COMPANY_TZ);
+  const { textOwner, textTeam } = await import("./texts");
+  await textOwner.videoCallBooked({ phone: r.phone || null }, names, whenOwner, token);
+  for (const l of team) await textTeam.ownerBookedVideo(l.id, r.business || r.name, r.role || "a position", whenUs, token);
   for (const l of team)
     await sendEmail({
       to: l.email,

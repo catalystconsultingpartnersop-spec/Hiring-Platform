@@ -1,3 +1,4 @@
+import { textCandidate, textTeam } from "./texts";
 import { db, logActivity } from "./db";
 import { emailAdmin, escapeHtml, sendEmail } from "./email";
 import { brandName, candidateUrl, teamUrl } from "./format";
@@ -104,7 +105,8 @@ export async function sendBookingEmails(callId: string, cancelled: boolean, hand
   const whenRep = formatInZone(call.starts_at, rep.time_zone ?? COMPANY_TZ);
   const manage = manageLink(call.id);
   const { callEmailFor } = await import("./callAccounts");
-  const callEmail = await callEmailFor({ id: (call as unknown as { staff_id: string }).staff_id, email: rep.email });
+  const staffId = (call as unknown as { staff_id: string }).staff_id;
+  const callEmail = await callEmailFor({ id: staffId, email: rep.email });
 
   const ics = (forRep: boolean) =>
     callIcs({
@@ -135,6 +137,8 @@ export async function sendBookingEmails(callId: string, cancelled: boolean, hand
       html: `<p>The call with <strong>${escapeHtml(c.full_name)}</strong> on ${escapeHtml(whenRep)} was cancelled.</p>`,
       attachments: [{ filename: "cancelled.ics", content: ics(true) }],
     });
+    await textCandidate.callCancelled(c, whenCandidate, call.id);
+    await textTeam.callCancelled(staffId, c.full_name, whenRep, call.id);
     return;
   }
 
@@ -147,6 +151,9 @@ export async function sendBookingEmails(callId: string, cancelled: boolean, hand
     // Replies (like their assessment results) go straight to their rep.
     replyTo: rep.email,
   });
+
+  if (tellCandidate) await textCandidate.callBooked(c, rep.full_name || "", whenCandidate, call.id);
+  await textTeam.callBooked(staffId, c.full_name, whenRep, call.id);
 
   const app = c.application ?? {};
   await sendEmail({
@@ -248,6 +255,7 @@ export async function sendHourReminders() {
       }),
       replyTo: call.staff.email,
     });
+    await textCandidate.callInAnHour(call.candidates, call.staff.full_name || "", clock, id);
     sent++;
   }
   return { sent };

@@ -1,5 +1,6 @@
 "use client";
 
+import { TextConsent } from "@/components/TextConsent";
 import { useActionState, useState } from "react";
 import { createAccount, LoginState, requestLink, signInWithPassword } from "./actions";
 import styles from "./login.module.css";
@@ -85,6 +86,7 @@ export function LoginForm({ next, startMode = "signin" }: { next: string; startM
             <span>Phone (optional)</span>
             <input className="input" type="tel" name="phone" autoComplete="tel" defaultValue={create.fields?.phone} />
           </label>
+          <TextConsent />
           <label className="field">
             <span>Choose a password (at least 8 characters)</span>
             <input className="input" type="password" name="password" required minLength={8} autoComplete="new-password" />

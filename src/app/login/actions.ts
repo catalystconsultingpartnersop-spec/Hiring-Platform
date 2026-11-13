@@ -1,5 +1,6 @@
 "use server";
 
+import { setTextConsent } from "@/lib/sms";
 import { allow, SLOW_DOWN } from "@/lib/throttle";
 import { tagReferral } from "@/lib/shareKit";
 
@@ -101,6 +102,7 @@ export async function createAccount(_prev: LoginState, form: FormData): Promise<
     .select("id, full_name, company")
     .single();
   if (error || !owner) return { error: "Something went wrong creating your account. Try again.", fields };
+  if (form.get("text_ok") === "yes") await setTextConsent(phone, true, "owner", "signup");
   await tagReferral(owner.id);
   await logActivity(`owner:${email}`, "owner_signed_up", { company });
   return signedIn(owner, email, next, "signup");

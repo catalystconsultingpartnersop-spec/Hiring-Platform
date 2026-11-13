@@ -1,3 +1,5 @@
+import { TextMe } from "./TextMe";
+import { textConsent } from "@/lib/sms";
 import { strengthsLink } from "@/lib/strengthsLink";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -29,6 +31,9 @@ const DONE: Record<string, React.ReactNode> = {
   job: "Congratulations! We've let your rep know, and your profile is hidden from employers.",
   promise: "Thank you for signing your candidate agreement.",
   "promise-live": "Thank you! You've signed your candidate agreement, and your profile is now live for employers.",
+  texts: "Done. We'll text you when something happens.",
+  notexts: "Done. No texts; we'll keep emailing you.",
+  badphone: "That doesn't look like a US mobile number. Use 10 digits, like 917 555 0123.",
   looking: "Thanks for letting us know. We're on it, and your rep is here if you need anything.",
   booked: "You're booked. We've emailed you both a calendar invite.",
   retime: "Got it. We've asked them for other times.",
@@ -310,6 +315,8 @@ export default async function MyPage({ searchParams }: PageProps<"/me">) {
               </p>
             </div>
           )}
+
+          <TextMe phone={c.phone} on={await textConsent(c.phone)} />
 
           <TellAFriend link={`${candidateUrl()}/join`} />
 

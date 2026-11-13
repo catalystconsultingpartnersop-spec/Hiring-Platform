@@ -6,6 +6,7 @@ import { callIcs } from "./ics";
 import { teamFor, TeamMember } from "./contact";
 import { Meeting, MODE_LABEL, Reference } from "./path";
 import { signedToken } from "./session";
+import { textCandidate, textOwner } from "./texts";
 import { COMPANY_TZ, formatInZone } from "./time";
 
 // Sends the emails in the path from "unlocked" to "hired". The words live in
@@ -79,6 +80,7 @@ export async function emailIntroStarted(unlockId: string) {
     to: c.cand.email,
     ...toCand.introStarted({ name: c.cand.full_name, company: company(c), contact: c.owner.full_name, link: candidatePageLink(c.cand.id) }),
   });
+  await textCandidate.wantsToMeet(c.cand, company(c), unlockId);
   await toRep(
     c,
     `${company(c)} unlocked ${c.cand.full_name}`,
@@ -94,6 +96,7 @@ export async function emailTimesOffered(m: Meeting) {
     to: c.cand.email,
     ...toCand.timesOffered({ name: c.cand.full_name, company: company(c), m, times: m.slots.map((s) => formatInZone(s, c.cand.tz)), link: candidatePageLink(c.cand.id) }),
   });
+  await textCandidate.timesOffered(c.cand, company(c), (m.kind === "call" ? "first call" : "meeting"), m.id);
   await toRep(c, `${company(c)} offered times to ${c.cand.full_name}`, `<strong>${e(company(c))}</strong> offered ${m.slots.length} times for a ${m.kind === "call" ? "first call" : "meeting"}. Waiting for ${e(first(c.cand.full_name))} to pick one.`);
 }
 
@@ -119,6 +122,8 @@ export async function emailBooked(m: Meeting) {
     ...toCand.booked({ name: c.cand.full_name, company: company(c), when: formatInZone(m.starts_at, c.cand.tz), how: howLine(m, c, true), m, link: candidatePageLink(c.cand.id) }),
     attachments: [{ filename: `${m.kind}.ics`, content: ics(`${label} with ${company(c)}`, `${MODE_LABEL[m.mode]}. ${m.mode === "phone" ? `${c.owner.full_name ?? company(c)} will call you.` : (m.place ?? "")}`) }],
   });
+  await textCandidate.booked(c.cand, company(c), (m.kind === "call" ? "first call" : "meeting"), formatInZone(m.starts_at, c.cand.tz), m.id);
+  await textOwner.pickedTime(c.owner, c.cand.full_name, (m.kind === "call" ? "first call" : "meeting"), formatInZone(m.starts_at, m.time_zone || COMPANY_TZ), c.cand.id, m.id);
   await toRep(c, `Booked: ${c.cand.full_name} and ${company(c)}`, `<strong>${e(c.cand.full_name)}</strong> and <strong>${e(company(c))}</strong> have a ${label.toLowerCase()} on ${e(formatInZone(m.starts_at, COMPANY_TZ))} (${e(MODE_LABEL[m.mode].toLowerCase())}). A good-luck text to ${e(first(c.cand.full_name))} would mean a lot.`);
 }
 
@@ -127,6 +132,7 @@ export async function emailNeedOtherTimes(m: Meeting) {
   const c = await pathCtx(m.unlock_id);
   if (!c) return;
   await sendEmail({ to: c.owner.email, ...toOwner.needOtherTimes({ name: c.owner.full_name, candidate: c.cand.full_name, candidateId: c.cand.id, note: m.candidate_note, phone: c.cand.phone }) });
+  await textOwner.needsOtherTimes(c.owner, c.cand.full_name, c.cand.id, m.id);
   await toRep(c, `${c.cand.full_name} asked for other times`, `${e(c.cand.full_name)} couldn't make ${e(company(c))}'s times.${m.candidate_note ? ` Their note: <em>${e(m.candidate_note)}</em>` : ""}`);
 }
 
@@ -159,7 +165,9 @@ export async function emailVerdict(m: Meeting, who: "owner" | "candidate", verdi
   );
   if (who === "candidate" && verdict === "yes") {
     await sendEmail({ to: c.owner.email, ...toOwner.candidateKeepGoing({ name: c.owner.full_name, candidate: c.cand.full_name, candidateId: c.cand.id, m }) });
+    await textOwner.keepGoing(c.owner, c.cand.full_name, c.cand.id, m.id);
   }
+  if (who === "owner" && verdict === "yes") await textCandidate.keepGoing(c.cand, company(c), m.id);
 }
 
 // 8. References.
@@ -167,6 +175,7 @@ export async function emailRefsRequested(unlockId: string, note: string | null) 
   const c = await pathCtx(unlockId);
   if (!c) return;
   await sendEmail({ to: c.cand.email, ...toCand.refsRequested({ name: c.cand.full_name, company: company(c), note, link: candidatePageLink(c.cand.id) }) });
+  await textCandidate.references(c.cand, company(c), unlockId);
   await toRep(c, `${company(c)} asked ${c.cand.full_name} for references`, `<strong>${e(company(c))}</strong> asked <strong>${e(c.cand.full_name)}</strong> for references. They're close. Help ${e(first(c.cand.full_name))} pick good ones if needed.`);
 }
 
@@ -174,6 +183,7 @@ export async function emailRefsGiven(unlockId: string, refs: Reference[]) {
   const c = await pathCtx(unlockId);
   if (!c) return;
   await sendEmail({ to: c.owner.email, ...toOwner.references({ name: c.owner.full_name, candidate: c.cand.full_name, candidateId: c.cand.id, refs }) });
+  await textOwner.references(c.owner, c.cand.full_name, c.cand.id, unlockId);
   await toRep(c, `${c.cand.full_name} sent references`, `${e(c.cand.full_name)} sent ${refs.length} reference${refs.length > 1 ? "s" : ""} to ${e(company(c))}.`);
 }
 

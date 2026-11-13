@@ -348,3 +348,19 @@ ${
   }
   redirect("/me?done=job");
 }
+
+// "Get updates by text" on the candidate's own page.
+export async function saveMyTexts(form: FormData) {
+  const c = await me();
+  const { setTextConsent, textConsent, textNumber } = await import("@/lib/sms");
+  const raw = String(form.get("phone") ?? "").trim().slice(0, 40);
+  if (!textNumber(raw)) redirect("/me?done=badphone");
+  const want = form.get("text_ok") === "yes";
+  if (raw !== (c.phone ?? "")) {
+    // A new number never inherits the old number's yes.
+    if (c.phone) await setTextConsent(c.phone, false, "candidate", "me-number-changed");
+    await db().from("candidates").update({ phone: raw }).eq("id", c.id);
+  }
+  if (want !== (await textConsent(raw))) await setTextConsent(raw, want, "candidate", "me");
+  redirect(`/me?done=${want ? "texts" : "notexts"}`);
+}

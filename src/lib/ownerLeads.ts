@@ -153,6 +153,10 @@ export async function fileCallback(o: { role: string; name: string; phone: strin
       () => null,
       () => null,
     );
+  // Both leaders get the text: this is the one where minutes matter.
+  const { textTeam } = await import("./texts");
+  const key = `${o.phone.replace(/\D/g, "")}:${new Date().toISOString().slice(0, 16)}`;
+  for (const l of await leaders().catch(() => [])) await textTeam.callBack(l.id, o.name, o.role, o.phone, key);
   for (const l of await callbackAnswerers())
     await sendEmail({
       to: l.email,

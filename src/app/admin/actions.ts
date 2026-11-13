@@ -1817,6 +1817,12 @@ export async function savePhone(staffId: string, _prev: FormState, form: FormDat
   const phone = cleanPhone(raw);
   if (!phone) return { error: "That doesn't look like a US mobile number. Use 10 digits, like 917 555 0123." };
   await setStaffPhone(staffId, phone);
+  // Only the rep can agree to texts for their own phone.
+  if (me.id === staffId) {
+    const { setTextConsent, textConsent } = await import("@/lib/sms");
+    const want = form.get("text_ok") === "yes";
+    if (want !== (await textConsent(phone))) await setTextConsent(phone, want, "staff", "my-hours");
+  }
   revalidatePath("/admin/hours");
   revalidatePath(`/admin/team/${staffId}`);
   return { ok: "Saved." };

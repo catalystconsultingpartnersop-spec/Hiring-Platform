@@ -1,3 +1,4 @@
+import { textConsent } from "@/lib/sms";
 import { redirect } from "next/navigation";
 import { currentOwner } from "@/lib/session";
 import { SetupForm } from "./SetupForm";
@@ -23,6 +24,7 @@ export default async function SetupPage({ searchParams }: PageProps<"/account/se
         owner={{ full_name: owner.full_name, company: owner.company, phone: owner.phone, email: owner.email }}
         needsPassword={!owner.password_hash && sp.pw === "1"}
         resetting={!!owner.password_hash && sp.pw === "1"}
+        textOk={await textConsent(owner.phone)}
       />
     </div>
   );

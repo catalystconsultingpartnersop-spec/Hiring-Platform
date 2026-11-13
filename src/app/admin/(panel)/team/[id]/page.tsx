@@ -1,3 +1,4 @@
+import { textConsent } from "@/lib/sms";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
@@ -44,7 +45,7 @@ export default async function RepView({ params }: PageProps<"/admin/team/[id]">)
         domain={workEmailDomain()}
       />
       <div style={{ maxWidth: 520, marginTop: 16 }}>
-        <PhoneForm staffId={data.id} phone={phones[data.id] ?? null} self={false} />
+        <PhoneForm staffId={data.id} phone={phones[data.id] ?? null} self={false} textOk={await textConsent(phones[data.id])} />
         <BioForm staffId={data.id} line={bio?.line ?? ""} bio={bio?.bio ?? ""} self={false} name={data.full_name || data.email} />
       </div>
       <RepDashboard staffId={data.id} name={data.full_name || data.email} self={false} nowIso={new Date(nowMs()).toISOString()} />

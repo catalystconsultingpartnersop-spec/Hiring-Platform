@@ -1,3 +1,4 @@
+import { textConsent } from "@/lib/sms";
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
 import { HoursForm } from "./HoursForm";
@@ -37,7 +38,7 @@ export default async function HoursPage() {
         </p>
       </div>
       <BookSwitches candidates={takes(bookMe, who, "candidates")} owners={takes(bookMe, who, "owners")} showOwners={me.manager} hasHours={(rows ?? []).length > 0} />
-      <PhoneForm staffId={me.id} phone={phones[me.id] ?? null} self />
+      <PhoneForm staffId={me.id} phone={phones[me.id] ?? null} self textOk={await textConsent(phones[me.id])} />
       <HoursForm
         windows={(rows ?? []) as { weekday: number; start_minute: number; end_minute: number }[]}
         meetingLink={profile?.meeting_link ?? ""}

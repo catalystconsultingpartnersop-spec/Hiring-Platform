@@ -1,5 +1,6 @@
 "use client";
 
+import { TextConsent } from "@/components/TextConsent";
 import { HOURS } from "@/lib/hours";
 import { LANGUAGES } from "@/lib/languages";
 import { AVAILABILITY } from "@/lib/availability";
@@ -157,6 +158,7 @@ export function ApplyFlow({
         <span>Phone</span>
         <input className="input" type="tel" name="phone" required autoComplete="tel" defaultValue={v("phone")} />
       </label>
+      <TextConsent />
       <label className="field">
         <span>What kind of work are you hoping for?</span>
         <textarea

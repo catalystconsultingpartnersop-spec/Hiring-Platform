@@ -29,6 +29,9 @@ export async function GET(req: NextRequest) {
   // Owners who told us what they're hiring for: one email when a strong new fit is listed (max weekly).
   const { teamDigest } = await import("@/lib/teamDigest");
   await teamDigest().catch(() => null);
+  // Each rep's morning picture: today's calls and where every introduction stands.
+  const { repMornings } = await import("@/lib/repMorning");
+  await repMornings().catch((e) => console.error("rep mornings", e));
   const { sendOwnerNudges } = await import("@/lib/ownerMatches");
   const ownerNudges = await sendOwnerNudges().catch(() => null);
 

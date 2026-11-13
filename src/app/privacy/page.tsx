@@ -51,10 +51,18 @@ export default function PrivacyPage() {
       </ul>
       <p>We don&rsquo;t sell your information, and we don&rsquo;t use it for advertising.</p>
 
+      <h2>Text messages</h2>
+      <p>
+        If you give us a mobile number and tick the box agreeing to texts, we&rsquo;ll text you about your calls and
+        introductions. We never text without that agreement, and you can reply STOP at any time. We don&rsquo;t sell
+        mobile numbers, and we don&rsquo;t share them, or your agreement to receive texts, with anyone for their
+        marketing.
+      </p>
+
       <h2>Who we share it with</h2>
       <ul>
         <li><strong>Businesses you&rsquo;re matched with:</strong> candidate details are shared only after a business signs an agreement, and never with companies the candidate asked to be hidden from (as far as we can tell from their company name and email address).</li>
-        <li><strong>Service providers</strong> who run parts of the site for us: hosting (Vercel), database (Supabase), payments (Stripe), email delivery (Resend) and sign-in (Google). They may only use the information to provide their service to us.</li>
+        <li><strong>Service providers</strong> who run parts of the site for us: hosting (Vercel), database (Supabase), payments (Stripe), email delivery (Resend), text messages (Twilio) and sign-in (Google). They may only use the information to provide their service to us.</li>
         <li><strong>When the law requires it</strong>, or to protect our rights and the safety of others.</li>
       </ul>
 

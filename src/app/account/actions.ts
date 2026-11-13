@@ -22,6 +22,12 @@ export async function saveSetup(_prev: SetupState, form: FormData): Promise<Setu
   }
   const { error } = await db().from("owners").update(update).eq("id", owner.id);
   if (error) return { error: "Something went wrong saving. Try again." };
+  // The "Text me updates" box: on or off, as they left it.
+  if (phone) {
+    const { setTextConsent, textConsent } = await import("@/lib/sms");
+    const want = form.get("text_ok") === "yes";
+    if (want !== (await textConsent(phone))) await setTextConsent(phone, want, "owner", "account");
+  }
   await logActivity(`owner:${owner.email}`, "profile_saved", { company });
   redirect(safeNext(String(form.get("next") ?? "")));
 }

@@ -1,5 +1,6 @@
 "use server";
 
+import { setTextConsent } from "@/lib/sms";
 import { fileCallback } from "@/lib/ownerLeads";
 import { allow, SLOW_DOWN } from "@/lib/throttle";
 
@@ -18,6 +19,7 @@ export async function requestCallback(_: CallbackState, form: FormData): Promise
   if (phone.replace(/\D/g, "").length < 10) return { error: "Add the number we should call." };
   if (!(await allow("callback", 5, 60))) return { error: SLOW_DOWN };
 
+  if (form.get("text_ok") === "yes") await setTextConsent(phone, true, "owner", "callback");
   await fileCallback({ role, name, phone, from: "home" });
   return { ok: true, phone };
 }

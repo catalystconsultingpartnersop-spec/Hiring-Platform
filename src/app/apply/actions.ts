@@ -1,5 +1,6 @@
 "use server";
 
+import { setTextConsent } from "@/lib/sms";
 import { cleanHours } from "@/lib/hours";
 import { cleanAvailability } from "@/lib/availability";
 import { hiddenStaffIds } from "@/lib/hiddenStaff";
@@ -86,6 +87,7 @@ export async function submitApplication(_prev: ApplyState, form: FormData): Prom
       .single();
     if (error) throw error;
     candidateId = data.id;
+    if (form.get("text_ok") === "yes") await setTextConsent(phone, true, "candidate", "apply");
   } catch (e) {
     console.error("application could not be saved", e);
   }

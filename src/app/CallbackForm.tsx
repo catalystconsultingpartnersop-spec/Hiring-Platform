@@ -1,5 +1,6 @@
 "use client";
 
+import { TextConsent } from "@/components/TextConsent";
 import { track } from "@vercel/analytics";
 import { useActionState, useEffect, useRef } from "react";
 import { requestCallback, type CallbackState } from "./callback";
@@ -44,6 +45,7 @@ export function CallbackForm() {
           <input className="input" name="phone" type="tel" autoComplete="tel" required />
         </label>
       </div>
+      <TextConsent />
       {state.error && <p className={s.cbErr}>{state.error}</p>}
       <button className={`btn btn-gold ${s.cbBtn}`} disabled={pending}>
         {pending ? "Sending…" : "Call me back"}

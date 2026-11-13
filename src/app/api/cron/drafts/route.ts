@@ -23,6 +23,11 @@ export async function GET(req: NextRequest) {
   await overdueAlerts().catch(() => null);
   const { chaseWaitingCallbacks } = await import("@/lib/ownerLeads");
   await chaseWaitingCallbacks(Date.now()).catch((e) => console.error("waiting call-backs", e));
+  // Texts: what waited overnight, and the one-hour nudge before owner and candidate meet.
+  const { flushQueuedTexts } = await import("@/lib/sms");
+  await flushQueuedTexts().catch((e) => console.error("queued texts", e));
+  const { meetingHourTexts } = await import("@/lib/repMorning");
+  await meetingHourTexts().catch((e) => console.error("meeting hour texts", e));
   const r = await draftFinishedCalls({ withinHours: 6 }).catch(() => ({ drafted: 0 }));
   return NextResponse.json({ ...r, ...reminders, ...stalls });
 }
