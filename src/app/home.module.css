@@ -155,3 +155,23 @@
   .hero .noteDark { text-align: center; }
   .cta { justify-items: stretch; text-align: center; }
 }
+
+/* The lower page: proof first (the people), then why it works for you, then who you'll talk to */
+.nowLede { margin: 14px 0 0; font-size: clamp(17px, 1.7vw, 20px); color: var(--ink-2); max-width: 44ch; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 26px 0 0; }
+.chips span { font-size: 14px; font-weight: 700; color: var(--ink-2); margin-right: 4px; }
+.chips a { text-decoration: none; color: var(--ink); background: #fff; border: 1.5px solid var(--line); border-radius: 999px; padding: 7px 14px; font-weight: 700; font-size: 14.5px; }
+.chips a:hover { border-color: var(--ink); }
+.now .all a { text-decoration: none; }
+.why { background: var(--ink); color: #fff; padding: clamp(72px, 10vw, 128px) 0; }
+.why h2 { font-size: clamp(30px, 4vw, 50px); letter-spacing: -0.035em; line-height: 1.08; margin: 0; max-width: 24ch; color: #aab3c6; }
+.why h2 span { display: block; color: #fff; margin-top: 6px; }
+.boxes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 40px; }
+.boxes > div { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 22px 20px; }
+.boxes b { display: block; font-family: var(--display); font-size: 19px; letter-spacing: -0.015em; line-height: 1.2; color: var(--marigold); }
+.boxes p { margin: 8px 0 0; color: #d3d9e5; font-size: 15.5px; line-height: 1.5; }
+.team { background: #fff; padding: clamp(64px, 8vw, 104px) 0; }
+.team h2 { font-size: clamp(30px, 4vw, 50px); letter-spacing: -0.035em; line-height: 1.06; margin: 0; max-width: 20ch; }
+.teamBody { margin: 18px 0 0; font-size: clamp(17px, 1.7vw, 20px); line-height: 1.6; color: var(--ink-2); max-width: 50ch; }
+@media (max-width: 1100px) { .boxes { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 760px) { .boxes { grid-template-columns: 1fr; gap: 10px; margin-top: 28px; } .boxes > div { padding: 18px; } }

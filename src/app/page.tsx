@@ -30,6 +30,10 @@ export default async function Home() {
     })
     .slice(0, 4);
   const rest = sample.slice(0, 3);
+  // The kinds of positions we have people for right now, most people first.
+  const tally = new Map<string, number>();
+  for (const c of rows) if (c.role_category) tally.set(c.role_category, (tally.get(c.role_category) ?? 0) + 1);
+  const roles = [...tally.entries()].sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0])).map(([r]) => r).slice(0, 10);
 
   return (
     <>
@@ -105,83 +109,21 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className={s.feel}>
-        <div className="wrap">
-          <p className={s.label}>Sound familiar?</p>
-          <h2>Usually, the search starts the day you need someone.</h2>
-          <div className={s.ways}>
-            <div>
-              <div className={s.pile} aria-hidden>
-                {Array.from({ length: 14 }, (_, i) => (
-                  <i key={i} />
-                ))}
-              </div>
-              <b>You put an ad in a publication.</b>
-              <p>Then you wait for résumés.</p>
-            </div>
-            <div>
-              <div className={`${s.pile} ${s.bubbles}`} aria-hidden>
-                {Array.from({ length: 7 }, (_, i) => (
-                  <i key={i} />
-                ))}
-              </div>
-              <b>You posted on your status.</b>
-              <p>Then you wait for names.</p>
-            </div>
-            <div>
-              <div className={`${s.pile} ${s.cardsPile}`} aria-hidden>
-                {Array.from({ length: 6 }, (_, i) => (
-                  <i key={i} />
-                ))}
-              </div>
-              <b>You called a recruiter.</b>
-              <p>&ldquo;We&rsquo;ll open the position and start looking.&rdquo;</p>
-            </div>
-          </div>
-          <p className={s.insight}>
-            Every route starts from zero. <b>So you wait, while the position sits open.</b>
-          </p>
-        </div>
-      </section>
-
-      <section className={s.flip}>
-        <div className={`wrap ${s.flipGrid}`}>
-          <div>
-            <p className={s.labelGold}>What we cracked</p>
-            <h2>
-              <span>Ours is already done.</span>
-            </h2>
-            <p className={s.wink}>Yes, you&rsquo;re hearing right.</p>
-            <p className={s.flipBody}>
-              Long before you call, we&rsquo;ve sat down with each candidate, assessed their natural strengths, and understood the kind of
-              work they&rsquo;ll thrive in.
-            </p>
-            <p className={s.flipBody}>
-              So when you tell us what you need, we&rsquo;re not starting now. They&rsquo;re ready, willing and able.{" "}
-              <b>Half an hour later, you can have a qualified candidate to consider.</b>
-            </p>
-          </div>
-          <div className={s.sift} aria-hidden>
-            <div className={s.many}>
-              {Array.from({ length: 24 }, (_, i) => (
-                <i key={i} />
-              ))}
-            </div>
-            <span className={s.arrow}>→</span>
-            <div className={s.few}>
-              <i />
-              <i />
-              <i />
-              <small>A few people we know</small>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section id="now" className={s.now}>
         <div className="wrap">
           <p className={s.label}>See for yourself</p>
           <h2>Meet a few of them.</h2>
+          <p className={s.nowLede}>Long before you call, we&rsquo;ve sat down with each one. Have a look around, no sign-up needed.</p>
+          {roles.length > 1 && (
+            <div className={s.chips}>
+              <span>We have people for</span>
+              {roles.map((r) => (
+                <Link key={r} href={`/candidates?role=${encodeURIComponent(r)}`}>
+                  {r}
+                </Link>
+              ))}
+            </div>
+          )}
           <div className={s.people}>
             {rest.map((c) => (
               <Link key={c.id} href={`/candidates/${c.id}`} className={s.person}>
@@ -193,7 +135,54 @@ export default async function Home() {
             ))}
           </div>
           <p className={s.all}>
-            <Link href="/candidates">Browse them all</Link>
+            <Link href="/candidates" className="btn btn-gold">
+              Browse them all →
+            </Link>
+          </p>
+        </div>
+      </section>
+
+      <section className={s.why}>
+        <div className="wrap">
+          <p className={s.labelGold}>Built around you</p>
+          <h2>
+            Usually, the search starts the day you need someone. <span>Ours is already done.</span>
+          </h2>
+          <div className={s.boxes}>
+            <div>
+              <b>Talk to us, or browse</b>
+              <p>Tell us the position and we&rsquo;ll call you. Or look through the collection on your own.</p>
+            </div>
+            <div>
+              <b>Your business, your call</b>
+              <p>You know your business best. We bring the people. You decide.</p>
+            </div>
+            <div>
+              <b>Everyone met one-on-one</b>
+              <p>We sat down with each candidate and learned the kind of work they&rsquo;ll thrive in.</p>
+            </div>
+            <div>
+              <b>Half an hour</b>
+              <p>Tell us what you need, and half an hour later you can have a qualified candidate to consider.</p>
+            </div>
+            <div>
+              <b>One flat fee</b>
+              <p>$5,000, paid the day you hire. Never a percentage of salary.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className={s.team}>
+        <div className="wrap">
+          <p className={s.label}>Who you&rsquo;ll talk to</p>
+          <h2>A team that knows every candidate.</h2>
+          <p className={s.teamBody}>
+            When you ask for a call, you&rsquo;ll hear from Shloimy or Heshy. Our team has sat down with every person in the collection, so
+            you&rsquo;re talking to people who know who they&rsquo;re recommending.
+          </p>
+          <p className={s.more}>
+            <Link href="/meet">Meet the team →</Link>
           </p>
         </div>
       </section>
