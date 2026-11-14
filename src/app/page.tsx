@@ -48,9 +48,9 @@ export default async function Home() {
               Talk to our team
             </a>
             <p className={s.links}>
-              <a href="#now" className={s.second}>
-                See who&rsquo;s here <span aria-hidden>↓</span>
-              </a>
+              <Link href="/candidates" className={s.second}>
+                Or browse candidates yourself <span aria-hidden>→</span>
+              </Link>
             </p>
           </div>
           <div id="callback" className={s.cb}>
