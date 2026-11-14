@@ -1,3 +1,4 @@
+import { HelpPill } from "./HelpPill";
 import Link from "next/link";
 import { currentOwner } from "@/lib/session";
 import { OwnerMatchNote } from "@/components/OwnerMatchNote";
@@ -68,6 +69,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
 
   return (
     <>
+      <HelpPill />
       <div className={styles.searchBand}>
         <div className="wrap">
           <form className={styles.search} method="get" action="/candidates" role="search">
