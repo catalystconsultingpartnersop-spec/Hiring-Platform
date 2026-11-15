@@ -17,6 +17,7 @@ export default async function ShareKit() {
   // Each person's link carries their name, so we know who brought each owner in.
   const ref = admin ? "" : refSlug(me.name.split(" ")[0] || me.email.split("@")[0]);
   const owner = await shelf(ownerKits(ref));
+  const cand = await shelf(candidateKits(ref));
   const { data: owners } = ref ? await db().from("owners").select("id").eq("referred_by", ref) : { data: null };
   const { data: candidates } = !admin && me.id ? await db().from("candidates").select("id").eq("added_by", me.id) : { data: null };
   return (
@@ -35,10 +36,15 @@ export default async function ShareKit() {
         For people looking for work
       </h2>
       <p className="small muted" style={{ margin: "0 0 16px" }}>
-        Send it to your network. Candidates who sign up through your link are added as yours
+        Pick a picture and send it to your network. Candidates who sign up through your link are added as yours
         {candidates?.length ? ` (${candidates.length} so far)` : ""}.
       </p>
-      <KitPicker kits={(await shelf(candidateKits(ref))).shown} />
+      <KitPicker
+        kits={cand.shown}
+        removed={me.manager ? cand.removed : []}
+        setHidden={me.manager ? setPosterHidden : undefined}
+        setLabel={me.manager ? setPosterLabel : undefined}
+      />
 
       <h2 id="owners" style={{ fontSize: 24, margin: "48px 0 6px", scrollMarginTop: 16 }}>
         For business owners

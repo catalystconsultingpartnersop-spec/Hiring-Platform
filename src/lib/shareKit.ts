@@ -65,8 +65,24 @@ export function ownerKits(ref?: string | null): Kit[] {
   ];
 }
 
+// One caption per candidate poster, so the message says what the picture says.
+const forCandidates = (ref: string | null | undefined, lines: string[], lead = "Start here") => `${lines.join("\n\n")}\n\n${lead}: ${candidateLink(ref)}`;
+
 export function candidateKits(ref?: string | null): Kit[] {
-  return [{ id: "candidate", name: "Looking for work?", about: "For someone looking for their next move.", image: "/share/candidate-card.png", message: candidateMessage(ref), link: candidateLink(ref) }];
+  const link = candidateLink(ref);
+  const k = (id: string, name: string, about: string, lines: string[], tag?: string, lead?: string): Kit => ({ id: `cand-${id}`, name, tag, about, image: `/share/cand-${id}.png`, message: forCandidates(ref, lines, lead), link });
+  return [
+    k("talent", "Everyone has a talent", "For someone who hasn't found their fit yet.", ["Looking for work? Everyone has a talent. Let's find yours.", "We sit down with you and help you discover what you're naturally great at, and the kind of work it belongs in.", "Then we put you in front of business owners looking for exactly that."], "New"),
+    k("conversation", "A real conversation", "It starts with sitting down with one of us.", ["Looking for work? It starts with a real conversation.", "Sit down with one of us. We get to know you, what you enjoy, and what you're naturally great at.", "Then we introduce you to business owners who need exactly that."], "New"),
+    k("privately", "Look around, privately", "For someone employed and thinking about a change.", ["Thinking about a change? Look around, privately.", "Your name stays private. Employers see what you're great at, not who you are, until they sign an agreement to meet you.", "You're in control. Hide your profile any time, with one click."], "New"),
+    k("not-sure", "Not sure what job you want?", "For someone who doesn't know what they're looking for.", ["Not sure what job you want? That's what we're for.", "Many people don't know, and that's what the conversation is for. We'll help you figure out where you'd shine.", "Then we introduce you to business owners who need exactly that."], "New"),
+    k("employers-ask", "Employers ask to meet you", "Turns the search around.", ["Looking for work? What if employers asked to meet you?", "Business owners browse our candidates. When one wants to meet you, they reach out directly.", "It starts with one conversation with us."], "New"),
+    k("more-than-resume", "More than a résumé", "For someone who feels like a piece of paper.", ["Looking for work? You're more than a résumé.", "Every person who joins sits down with one of us. You're a person, not a keyword match.", "We describe how you work, in plain words, to business owners who are hiring."], "New"),
+    k("how-we-help", "Here's how we help", "The four steps, as a short list.", ["Looking for work? Here's how we help.", "Tell us about you. Sit down with us. We write your profile, and your name stays private. Employers ask to meet you."], "New"),
+    k("short", "Short and clear", "The whole offer in a few words.", ["Looking for work?", "A real conversation. Your strengths. A private profile. Real employers.", "It doesn't cost you a thing. Our job is to help you find work that fits you."], "New"),
+    k("pass-it-on", "Pass this on", "To send to someone who knows someone.", ["Know someone looking for work? Pass this on.", "We sit down with them, find what they're naturally great at, and introduce them to business owners who need exactly that.", "Private. And it doesn't cost them a thing."], "New", "Send them here"),
+    { id: "candidate", name: "No one is listening?", about: "The first candidate poster.", image: "/share/candidate-card.png", message: candidateMessage(ref), link },
+  ];
 }
 
 // The candidate side: a warm note from a rep to their network.
