@@ -1,25 +1,26 @@
 .bar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 6px 16px;
-  padding: 14px 0;
+  justify-content: space-between;
+  gap: 8px 20px;
   border-bottom: 1px solid var(--line);
   font-weight: 600;
-  font-size: 14.5px;
+  font-size: 14px;
 }
+.links { display: flex; align-items: stretch; gap: 0 15px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.links a { display: flex; align-items: center; white-space: nowrap; padding: 17px 0 14px; border-bottom: 3px solid transparent; }
+.links a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--marigold); }
+.side { display: flex; align-items: center; gap: 14px; flex: none; }
 
 .bar a { text-decoration: none; color: var(--ink-2); }
 .bar a:hover { color: var(--ink); }
 
-.bar a.me { margin-left: auto; font-weight: 400; color: var(--ink-3); font-size: 14px; }
-.bar a.me:hover { color: var(--ink); text-decoration: underline; }
-.out { margin-left: 0; }
 .bar a.addLink {
   background: var(--marigold);
   color: var(--ink);
   padding: 7px 14px;
   border-radius: 999px;
+  white-space: nowrap;
 }
 .bar a.addLink:hover { background: #ffc21a; color: var(--ink); }
 .out button {
@@ -28,7 +29,19 @@
   font: inherit;
   color: var(--ink-2);
   cursor: pointer;
-  padding: 0;
+  padding: 8px 10px;
+  width: 100%;
+  text-align: left;
+  border-radius: 8px;
+}
+.out button:hover { background: var(--wash); color: var(--ink); }
+
+@media (max-width: 1240px) {
+  .bar { font-size: 14.5px; flex-direction: column-reverse; align-items: stretch; gap: 0; }
+  .side { justify-content: flex-end; padding: 10px 0 2px; }
+  .links { overflow-x: auto; gap: 0 20px; scrollbar-width: none; margin: 0 calc(var(--gutter) * -1); padding: 0 var(--gutter); }
+  .links::-webkit-scrollbar { display: none; }
+  .links a { padding: 12px 0 10px; }
 }
 
 .stats {
@@ -127,7 +140,7 @@ a.stat:hover { outline: 1.5px solid var(--ink); }
 .more > div {
   position: absolute;
   top: calc(100% + 8px);
-  left: 0;
+  right: 0;
   z-index: 20;
   min-width: 180px;
   display: grid;

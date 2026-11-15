@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MoreMenu } from "./MoreMenu";
 import { Suspense } from "react";
 import { NavProgress } from "./NavProgress";
+import { NavLink } from "./NavLink";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { isMine, listThreads } from "@/lib/ownerMessages";
@@ -32,59 +33,61 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <NavProgress />
       </Suspense>
       <nav className={styles.bar} aria-label="Admin">
-        {!admin && me.manager && <Link href="/admin/reps">Team</Link>}
-        <Link href={!admin && me.manager ? "/admin?mine=1" : "/admin"}>{admin ? "Dashboard" : "My dashboard"}</Link>
-        <Link href="/admin/candidates">🔎 Browse candidates</Link>
-        <Link href="/admin/room">
-          Team Room{roomNew ? <span className={styles.badge}>{roomNew}</span> : null}
-        </Link>
-        {admin && <Link href="/admin/agreements">Introductions</Link>}
-        {admin && <Link href="/admin/clients">Clients</Link>}
-        {admin && <Link href="/admin/payments">Finance</Link>}
-        {me.manager && <Link href="/admin/analytics">Analytics</Link>}
-        <Link href="/admin/requests">
-          Requests{openRequests ? <span className={styles.badge}>{openRequests}</span> : null}
-        </Link>
-        {admin && <Link href="/admin/reps">Reps</Link>}
-        <Link href="/admin/calls">{me.manager ? "Calls" : "My calls"}</Link>
-        {me.id && <Link href="/admin/booking-link">📅 My booking link</Link>}
-        <Link href="/admin/messages">
-          💬 Messages{waiting ? <span className={styles.badge}>{waiting}</span> : null}
-        </Link>
-        {admin && <Link href="/admin/team">Team</Link>}
-        <Link href="/admin/candidates/new" className={styles.addLink}>
-          + Add candidate
-        </Link>
-        {admin ? (
+        <Suspense fallback={null}>
+          <div className={styles.links}>
+            {!admin && me.manager && <NavLink href="/admin/reps">Team</NavLink>}
+            <NavLink href={!admin && me.manager ? "/admin?mine=1" : "/admin"}>{admin ? "Dashboard" : "My dashboard"}</NavLink>
+            <NavLink href="/admin/candidates">Browse candidates</NavLink>
+            {admin && <NavLink href="/admin/agreements">Introductions</NavLink>}
+            {admin && <NavLink href="/admin/clients">Clients</NavLink>}
+            <NavLink href="/admin/messages">
+              Messages{waiting ? <span className={styles.badge}>{waiting}</span> : null}
+            </NavLink>
+            <NavLink href="/admin/requests">
+              Requests{openRequests ? <span className={styles.badge}>{openRequests}</span> : null}
+            </NavLink>
+            <NavLink href="/admin/room">
+              Team Room{roomNew ? <span className={styles.badge}>{roomNew}</span> : null}
+            </NavLink>
+            {admin && <NavLink href="/admin/payments">Finance</NavLink>}
+            {me.manager && <NavLink href="/admin/analytics">Analytics</NavLink>}
+            {!admin && <NavLink href="/admin/calls">{me.manager ? "Calls" : "My calls"}</NavLink>}
+          </div>
+        </Suspense>
+        <div className={styles.side}>
           <MoreMenu className={styles.more}>
             <summary>More</summary>
             <div>
+              {admin && <Link href="/admin/calls">Calls</Link>}
+              {admin && <Link href="/admin/reps">Reps</Link>}
+              {admin && <Link href="/admin/team">Team</Link>}
               <Link href="/admin/share">Share kit</Link>
+              {me.id && <Link href="/admin/booking-link">My booking link</Link>}
               <Link href="/admin/hours">My hours</Link>
-              <Link href="/admin/invite">Invite a rep</Link>
+              {admin && <Link href="/admin/invite">Invite a rep</Link>}
               <Link href="/admin/assessments">Strengths Assessment</Link>
-              <Link href="/admin/settings">Fee settings</Link>
+              {admin && <Link href="/admin/settings">Fee settings</Link>}
               <Link href="/admin/matches">Matches</Link>
-              <Link href="/admin/activity">Activity</Link>
+              {admin && <Link href="/admin/activity">Activity</Link>}
               <Link href="/admin/guide">Rep guide</Link>
             </div>
           </MoreMenu>
-        ) : (
-          <>
-            <Link href="/admin/share">Share kit</Link>
-            <Link href="/admin/assessments">Strengths Assessment</Link>
-            <Link href="/admin/hours">My hours</Link>
-            <Link href="/admin/guide">Rep guide</Link>
-            <Link href="/admin/matches">Matches</Link>
-          </>
-        )}
-        <Link href="/admin/password" className={styles.me} title="Change your password">
-          {me.name}
-          {admin ? "" : " (rep)"}
-        </Link>
-        <form action={adminLogout} className={styles.out}>
-          <button type="submit">Sign out</button>
-        </form>
+          <Link href="/admin/candidates/new" className={styles.addLink}>
+            + Add candidate
+          </Link>
+          <MoreMenu className={`${styles.more} ${styles.who}`}>
+            <summary>
+              {me.name.split(" ")[0]}
+              {admin ? "" : " (rep)"}
+            </summary>
+            <div>
+              <Link href="/admin/password">Change password</Link>
+              <form action={adminLogout} className={styles.out}>
+                <button type="submit">Sign out</button>
+              </form>
+            </div>
+          </MoreMenu>
+        </div>
       </nav>
       {children}
     </div>

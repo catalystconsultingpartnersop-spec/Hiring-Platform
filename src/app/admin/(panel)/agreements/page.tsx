@@ -7,6 +7,8 @@ import { requireAdmin } from "@/lib/session";
 import { nowMs } from "@/lib/time";
 import { chargeAgreement, markHired, setUnlockFee } from "../../actions";
 import { RefundButton } from "../RefundButton";
+import { InProgress } from "./InProgress";
+import intro from "./intro.module.css";
 import styles from "../admin.module.css";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +25,7 @@ const DAY = 864e5;
 
 export default async function AgreementsPage({ searchParams }: PageProps<"/admin/agreements">) {
   const sp = await searchParams;
-  await requireAdmin();
+  const me = await requireAdmin();
   const NOW = nowMs();
   const { rows: everything, error, people } = await loadAgreements();
   const period = typeof sp.period === "string" && PERIODS.some(([p]) => p === sp.period) ? sp.period : "all";
@@ -91,7 +93,7 @@ export default async function AgreementsPage({ searchParams }: PageProps<"/admin
     <>
       <div className="page-head" style={{ paddingBottom: 4 }}>
         <h1>Introductions</h1>
-        <p>Every client who signed to meet a candidate, and where each one stands.</p>
+        <p>What&rsquo;s open right now, where each one is up to, and what to do next.</p>
       </div>
       {error && (
         <p className="notice notice-bad" role="alert">
@@ -119,6 +121,15 @@ export default async function AgreementsPage({ searchParams }: PageProps<"/admin
         </p>
       )}
 
+      <InProgress rows={everything} people={people} now={NOW} me={me.name || me.email} />
+      {expiringSoon.length > 0 && (
+        <p className="small" style={{ marginTop: 10 }}>
+          {expiringSoon.length} agreement{expiringSoon.length > 1 ? "s" : ""} reach the 12-month mark within 30 days.
+        </p>
+      )}
+
+      <details className={intro.numbers}>
+        <summary>Numbers</summary>
       <div className={styles.tabs}>
         {PERIODS.map(([p, label]) => (
           <Link key={p} href={qs(p, stage)} aria-current={p === period ? "page" : undefined}>
@@ -150,7 +161,7 @@ export default async function AgreementsPage({ searchParams }: PageProps<"/admin
         </Link>
       </div>
 
-      <div className={styles.split}>
+      <div>
         <div className="panel">
           <h2 className={styles.h3}>Last 6 months</h2>
           <div className={styles.bars}>
@@ -177,29 +188,6 @@ export default async function AgreementsPage({ searchParams }: PageProps<"/admin
               Hired (by month paid)
             </span>
           </div>
-        </div>
-        <div className="panel">
-          <h2 className={styles.h3}>Worth a follow-up</h2>
-          <ul className={styles.attention}>
-            {considering.slice(0, 4).map((a) => (
-              <li key={a.id}>
-                <span>
-                  <strong>{a.owners.company}</strong> has been considering{" "}
-                  <Link prefetch={false} href={`/admin/candidates/${a.candidate_id}`}>{a.candidates.full_name}</Link> for{" "}
-                  {Math.max(0, Math.round((NOW - new Date(a.signed_at).getTime()) / DAY))} days
-                </span>
-                <a href={`mailto:${a.owners.email}`} className="small">
-                  Email
-                </a>
-              </li>
-            ))}
-            {considering.length === 0 && <li className="small muted">No one is mid-decision right now.</li>}
-          </ul>
-          {expiringSoon.length > 0 && (
-            <p className="small" style={{ marginTop: 10 }}>
-              {expiringSoon.length} agreement{expiringSoon.length > 1 ? "s" : ""} reach the 12-month mark within 30 days.
-            </p>
-          )}
         </div>
       </div>
 
@@ -247,6 +235,8 @@ export default async function AgreementsPage({ searchParams }: PageProps<"/admin
           )}
         </div>
       </div>
+
+      </details>
 
       <h2 className={styles.h2}>All agreements</h2>
       <div className={styles.tabs}>

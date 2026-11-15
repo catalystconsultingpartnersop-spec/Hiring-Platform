@@ -69,5 +69,8 @@ export const textTeam = {
     toStaff(staffId, `Call back: ${name}, hiring for ${role}. ${phone}`, "lead_callback", `lead_callback:${leadKey}:${staffId}`),
   ownerBookedVideo: (staffId: string, name: string, role: string, when: string, token: string) =>
     toStaff(staffId, `${name} booked a call with us: ${when}. Hiring for ${role}.`, "lead_video", `lead_video:${token}:${staffId}`),
+  // A manager asked the rep to check on one introduction.
+  nudge: (staffId: string, from: string, cand: string, company: string, key: string) =>
+    toStaff(staffId, `${from} asked: can you check in on ${cand} and ${company}? ${teamUrl()}/admin`, "rep_nudge", `rep_nudge:${key}`),
   morning: (staffId: string, line: string, day: string) => toStaff(staffId, `${line} ${teamUrl()}/admin`, "rep_morning", `rep_morning:${staffId}:${day}`),
 };
