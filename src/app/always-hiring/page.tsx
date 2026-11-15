@@ -29,11 +29,14 @@ export default async function AlwaysHiringPage() {
           &ldquo;I wish I had someone who could just handle this.&rdquo; <span>How many times did you say it this week?</span>
         </h1>
 
-        <p>The invoices that sat another week. The customer nobody called back. The schedule that only lives in your head.</p>
-        <p>The thing you did yourself at ten at night, because explaining it would have taken longer.</p>
+        <p>Your best customer called three times this week. Nobody called him back.</p>
+        <p>The crew stood around for an hour this morning, because nobody told them where to go.</p>
+        <p>Two of your people aren&rsquo;t speaking to each other, and you&rsquo;re the one carrying the messages.</p>
+        <p>You stepped out of a wedding to deal with a delivery.</p>
+        <p>And if you were out for a week, the whole thing would stop.</p>
         <p>
-          Every day in a business has one of those moments. You think, <em>I wish I had someone.</em> Then the phone
-          rings, and the thought is gone.
+          None of that is a job for software. It&rsquo;s a job for a person. And every time, you think the same thing:{" "}
+          <em>I wish I had someone.</em> Then the phone rings, and the thought is gone.
         </p>
         <p>That thought is a hiring thought. You have one almost every day.</p>
 
@@ -42,8 +45,8 @@ export default async function AlwaysHiringPage() {
         <p>Some owners are just more active about it than others. Most of us wait until it hurts, and then we rush.</p>
         <p>So look now. Open the collection for a few minutes, here and there, the way you&rsquo;d check anything else on your phone.</p>
         <p>
-          Read what each person is great at. The one who loves the details. The one who keeps a whole office moving.
-          The one who picks up the phone and follows through.
+          Read what each person is great at. The one who can calm an upset customer. The one a whole crew listens to.
+          The one who notices what you missed, and deals with it before you ever hear about it.
         </p>
         <p>There&rsquo;s a quiet relief in it. The people who could help you are out there, and now you can see them.</p>
         <p className={styles.beat}>And then one day it clicks.</p>
