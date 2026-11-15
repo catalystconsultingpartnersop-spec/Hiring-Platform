@@ -75,7 +75,9 @@ export async function bookMeeting(startIso: string, r: MeetRequest, ownerTz: str
   }
 
   const token = randomBytes(12).toString("base64url");
-  await logActivity(`public:${r.email}`, "owner_meeting", { ...r, starts_at: slot.start, ends_at: ends, staff_id: host.id, link, space, token, owner_tz: ownerTz });
+  const { sentBy } = await import("./shareKit");
+  const ref = await sentBy();
+  await logActivity(`public:${r.email}`, "owner_meeting", { ...r, ref: ref ?? undefined, starts_at: slot.start, ends_at: ends, staff_id: host.id, link, space, token, owner_tz: ownerTz });
 
   // Their opening goes on the private positions list, for matching.
   await db()
@@ -86,7 +88,8 @@ export async function bookMeeting(startIso: string, r: MeetRequest, ownerTz: str
       () => null,
     );
 
-  const names = team.map((l) => l.first).join(" and ");
+  // Owners are told one name: the person hosting their call.
+  const names = host.first;
   const whenOwner = formatInZone(slot.start, ownerTz);
   const ics = callIcs({ uid: `meet-${token}@thecandidatecollection.com`, start: slot.start, end: ends, title: `Call with ${names}, The Candidate Collection`, description: link ? `Join: ${link}` : "We'll call you.", location: link || null });
   await sendEmail({
@@ -122,6 +125,7 @@ export async function bookMeeting(startIso: string, r: MeetRequest, ownerTz: str
           ["When", whenUs + (l.id === host.id ? " (you're hosting)" : "")],
           ["Length", `${minutes} minutes`],
           ["Hiring for", r.role ? e(r.role) : null],
+          ["Came from", ref ? `${e(ref)}'s link` : null],
           ["Where", r.town ? e(r.town) : null],
           ["Needs someone", r.when ? e(r.when) : null],
           ["Notes", r.notes ? e(r.notes) : null],

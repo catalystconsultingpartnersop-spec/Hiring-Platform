@@ -30,7 +30,8 @@ export async function askForCall(r: MeetRequest) {
   const c = await clean({ ...r, phoneCall: false });
   if (typeof c === "string") return { error: c };
   if (!(await allow("meet-us", 6, 60))) return { error: SLOW_DOWN };
-  await logActivity(`public:${c.email}`, "owner_meeting_request", c);
+  const { sentBy } = await import("@/lib/shareKit");
+  await logActivity(`public:${c.email}`, "owner_meeting_request", { ...c, ref: (await sentBy()) ?? undefined });
   await emailAdmin(
     `Call request: ${c.business || c.name}`,
     `<p><strong>${e(c.name)}</strong>${c.business ? `, ${e(c.business)}` : ""} wants to talk. There were no open times, so call them to set one.</p><p>Hiring for: ${e(c.role)}<br>Where: ${e(c.town || "-")}<br>Needs someone: ${e(c.when || "-")}<br>Phone: ${e(c.phone || "-")}<br>Email: ${e(c.email)}</p>${c.notes ? `<p>${e(c.notes)}</p>` : ""}`,

@@ -49,6 +49,7 @@ export async function OwnersWaiting({ full = false }: { full?: boolean }) {
               </b>
               <span>
                 Hiring for: {l.role || "not said"} · {l.kind === "callback" ? "asked for a call back" : "asked us to call and set a time"}
+                {l.ref ? ` · came from ${l.ref}'s link` : ""}
               </span>
               <span className={s.wait}>Waiting {ago(waited)}</span>
             </div>
@@ -95,7 +96,10 @@ export async function OwnersWaiting({ full = false }: { full?: boolean }) {
                   {m.name}
                   {m.business ? `, ${m.business}` : ""}
                 </b>
-                <span>Hiring for: {m.role || "not said"}</span>
+                <span>
+                  Hiring for: {m.role || "not said"}
+                  {m.ref ? ` · came from ${m.ref}'s link` : ""}
+                </span>
                 <span className={s.time}>
                   {when(m.starts_at)} · {m.minutes} min{m.phoneCall ? " · wants a phone call" : ""}
                 </span>

@@ -10,6 +10,7 @@ import { isOwnerEmail } from "./session";
 // One list for Heshy and Shloimy, so nobody is missed. Kept in activity_log.
 
 export type Lead = {
+  ref?: string | null; // whose share link brought them
   id: string;
   kind: "callback" | "set_time";
   at: string;
@@ -20,7 +21,7 @@ export type Lead = {
   email: string | null;
   done: { at: string; by: string; note: string | null; declined: boolean } | null;
 };
-export type Booked = { id: string; token: string | null; owner_tz: string | null; staff_id: string | null; declined?: { at: string; by: string } | null; starts_at: string; minutes: number; name: string; business: string | null; role: string; phone: string | null; email: string | null; link: string | null; phoneCall: boolean };
+export type Booked = { ref?: string | null; id: string; token: string | null; owner_tz: string | null; staff_id: string | null; declined?: { at: string; by: string } | null; starts_at: string; minutes: number; name: string; business: string | null; role: string; phone: string | null; email: string | null; link: string | null; phoneCall: boolean };
 
 const DAY = 864e5;
 
@@ -42,6 +43,7 @@ export async function ownerLeads(nowMs: number): Promise<{ waiting: Lead[]; call
       role: r.details.role ?? "",
       phone: r.details.phone || null,
       email: r.details.email || null,
+      ref: r.details.ref || null,
       done: done.get(String(r.id)) ?? null,
     }),
   );
@@ -50,7 +52,7 @@ export async function ownerLeads(nowMs: number): Promise<{ waiting: Lead[]; call
       const d = m.details as Record<string, string | undefined>;
       const mins = Math.round((Date.parse(d.ends_at ?? "") - Date.parse(d.starts_at ?? "")) / 60e3);
       const dec = m.details.cancelled ? { at: d.declined_at ?? "", by: d.declined_by ?? "" } : null;
-      return { id: String(m.id), token: d.token || null, owner_tz: d.owner_tz || null, staff_id: d.staff_id || null, declined: dec, starts_at: d.starts_at ?? "", minutes: mins || 20, name: d.name ?? "", business: d.business || null, role: d.role ?? "", phone: d.phone || null, email: d.email || null, link: d.link || null, phoneCall: !!m.details.phoneCall };
+      return { ref: d.ref || null, id: String(m.id), token: d.token || null, owner_tz: d.owner_tz || null, staff_id: d.staff_id || null, declined: dec, starts_at: d.starts_at ?? "", minutes: mins || 20, name: d.name ?? "", business: d.business || null, role: d.role ?? "", phone: d.phone || null, email: d.email || null, link: d.link || null, phoneCall: !!m.details.phoneCall };
     })
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   const booked = all.filter((m) => !m.declined);
@@ -145,7 +147,10 @@ export async function declineMeeting(meetingId: string, message: string, by: { n
 // An owner asks for a call back: from the front page form, or from Meet the team
 // when no time suits them. Lands on the waiting list and goes to Shloimy.
 export async function fileCallback(o: { role: string; name: string; phone: string; email?: string; business?: string; from: "home" | "meet" }) {
-  await logActivity(`public:${o.phone}`, "owner_callback_request", { role: o.role, name: o.name, phone: o.phone, email: o.email || undefined, business: o.business || undefined, from: o.from });
+  // Whose share link brought them here, so the right person gets the credit.
+  const { sentBy } = await import("./shareKit");
+  const ref = await sentBy();
+  await logActivity(`public:${o.phone}`, "owner_callback_request", { role: o.role, name: o.name, phone: o.phone, email: o.email || undefined, business: o.business || undefined, from: o.from, ref: ref ?? undefined });
   await db()
     .from("positions")
     .insert({ title: o.role, company: o.business || null, source: "callback", contact_name: o.name, contact_email: o.email || null, needs: `Call back: ${o.phone}`, added_by: "callback" })
@@ -169,6 +174,7 @@ export async function fileCallback(o: { role: string; name: string; phone: strin
           ["Business", o.business ? e(o.business) : null],
           ["Phone", e(o.phone)],
           ["Email", o.email ? e(o.email) : null],
+          ["Came from", ref ? `${e(ref)}'s link` : null],
         ]) +
         kit.button(`${teamUrl()}/admin/candidates?q=${encodeURIComponent(o.role)}`, "Search the collection for this") +
         kit.button(`${teamUrl()}/admin/waiting`, "Mark them as called") +
