@@ -63,7 +63,7 @@ export function ownerKits(ref?: string | null): Kit[] {
       tag: "New",
       about: "For owners who aren't hiring today but like to look. Opens the page that explains why.",
       image: "/share/owner-browse-anyway.png",
-      message: `You're not moving. You look at houses anyway.\n\nNot hiring? Browse candidates the same way.\n\nPre-vetted candidates. Every one sat down with our team.\n\nTake a look: ${siteUrl()}/just-looking${ref ? `?r=${refSlug(ref)}` : ""}`,
+      message: `\"I wish I had someone who could just handle this.\"\n\nNot hiring today? See who's out there anyway.\n\nPre-vetted candidates. Every one sat down with our team.\n\nTake a look: ${siteUrl()}/just-looking${ref ? `?r=${refSlug(ref)}` : ""}`,
       link: `${siteUrl()}/just-looking${ref ? `?r=${refSlug(ref)}` : ""}`,
     },
     { id: "half-hour", name: "Half an hour", tag: "Shloimy recommends", about: "The promise: a candidate to consider in half an hour.", image: "/share/owner-teaser.png", message: ownerTeaser(ref), link },
