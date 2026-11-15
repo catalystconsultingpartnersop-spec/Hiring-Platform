@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AgreementRow, latest, repName, StaffLite } from "@/lib/adminData";
+import { AgreementRow, latest, repName, StaffLite, stageOf } from "@/lib/adminData";
 import { nextStep, NUDGE_LABEL, nudgeText, type NudgeKind } from "@/lib/clientFollowUp";
 import { db } from "@/lib/db";
 import { BIG_STEPS, bigStepIndex, loadPath, pathState, STAGE_TEAM_LABEL, type Stage } from "@/lib/path";
@@ -21,7 +21,8 @@ const short = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month
 // Every introduction that's still open: where it's up to, who we're waiting on,
 // the suggested next step, and one-tap ways to move it along.
 export async function InProgress({ rows, people, now, me }: { rows: AgreementRow[]; people: Map<string, StaffLite>; now: number; me: string }) {
-  const signed = rows.filter((a) => a.confirmed_at);
+  // Refunded ones are closed, even though no one "passed".
+  const signed = rows.filter((a) => a.confirmed_at && stageOf(a) !== "refunded");
   const paths = await loadPath(signed.map((a) => a.id));
   const open = signed
     .map((a) => ({ a, p: pathState(a, paths, { hireStatus: latest(a.hires)?.status, candidateStatus: a.candidates.status, nowMs: now }) }))

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AgreementRow, latest } from "@/lib/adminData";
+import { AgreementRow, latest, stageOf } from "@/lib/adminData";
 import { loadPath, pathState, STAGE_TEAM_LABEL } from "@/lib/path";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
 import styles from "./admin.module.css";
@@ -7,7 +7,7 @@ import styles from "./admin.module.css";
 // Every live introduction (client + candidate) and where it stands, so the
 // rep knows who to nudge. Closed ones (hired, passed) drop off.
 export async function Introductions({ rows, now, title = "Introductions in progress" }: { rows: AgreementRow[]; now: number; title?: string }) {
-  const signed = rows.filter((a) => a.confirmed_at);
+  const signed = rows.filter((a) => a.confirmed_at && stageOf(a) !== "refunded");
   const paths = await loadPath(signed.map((a) => a.id));
   const live = signed
     .map((a) => ({
