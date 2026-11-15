@@ -29,7 +29,7 @@ export default async function ShareKit() {
       </div>
 
       <h2 id="candidates" style={{ fontSize: 24, margin: "16px 0 6px", scrollMarginTop: 16 }}>
-        For people looking for work
+        Posters to attract candidates
       </h2>
       <p className="small muted" style={{ margin: "0 0 16px" }}>
         Pick a picture and send it to your network. Candidates who sign up through your link are added as yours
@@ -44,7 +44,7 @@ export default async function ShareKit() {
       />
 
       <h2 id="owners" style={{ fontSize: 24, margin: "48px 0 6px", scrollMarginTop: 16 }}>
-        For business owners
+        Posters to attract business owners
       </h2>
       <p className="small muted" style={{ margin: "0 0 16px" }}>
         Know someone who owns a business? Pick a picture and send it
