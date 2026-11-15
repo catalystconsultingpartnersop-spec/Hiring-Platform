@@ -1,5 +1,6 @@
 import { WorksBest } from "@/components/CandidateCard";
 import { CallbackForm } from "./CallbackForm";
+import { TalkButton } from "./TalkButton";
 import { keepCandidatesOut } from "@/lib/candidateMode";
 import { allListed } from "@/lib/catalog";
 import Link from "next/link";
@@ -48,13 +49,13 @@ export default async function Home() {
             <p className={s.lede}>
               Tell us what you need. <b>Half an hour later, you can have a candidate to consider.</b>
             </p>
-            <a href="#callback" className={`btn btn-gold ${s.ctaBtn} ${s.onlyPhone}`}>
-              Talk to our team
-            </a>
-            <p className={`${s.orLine} ${s.onlyPhone}`}>or</p>
-            <Link href="/candidates" className={`btn ${s.ctaBtn} ${s.browseBtn}`}>
-              Browse candidates yourself <span aria-hidden>→</span>
-            </Link>
+            <div className={s.choice}>
+              <TalkButton className={`btn btn-gold ${s.ctaBtn}`} />
+              <span className={s.orLine}>or</span>
+              <Link href="/candidates" className={`btn ${s.ctaBtn} ${s.browseBtn}`}>
+                Browse candidates yourself <span aria-hidden>→</span>
+              </Link>
+            </div>
           </div>
           <div id="callback" className={s.cb}>
             <h2>Tell us what you need.</h2>
