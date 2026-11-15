@@ -24,9 +24,9 @@ export function ownerMessage(ref?: string | null) {
   return `If hiring has ever felt like more work than it should be, this is for you.\n\nSee how it works: ${shareLink(ref, "home")}`;
 }
 
-// The teaser: the new front-page message, one link, meant to make an owner curious.
+// The teaser: the question, the half-hour promise, what you get. One link.
 export function ownerTeaser(ref?: string | null) {
-  return `Unimpressed with your hiring options? We built a revolutionary way to hire.\n\nTell us the position you're hiring for. Half an hour later, you can have a qualified candidate to consider.\n\nSee how: ${shareLink(ref, "home")}`;
+  return `Unimpressed with your hiring options?\n\nTell us the position you're hiring for. Half an hour later, you can have a qualified candidate to consider.\n\nPre-vetted candidates who fit your position and your needs.\n\nSee how: ${shareLink(ref, "home")}`;
 }
 
 // The candidate side: a warm note from a rep to their network.
