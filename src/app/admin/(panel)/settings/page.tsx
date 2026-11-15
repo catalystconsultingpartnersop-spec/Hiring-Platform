@@ -1,3 +1,5 @@
+import { candidatesSeeBusiness } from "@/lib/candidateMode";
+import { CandidateSide } from "./CandidateSide";
 import { requireAdmin } from "@/lib/session";
 import { getTiers } from "@/lib/catalog";
 import { callsAccount, callsRedirectUri, googleCallsConfigured } from "@/lib/googleCalls";
@@ -61,6 +63,12 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
           </p>
         )}
       </section>
+      <details style={{ marginTop: 28 }}>
+        <summary className="small muted" style={{ cursor: "pointer" }}>
+          Rarely needed: what candidates can see
+        </summary>
+        <CandidateSide on={await candidatesSeeBusiness()} />
+      </details>
     </div>
   );
 }
