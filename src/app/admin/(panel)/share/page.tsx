@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { KitView } from "@/components/ShareTools";
+import { KitPicker } from "@/components/ShareTools";
 import { db } from "@/lib/db";
 import { siteUrl } from "@/lib/format";
 import { requireStaff } from "@/lib/session";
-import { candidateLink, candidateMessage, ownerMessage, ownerTeaser, refSlug, shareLink } from "@/lib/shareKit";
+import { candidateKits, ownerKits, refSlug } from "@/lib/shareKit";
 import { NetworkerLink } from "./NetworkerLink";
 import { CandidateSide } from "./CandidateSide";
 import { candidatesSeeBusiness } from "@/lib/candidateMode";
@@ -15,7 +15,6 @@ export default async function ShareKit() {
   const admin = me.role === "admin";
   // Each person's link carries their name, so we know who brought each owner in.
   const ref = admin ? "" : refSlug(me.name.split(" ")[0] || me.email.split("@")[0]);
-  const link = shareLink(ref);
   const { data: owners } = ref ? await db().from("owners").select("id").eq("referred_by", ref) : { data: null };
   const { data: candidates } = !admin && me.id ? await db().from("candidates").select("id").eq("added_by", me.id) : { data: null };
   return (
@@ -37,21 +36,16 @@ export default async function ShareKit() {
         Send it to your network. Candidates who sign up through your link are added as yours
         {candidates?.length ? ` (${candidates.length} so far)` : ""}.
       </p>
-      <KitView message={candidateMessage(ref)} link={candidateLink(ref)} image="/share/candidate-card.png" />
+      <KitPicker kits={candidateKits(ref)} />
 
       <h2 id="owners" style={{ fontSize: 24, margin: "48px 0 6px", scrollMarginTop: 16 }}>
         For business owners
       </h2>
       <p className="small muted" style={{ margin: "0 0 16px" }}>
-        Know someone who owns a business? Send them this
+        Know someone who owns a business? Pick a picture and send it
         {owners?.length ? `. ${owners.length} owner${owners.length === 1 ? " has" : "s have"} joined through you so far` : ""}.
       </p>
-      <h3 style={{ fontSize: 17, margin: "0 0 12px" }}>
-        The teaser <span className="tag tag-gold">New</span>
-      </h3>
-      <KitView message={ownerTeaser(ref)} link={link} image="/share/owner-teaser.png" />
-      <h3 style={{ fontSize: 17, margin: "40px 0 12px" }}>The letter</h3>
-      <KitView message={ownerMessage(ref)} link={link} image="/share/owner-card.png" />
+      <KitPicker kits={ownerKits(ref)} />
       {admin && (
         <section className="panel" style={{ marginTop: 32 }}>
           <h2 style={{ fontSize: 19, margin: 0 }}>Give the kit to a networker</h2>

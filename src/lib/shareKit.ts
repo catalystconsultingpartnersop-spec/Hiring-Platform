@@ -29,6 +29,34 @@ export function ownerTeaser(ref?: string | null) {
   return `Unimpressed with your hiring options?\n\nTell us the position you're hiring for. Half an hour later, you can have a qualified candidate to consider.\n\nPre-vetted candidates who fit your position and your needs.\n\nSee how: ${shareLink(ref, "home")}`;
 }
 
+// "A new concept in hiring": for owners who'd rather browse than be called.
+export function ownerConcept(ref?: string | null) {
+  return `A new concept in hiring.\n\nPre-vetted talent. Handpicked by you.\n\nBrowse profiles of experienced, pre-screened candidates, ready for their next opportunity.\n\nOne flat fee. No hefty recruiter commissions.\n\nSee for yourself: ${shareLink(ref, "home")}`;
+}
+
+// The earlier teaser, kept as a choice.
+export function ownerRevolutionary(ref?: string | null) {
+  return `Unimpressed with your hiring options? We built a revolutionary way to hire.\n\nTell us the position you're hiring for. Half an hour later, you can have a qualified candidate to consider.\n\nSee how: ${shareLink(ref, "home")}`;
+}
+
+// Everything in the share kit, in the order people see it. To add a poster:
+// put name.png and name-status.png in public/share and add a line here.
+export type Kit = { id: string; name: string; tag?: string; about: string; image: string; message: string; link: string };
+
+export function ownerKits(ref?: string | null): Kit[] {
+  const link = shareLink(ref);
+  return [
+    { id: "half-hour", name: "Half an hour", tag: "Shloimy recommends", about: "The promise: a candidate to consider in half an hour.", image: "/share/owner-teaser.png", message: ownerTeaser(ref), link },
+    { id: "concept", name: "A new concept", tag: "New", about: "For owners who like to browse and pick for themselves.", image: "/share/owner-concept.png", message: ownerConcept(ref), link },
+    { id: "revolutionary", name: "A revolutionary way", about: "The first teaser.", image: "/share/owner-revolutionary.png", message: ownerRevolutionary(ref), link },
+    { id: "letter", name: "The letter", about: "Speaks to what owners find frustrating.", image: "/share/owner-card.png", message: ownerMessage(ref), link },
+  ];
+}
+
+export function candidateKits(ref?: string | null): Kit[] {
+  return [{ id: "candidate", name: "Looking for work?", about: "For someone looking for their next move.", image: "/share/candidate-card.png", message: candidateMessage(ref), link: candidateLink(ref) }];
+}
+
 // The candidate side: a warm note from a rep to their network.
 export function candidateLink(ref?: string | null) {
   const r = ref ? refSlug(ref) : "";

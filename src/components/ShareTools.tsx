@@ -137,7 +137,7 @@ export function KitView({ message, link, image }: { message: string; link: strin
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 28, alignItems: "start" }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={image} alt="Share picture" style={{ width: "100%", maxWidth: 460, borderRadius: 16, boxShadow: "0 12px 30px rgba(23,33,58,.15)" }} />
+      <img src={image} alt="Share picture" style={{ width: "100%", maxWidth: 300, borderRadius: 14, boxShadow: "0 12px 30px rgba(23,33,58,.15)" }} />
       <div style={{ display: "grid", gap: 16, minWidth: 0 }}>
         <div>
           <p className="small muted" style={{ margin: "0 0 6px", fontWeight: 600 }}>
@@ -149,6 +149,66 @@ export function KitView({ message, link, image }: { message: string; link: strin
         </div>
         <ShareTools message={message} link={link} image={image} />
       </div>
+    </div>
+  );
+}
+
+// The share kit as a shelf: small previews to pick from, then the chosen one
+// opens underneath with its message and buttons.
+export function KitPicker({ kits }: { kits: { id: string; name: string; tag?: string; about: string; image: string; message: string; link: string }[] }) {
+  const [id, setId] = useState(kits[0]?.id ?? "");
+  const kit = kits.find((k) => k.id === id) ?? kits[0];
+  if (!kit) return null;
+  return (
+    <div>
+      {kits.length > 1 && (
+        <>
+          <p className="small muted" style={{ margin: "0 0 10px", fontWeight: 600 }}>
+            Pick one
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))", gap: 12, marginBottom: 26 }}>
+            {kits.map((k) => {
+              const on = k.id === kit.id;
+              return (
+                <button
+                  key={k.id}
+                  type="button"
+                  onClick={() => setId(k.id)}
+                  aria-pressed={on}
+                  style={{
+                    font: "inherit",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    background: "#fff",
+                    padding: 8,
+                    borderRadius: 14,
+                    border: on ? "2.5px solid var(--marigold)" : "2.5px solid var(--line)",
+                    boxShadow: on ? "0 8px 20px rgba(23,33,58,.16)" : "none",
+                    display: "grid",
+                    gap: 6,
+                    alignContent: "start",
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={k.image} alt="" loading="lazy" style={{ width: "100%", aspectRatio: "4 / 5", objectFit: "cover", borderRadius: 8, display: "block" }} />
+                  <span style={{ fontWeight: 800, fontSize: 14, lineHeight: 1.2, color: "var(--ink)" }}>{k.name}</span>
+                  {k.tag && (
+                    <span className="tag tag-gold" style={{ justifySelf: "start", fontSize: 11.5 }}>
+                      {k.tag}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+      {kits.length > 1 && (
+        <p style={{ margin: "0 0 14px" }}>
+          <strong style={{ fontSize: 18 }}>{kit.name}</strong> <span className="muted">· {kit.about}</span>
+        </p>
+      )}
+      <KitView key={kit.id} message={kit.message} link={kit.link} image={kit.image} />
     </div>
   );
 }

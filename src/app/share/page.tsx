@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { KitView } from "@/components/ShareTools";
+import { KitPicker } from "@/components/ShareTools";
 import { brandName } from "@/lib/format";
-import { candidateLink, candidateMessage, ownerMessage, ownerTeaser, refSlug, shareLink } from "@/lib/shareKit";
+import { candidateKits, ownerKits, refSlug } from "@/lib/shareKit";
 
 export const metadata: Metadata = {
   title: `Share ${brandName()}`,
@@ -13,27 +13,21 @@ export const metadata: Metadata = {
 export default async function SharePage({ searchParams }: PageProps<"/share">) {
   const sp = await searchParams;
   const ref = typeof sp.r === "string" ? refSlug(sp.r) : "";
-  const link = shareLink(ref);
   return (
     <div className="wrap" style={{ paddingBlock: "40px 64px" }}>
       <div className="page-head" style={{ paddingTop: 0 }}>
         <h1>Know a business owner who&rsquo;s hiring?</h1>
         <p>
-          Send them this. One picture, one short message, one link. It takes ten seconds, and it might be the best hire
-          they make this year.
+          Pick a picture and send it. One picture, one short message, one link. It takes ten seconds, and it might be
+          the best hire they make this year.
         </p>
       </div>
-      <h3 style={{ fontSize: 17, margin: "0 0 12px" }}>
-        The teaser <span className="tag tag-gold">New</span>
-      </h3>
-      <KitView message={ownerTeaser(ref)} link={link} image="/share/owner-teaser.png" />
-      <h3 style={{ fontSize: 17, margin: "40px 0 12px" }}>The letter</h3>
-      <KitView message={ownerMessage(ref)} link={link} image="/share/owner-card.png" />
+      <KitPicker kits={ownerKits(ref)} />
       <h2 style={{ fontSize: 26, margin: "56px 0 6px" }}>Know someone looking for work?</h2>
       <p className="muted" style={{ margin: "0 0 18px" }}>
         Send them this one. It&rsquo;s free for them, private, and starts with a real conversation.
       </p>
-      <KitView message={candidateMessage(ref)} link={candidateLink(ref)} image="/share/candidate-card.png" />
+      <KitPicker kits={candidateKits(ref)} />
     </div>
   );
 }
