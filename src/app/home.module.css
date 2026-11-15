@@ -176,3 +176,10 @@
 @media (max-width: 1100px) { .boxes { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 760px) { .boxes { grid-template-columns: 1fr; gap: 10px; margin-top: 28px; } .boxes > div { padding: 18px; } }
 .chips a.chipMore { background: none; border-color: transparent; text-decoration: underline; text-underline-offset: 3px; padding-left: 6px; }
+
+/* The second way in, as a real button: talk to us, or browse */
+.browseBtn { background: transparent; color: #fff; border: 2px solid rgba(255, 255, 255, 0.55); box-shadow: none; display: inline-block; }
+.browseBtn:hover { border-color: #fff; background: rgba(255, 255, 255, 0.08); }
+.browseBtn span { color: var(--marigold); }
+.orLine { text-align: center; color: #aab3c6; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+@media (max-width: 900px) { .orLine.onlyPhone { margin: -6px 0 12px; } }

@@ -51,11 +51,10 @@ export default async function Home() {
             <a href="#callback" className={`btn btn-gold ${s.ctaBtn} ${s.onlyPhone}`}>
               Talk to our team
             </a>
-            <p className={s.links}>
-              <Link href="/candidates" className={s.second}>
-                Or browse candidates yourself <span aria-hidden>→</span>
-              </Link>
-            </p>
+            <p className={`${s.orLine} ${s.onlyPhone}`}>or</p>
+            <Link href="/candidates" className={`btn ${s.ctaBtn} ${s.browseBtn}`}>
+              Browse candidates yourself <span aria-hidden>→</span>
+            </Link>
           </div>
           <div id="callback" className={s.cb}>
             <h2>Tell us what you need.</h2>
