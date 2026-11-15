@@ -7,7 +7,7 @@ import { nowMs } from "@/lib/time";
 // any outside plan. Shown to managers on the dashboard.
 type Row = { at: string; action: string; details: { step?: string; v?: string; ref?: string } };
 
-export async function SiteFlow() {
+export async function SiteFlow({ always = false }: { always?: boolean }) {
   const me = await requireStaff();
   if (!me.manager) return null;
   const now = nowMs();
@@ -25,7 +25,13 @@ export async function SiteFlow() {
   const all = (data ?? []) as Row[];
   // Only count from when step-counting began, so "sent" never looks bigger than "started".
   const first = all.filter((r) => r.action === "funnel").map((r) => r.at).sort()[0];
-  if (!first) return null;
+  if (!first)
+    return always ? (
+      <section className="panel" style={{ marginTop: 16 }}>
+        <h2 style={{ fontSize: 19, margin: 0 }}>Where owners go, and where they stop</h2>
+        <p className="muted" style={{ margin: "8px 0 0" }}>Nothing counted yet. This fills in as soon as someone opens the homepage.</p>
+      </section>
+    ) : null;
   const rows = all.filter((r) => r.at >= first);
 
   const people = (step: string, from = 0) => new Set(rows.filter((r) => r.action === "funnel" && r.details.step === step && Date.parse(r.at) >= from).map((r) => r.details.v ?? r.at)).size;

@@ -41,6 +41,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {admin && <Link href="/admin/agreements">Introductions</Link>}
         {admin && <Link href="/admin/clients">Clients</Link>}
         {admin && <Link href="/admin/payments">Finance</Link>}
+        {me.manager && <Link href="/admin/analytics">Analytics</Link>}
         <Link href="/admin/requests">
           Requests{openRequests ? <span className={styles.badge}>{openRequests}</span> : null}
         </Link>
