@@ -7,7 +7,8 @@ import "@fontsource-variable/instrument-sans";
 import "./globals.css";
 import { brandName } from "@/lib/format";
 import { currentCandidateId, currentOwner } from "@/lib/session";
-import { ShortlistLink, ShortlistSync } from "@/components/Shortlist";
+import { ShortlistSync } from "@/components/Shortlist";
+import { SiteNav } from "@/components/SiteNav";
 import { Logo } from "@/components/Logo";
 import { legalEntity } from "@/lib/agreement";
 import { siteUrl, teamUrl } from "@/lib/format";
@@ -68,48 +69,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <Link href={site ? "/admin" : onlyCandidate ? "/join" : "/"} className="brand" aria-label={`${brandName()} home`}>
               <Logo tagline />
             </Link>
-            {onlyCandidate ? (
-              <nav className="nav" aria-label="Main">
-                <Link href={P("/join")} className="hide-sm">
-                  Looking for work?
-                </Link>
-                <Link href={P("/mission")} className="hide-sm">
-                  Our mission
-                </Link>
-                <Link href={P("/me")}>Your page</Link>
-              </nav>
-            ) : (
-            <nav className="nav" aria-label="Main">
-              <Link href={P("/meet")} className="btn btn-gold btn-small">
-                <span className="hide-sm">Meet the team</span>
-                <span className="show-sm">Meet us</span>
-              </Link>
-              <Link href={P("/candidates")} className="hide-sm">
-                Browse candidates
-              </Link>
-              <ShortlistLink base={site} />
-              {signedIn && <ShortlistSync />}
-              <Link href={P("/join")} className="hide-sm hide-md">
-                Looking for work?
-              </Link>
-              <Link href={P("/how-it-works")} className="hide-sm">
-                How it works
-              </Link>
-              <Link href={P("/hiring-help")} className="hide-sm hide-md">
-                Hiring help
-              </Link>
-              {signedIn ? (
-                <Link href={P("/account")}>
-                  <span className="hide-sm">Your account</span>
-                  <span className="show-sm">Account</span>
-                </Link>
-              ) : candidate ? (
-                <Link href={P("/me")}>Your page</Link>
-              ) : (
-                <Link href={P("/login")}>Sign in</Link>
-              )}
-            </nav>
-            )}
+            <SiteNav base={site} signedIn={signedIn} candidate={candidate} onlyCandidate={onlyCandidate} />
+            {signedIn && <ShortlistSync />}
           </div>
         </header>
         <main>{children}</main>

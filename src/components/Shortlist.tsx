@@ -87,8 +87,9 @@ export function ShortlistButton({ id, label }: { id: string; label?: boolean }) 
   );
 }
 
-export function ShortlistLink({ base }: { base?: string }) {
+export function ShortlistLink({ base, hideEmpty }: { base?: string; hideEmpty?: boolean }) {
   const ids = useShortlist();
+  if (hideEmpty && !ids.length) return null;
   return (
     <Link className="nav-shortlist" href={(base ?? "") + (ids.length ? `/candidates?saved=${ids.join(",")}` : "/candidates?saved=none")}>
       Shortlist{ids.length ? ` (${ids.length})` : ""}
