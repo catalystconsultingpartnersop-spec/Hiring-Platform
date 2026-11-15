@@ -29,6 +29,12 @@ export function ownerTeaser(ref?: string | null) {
   return `Unimpressed with your hiring options?\n\nTell us the position you're hiring for. Half an hour later, you can have a qualified candidate to consider.\n\nPre-vetted candidates who fit your position and your needs.\n\nSee how: ${shareLink(ref, "home")}`;
 }
 
+// The "new concept" family: one message for each poster, so the caption says
+// what the picture says.
+const concept = (ref: string | null | undefined, middle: string) =>
+  `Looking to hire? A new concept in hiring.\n\nPre-vetted candidates. Handpicked by you.\n\n${middle}\n\nOne flat fee. No hefty recruiter commissions.\n\nFind out more: ${shareLink(ref, "home")}`;
+const HALF_HOUR = "Tell us the position you're hiring for. Half an hour later, you can have a qualified candidate to consider.";
+
 // "A new concept in hiring": for owners who'd rather browse than be called.
 export function ownerConcept(ref?: string | null) {
   return `A new concept in hiring.\n\nPre-vetted talent. Handpicked by you.\n\nBrowse profiles of experienced, pre-screened candidates, ready for their next opportunity.\n\nOne flat fee. No hefty recruiter commissions.\n\nSee for yourself: ${shareLink(ref, "home")}`;
@@ -46,9 +52,14 @@ export type Kit = { id: string; name: string; tag?: string; about: string; image
 export function ownerKits(ref?: string | null): Kit[] {
   const link = shareLink(ref);
   return [
+    { id: "four-reasons", name: "Four reasons", tag: "New", about: "Everything we do, as a short list.", image: "/share/owner-four-reasons.png", message: concept(ref, "Tell us the position, and half an hour later you can have a qualified candidate to consider."), link },
+    { id: "concept-short", name: "Short and clear", tag: "New", about: "The whole offer in the fewest words.", image: "/share/owner-concept-short.png", message: concept(ref, "Tell us the position. A qualified candidate to consider, in half an hour."), link },
+    { id: "handpicked", name: "Handpicked by you", tag: "New", about: "For owners who want to stay in charge of who they meet.", image: "/share/owner-handpicked.png", message: concept(ref, HALF_HOUR), link },
+    { id: "concept-half-hour", name: "The half-hour promise", tag: "New", about: "The half-hour sentence in full.", image: "/share/owner-concept-half-hour.png", message: concept(ref, HALF_HOUR), link },
+    { id: "concept-talk-browse", name: "Talk or browse", tag: "New", about: "Tell us the position, or browse the candidates yourself.", image: "/share/owner-concept-talk-browse.png", message: concept(ref, "We've already met the candidates. Tell us the position you're hiring for, or browse them yourself."), link },
     { id: "half-hour", name: "Half an hour", tag: "Shloimy recommends", about: "The promise: a candidate to consider in half an hour.", image: "/share/owner-teaser.png", message: ownerTeaser(ref), link },
-    { id: "concept-words", name: "A new concept", tag: "New", about: "For owners who like to browse and pick for themselves. Words only.", image: "/share/owner-concept-words.png", message: ownerConcept(ref), link },
-    { id: "concept", name: "A new concept, with profiles", tag: "New", about: "The same words, with three sample profile cards.", image: "/share/owner-concept.png", message: ownerConcept(ref), link },
+    { id: "concept-words", name: "A new concept (browse)", about: "For owners who like to browse and pick for themselves. Words only.", image: "/share/owner-concept-words.png", message: ownerConcept(ref), link },
+    { id: "concept", name: "A new concept, with profiles", about: "The same words, with three sample profile cards.", image: "/share/owner-concept.png", message: ownerConcept(ref), link },
     { id: "revolutionary", name: "A revolutionary way", about: "The first teaser.", image: "/share/owner-revolutionary.png", message: ownerRevolutionary(ref), link },
     { id: "letter", name: "The letter", about: "Speaks to what owners find frustrating.", image: "/share/owner-card.png", message: ownerMessage(ref), link },
   ];

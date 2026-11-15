@@ -49,9 +49,9 @@ export default async function ShareKit() {
       </p>
       <KitPicker
         kits={owner.shown}
-        removed={admin ? owner.removed : []}
-        setHidden={admin ? setPosterHidden : undefined}
-        setLabel={admin ? setPosterLabel : undefined}
+        removed={me.manager ? owner.removed : []}
+        setHidden={me.manager ? setPosterHidden : undefined}
+        setLabel={me.manager ? setPosterLabel : undefined}
       />
       {admin && (
         <section className="panel" style={{ marginTop: 32 }}>

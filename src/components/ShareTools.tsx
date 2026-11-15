@@ -312,7 +312,7 @@ export function KitPicker({
       <div className="panel panel-wash" style={{ marginTop: 22 }}>
         <p style={{ fontWeight: 800, margin: "0 0 4px" }}>Removed posters</p>
         <p className="small muted" style={{ margin: "0 0 12px" }}>
-          Nobody sees these in their share kit. Only you see this box.
+          Nobody sees these in their share kit. Only Heshy and partners see this box.
         </p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           {removed.map((k) => (
