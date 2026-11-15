@@ -12,7 +12,7 @@ import styles from "./catalog.module.css";
 // same call-back form as the front page, with the video call as the other way.
 export function HelpPill({ roles, words }: { roles: string[]; words: string }) {
   const [open, setOpen] = useState(false);
-  const [way, setWay] = useState<"menu" | "call" | "text">("menu");
+  const [way, setWay] = useState<"call" | "text">("call");
   useEffect(() => {
     if (!open) return;
     const onKey = (ev: KeyboardEvent) => ev.key === "Escape" && setOpen(false);
@@ -25,7 +25,7 @@ export function HelpPill({ roles, words }: { roles: string[]; words: string }) {
         type="button"
         className={styles.helpPill}
         onClick={() => {
-          setWay("menu");
+          setWay("call");
           setOpen(true);
           track("Browse help opened");
           mark("help_opened");
@@ -40,34 +40,22 @@ export function HelpPill({ roles, words }: { roles: string[]; words: string }) {
             <button type="button" className={styles.helpX} onClick={() => setOpen(false)} aria-label="Close">
               ×
             </button>
-            {way === "menu" && (
-              <>
-                <h2>How can we help?</h2>
-                <p className={styles.helpLede}>We&rsquo;ve met every candidate here.</p>
-                <div className={styles.helpWays}>
-                  <button type="button" onClick={() => setWay("call")}>
-                    <b>Help me choose</b>
-                    <span>Tell us the position, and we&rsquo;ll call you with who fits.</span>
-                  </button>
-                  <button type="button" onClick={() => setWay("text")}>
-                    <b>Don&rsquo;t see who I need</b>
-                    <span>Tell us the role, and we&rsquo;ll text you when they join.</span>
-                  </button>
-                  <Link href="/meet">
-                    <b>Meet the team</b>
-                    <span>Pick a time for a video call.</span>
-                  </Link>
-                </div>
-                <p className={styles.helpAlt}>
-                  Something else? <Link href="/contact">Send us a message</Link>
-                </p>
-              </>
-            )}
             {way === "call" && (
               <>
                 <h2>Need help choosing?</h2>
                 <p className={styles.helpLede}>We&rsquo;ve met every candidate here. Tell us the position, and we&rsquo;ll call you with who fits.</p>
                 <CallbackForm />
+                <div className={styles.helpMore}>
+                  <p>
+                    Don&rsquo;t see who you need?{" "}
+                    <button type="button" className={styles.helpBackLink} onClick={() => setWay("text")}>
+                      We&rsquo;ll text you when they join.
+                    </button>
+                  </p>
+                  <p>
+                    Or <Link href="/meet">pick a time for a video call</Link>.
+                  </p>
+                </div>
               </>
             )}
             {way === "text" && (
@@ -75,14 +63,12 @@ export function HelpPill({ roles, words }: { roles: string[]; words: string }) {
                 <h2>Don&rsquo;t see who you need?</h2>
                 <p className={styles.helpLede}>Tell us the role, and we&rsquo;ll text you when they join.</p>
                 <TellForm roles={roles} words={words} focus />
+                <p className={styles.helpAlt}>
+                  <button type="button" className={styles.helpBackLink} onClick={() => setWay("call")}>
+                    ← Back
+                  </button>
+                </p>
               </>
-            )}
-            {way !== "menu" && (
-              <p className={styles.helpAlt}>
-                <button type="button" className={styles.helpBackLink} onClick={() => setWay("menu")}>
-                  ← Other ways we can help
-                </button>
-              </p>
             )}
           </div>
         </div>

@@ -246,3 +246,6 @@
 .helpWays span { font-size: 14.5px; color: var(--ink-2); }
 .helpBackLink { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--ink); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .helpBox .tellForm { margin-top: 0; }
+.helpMore { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 6px; text-align: center; font-size: 15px; color: var(--ink-2); }
+.helpMore p { margin: 0; }
+.helpMore a { color: var(--ink); font-weight: 700; }
