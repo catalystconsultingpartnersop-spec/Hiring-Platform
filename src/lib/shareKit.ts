@@ -47,7 +47,8 @@ export function ownerKits(ref?: string | null): Kit[] {
   const link = shareLink(ref);
   return [
     { id: "half-hour", name: "Half an hour", tag: "Shloimy recommends", about: "The promise: a candidate to consider in half an hour.", image: "/share/owner-teaser.png", message: ownerTeaser(ref), link },
-    { id: "concept", name: "A new concept", tag: "New", about: "For owners who like to browse and pick for themselves.", image: "/share/owner-concept.png", message: ownerConcept(ref), link },
+    { id: "concept-words", name: "A new concept", tag: "New", about: "For owners who like to browse and pick for themselves. Words only.", image: "/share/owner-concept-words.png", message: ownerConcept(ref), link },
+    { id: "concept", name: "A new concept, with profiles", tag: "New", about: "The same words, with three sample profile cards.", image: "/share/owner-concept.png", message: ownerConcept(ref), link },
     { id: "revolutionary", name: "A revolutionary way", about: "The first teaser.", image: "/share/owner-revolutionary.png", message: ownerRevolutionary(ref), link },
     { id: "letter", name: "The letter", about: "Speaks to what owners find frustrating.", image: "/share/owner-card.png", message: ownerMessage(ref), link },
   ];
