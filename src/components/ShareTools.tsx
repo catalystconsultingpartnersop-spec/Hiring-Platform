@@ -8,12 +8,20 @@ export function ShareTools({ message, link, image }: { message: string; link: st
   const [done, setDone] = useState("");
   const [canShareFiles, setCanShareFiles] = useState(false);
   const picture = useRef<File | null>(null);
+  // The same picture in the tall size WhatsApp status uses (1080 x 1920), with
+  // the words kept clear of the bars WhatsApp puts at the top and bottom.
+  const statusImage = image.replace(/\.png$/, "-status.png");
+  const statusPicture = useRef<File | null>(null);
 
   useEffect(() => {
     // Load the picture ahead of time, so tapping Share opens the share sheet right away.
     fetch(image)
       .then((r) => r.blob())
       .then((b) => (picture.current = new File([b], "the-candidate-collection.png", { type: "image/png" })))
+      .catch(() => {});
+    fetch(statusImage)
+      .then((r) => r.blob())
+      .then((b) => (statusPicture.current = new File([b], "the-candidate-collection-status.png", { type: "image/png" })))
       .catch(() => {});
     // Whether this phone can share a picture (checked once the page is on screen).
     const t = setTimeout(() => {
@@ -25,7 +33,7 @@ export function ShareTools({ message, link, image }: { message: string; link: st
       }
     }, 0);
     return () => clearTimeout(t);
-  }, [image]);
+  }, [image, statusImage]);
 
   async function copy(text: string, what: string) {
     try {
@@ -62,6 +70,21 @@ export function ShareTools({ message, link, image }: { message: string; link: st
     }
   }
 
+  // For a WhatsApp status: the tall picture. A status can't carry a tappable
+  // link in the picture, so the message is copied to paste as the caption.
+  async function shareStatus() {
+    navigator.clipboard
+      .writeText(message)
+      .then(() => setDone("Message copied. Pick WhatsApp, then My status, and paste it as the caption."))
+      .catch(() => setDone(""));
+    try {
+      const file = statusPicture.current ?? new File([await (await fetch(statusImage)).blob()], "the-candidate-collection-status.png", { type: "image/png" });
+      await navigator.share({ files: [file] });
+    } catch {
+      /* they closed the share sheet */
+    }
+  }
+
   return (
     <div style={{ display: "grid", gap: 12 }}>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -74,6 +97,15 @@ export function ShareTools({ message, link, image }: { message: string; link: st
           <button type="button" className="btn btn-ghost" onClick={sharePicture}>
             Share picture only
           </button>
+        )}
+        {canShareFiles ? (
+          <button type="button" className="btn btn-ghost" onClick={shareStatus}>
+            For WhatsApp status
+          </button>
+        ) : (
+          <a className="btn btn-ghost" href={statusImage} download="the-candidate-collection-status.png">
+            Download for WhatsApp status
+          </a>
         )}
         <button type="button" className={`btn ${canShareFiles ? "btn-ghost" : "btn-gold"}`} onClick={() => copy(message, "Message")}>
           Copy message
