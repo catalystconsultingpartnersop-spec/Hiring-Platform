@@ -1,89 +1,76 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { keepCandidatesOut } from "@/lib/candidateMode";
+import { CandidateCard } from "@/components/CandidateCard";
 import { Seen } from "@/components/Seen";
+import { keepCandidatesOut } from "@/lib/candidateMode";
+import { allListed, getTiers, interviewingIds } from "@/lib/catalog";
+import { feeFor } from "@/lib/format";
 import styles from "./looking.module.css";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
-  title: "Not hiring today? Browse anyway",
-  description: "Find the one you're looking for, or the one you didn't know you needed. Browse pre-vetted candidates any day, hiring or not.",
+  title: "Just looking?",
+  description: "You're not moving, and you look at houses anyway. Browse pre-vetted candidates the same way, hiring or not.",
 };
 
-// For the owner who likes to look: why browsing makes sense even when there's
-// no opening today. Reached from posters, the Browse page and the footer; it is
-// deliberately not in the top menu.
+// For the owner who likes to look. A short story, then real people to scroll.
+// Reached from posters and the footer; deliberately not in the top menu.
 export default async function JustLookingPage() {
   await keepCandidatesOut();
+  const [{ rows }, tiers, busy] = await Promise.all([allListed(), getTiers(), interviewingIds()]);
+  const newest = [...rows].sort((a, b) => String(b.listed_at ?? "").localeCompare(String(a.listed_at ?? ""))).slice(0, 4);
   return (
-    <>
+    <div className={styles.page}>
       <Seen step="just_looking" />
-      <section className={styles.hero}>
-        <div className="wrap">
-          <p className={styles.label}>Not hiring today?</p>
-          <h1>
-            Find the one you&rsquo;re looking for. <span>Or the one you didn&rsquo;t know you needed.</span>
-          </h1>
-          <p className={styles.lead}>
-            Most business owners look at who&rsquo;s available only on the day they need someone. The collection is
-            open every day. Come look whenever you like, the way people look at houses long before they move.
-          </p>
-          <Link href="/candidates" className="btn btn-gold btn-big">
-            Browse candidates
-          </Link>
-        </div>
+      <section className={`wrap ${styles.story}`}>
+        <p className={styles.label}>Just looking?</p>
+        <h1>
+          You&rsquo;re not moving. <span>You look at houses anyway.</span>
+        </h1>
+
+        <p>It&rsquo;s late. The house is quiet. And you&rsquo;re on your phone, three towns over, standing in a kitchen you will never cook in.</p>
+        <p>You&rsquo;re not buying. You&rsquo;re just looking.</p>
+        <p className={styles.beat}>Then one stops your thumb.</p>
+        <p>
+          The porch. The light in that kitchen. A minute ago you weren&rsquo;t in the market, and now you&rsquo;re holding
+          out your phone: <em>look at this one.</em>
+        </p>
+        <p>That little jolt is the whole reason we scroll.</p>
+
+        <h2>We built that, for hiring.</h2>
+
+        <p>A collection of people instead of houses. Every one of them sat down with our team before they went up.</p>
+        <p>Scroll through them tonight. Nobody calls you. Nobody knows you looked.</p>
+        <p>Stop on the one who catches you. Read what they&rsquo;re great at. Tap the heart. Sleep on it.</p>
+        <p>Most nights, that&rsquo;s all it is. A good scroll.</p>
+        <p className={styles.beat}>
+          And then one night you find the one you&rsquo;re looking for. <span>Or the one you didn&rsquo;t know you needed.</span>
+        </p>
+
+        <Link href="/candidates" className="btn btn-gold btn-big">
+          Start scrolling
+        </Link>
       </section>
 
-      <section className={`wrap ${styles.body}`}>
-        <h2>Why owners browse when they&rsquo;re not hiring</h2>
-        <ul className={styles.reasons}>
-          <li>
-            <h3>You see who&rsquo;s out there before you need them.</h3>
-            <p>When a seat opens, you&rsquo;re not starting from zero. You already know the kind of people who are available.</p>
-          </li>
-          <li>
-            <h3>Sometimes you spot a person worth making room for.</h3>
-            <p>The right person can show up before the opening does. When you see them, the choice is yours.</p>
-          </li>
-          <li>
-            <h3>When you&rsquo;re ready, you know who you want to meet.</h3>
-            <p>Go straight to the people you saved, and skip the search.</p>
-          </li>
-        </ul>
-
-        <h2>How to browse</h2>
-        <div className={styles.how}>
-          <div>
-            <h3>Open any profile</h3>
-            <p>Every candidate sat down with our team first. Each profile tells you, in plain words, what they&rsquo;re great at.</p>
+      {newest.length > 0 && (
+        <section className={styles.feed}>
+          <div className="wrap">
+            <h2>Go ahead. Here are the newest.</h2>
+            <div className="cards">
+              {newest.map((c) => (
+                <CandidateCard key={c.id} c={c} fee={feeFor(c, tiers)} href={`/candidates/${c.id}`} store interviewing={busy.has(c.id)} />
+              ))}
+            </div>
+            <div className={styles.more}>
+              <Link href="/candidates" className="btn btn-big">
+                Keep scrolling
+              </Link>
+              <p>One flat fee, only if you hire. Never a percentage of salary.</p>
+            </div>
           </div>
-          <div>
-            <h3>Tap the heart</h3>
-            <p>Save anyone who catches your eye to your shortlist, and come back to them later.</p>
-          </div>
-          <div>
-            <h3>Tell us a role</h3>
-            <p>
-              Leave a role and your cell number at the bottom of the{" "}
-              <Link href="/candidates">Browse page</Link>, and we&rsquo;ll text you when someone joins.
-            </p>
-          </div>
-        </div>
-        <p className={styles.fee}>One flat fee, only if you hire. Never a percentage of salary.</p>
-      </section>
-
-      <section className={styles.closing}>
-        <div className="wrap">
-          <h2>Take a look. See who&rsquo;s here.</h2>
-          <div className={styles.actions}>
-            <Link href="/candidates" className="btn btn-gold btn-big">
-              Browse candidates
-            </Link>
-            <Link href="/meet" className={`btn btn-ghost btn-big ${styles.light}`}>
-              Hiring now? Meet the team
-            </Link>
-          </div>
-        </div>
-      </section>
-    </>
+        </section>
+      )}
+    </div>
   );
 }

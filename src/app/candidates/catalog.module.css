@@ -234,3 +234,6 @@
 .tellForm button { white-space: nowrap; }
 .tellFine { flex: 1 1 100%; font-size: 12.5px; line-height: 1.45; color: var(--ink-3); }
 .tellErr { flex: 1 1 100%; font-size: 14px; color: var(--rust); }
+
+.under { margin: -6px 0 18px; font-size: 15px; line-height: 1.5; color: var(--ink-2); }
+.under strong { color: var(--ink); }

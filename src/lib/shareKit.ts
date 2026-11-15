@@ -59,11 +59,11 @@ export function ownerKits(ref?: string | null): Kit[] {
     { id: "concept-talk-browse", name: "Talk or browse", tag: "New", about: "Tell us the position, or browse the candidates yourself.", image: "/share/owner-concept-talk-browse.png", message: concept(ref, "We've already met the candidates. Tell us the position you're hiring for, or browse them yourself."), link },
     {
       id: "browse-anyway",
-      name: "Browse anyway",
+      name: "Just looking",
       tag: "New",
       about: "For owners who aren't hiring today but like to look. Opens the page that explains why.",
       image: "/share/owner-browse-anyway.png",
-      message: `Not hiring today? Browse anyway.\n\nFind the one you're looking for. Or the one you didn't know you needed.\n\nPre-vetted candidates. Every one sat down with our team.\n\nTake a look: ${siteUrl()}/just-looking${ref ? `?r=${refSlug(ref)}` : ""}`,
+      message: `You're not moving. You look at houses anyway.\n\nNot hiring? Browse candidates the same way.\n\nPre-vetted candidates. Every one sat down with our team.\n\nTake a look: ${siteUrl()}/just-looking${ref ? `?r=${refSlug(ref)}` : ""}`,
       link: `${siteUrl()}/just-looking${ref ? `?r=${refSlug(ref)}` : ""}`,
     },
     { id: "half-hour", name: "Half an hour", tag: "Shloimy recommends", about: "The promise: a candidate to consider in half an hour.", image: "/share/owner-teaser.png", message: ownerTeaser(ref), link },
