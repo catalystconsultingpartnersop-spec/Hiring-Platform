@@ -3,10 +3,7 @@
 Kept by Claude for Heshy. Newest asks at the top. Last updated November 13, 2026.
 
 ## In progress
-- Text messaging. Built and live on the site (consent boxes, every text, reps' morning summary); nothing sends until the Twilio keys are in Vercel.
-  Where we stopped (Nov 13): Twilio account active, business profile approved. Buying the number failed once with a generic error ((929) 383-7042, nothing charged). Next: retry with a fresh number, then carrier (A2P) registration with wording from Claude, then Heshy pastes TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_FROM into Vercel himself, then one test text.
-  Heshy and Shloimy still need to add their mobile and tick the box on My hours.
-- Analytics: check that "Callback started / sent" show under Events in Vercel after one test form (needs Pro plan).
+- Text messaging is LIVE (Nov 15): Twilio number (929) 673-2988, campaign approved, keys in Vercel, test text received on Heshy's phone. Texts hold 9pm-8am and Friday 3pm to Sunday 8am. Still to do: Shloimy and reps turn texts on at My hours; watch the first real texts.
 
 ## Wanted
 - Send site emails from thecandidatecollection.com instead of the consulting address (add-only DNS records in Vercel).
