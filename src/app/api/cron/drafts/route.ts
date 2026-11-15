@@ -26,6 +26,8 @@ export async function GET(req: NextRequest) {
   // Texts: what waited overnight, and the one-hour nudge before owner and candidate meet.
   const { flushQueuedTexts } = await import("@/lib/sms");
   await flushQueuedTexts().catch((e) => console.error("queued texts", e));
+  const { textRoleWatchers } = await import("@/lib/roleWatch");
+  await textRoleWatchers().catch((e) => console.error("role watch texts", e));
   const { meetingHourTexts } = await import("@/lib/repMorning");
   await meetingHourTexts().catch((e) => console.error("meeting hour texts", e));
   const r = await draftFinishedCalls({ withinHours: 6 }).catch(() => ({ drafted: 0 }));

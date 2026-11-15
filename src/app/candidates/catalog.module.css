@@ -224,3 +224,13 @@
   .helpBack { align-items: flex-end; padding: 0; }
   .helpBox { width: 100%; border-radius: 22px 22px 0 0; padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
 }
+
+/* "Tell me when": one quiet line under the candidates. */
+.tell { margin: 28px 0 8px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 16px; color: var(--ink-2); }
+.tell p { margin: 0; }
+.tellLink { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; text-align: left; }
+.tellForm { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; max-width: 640px; }
+.tellForm :global(.input) { flex: 1 1 180px; min-width: 0; }
+.tellForm button { white-space: nowrap; }
+.tellFine { flex: 1 1 100%; font-size: 12.5px; line-height: 1.45; color: var(--ink-3); }
+.tellErr { flex: 1 1 100%; font-size: 14px; color: var(--rust); }

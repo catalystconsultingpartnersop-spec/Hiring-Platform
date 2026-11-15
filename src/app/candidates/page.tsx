@@ -1,3 +1,6 @@
+import { TellMeWhen } from "./TellMeWhen";
+import { WATCH_WORDS } from "@/lib/roleWatch";
+import { ROLE_LIST } from "@/lib/writingHelp";
 import { Seen } from "@/components/Seen";
 import { HelpPill } from "./HelpPill";
 import Link from "next/link";
@@ -254,6 +257,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
               </Link>
             </div>
           )}
+          {!shortlistView && <TellMeWhen roles={ROLE_LIST} words={WATCH_WORDS} />}
         </section>
       </div>
       </div>
