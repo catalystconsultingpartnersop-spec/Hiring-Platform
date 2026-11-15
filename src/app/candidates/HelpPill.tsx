@@ -1,5 +1,6 @@
 "use client";
 
+import { mark } from "@/components/Seen";
 import { track } from "@vercel/analytics";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -24,6 +25,7 @@ export function HelpPill() {
         onClick={() => {
           setOpen(true);
           track("Browse help opened");
+          mark("help_opened");
         }}
         aria-haspopup="dialog"
       >

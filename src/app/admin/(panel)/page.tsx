@@ -13,6 +13,7 @@ import { Introductions } from "./Introductions";
 import { RepDashboard } from "./RepDashboard";
 import { MessagesWaiting } from "./MessagesWaiting";
 import { OwnersWaiting } from "./OwnersWaiting";
+import { SiteFlow } from "./SiteFlow";
 import styles from "./admin.module.css";
 
 export const dynamic = "force-dynamic";
@@ -113,6 +114,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin">) {
         <h1>Dashboard</h1>
       </div>
       <OwnersWaiting />
+      <SiteFlow />
       {dbError && (
         <div className="notice notice-bad" role="alert" style={{ marginTop: 12 }}>
           <strong>The database connection isn&rsquo;t working.</strong> Error:{" "}

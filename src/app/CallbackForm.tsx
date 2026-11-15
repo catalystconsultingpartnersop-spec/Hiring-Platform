@@ -1,5 +1,6 @@
 "use client";
 
+import { mark } from "@/components/Seen";
 import { track } from "@vercel/analytics";
 import { useActionState, useEffect, useRef } from "react";
 import { requestCallback, type CallbackState } from "./callback";
@@ -28,6 +29,7 @@ export function CallbackForm() {
         if (started.current) return;
         started.current = true;
         track("Callback started");
+        mark("form_started");
       }}
     >
       <label>

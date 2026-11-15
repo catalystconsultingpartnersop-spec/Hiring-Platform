@@ -1,3 +1,4 @@
+import { Seen } from "@/components/Seen";
 import { HelpPill } from "./HelpPill";
 import Link from "next/link";
 import { currentOwner } from "@/lib/session";
@@ -70,6 +71,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
   return (
     <>
       <HelpPill />
+      <Seen step="browse" />
       <div className={styles.searchBand}>
         <div className="wrap">
           <form className={styles.search} method="get" action="/candidates" role="search">

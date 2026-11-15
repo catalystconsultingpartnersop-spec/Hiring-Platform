@@ -1,6 +1,7 @@
 import { WorksBest } from "@/components/CandidateCard";
 import { CallbackForm } from "./CallbackForm";
-import { TalkButton } from "./TalkButton";
+import { BrowseButton, TalkButton } from "./TalkButton";
+import { Seen } from "@/components/Seen";
 import { keepCandidatesOut } from "@/lib/candidateMode";
 import { allListed } from "@/lib/catalog";
 import Link from "next/link";
@@ -38,6 +39,7 @@ export default async function Home() {
 
   return (
     <>
+      <Seen step="home" />
       <section className={s.hero}>
         <div className={`wrap ${s.heroGrid}`}>
           <div>
@@ -52,9 +54,7 @@ export default async function Home() {
             <div className={s.choice}>
               <TalkButton className={`btn btn-gold ${s.ctaBtn}`} />
               <span className={s.orLine}>or</span>
-              <Link href="/candidates" className={`btn ${s.ctaBtn} ${s.browseBtn}`}>
-                Browse candidates yourself <span aria-hidden>→</span>
-              </Link>
+              <BrowseButton className={`btn ${s.ctaBtn} ${s.browseBtn}`} />
             </div>
           </div>
           <div id="callback" className={s.cb}>

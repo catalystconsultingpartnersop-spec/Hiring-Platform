@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { db } from "./db";
 
 // Who's asking, as a short one-way hash of their IP address (never stored raw).
-async function visitor() {
+export async function visitor() {
   const h = await headers();
   const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || h.get("x-real-ip") || "unknown";
   return createHash("sha256").update(`${ip}|${process.env.SESSION_SECRET ?? ""}`).digest("base64url").slice(0, 22);
