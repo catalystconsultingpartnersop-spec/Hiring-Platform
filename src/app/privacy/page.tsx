@@ -2,16 +2,16 @@ import type { Metadata } from "next";
 import { legalEntity } from "@/lib/agreement";
 import { brandName } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Privacy policy" };
+export const metadata: Metadata = { title: "Privacy Policy" };
 
-const UPDATED = "November 13, 2026";
+const UPDATED = "November 14, 2026";
 
 export default function PrivacyPage() {
   const brand = brandName();
   const email = process.env.ADMIN_EMAIL ?? "";
   return (
     <div className="wrap narrow" style={{ paddingTop: 40, paddingBottom: 64, lineHeight: 1.7 }}>
-      <h1 style={{ fontFamily: "var(--display)", fontSize: "clamp(32px,5vw,48px)", margin: 0 }}>Privacy policy</h1>
+      <h1 style={{ fontFamily: "var(--display)", fontSize: "clamp(32px,5vw,48px)", margin: 0 }}>Privacy Policy</h1>
       <p className="muted">Last updated {UPDATED}</p>
 
       <p>
@@ -51,12 +51,16 @@ export default function PrivacyPage() {
       </ul>
       <p>We don&rsquo;t sell your information, and we don&rsquo;t use it for advertising.</p>
 
-      <h2>Text messages</h2>
+      <h2>Text messages (SMS)</h2>
       <p>
-        If you give us a mobile number and tick the box agreeing to texts, we&rsquo;ll text you about your calls and
-        introductions. We never text without that agreement, and you can reply STOP at any time. We don&rsquo;t sell
-        mobile numbers, and we don&rsquo;t share them, or your agreement to receive texts, with anyone for their
-        marketing.
+        If you give {brand} a mobile number and tick the box agreeing to texts, we&rsquo;ll text you about your calls
+        and introductions. We never text without that agreement, and you can reply STOP at any time.
+      </p>
+      <p>
+        <strong>
+          We do not sell or share your SMS opt-in data or personal information with third parties for marketing
+          purposes.
+        </strong>
       </p>
 
       <h2>Who we share it with</h2>

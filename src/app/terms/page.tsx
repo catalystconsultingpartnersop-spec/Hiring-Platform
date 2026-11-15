@@ -3,9 +3,9 @@ import Link from "next/link";
 import { legalEntity } from "@/lib/agreement";
 import { brandName } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Terms of use", description: "The terms for using The Candidate Collection, in plain language." };
+export const metadata: Metadata = { title: "Terms of Service", description: "The terms for using The Candidate Collection, in plain language." };
 
-const UPDATED = "November 13, 2026";
+const UPDATED = "November 14, 2026";
 
 // The general terms for using the site. The fee itself is governed by the
 // agreement a business signs for each candidate; this page points to it and
@@ -15,7 +15,7 @@ export default function TermsPage() {
   const email = process.env.ADMIN_EMAIL ?? "";
   return (
     <div className="wrap narrow" style={{ paddingTop: 40, paddingBottom: 64, lineHeight: 1.7 }}>
-      <h1 style={{ fontFamily: "var(--display)", fontSize: "clamp(32px,5vw,48px)", margin: 0 }}>Terms of use</h1>
+      <h1 style={{ fontFamily: "var(--display)", fontSize: "clamp(32px,5vw,48px)", margin: 0 }}>Terms of Service</h1>
       <p className="muted">Last updated {UPDATED}</p>
 
       <p>
@@ -72,14 +72,28 @@ export default function TermsPage() {
         responsible for what happens under your account.
       </p>
 
-      <h2>Emails and text messages</h2>
+      <h2>Emails</h2>
+      <p>We send emails about your account, your calls and the people you&rsquo;re meeting.</p>
+
+      <h2 id="sms">SMS terms (text messages)</h2>
       <p>
-        We send emails about your account, your calls and the people you&rsquo;re meeting. If you give us a mobile
-        number and agree to texts, we may also text you about the same things, such as a booked call or a reply waiting
-        for you. Message frequency varies. Message and data rates may apply. Reply STOP to stop texts at any time, or
-        HELP for help. We don&rsquo;t sell or share mobile numbers for marketing. See our{" "}
-        <Link href="/privacy">privacy policy</Link>.
+        If you give {brand} a mobile number and tick the box agreeing to texts, we will text you about your account:
+        that a call or meeting was booked, a reminder before it, and that someone responded to you. We only text people
+        who agreed, and agreeing is never required to use the service.
       </p>
+      <ul>
+        <li>Message frequency varies.</li>
+        <li>Message and data rates may apply.</li>
+        <li>
+          Reply <strong>STOP</strong> to stop texts at any time. Reply <strong>HELP</strong> for help, or use our{" "}
+          <a href="/contact">Contact us</a> page.
+        </li>
+        <li>Carriers are not liable for delayed or undelivered messages.</li>
+        <li>
+          We do not sell or share your SMS opt-in data or personal information with third parties for marketing
+          purposes. See our <Link href="/privacy">Privacy Policy</Link>.
+        </li>
+      </ul>
 
       <h2>Our content</h2>
       <p>
