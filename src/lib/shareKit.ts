@@ -108,7 +108,10 @@ export async function referringRep(): Promise<string | null> {
     if (!ref) return null;
     const { data } = await db().from("staff").select("id, full_name, email, active").eq("active", true);
     const match = (data ?? []).find((s) => refSlug(((s.full_name as string | null) ?? (s.email as string)).split(" ")[0]) === ref);
-    return (match?.id as string) ?? null;
+    // The owner's link counts who came, but candidates aren't handed to him: they see the whole team's times.
+    const { isOwnerEmail } = await import("./session");
+    if (!match || isOwnerEmail(match.email as string)) return null;
+    return match.id as string;
   } catch {
     return null;
   }

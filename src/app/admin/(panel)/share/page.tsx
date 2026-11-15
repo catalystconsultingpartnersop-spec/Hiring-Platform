@@ -13,7 +13,7 @@ export default async function ShareKit() {
   const me = await requireStaff();
   const admin = me.role === "admin";
   // Each person's link carries their name, so we know who brought each owner in.
-  const ref = admin ? "" : refSlug(me.name.split(" ")[0] || me.email.split("@")[0]);
+  const ref = me.id ? refSlug(me.name.split(" ")[0] || me.email.split("@")[0]) : "";
   const owner = await shelf(ownerKits(ref));
   const cand = await shelf(candidateKits(ref));
   const { data: owners } = ref ? await db().from("owners").select("id").eq("referred_by", ref) : { data: null };
