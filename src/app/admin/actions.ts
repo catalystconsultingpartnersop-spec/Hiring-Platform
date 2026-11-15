@@ -1822,6 +1822,13 @@ export async function savePhone(staffId: string, _prev: FormState, form: FormDat
     const { setTextConsent, textConsent } = await import("@/lib/sms");
     const want = form.get("text_ok") === "yes";
     if (want !== (await textConsent(phone))) await setTextConsent(phone, want, "staff", "my-hours");
+    if (want) {
+      const { sendCheckText } = await import("@/lib/sms");
+      const sent = await sendCheckText(phone);
+      revalidatePath("/admin/hours");
+      revalidatePath(`/admin/team/${staffId}`);
+      return sent.ok ? { ok: `Saved. ${sent.note}` } : { error: `Saved, but: ${sent.note}` };
+    }
   }
   revalidatePath("/admin/hours");
   revalidatePath(`/admin/team/${staffId}`);

@@ -123,3 +123,24 @@ export async function flushQueuedTexts(nowMs = Date.now()) {
   }
   return sent;
 }
+
+// A team member pressed Save with "Text me" ticked: send one text right away so
+// they see it works (they asked for it this second, so quiet hours don't apply).
+// Says plainly what happened, so a problem isn't a mystery.
+export async function sendCheckText(phone: string): Promise<{ ok: boolean; note: string }> {
+  try {
+    const to = textNumber(phone);
+    if (!to) return { ok: false, note: "That number can't get texts." };
+    if (!textingIsOn()) return { ok: false, note: "Texting isn't switched on for the site yet." };
+    const r = await deliver(to, `${brandName()}: Texts are on for this number. You'll hear from us when a call is booked or changed. Reply STOP to stop texts.`);
+    if (r.ok) {
+      await logActivity("system", "sms_sent", { to, kind: "staff_check", once: null, body: "check text" });
+      return { ok: true, note: "We just sent a text to this number." };
+    }
+    await logActivity("system", "sms_failed", { to, kind: "staff_check", code: r.code ?? null, error: r.error ?? null });
+    return { ok: false, note: `The text didn't go out${r.code ? ` (Twilio code ${r.code})` : ""}. Tell Heshy.` };
+  } catch (e) {
+    console.error("check text failed", e);
+    return { ok: false, note: "The text didn't go out. Tell Heshy." };
+  }
+}
