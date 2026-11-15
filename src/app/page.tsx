@@ -175,12 +175,13 @@ export default async function Home() {
 
       <section className={s.team}>
         <div className="wrap">
-          <p className={s.label}>Who you&rsquo;ll talk to</p>
-          <h2>A team that knows every candidate.</h2>
+          <p className={s.label}>Who we are</p>
+          <h2>A team with a knack for people.</h2>
           <p className={s.teamBody}>
-            When you ask for a call, you&rsquo;ll hear from Shloimy or Heshy. Our team has sat down with every person in the collection, so
-            you&rsquo;re talking to people who know who they&rsquo;re recommending.
+            Recruiters, consultants, HR specialists and executives. Successful people in our own fields, on one team because we share one
+            mission: helping people find the work that truly fits them.
           </p>
+          <p className={s.teamBody}>Together, we&rsquo;ve sat down with every person in the collection.</p>
           <p className={s.more}>
             <Link href="/meet">Meet the team →</Link>
           </p>
