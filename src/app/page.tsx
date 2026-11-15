@@ -184,7 +184,7 @@ export default async function Home() {
             Recruiters, consultants, HR specialists and executives. Successful people in our own fields, on one team because we share one
             mission: helping people find the work that truly fits them.
           </p>
-          <p className={s.teamBody}>Together, we&rsquo;ve sat down with every person in the collection.</p>
+          <p className={s.teamBody}>Every person in the collection has sat down with one of us.</p>
           <p className={s.more}>
             <Link href="/meet">Meet the team →</Link>
           </p>
