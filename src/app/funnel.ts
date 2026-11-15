@@ -7,7 +7,7 @@ import { allow, visitor } from "@/lib/throttle";
 // Where owners go on the site, counted by us (no cookies, no names): each step
 // is logged with a one-way visitor code, so the dashboard can show how many
 // people reached each step and where they stopped.
-const STEPS = ["home", "talk", "browse_click", "browse", "candidate", "form_started", "help_opened", "meet"] as const;
+const STEPS = ["home", "just_looking", "talk", "browse_click", "browse", "candidate", "form_started", "help_opened", "meet"] as const;
 export type Step = (typeof STEPS)[number];
 
 export async function markStep(step: Step) {
