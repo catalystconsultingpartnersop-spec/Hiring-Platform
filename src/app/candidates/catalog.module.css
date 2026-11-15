@@ -237,3 +237,12 @@
 
 .under { margin: -6px 0 18px; font-size: 15px; line-height: 1.5; color: var(--ink-2); }
 .under strong { color: var(--ink); }
+
+.tellDone { margin: 14px 0 0; font-size: 16px; }
+.helpWays { display: grid; gap: 10px; }
+.helpWays > * { display: grid; gap: 3px; text-align: left; width: 100%; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: 14px; background: #fff; font: inherit; color: var(--ink); text-decoration: none; cursor: pointer; }
+.helpWays > *:hover, .helpWays > *:focus-visible { border-color: var(--marigold); background: #fffaf0; }
+.helpWays b { font-family: var(--display); font-size: 18px; }
+.helpWays span { font-size: 14.5px; color: var(--ink-2); }
+.helpBackLink { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--ink); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.helpBox .tellForm { margin-top: 0; }

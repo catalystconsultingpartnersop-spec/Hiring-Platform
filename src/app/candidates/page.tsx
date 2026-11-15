@@ -73,7 +73,7 @@ export default async function Catalog({ searchParams }: PageProps<"/candidates">
 
   return (
     <>
-      <HelpPill />
+      <HelpPill roles={ROLE_LIST} words={WATCH_WORDS} />
       <Seen step="browse" />
       <div className={styles.searchBand}>
         <div className="wrap">
