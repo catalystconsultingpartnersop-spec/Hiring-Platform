@@ -89,7 +89,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <Link href={P("/meet")}>Meet the team</Link>
               <Link href={P("/how-it-works")}>How it works</Link>
               <Link href={P("/candidates")}>Browse candidates</Link>
-              <Link href={P("/just-looking")}>Just looking?</Link>
+              <Link href={P("/always-hiring")}>Always hiring</Link>
               <Link href={P("/hiring-help")}>Hiring help</Link>
               <Link href={P("/billing")}>Billing philosophy</Link>
               <Link href={P(signedIn ? "/account" : "/login")}>{signedIn ? "Your account" : "Business sign in"}</Link>

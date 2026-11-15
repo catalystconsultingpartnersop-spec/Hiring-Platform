@@ -10,13 +10,13 @@ import styles from "./looking.module.css";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Not hiring today? See who's out there",
-  description: "Every day you think, I wish I had someone who could handle this. See who's out there, even when you're not hiring.",
+  title: "Everyone is always hiring",
+  description: "Every day you think, I wish I had someone who could handle this. Everyone is always hiring. Come see who's out there.",
 };
 
-// For the owner who likes to look. A short story, then real people to scroll.
+// The "everyone is always hiring" idea, told from the owner's day, then real people to scroll.
 // Reached from posters and the footer; deliberately not in the top menu.
-export default async function JustLookingPage() {
+export default async function AlwaysHiringPage() {
   await keepCandidatesOut();
   const [{ rows }, tiers, busy] = await Promise.all([allListed(), getTiers(), interviewingIds()]);
   const newest = [...rows].sort((a, b) => String(b.listed_at ?? "").localeCompare(String(a.listed_at ?? ""))).slice(0, 4);
@@ -24,7 +24,7 @@ export default async function JustLookingPage() {
     <div className={styles.page}>
       <Seen step="just_looking" />
       <section className={`wrap ${styles.story}`}>
-        <p className={styles.label}>Not hiring today?</p>
+        <p className={styles.label}>Everyone&rsquo;s always hiring</p>
         <h1>
           &ldquo;I wish I had someone who could just handle this.&rdquo; <span>How many times did you say it this week?</span>
         </h1>
@@ -35,11 +35,12 @@ export default async function JustLookingPage() {
           Every day in a business has one of those moments. You think, <em>I wish I had someone.</em> Then the phone
           rings, and the thought is gone.
         </p>
-        <p>You&rsquo;re not hiring. There&rsquo;s no opening and no job description. So the thought never turns into anything.</p>
+        <p>That thought is a hiring thought. You have one almost every day.</p>
 
-        <h2>So don&rsquo;t hire. Just look.</h2>
+        <h2>Everyone is always hiring.</h2>
 
-        <p>Open the collection for a few minutes, here and there, the way you&rsquo;d check anything else on your phone.</p>
+        <p>Some owners are just more active about it than others. Most of us wait until it hurts, and then we rush.</p>
+        <p>So look now. Open the collection for a few minutes, here and there, the way you&rsquo;d check anything else on your phone.</p>
         <p>
           Read what each person is great at. The one who loves the details. The one who keeps a whole office moving.
           The one who picks up the phone and follows through.
