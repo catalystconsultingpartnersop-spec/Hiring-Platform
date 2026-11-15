@@ -32,12 +32,12 @@ export function ownerTeaser(ref?: string | null) {
 // The "new concept" family: one message for each poster, so the caption says
 // what the picture says.
 const concept = (ref: string | null | undefined, middle: string) =>
-  `Looking to hire? A new concept in hiring.\n\nPre-vetted candidates. Handpicked by you.\n\n${middle}\n\nOne flat fee. No hefty recruiter commissions.\n\nFind out more: ${shareLink(ref, "home")}`;
+  `Looking to hire? A new concept in hiring.\n\nPre-vetted candidates. Handpicked by you.\n\n${middle}\n\nOne flat fee. Never a percentage of salary.\n\nFind out more: ${shareLink(ref, "home")}`;
 const HALF_HOUR = "Tell us the position you're hiring for. Half an hour later, you can have a qualified candidate to consider.";
 
 // "A new concept in hiring": for owners who'd rather browse than be called.
 export function ownerConcept(ref?: string | null) {
-  return `A new concept in hiring.\n\nPre-vetted talent. Handpicked by you.\n\nBrowse profiles of experienced, pre-screened candidates, ready for their next opportunity.\n\nOne flat fee. No hefty recruiter commissions.\n\nSee for yourself: ${shareLink(ref, "home")}`;
+  return `A new concept in hiring.\n\nPre-vetted talent. Handpicked by you.\n\nBrowse profiles of experienced, pre-screened candidates, ready for their next opportunity.\n\nOne flat fee. Never a percentage of salary.\n\nSee for yourself: ${shareLink(ref, "home")}`;
 }
 
 // The earlier teaser, kept as a choice.
