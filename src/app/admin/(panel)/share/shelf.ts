@@ -34,3 +34,17 @@ export async function setPosterLabel(id: string, label: string) {
   revalidatePath("/admin/share");
   revalidatePath("/share");
 }
+
+// Gone for good: off the shelf and out of the removed list. (The picture files
+// stay on the server, so Claude can bring one back if it was a mistake.)
+export async function deletePoster(id: string) {
+  const me = await requireStaff();
+  if (!me.manager) return;
+  const key = String(id).slice(0, 60);
+  const cur = new Set(await getSetting<string[]>("share_deleted", []));
+  cur.add(key);
+  await setSetting("share_deleted", [...cur]);
+  await logActivity(`staff:${me.email}`, "share_poster_deleted", { poster: key });
+  revalidatePath("/admin/share");
+  revalidatePath("/share");
+}

@@ -275,6 +275,7 @@ type KitItem = {
 export function KitPicker({
   kits,
   removed = [],
+  setDeleted,
   setHidden,
   setLabel,
 }: {
@@ -282,10 +283,22 @@ export function KitPicker({
   removed?: KitItem[]; // posters taken off the shelf (shown only to whoever can put them back)
   setHidden?: (id: string, hidden: boolean) => Promise<void>;
   setLabel?: (id: string, label: string) => Promise<void>; // the small gold label under a poster's name
+  setDeleted?: (id: string) => Promise<void>; // gone for good, from the removed list too
 }) {
   const [id, setId] = useState(kits[0]?.id ?? "");
   const [busy, setBusy] = useState("");
   const kit = kits.find((k) => k.id === id) ?? kits[0];
+  const [sure, setSure] = useState("");
+  const erase = async (pid: string) => {
+    if (!setDeleted || busy) return;
+    setBusy(pid);
+    try {
+      await setDeleted(pid);
+      setSure("");
+    } finally {
+      setBusy("");
+    }
+  };
   const [editing, setEditing] = useState("");
   const [draft, setDraft] = useState("");
   const saveLabel = async (pid: string) => {
@@ -307,47 +320,45 @@ export function KitPicker({
       setBusy("");
     }
   };
+  const link = { font: "inherit", fontSize: 13, background: "none", border: 0, padding: 0, cursor: "pointer", textDecoration: "underline" } as const;
   const putBack =
     setHidden && removed.length > 0 ? (
-      <div className="panel panel-wash" style={{ marginTop: 22 }}>
-        <p style={{ fontWeight: 800, margin: "0 0 4px" }}>Removed posters</p>
-        <p className="small muted" style={{ margin: "0 0 12px" }}>
-          Nobody sees these in their share kit. Only Heshy and partners see this box.
-        </p>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+      <details style={{ marginTop: 18 }}>
+        <summary className="small muted" style={{ cursor: "pointer" }}>
+          Removed posters ({removed.length})
+        </summary>
+        <ul style={{ listStyle: "none", margin: "8px 0 0", padding: 0, display: "grid", gap: 6 }}>
           {removed.map((k) => (
-            <div key={k.id} style={{ width: 110, display: "grid", gap: 6 }}>
+            <li key={k.id} className="small" style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={k.image}
-                alt=""
-                loading="lazy"
-                style={{
-                  width: "100%",
-                  aspectRatio: "4 / 5",
-                  objectFit: "cover",
-                  borderRadius: 8,
-                  opacity: 0.55,
-                }}
-              />
-              <span
-                className="small"
-                style={{ fontWeight: 700, lineHeight: 1.2 }}
-              >
-                {k.name}
-              </span>
-              <button
-                type="button"
-                className="btn btn-ghost btn-small"
-                disabled={busy === k.id}
-                onClick={() => change(k.id, false)}
-              >
-                {busy === k.id ? "…" : "Put back"}
-              </button>
-            </div>
+              <img src={k.image} alt="" loading="lazy" style={{ width: 28, height: 35, objectFit: "cover", borderRadius: 4, opacity: 0.6 }} />
+              <span style={{ minWidth: 150 }}>{k.name}</span>
+              {sure === k.id ? (
+                <>
+                  <span style={{ color: "var(--rust)", fontWeight: 700 }}>Delete for good?</span>
+                  <button type="button" style={{ ...link, color: "var(--rust)", fontWeight: 700 }} disabled={busy === k.id} onClick={() => erase(k.id)}>
+                    {busy === k.id ? "Deleting…" : "Yes, delete"}
+                  </button>
+                  <button type="button" style={{ ...link, color: "var(--ink-2)" }} onClick={() => setSure("")}>
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button type="button" style={{ ...link, color: "var(--ink)" }} disabled={busy === k.id} onClick={() => change(k.id, false)}>
+                    {busy === k.id ? "…" : "Put back"}
+                  </button>
+                  {setDeleted && (
+                    <button type="button" style={{ ...link, color: "var(--rust)" }} onClick={() => setSure(k.id)}>
+                      Delete for good
+                    </button>
+                  )}
+                </>
+              )}
+            </li>
           ))}
-        </div>
-      </div>
+        </ul>
+      </details>
     ) : null;
   if (!kit) return putBack;
   return (

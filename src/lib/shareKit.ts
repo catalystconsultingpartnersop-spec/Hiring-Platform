@@ -152,6 +152,13 @@ export async function shelf(kits: Kit[]): Promise<{ shown: Kit[]; removed: Kit[]
   } catch {
     /* built-in labels */
   }
-  const all = kits.map((k) => (k.id in labels ? { ...k, tag: labels[k.id] || undefined } : k));
+  let deleted: string[] = [];
+  try {
+    const { getSetting } = await import("./settings");
+    deleted = await getSetting<string[]>("share_deleted", []);
+  } catch {
+    /* nothing deleted */
+  }
+  const all = kits.filter((k) => !deleted.includes(k.id)).map((k) => (k.id in labels ? { ...k, tag: labels[k.id] || undefined } : k));
   return { shown: all.filter((k) => !hidden.includes(k.id)), removed: all.filter((k) => hidden.includes(k.id)) };
 }

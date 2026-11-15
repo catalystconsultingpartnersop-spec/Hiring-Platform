@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { siteUrl } from "@/lib/format";
 import { requireStaff } from "@/lib/session";
 import { candidateKits, ownerKits, refSlug, shelf } from "@/lib/shareKit";
-import { setPosterHidden, setPosterLabel } from "./shelf";
+import { deletePoster, setPosterHidden, setPosterLabel } from "./shelf";
 import { NetworkerLink } from "./NetworkerLink";
 import { CandidateSide } from "./CandidateSide";
 import { candidatesSeeBusiness } from "@/lib/candidateMode";
@@ -44,6 +44,7 @@ export default async function ShareKit() {
         removed={me.manager ? cand.removed : []}
         setHidden={me.manager ? setPosterHidden : undefined}
         setLabel={me.manager ? setPosterLabel : undefined}
+        setDeleted={me.manager ? deletePoster : undefined}
       />
 
       <h2 id="owners" style={{ fontSize: 24, margin: "48px 0 6px", scrollMarginTop: 16 }}>
@@ -58,6 +59,7 @@ export default async function ShareKit() {
         removed={me.manager ? owner.removed : []}
         setHidden={me.manager ? setPosterHidden : undefined}
         setLabel={me.manager ? setPosterLabel : undefined}
+        setDeleted={me.manager ? deletePoster : undefined}
       />
       {admin && (
         <section className="panel" style={{ marginTop: 32 }}>
