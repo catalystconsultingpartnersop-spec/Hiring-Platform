@@ -3,8 +3,8 @@ import { KitPicker } from "@/components/ShareTools";
 import { db } from "@/lib/db";
 import { siteUrl } from "@/lib/format";
 import { requireStaff } from "@/lib/session";
-import { candidateKits, hiddenPosters, ownerKits, refSlug } from "@/lib/shareKit";
-import { setPosterHidden } from "./shelf";
+import { candidateKits, ownerKits, refSlug, shelf } from "@/lib/shareKit";
+import { setPosterHidden, setPosterLabel } from "./shelf";
 import { NetworkerLink } from "./NetworkerLink";
 import { CandidateSide } from "./CandidateSide";
 import { candidatesSeeBusiness } from "@/lib/candidateMode";
@@ -16,7 +16,7 @@ export default async function ShareKit() {
   const admin = me.role === "admin";
   // Each person's link carries their name, so we know who brought each owner in.
   const ref = admin ? "" : refSlug(me.name.split(" ")[0] || me.email.split("@")[0]);
-  const hidden = await hiddenPosters();
+  const owner = await shelf(ownerKits(ref));
   const { data: owners } = ref ? await db().from("owners").select("id").eq("referred_by", ref) : { data: null };
   const { data: candidates } = !admin && me.id ? await db().from("candidates").select("id").eq("added_by", me.id) : { data: null };
   return (
@@ -38,7 +38,7 @@ export default async function ShareKit() {
         Send it to your network. Candidates who sign up through your link are added as yours
         {candidates?.length ? ` (${candidates.length} so far)` : ""}.
       </p>
-      <KitPicker kits={candidateKits(ref).filter((k) => !hidden.includes(k.id))} />
+      <KitPicker kits={(await shelf(candidateKits(ref))).shown} />
 
       <h2 id="owners" style={{ fontSize: 24, margin: "48px 0 6px", scrollMarginTop: 16 }}>
         For business owners
@@ -48,9 +48,10 @@ export default async function ShareKit() {
         {owners?.length ? `. ${owners.length} owner${owners.length === 1 ? " has" : "s have"} joined through you so far` : ""}.
       </p>
       <KitPicker
-        kits={ownerKits(ref).filter((k) => !hidden.includes(k.id))}
-        removed={admin ? ownerKits(ref).filter((k) => hidden.includes(k.id)) : []}
+        kits={owner.shown}
+        removed={admin ? owner.removed : []}
         setHidden={admin ? setPosterHidden : undefined}
+        setLabel={admin ? setPosterLabel : undefined}
       />
       {admin && (
         <section className="panel" style={{ marginTop: 32 }}>

@@ -276,14 +276,28 @@ export function KitPicker({
   kits,
   removed = [],
   setHidden,
+  setLabel,
 }: {
   kits: KitItem[];
   removed?: KitItem[]; // posters taken off the shelf (shown only to whoever can put them back)
   setHidden?: (id: string, hidden: boolean) => Promise<void>;
+  setLabel?: (id: string, label: string) => Promise<void>; // the small gold label under a poster's name
 }) {
   const [id, setId] = useState(kits[0]?.id ?? "");
   const [busy, setBusy] = useState("");
   const kit = kits.find((k) => k.id === id) ?? kits[0];
+  const [editing, setEditing] = useState("");
+  const [draft, setDraft] = useState("");
+  const saveLabel = async (pid: string) => {
+    if (!setLabel || busy) return;
+    setBusy(pid);
+    try {
+      await setLabel(pid, draft);
+      setEditing("");
+    } finally {
+      setBusy("");
+    }
+  };
   const change = async (pid: string, hidden: boolean) => {
     if (!setHidden || busy) return;
     setBusy(pid);
@@ -413,6 +427,42 @@ export function KitPicker({
                       </span>
                     )}
                   </button>
+                  {setLabel &&
+                    (editing === k.id ? (
+                      <span style={{ display: "grid", gap: 4 }}>
+                        <input
+                          className="input"
+                          value={draft}
+                          onChange={(ev) => setDraft(ev.target.value)}
+                          onKeyDown={(ev) => ev.key === "Enter" && saveLabel(k.id)}
+                          maxLength={30}
+                          placeholder="e.g. Heshy's pick"
+                          aria-label={`Label for ${k.name}`}
+                          autoFocus
+                          style={{ fontSize: 13, padding: "6px 8px" }}
+                        />
+                        <span style={{ display: "flex", gap: 6 }}>
+                          <button type="button" className="btn btn-gold btn-small" disabled={busy === k.id} onClick={() => saveLabel(k.id)} style={{ fontSize: 12.5, padding: "5px 10px" }}>
+                            {busy === k.id ? "…" : "Save"}
+                          </button>
+                          <button type="button" onClick={() => setEditing("")} style={{ font: "inherit", fontSize: 12.5, background: "none", border: 0, cursor: "pointer", color: "var(--ink-2)" }}>
+                            Cancel
+                          </button>
+                        </span>
+                        <span className="small muted" style={{ fontSize: 11.5 }}>Leave empty for no label.</span>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDraft(k.tag ?? "");
+                          setEditing(k.id);
+                        }}
+                        style={{ font: "inherit", fontSize: 12.5, background: "none", border: 0, padding: "2px 4px", color: "var(--ink)", cursor: "pointer", textDecoration: "underline", justifySelf: "start" }}
+                      >
+                        ✎ {k.tag ? "Edit label" : "Add label"}
+                      </button>
+                    ))}
                   {setHidden && (
                     <button
                       type="button"

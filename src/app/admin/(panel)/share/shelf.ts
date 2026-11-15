@@ -19,3 +19,18 @@ export async function setPosterHidden(id: string, hidden: boolean) {
   revalidatePath("/admin/share");
   revalidatePath("/share");
 }
+
+// The small gold label under a poster ("Shloimy recommends", "New"...). Empty
+// text means no label.
+export async function setPosterLabel(id: string, label: string) {
+  const me = await requireStaff();
+  if (me.role !== "admin") return;
+  const key = String(id).slice(0, 60);
+  const text = String(label).trim().slice(0, 30);
+  const cur = await getSetting<Record<string, string>>("share_labels", {});
+  cur[key] = text;
+  await setSetting("share_labels", cur);
+  await logActivity(`staff:${me.email}`, "share_poster_label", { poster: key, label: text });
+  revalidatePath("/admin/share");
+  revalidatePath("/share");
+}

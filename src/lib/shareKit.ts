@@ -113,3 +113,18 @@ export async function hiddenPosters(): Promise<string[]> {
     return [];
   }
 }
+
+// The shelf as people see it: removed posters left out, and Heshy's own labels
+// in place of the built-in ones.
+export async function shelf(kits: Kit[]): Promise<{ shown: Kit[]; removed: Kit[] }> {
+  const hidden = await hiddenPosters();
+  let labels: Record<string, string> = {};
+  try {
+    const { getSetting } = await import("./settings");
+    labels = await getSetting<Record<string, string>>("share_labels", {});
+  } catch {
+    /* built-in labels */
+  }
+  const all = kits.map((k) => (k.id in labels ? { ...k, tag: labels[k.id] || undefined } : k));
+  return { shown: all.filter((k) => !hidden.includes(k.id)), removed: all.filter((k) => hidden.includes(k.id)) };
+}
