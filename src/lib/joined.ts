@@ -18,7 +18,8 @@ export async function justJoined(now = Date.now()): Promise<Joined[]> {
     .slice(0, 8)
     .map((c) => ({
       id: c.id,
-      role: c.role_category!,
+      // The same title the candidate's card shows.
+      role: [c.role_category, ...(c.also_roles ?? [])].filter(Boolean).slice(0, 2).join(" / "),
       meta: [c.location_region, c.level ? LEVEL_LABEL[c.level] : null].filter(Boolean).join(" · "),
       line: (c.headline ?? "").trim().replace(/\.$/, ""),
       listedAt: c.listed_at!,
