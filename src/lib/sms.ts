@@ -25,7 +25,7 @@ export function textingIsOn() {
 // The exact words next to the box people tick. Kept with each consent, as the
 // carriers ask.
 export const CONSENT_WORDS =
-  "Text me updates about my calls and introductions. Message frequency varies. Message and data rates may apply. Reply STOP to stop, HELP for help.";
+  "Text me updates about my calls and introductions. Msg frequency varies. Msg & data rates may apply. Reply STOP to stop, HELP for help.";
 
 // Someone ticked (or unticked) the box, or replied STOP.
 export async function setTextConsent(phone: string | null | undefined, on: boolean, who: TextWho, source: string) {

@@ -11,7 +11,7 @@ export function TextMe({ phone, on }: { phone: string | null; on: boolean }) {
         <span>Mobile number</span>
         <input className="input" name="phone" type="tel" autoComplete="tel" defaultValue={phone ?? ""} required />
       </label>
-      <TextConsent defaultChecked={on} />
+      <TextConsent defaultChecked={on} agreed={on} />
       <button className="btn btn-gold btn-small" type="submit" style={{ marginTop: 12 }}>
         Save
       </button>

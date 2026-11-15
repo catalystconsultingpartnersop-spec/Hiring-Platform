@@ -11,7 +11,7 @@ import { sendText, textNumber } from "./sms";
 // gets a text when a candidate in that role is listed. Kept in activity_log.
 
 export const WATCH_WORDS =
-  "By tapping Text me, you agree to get texts from The Candidate Collection when a candidate in this role joins. Message frequency varies. Message and data rates may apply. Reply STOP to stop, HELP for help.";
+  "You agree to texts from The Candidate Collection. Msg frequency varies. Msg & data rates may apply. Reply STOP to stop, HELP for help.";
 
 type Watch = { at: string; details: { phone: string; role: string; roles: string[]; ref?: string | null } };
 

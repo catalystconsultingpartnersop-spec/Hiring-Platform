@@ -35,7 +35,7 @@ export function SetupForm({
         <span>Phone (optional)</span>
         <input className="input" name="phone" type="tel" defaultValue={owner.phone ?? ""} autoComplete="tel" />
       </label>
-      <TextConsent defaultChecked={textOk} />
+      <TextConsent defaultChecked={textOk} agreed={textOk} />
       <input type="email" name="email" value={owner.email} autoComplete="username" readOnly hidden />
       <label className="field">
         <span>

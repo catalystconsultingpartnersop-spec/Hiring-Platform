@@ -22,9 +22,11 @@ export function PhoneForm({ staffId, phone, self, textOk }: { staffId: string; p
           <input type="checkbox" name="text_ok" value="yes" defaultChecked={textOk} style={{ marginTop: 3, width: 18, height: 18, flex: "none" }} />
           <span style={{ fontSize: 14.5 }}>
             <b>Text me</b> when a candidate books or changes a call, and a short summary each morning.
-            <span className="small muted" style={{ display: "block" }}>
-              Message frequency varies. Message and data rates may apply. Reply STOP to stop, HELP for help.
-            </span>
+            {!textOk && (
+              <span className="small muted" style={{ display: "block" }}>
+                Msg frequency varies. Msg &amp; data rates may apply. Reply STOP to stop, HELP for help.
+              </span>
+            )}
           </span>
         </label>
       )}
