@@ -4,7 +4,15 @@ import { useEffect, useRef, useState } from "react";
 
 // Copy, download and send buttons for the owner share kit. On phones, "Share"
 // sends the picture and the message together (WhatsApp, Messages, email).
-export function ShareTools({ message, link, image }: { message: string; link: string; image: string }) {
+export function ShareTools({
+  message,
+  link,
+  image,
+}: {
+  message: string;
+  link: string;
+  image: string;
+}) {
   const [done, setDone] = useState("");
   const [canShareFiles, setCanShareFiles] = useState(false);
   const picture = useRef<File | null>(null);
@@ -17,11 +25,23 @@ export function ShareTools({ message, link, image }: { message: string; link: st
     // Load the picture ahead of time, so tapping Share opens the share sheet right away.
     fetch(image)
       .then((r) => r.blob())
-      .then((b) => (picture.current = new File([b], "the-candidate-collection.png", { type: "image/png" })))
+      .then(
+        (b) =>
+          (picture.current = new File([b], "the-candidate-collection.png", {
+            type: "image/png",
+          })),
+      )
       .catch(() => {});
     fetch(statusImage)
       .then((r) => r.blob())
-      .then((b) => (statusPicture.current = new File([b], "the-candidate-collection-status.png", { type: "image/png" })))
+      .then(
+        (b) =>
+          (statusPicture.current = new File(
+            [b],
+            "the-candidate-collection-status.png",
+            { type: "image/png" },
+          )),
+      )
       .catch(() => {});
     // Whether this phone can share a picture (checked once the page is on screen).
     const t = setTimeout(() => {
@@ -60,10 +80,20 @@ export function ShareTools({ message, link, image }: { message: string; link: st
   async function sharePicture() {
     navigator.clipboard
       .writeText(message)
-      .then(() => setDone("Message copied. In WhatsApp, tap the caption box and paste it."))
+      .then(() =>
+        setDone(
+          "Message copied. In WhatsApp, tap the caption box and paste it.",
+        ),
+      )
       .catch(() => setDone(""));
     try {
-      const file = picture.current ?? new File([await (await fetch(image)).blob()], "the-candidate-collection.png", { type: "image/png" });
+      const file =
+        picture.current ??
+        new File(
+          [await (await fetch(image)).blob()],
+          "the-candidate-collection.png",
+          { type: "image/png" },
+        );
       await navigator.share({ files: [file] });
     } catch {
       /* they closed the share sheet */
@@ -75,10 +105,20 @@ export function ShareTools({ message, link, image }: { message: string; link: st
   async function shareStatus() {
     navigator.clipboard
       .writeText(message)
-      .then(() => setDone("Message copied. Pick WhatsApp, then My status, and paste it as the caption."))
+      .then(() =>
+        setDone(
+          "Message copied. Pick WhatsApp, then My status, and paste it as the caption.",
+        ),
+      )
       .catch(() => setDone(""));
     try {
-      const file = statusPicture.current ?? new File([await (await fetch(statusImage)).blob()], "the-candidate-collection-status.png", { type: "image/png" });
+      const file =
+        statusPicture.current ??
+        new File(
+          [await (await fetch(statusImage)).blob()],
+          "the-candidate-collection-status.png",
+          { type: "image/png" },
+        );
       await navigator.share({ files: [file] });
     } catch {
       /* they closed the share sheet */
@@ -94,7 +134,11 @@ export function ShareTools({ message, link, image }: { message: string; link: st
           </button>
         )}
         {canShareFiles && (
-          <button type="button" className="btn btn-ghost" onClick={sharePicture}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={sharePicture}
+          >
             Share picture only
           </button>
         )}
@@ -103,47 +147,110 @@ export function ShareTools({ message, link, image }: { message: string; link: st
             For WhatsApp status
           </button>
         ) : (
-          <a className="btn btn-ghost" href={statusImage} download="the-candidate-collection-status.png">
+          <a
+            className="btn btn-ghost"
+            href={statusImage}
+            download="the-candidate-collection-status.png"
+          >
             Download for WhatsApp status
           </a>
         )}
-        <button type="button" className={`btn ${canShareFiles ? "btn-ghost" : "btn-gold"}`} onClick={() => copy(message, "Message")}>
+        <button
+          type="button"
+          className={`btn ${canShareFiles ? "btn-ghost" : "btn-gold"}`}
+          onClick={() => copy(message, "Message")}
+        >
           Copy message
         </button>
-        <a className="btn btn-ghost" href={image} download="the-candidate-collection.png">
+        <a
+          className="btn btn-ghost"
+          href={image}
+          download="the-candidate-collection.png"
+        >
           Download picture
         </a>
-        <button type="button" className="btn btn-ghost" onClick={() => copy(link, "Link")}>
+        <button
+          type="button"
+          className="btn btn-ghost"
+          onClick={() => copy(link, "Link")}
+        >
           Copy link
         </button>
-        <a className="btn btn-ghost" href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noreferrer">
+        <a
+          className="btn btn-ghost"
+          href={`https://wa.me/?text=${encodeURIComponent(message)}`}
+          target="_blank"
+          rel="noreferrer"
+        >
           WhatsApp
         </a>
-        <a className="btn btn-ghost" href={`sms:?&body=${encodeURIComponent(message)}`}>
+        <a
+          className="btn btn-ghost"
+          href={`sms:?&body=${encodeURIComponent(message)}`}
+        >
           Text
         </a>
       </div>
-      <p className="small" role="status" style={{ minHeight: 20, color: "var(--moss)", margin: 0 }}>
+      <p
+        className="small"
+        role="status"
+        style={{ minHeight: 20, color: "var(--moss)", margin: 0 }}
+      >
         {done}
       </p>
       <p className="small muted" style={{ margin: 0 }}>
-        &ldquo;Share&rdquo; sends the message and link; WhatsApp and Messages show the picture as a preview above it.
+        &ldquo;Share&rdquo; sends the message and link; WhatsApp and Messages
+        show the picture as a preview above it.
       </p>
     </div>
   );
 }
 
-export function KitView({ message, link, image }: { message: string; link: string; image: string }) {
+export function KitView({
+  message,
+  link,
+  image,
+}: {
+  message: string;
+  link: string;
+  image: string;
+}) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 28, alignItems: "start" }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+        gap: 28,
+        alignItems: "start",
+      }}
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={image} alt="Share picture" style={{ width: "100%", maxWidth: 300, borderRadius: 14, boxShadow: "0 12px 30px rgba(23,33,58,.15)" }} />
+      <img
+        src={image}
+        alt="Share picture"
+        style={{
+          width: "100%",
+          maxWidth: 300,
+          borderRadius: 14,
+          boxShadow: "0 12px 30px rgba(23,33,58,.15)",
+        }}
+      />
       <div style={{ display: "grid", gap: 16, minWidth: 0 }}>
         <div>
-          <p className="small muted" style={{ margin: "0 0 6px", fontWeight: 600 }}>
+          <p
+            className="small muted"
+            style={{ margin: "0 0 6px", fontWeight: 600 }}
+          >
             The message
           </p>
-          <p className="panel panel-wash" style={{ whiteSpace: "pre-wrap", margin: 0, overflowWrap: "anywhere" }}>
+          <p
+            className="panel panel-wash"
+            style={{
+              whiteSpace: "pre-wrap",
+              margin: 0,
+              overflowWrap: "anywhere",
+            }}
+          >
             {message}
           </p>
         </div>
@@ -155,49 +262,178 @@ export function KitView({ message, link, image }: { message: string; link: strin
 
 // The share kit as a shelf: small previews to pick from, then the chosen one
 // opens underneath with its message and buttons.
-export function KitPicker({ kits }: { kits: { id: string; name: string; tag?: string; about: string; image: string; message: string; link: string }[] }) {
+type KitItem = {
+  id: string;
+  name: string;
+  tag?: string;
+  about: string;
+  image: string;
+  message: string;
+  link: string;
+};
+
+export function KitPicker({
+  kits,
+  removed = [],
+  setHidden,
+}: {
+  kits: KitItem[];
+  removed?: KitItem[]; // posters taken off the shelf (shown only to whoever can put them back)
+  setHidden?: (id: string, hidden: boolean) => Promise<void>;
+}) {
   const [id, setId] = useState(kits[0]?.id ?? "");
+  const [busy, setBusy] = useState("");
   const kit = kits.find((k) => k.id === id) ?? kits[0];
-  if (!kit) return null;
+  const change = async (pid: string, hidden: boolean) => {
+    if (!setHidden || busy) return;
+    setBusy(pid);
+    try {
+      await setHidden(pid, hidden);
+    } finally {
+      setBusy("");
+    }
+  };
+  const putBack =
+    setHidden && removed.length > 0 ? (
+      <div className="panel panel-wash" style={{ marginTop: 22 }}>
+        <p style={{ fontWeight: 800, margin: "0 0 4px" }}>Removed posters</p>
+        <p className="small muted" style={{ margin: "0 0 12px" }}>
+          Nobody sees these in their share kit. Only you see this box.
+        </p>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          {removed.map((k) => (
+            <div key={k.id} style={{ width: 110, display: "grid", gap: 6 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={k.image}
+                alt=""
+                loading="lazy"
+                style={{
+                  width: "100%",
+                  aspectRatio: "4 / 5",
+                  objectFit: "cover",
+                  borderRadius: 8,
+                  opacity: 0.55,
+                }}
+              />
+              <span
+                className="small"
+                style={{ fontWeight: 700, lineHeight: 1.2 }}
+              >
+                {k.name}
+              </span>
+              <button
+                type="button"
+                className="btn btn-ghost btn-small"
+                disabled={busy === k.id}
+                onClick={() => change(k.id, false)}
+              >
+                {busy === k.id ? "…" : "Put back"}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    ) : null;
+  if (!kit) return putBack;
   return (
     <div>
-      {kits.length > 1 && (
+      {(kits.length > 1 || setHidden) && (
         <>
-          <p className="small muted" style={{ margin: "0 0 10px", fontWeight: 600 }}>
+          <p
+            className="small muted"
+            style={{ margin: "0 0 10px", fontWeight: 600 }}
+          >
             Pick one
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))", gap: 12, marginBottom: 26 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))",
+              gap: 12,
+              marginBottom: 26,
+            }}
+          >
             {kits.map((k) => {
               const on = k.id === kit.id;
               return (
-                <button
+                <div
                   key={k.id}
-                  type="button"
-                  onClick={() => setId(k.id)}
-                  aria-pressed={on}
-                  style={{
-                    font: "inherit",
-                    textAlign: "left",
-                    cursor: "pointer",
-                    background: "#fff",
-                    padding: 8,
-                    borderRadius: 14,
-                    border: on ? "2.5px solid var(--marigold)" : "2.5px solid var(--line)",
-                    boxShadow: on ? "0 8px 20px rgba(23,33,58,.16)" : "none",
-                    display: "grid",
-                    gap: 6,
-                    alignContent: "start",
-                  }}
+                  style={{ display: "grid", gap: 4, alignContent: "start" }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={k.image} alt="" loading="lazy" style={{ width: "100%", aspectRatio: "4 / 5", objectFit: "cover", borderRadius: 8, display: "block" }} />
-                  <span style={{ fontWeight: 800, fontSize: 14, lineHeight: 1.2, color: "var(--ink)" }}>{k.name}</span>
-                  {k.tag && (
-                    <span className="tag tag-gold" style={{ justifySelf: "start", fontSize: 11.5 }}>
-                      {k.tag}
+                  <button
+                    type="button"
+                    onClick={() => setId(k.id)}
+                    aria-pressed={on}
+                    style={{
+                      font: "inherit",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      background: "#fff",
+                      padding: 8,
+                      borderRadius: 14,
+                      border: on
+                        ? "2.5px solid var(--marigold)"
+                        : "2.5px solid var(--line)",
+                      boxShadow: on ? "0 8px 20px rgba(23,33,58,.16)" : "none",
+                      display: "grid",
+                      gap: 6,
+                      alignContent: "start",
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={k.image}
+                      alt=""
+                      loading="lazy"
+                      style={{
+                        width: "100%",
+                        aspectRatio: "4 / 5",
+                        objectFit: "cover",
+                        borderRadius: 8,
+                        display: "block",
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontWeight: 800,
+                        fontSize: 14,
+                        lineHeight: 1.2,
+                        color: "var(--ink)",
+                      }}
+                    >
+                      {k.name}
                     </span>
+                    {k.tag && (
+                      <span
+                        className="tag tag-gold"
+                        style={{ justifySelf: "start", fontSize: 11.5 }}
+                      >
+                        {k.tag}
+                      </span>
+                    )}
+                  </button>
+                  {setHidden && (
+                    <button
+                      type="button"
+                      disabled={busy === k.id}
+                      onClick={() => change(k.id, true)}
+                      style={{
+                        font: "inherit",
+                        fontSize: 12.5,
+                        background: "none",
+                        border: 0,
+                        padding: "2px 4px",
+                        color: "var(--rust)",
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                        justifySelf: "start",
+                      }}
+                    >
+                      {busy === k.id ? "Removing…" : "✕ Remove"}
+                    </button>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>
@@ -205,10 +441,17 @@ export function KitPicker({ kits }: { kits: { id: string; name: string; tag?: st
       )}
       {kits.length > 1 && (
         <p style={{ margin: "0 0 14px" }}>
-          <strong style={{ fontSize: 18 }}>{kit.name}</strong> <span className="muted">· {kit.about}</span>
+          <strong style={{ fontSize: 18 }}>{kit.name}</strong>{" "}
+          <span className="muted">· {kit.about}</span>
         </p>
       )}
-      <KitView key={kit.id} message={kit.message} link={kit.link} image={kit.image} />
+      <KitView
+        key={kit.id}
+        message={kit.message}
+        link={kit.link}
+        image={kit.image}
+      />
+      {putBack}
     </div>
   );
 }

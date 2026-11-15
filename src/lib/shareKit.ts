@@ -103,3 +103,13 @@ export async function sentBy(): Promise<string | null> {
     return null;
   }
 }
+
+// Posters Heshy took off the shelf (they can be put back from the team share kit).
+export async function hiddenPosters(): Promise<string[]> {
+  try {
+    const { getSetting } = await import("./settings");
+    return await getSetting<string[]>("share_hidden", []);
+  } catch {
+    return [];
+  }
+}

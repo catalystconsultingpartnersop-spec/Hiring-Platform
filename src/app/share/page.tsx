@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { KitPicker } from "@/components/ShareTools";
 import { brandName } from "@/lib/format";
-import { candidateKits, ownerKits, refSlug } from "@/lib/shareKit";
+import { candidateKits, hiddenPosters, ownerKits, refSlug } from "@/lib/shareKit";
 
 export const metadata: Metadata = {
   title: `Share ${brandName()}`,
@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 export default async function SharePage({ searchParams }: PageProps<"/share">) {
   const sp = await searchParams;
   const ref = typeof sp.r === "string" ? refSlug(sp.r) : "";
+  const hidden = await hiddenPosters();
   return (
     <div className="wrap" style={{ paddingBlock: "40px 64px" }}>
       <div className="page-head" style={{ paddingTop: 0 }}>
@@ -22,12 +23,12 @@ export default async function SharePage({ searchParams }: PageProps<"/share">) {
           the best hire they make this year.
         </p>
       </div>
-      <KitPicker kits={ownerKits(ref)} />
+      <KitPicker kits={ownerKits(ref).filter((k) => !hidden.includes(k.id))} />
       <h2 style={{ fontSize: 26, margin: "56px 0 6px" }}>Know someone looking for work?</h2>
       <p className="muted" style={{ margin: "0 0 18px" }}>
         Send them this one. It&rsquo;s free for them, private, and starts with a real conversation.
       </p>
-      <KitPicker kits={candidateKits(ref)} />
+      <KitPicker kits={candidateKits(ref).filter((k) => !hidden.includes(k.id))} />
     </div>
   );
 }
