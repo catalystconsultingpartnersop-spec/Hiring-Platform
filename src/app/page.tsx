@@ -122,6 +122,9 @@ export default async function Home() {
                   {r}
                 </Link>
               ))}
+              <Link href="/candidates" className={s.chipMore}>
+                and more →
+              </Link>
             </div>
           )}
           <div className={s.people}>
