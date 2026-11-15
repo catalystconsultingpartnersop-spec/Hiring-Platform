@@ -404,16 +404,17 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
   color: rgba(255, 255, 255, 0.72);
   font-size: 14.5px;
 }
-.footer-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 32px; }
+.footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.1fr; gap: 32px; }
 .footer-brand p { margin: 14px 0 0; max-width: 38ch; line-height: 1.6; }
 .site-footer h3 { font-family: var(--text); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.5); margin: 4px 0 12px; }
-.site-footer nav, .site-footer .footer-grid > div:last-child { display: flex; flex-direction: column; gap: 8px; }
+.site-footer nav { display: flex; flex-direction: column; gap: 8px; }
 .site-footer a { color: #fff; text-decoration: none; }
 .site-footer a:hover { text-decoration: underline; }
 .site-footer .logo-name { color: #fff; }
 .site-footer .brand-accent { color: var(--marigold); }
 .site-footer .logo-tag { color: rgba(255, 255, 255, 0.6); }
-.footer-bottom { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 36px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: 13px; color: rgba(255, 255, 255, 0.5); }
+.footer-bottom a { color: rgba(255, 255, 255, 0.75); }
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 36px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: 13px; color: rgba(255, 255, 255, 0.5); }
 @media (max-width: 760px) { .footer-grid { grid-template-columns: 1fr 1fr; } .footer-brand { grid-column: 1 / -1; } }
 
 .sr-only {
@@ -615,7 +616,7 @@ a.card:hover, .card:has(.card-link:hover) { border-color: var(--ink); }
   .site-footer { padding-top: 36px; }
   .footer-brand p { display: none; }
   .footer-grid { gap: 24px 20px; }
-  .footer-grid > div:last-child { grid-column: 1 / -1; }
+  .footer-grid > nav[aria-label="For businesses"] { grid-row: span 2; }
   .footer-bottom { margin-top: 24px; font-size: 12px; }
 }
 

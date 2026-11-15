@@ -10,7 +10,7 @@ import { currentCandidateId, currentOwner } from "@/lib/session";
 import { ShortlistLink, ShortlistSync } from "@/components/Shortlist";
 import { Logo } from "@/components/Logo";
 import { legalEntity } from "@/lib/agreement";
-import { siteUrl } from "@/lib/format";
+import { siteUrl, teamUrl } from "@/lib/format";
 import { candidateOnly } from "@/lib/candidateMode";
 
 export const metadata: Metadata = {
@@ -130,21 +130,21 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <Link href={P("/candidates")}>Browse candidates</Link>
               <Link href={P("/hiring-help")}>Hiring help</Link>
               <Link href={P("/billing")}>Billing philosophy</Link>
-              <Link href={P("/refer")}>Refer a business owner</Link>
-              <Link href={P(signedIn ? "/account" : "/login")}>{signedIn ? "Your account" : "Sign in"}</Link>
+              <Link href={P(signedIn ? "/account" : "/login")}>{signedIn ? "Your account" : "Business sign in"}</Link>
             </nav>
             )}
             <nav aria-label="For candidates">
               <h3>For candidates</h3>
               <Link href={P("/join")}>Looking for work?</Link>
               <Link href={P("/join#career-help")}>Career help</Link>
-              <Link href={P("/me")}>Your page</Link>
-              <Link href={P("/mission")}>Our mission</Link>
+              <Link href={P("/me")}>Candidate sign in</Link>
             </nav>
-            <div>
-              <h3>Questions?</h3>
+            <nav aria-label="About us">
+              <h3>About us</h3>
+              <Link href={P("/mission")}>Our mission</Link>
+              {!onlyCandidate && <Link href={P("/refer")}>Refer a business owner</Link>}
               <Link href={P("/contact")}>Contact us</Link>
-            </div>
+            </nav>
           </div>
           <div className="wrap footer-bottom">
             <span>
@@ -155,6 +155,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               {onlyCandidate && <Link href={P("/candidates?for=business")}>Hiring? Browse candidates</Link>}
               <Link href={P("/terms")}>Terms</Link>
               <Link href={P("/privacy")}>Privacy</Link>
+              <a href={`${teamUrl()}/admin/login`}>Team sign in</a>
             </span>
           </div>
         </footer>
