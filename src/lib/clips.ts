@@ -50,7 +50,7 @@ export function topWindows(entries: Span[], total: number, n = 4, len = 30, othe
   const out: number[] = [];
   for (const w of all) {
     if (out.length >= n) break;
-    if (out.every((t) => Math.abs(t - w.t) >= 60)) out.push(w.t);
+    if (out.every((t) => Math.abs(t - w.t) >= 40)) out.push(w.t);
   }
   return out.length ? out : [skip];
 }
@@ -138,7 +138,7 @@ ${talkers.slice(0, 8).map((p, i) => `Speaker ${letters[i]} (shown as "${p.n || "
   const cand = scored.find((p) => p.id === candId)!;
   const mine = speakers.get(candId) ?? [];
   const others = [...speakers.entries()].filter(([id]) => id !== candId).flatMap(([, es]) => es);
-  const starts = topWindows(mine, total, 4, 30, others);
+  const starts = topWindows(mine, total, 8, 30, others);
   // How much of each stretch is the candidate talking, and how much is anyone else.
   const share = (t: number) => ({ cand: overlap(mine, t, 30), others: overlap(others, t, 30) });
   // Moments when the candidate is mid-sentence: the places to look for a clear picture of them.
@@ -235,8 +235,13 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
     // Only stretches where the candidate does most of the talking. Then look at two frames from each,
     // and take the first stretch that shows the candidate both times (a face, and not our own team's name on the tile).
     const solo = rec.starts.filter((t) => rec.share(t).cand >= 12 && rec.share(t).others <= 6);
-    const tries = solo.length ? solo : rec.starts.filter((t) => rec.share(t).cand > rec.share(t).others * 2).slice(0, 2);
-    if (!tries.length) throw new Error("No 30 seconds where the candidate talks without the rep.");
+    // No stretch where they talk quite alone? Then the ones where they talk clearly more than anyone else.
+    const mostly = rec.starts.filter((t) => rec.share(t).cand >= 8 && rec.share(t).cand > rec.share(t).others);
+    const tries = (solo.length ? solo : mostly).slice(0, 5);
+    if (!tries.length) {
+      const b = rec.share(rec.starts[0]);
+      throw new Error(`No 30 seconds where the candidate does most of the talking (best: candidate ${Math.round(b.cand)}s, others ${Math.round(b.others)}s, shown as "${rec.candidateLabel}").`);
+    }
     const staffOn = (label: string) => {
       const lw = wordsOf(label);
       return lw.some((w) => staffWords.includes(w)) && !lw.some((w) => candWords.includes(w));
@@ -353,13 +358,20 @@ export async function makeWaitingClips(max = 1) {
   // (then it's tried again as soon as that's fixed).
   const resting = (a: Record<string, string> | null) =>
     !!a?.clip_tried_at && Date.now() - Date.parse(a.clip_tried_at) < 6 * 36e5 && !/has not been used|is disabled|isn't connected/i.test(a.clip_error ?? "");
-  // New ones first, then older clips that should be made again the better way.
+  // Older clips that should be made again the careful way go first, then calls that have none yet.
   const fresh = uniq.filter((r) => !clipOf(r.candidates!.application) && !resting(r.candidates!.application));
   const redo = uniq.filter((r) => clipIsOld(clipOf(r.candidates!.application)) && !resting(r.candidates!.application));
-  const todo = [...fresh, ...redo].slice(0, max);
+  // A call with no recording fails in a second: don't let those use up the run. Keep going
+  // until enough clips are made or the time is nearly up.
+  const began = Date.now();
   let made = 0;
-  for (const r of todo) if ((await makeClip(r.candidate_id)).ok) made++;
-  return { made, done: done + made, waiting: uniq.length - done - made };
+  let tried = 0;
+  for (const r of [...redo, ...fresh]) {
+    if (made >= max || Date.now() - began > 150_000) break;
+    tried++;
+    if ((await makeClip(r.candidate_id)).ok) made++;
+  }
+  return { made, tried, done: done + made, waiting: redo.length + fresh.length - tried };
 }
 
 export async function clipUrl(candidateId: string, kind: "video" | "photo" | "face") {
