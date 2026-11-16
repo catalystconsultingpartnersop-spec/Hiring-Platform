@@ -1075,6 +1075,7 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
   let rebooked = 0;
   let asked = 0;
   let movedWhen = "";
+  let clash = 0;
   if (rep && plan !== "stay") {
     const { data: calls } = await db()
       .from("onboarding_calls")
@@ -1093,7 +1094,12 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
       // Outside the new rep's hours, or they're busy then: ask them first. The call stays put until they say yes.
       if (me.id !== rep.id) {
         const { count } = await db().from("onboarding_calls").select("id", { count: "exact", head: true }).eq("staff_id", rep.id).eq("status", "booked").neq("candidate_id", candidateId).lt("starts_at", k.ends_at).gt("ends_at", k.starts_at);
-        if (count || !(await withinHours(rep.id, k.starts_at, k.ends_at))) {
+        // Already has another call then: nothing to ask. The call stays where it is.
+        if (count) {
+          clash++;
+          continue;
+        }
+        if (!(await withinHours(rep.id, k.starts_at, k.ends_at))) {
           const { askRepForTime } = await import("@/lib/timeAsk");
           if (await askRepForTime(k.id, rep, { name: me.name || me.email, email: me.email, actor: staffActor(me), prevRep })) asked++;
           continue;
@@ -1141,7 +1147,7 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
   revalidatePath(`/admin/candidates/${candidateId}`);
   return {
     ok: rep
-      ? `Assigned to ${rep.full_name || rep.email}${moved ? `. Their upcoming call moved too, and ${(rep.full_name || "they").split(" ")[0]} has the link` : ""}${rebooked ? ". Their call was cancelled, and they got an email to pick a new time" : ""}${asked ? `. ${(rep.full_name || "They").split(" ")[0]} was asked to make an exception for the call time. Until they answer, the call stays where it is` : ""}${tell ? ". The candidate was told about the new rep" : rebooked ? "" : ". The candidate wasn't emailed"}.`
+      ? `Assigned to ${rep.full_name || rep.email}${moved ? `. Their upcoming call moved too, and ${(rep.full_name || "they").split(" ")[0]} has the link` : ""}${rebooked ? ". Their call was cancelled, and they got an email to pick a new time" : ""}${clash ? `. ${(rep.full_name || "They").split(" ")[0]} has another call at that time, so the booked call stayed where it is` : ""}${asked ? `. ${(rep.full_name || "They").split(" ")[0]} was asked to make an exception for the call time. Until they answer, the call stays where it is` : ""}${tell ? ". The candidate was told about the new rep" : rebooked ? "" : ". The candidate wasn't emailed"}.`
       : "Unassigned.",
   };
 }
@@ -1178,7 +1184,7 @@ export async function callPlanInfo(candidateId: string, repId: string): Promise<
     busy: !!count,
     outside,
     // Their open hours are their standing yes. Anything else, they're asked first (unless they're the one switching).
-    needsYes: (!!count || outside) && me.id !== repId,
+    needsYes: !count && outside && me.id !== repId,
   };
 }
 

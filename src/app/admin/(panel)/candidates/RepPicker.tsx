@@ -41,7 +41,7 @@ export function RepPicker(p: { candidateId: string; value: string; options: [str
     start(async () => {
       const info = next ? await callPlanInfo(p.candidateId, next).catch(() => null) : null;
       if (!info) return save(next, "keep");
-      setPlan("keep");
+      setPlan(info.busy ? "rebook" : "keep");
       setAsk({ next, info });
     });
   }
@@ -84,13 +84,16 @@ export function RepPicker(p: { candidateId: string; value: string; options: [str
           <b>
             A call is booked with {ask.info.with} for {ask.info.when}. What should happen to it?
           </b>
+          {ask.info.busy ? (
+            <span style={{ color: "#8a5a00" }}>{nameOf(ask.next)} already has another call at that time, so it can&rsquo;t stay as is.</span>
+          ) : (
           <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontWeight: 400, margin: 0 }}>
             <input type="radio" name={`plan-${p.candidateId}`} checked={plan === "keep"} onChange={() => setPlan("keep")} style={{ marginTop: 3 }} />
             {ask.info.needsYes ? (
               <span>
                 Ask {nameOf(ask.next)} to make an exception for this time
                 <span style={{ display: "block", color: "#8a5a00", fontSize: 13.5 }}>
-                  {ask.info.busy ? `${nameOf(ask.next)} has another call then.` : `It's outside ${nameOf(ask.next)}'s open hours.`} {nameOf(ask.next)} can say yes, ask for a different time, or pass. Nothing moves until then.
+                  It&rsquo;s outside {nameOf(ask.next)}&rsquo;s open hours. {nameOf(ask.next)} can say yes, ask for a different time, or pass. Nothing moves until then.
                 </span>
               </span>
             ) : (
@@ -100,6 +103,7 @@ export function RepPicker(p: { candidateId: string; value: string; options: [str
               </span>
             )}
           </label>
+          )}
           <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontWeight: 400, margin: 0 }}>
             <input type="radio" name={`plan-${p.candidateId}`} checked={plan === "rebook"} onChange={() => setPlan("rebook")} style={{ marginTop: 3 }} />
             <span>
