@@ -2,9 +2,14 @@ import type { FeeTier, PublicCandidate } from "./db";
 
 export function money(cents: number | null | undefined) {
   if (cents == null) return "—";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(
-    cents / 100,
-  );
+  // Whole dollars stay clean ($5,000); amounts with cents show them ($19.50).
+  const digits = cents % 100 === 0 ? 0 : 2;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(cents / 100);
 }
 
 export function salaryRange(min: number | null, max: number | null) {
@@ -49,6 +54,11 @@ export function feeFor(c: Pick<PublicCandidate, "fee_override_cents" | "salary_m
 
 export function dateShort(iso: string | null | undefined) {
   if (!iso) return "—";
+  // A plain calendar date ("2026-11-13") has no time, so show it as that exact day.
+  // Reading it in New York time would turn it into the day before.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+    return new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+  }
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York" });
 }
 
