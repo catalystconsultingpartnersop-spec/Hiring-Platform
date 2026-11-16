@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { requireStaff } from "@/lib/session";
 import { matchesFor, positionsFor } from "@/lib/matching";
+import { after } from "next/server";
+import { judgePending } from "@/lib/matchJudge";
 import { loadMatches } from "./data";
 import { FitPill } from "./FitPill";
 import { markNotAFit } from "./actions";
@@ -13,14 +15,16 @@ export const metadata = { title: "Matches" };
 export default async function MatchesPage({ searchParams }: PageProps<"/admin/matches">) {
   const me = await requireStaff();
   const sp = await searchParams;
-  const { ready, positions, candidates, poolFor, isHidden } = await loadMatches(me);
+  const { ready, positions, candidates, poolFor, isHidden, verdict } = await loadMatches(me);
+  after(() => judgePending(4).catch(() => null));
 
   const perPosition = positions.map((p) => ({ p, ms: matchesFor(p, poolFor(p.id)) }));
   const perCandidate = candidates
     .map((c) => ({ c, best: positionsFor(c, positions.filter((p) => !isHidden(p.id, c.id)), 3) }))
     .filter((x) => x.best.length)
     .sort((a, b) => b.best[0].m.score - a.best[0].m.score);
-  const strong = perCandidate.filter((x) => x.best[0].m.fit === "strong").length;
+  const top = (x: (typeof perCandidate)[number]) => verdict(x.best[0].p.id, x.c.id);
+  const strong = perCandidate.filter((x) => (top(x)?.v === "strong" || top(x)?.v === "good" ? top(x)!.v : x.best[0].m.fit) === "strong" && top(x)?.v !== "paper").length;
   const noFit = perPosition.filter((x) => !x.ms.length).length;
 
   return (
@@ -93,9 +97,10 @@ export default async function MatchesPage({ searchParams }: PageProps<"/admin/ma
                           {best[0].p.company ? ` at ${best[0].p.company}` : ""}
                           {best.length > 1 ? ` · +${best.length - 1} more` : ""}
                         </small>
+                        {verdict(best[0].p.id, c.id)?.why && <small className={styles.aiWhy}>{verdict(best[0].p.id, c.id)!.why}</small>}
                       </Link>
                       <span className={styles.rowEnd}>
-                        <FitPill fit={best[0].m.fit!} />
+                        <FitPill fit={best[0].m.fit!} j={verdict(best[0].p.id, c.id)} />
                         <form action={markNotAFit.bind(null, best[0].p.id, c.id, true)}>
                           <button type="submit" className={styles.x} title={`Not a fit for ${best[0].p.title}`} aria-label={`${c.full_name} is not a fit for ${best[0].p.title}`}>
                             ✕

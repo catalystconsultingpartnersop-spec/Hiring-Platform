@@ -27,3 +27,8 @@
 .x:hover { color: var(--rust); border-color: var(--rust); }
 .removed { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
 .removed > summary { cursor: pointer; font-size: 14px; color: var(--ink-2); }
+
+.aiWhy { display: block; margin-top: 4px; font-size: 14px; line-height: 1.4; color: var(--ink); font-weight: 600; }
+.ask { margin-top: 3px; font-size: 13.5px; color: var(--ink-2); }
+.checking { margin-top: 4px; font-size: 13.5px; color: var(--ink-3); font-style: italic; }
+.doubt { margin-top: 3px; font-size: 14px; color: #7d2a1e; }

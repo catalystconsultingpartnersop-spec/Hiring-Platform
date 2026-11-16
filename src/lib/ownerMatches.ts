@@ -7,6 +7,7 @@ import { sendEmail } from "./email";
 import { siteUrl } from "./format";
 import { signedToken } from "./session";
 import { hiddenMatches, pairKey } from "./matchHidden";
+import { judgedMatches, passes } from "./matchJudge";
 
 // Owners can tell us what they're hiring for. We quietly point out candidates who fit:
 // a note on the site, and at most one email a week. Never pushy, always optional.
@@ -35,10 +36,10 @@ export type OwnerFit = { p: Position; list: { c: PublicCandidate; why: string; s
 export async function ownerFits(ownerId: string, max = 3): Promise<OwnerFit[]> {
   const positions = await ownerPositions(ownerId);
   if (!positions.length) return [];
-  const [{ rows }, seen, hidden] = await Promise.all([allListed(), alreadySeen(ownerId), hiddenMatches()]);
+  const [{ rows }, seen, hidden, judged] = await Promise.all([allListed(), alreadySeen(ownerId), hiddenMatches(), judgedMatches()]);
   const pool = rows.filter((c) => !seen.has(c.id));
   return positions
-    .map((p) => ({ p, list: matchesFor(p, pool.filter((c) => !hidden[pairKey(p.id, c.id)]), max).map(({ c, m }) => ({ c, why: ownerWhy(m.why), strong: m.fit === "strong" })) }))
+    .map((p) => ({ p, list: matchesFor(p, pool.filter((c) => !hidden[pairKey(p.id, c.id)] && passes(judged[pairKey(p.id, c.id)])), max).map(({ c, m }) => ({ c, why: ownerWhy(m.why), strong: m.fit === "strong" })) }))
     .filter((x) => x.list.length);
 }
 
@@ -62,6 +63,7 @@ export async function sendOwnerNudges() {
   if (!positions.length) return { sent: 0 };
   const out = await optedOut();
   const hidden = await hiddenMatches();
+  const judged = await judgedMatches();
   const { rows } = await allListed();
   const weekAgo = Date.now() - 7 * 864e5;
   const fresh = rows.filter((c) => c.listed_at && Date.parse(c.listed_at) > weekAgo);
@@ -81,7 +83,7 @@ export async function sendOwnerNudges() {
     const told = new Set(((prior ?? []) as { details: { candidate_id?: string } }[]).map((r) => r.details.candidate_id));
     let best: { p: Position; c: PublicCandidate } | null = null;
     for (const p of ps) {
-      const top = matchesFor(p, fresh.filter((c) => !seen.has(c.id) && !told.has(c.id) && !hidden[pairKey(p.id, c.id)]), 1)[0];
+      const top = matchesFor(p, fresh.filter((c) => !seen.has(c.id) && !told.has(c.id) && !hidden[pairKey(p.id, c.id)] && passes(judged[pairKey(p.id, c.id)])), 1)[0];
       if (top && top.m.fit === "strong") {
         best = { p, c: top.c };
         break;

@@ -27,6 +27,8 @@ export async function GET(req: NextRequest) {
   const { flushQueuedTexts } = await import("@/lib/sms");
   await flushQueuedTexts().catch((e) => console.error("queued texts", e));
   await (await import("@/lib/timeAsk")).lapseAsks().catch((e) => console.error("call time asks", e));
+  // The second look at new matches, so they're ready before anyone opens the page or an owner is told.
+  await (await import("@/lib/matchJudge")).judgePending(5).catch((e) => console.error("match second look", e));
   const { textRoleWatchers } = await import("@/lib/roleWatch");
   await textRoleWatchers().catch((e) => console.error("role watch texts", e));
   const { meetingHourTexts } = await import("@/lib/repMorning");

@@ -1,3 +1,5 @@
+import { after } from "next/server";
+import { judgePending } from "@/lib/matchJudge";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/session";
@@ -18,7 +20,9 @@ export default async function PositionPage({ params, searchParams }: PageProps<"
   const me = await requireStaff();
   const p = await getPosition(id);
   if (!p) notFound();
-  const { poolFor, removedFor } = await loadMatches(me);
+  const { poolFor, removedFor, verdict, doubtsFor } = await loadMatches(me);
+  const doubts = doubtsFor(p.id);
+  after(() => judgePending(6).catch(() => null));
   const ms = matchesFor(p, poolFor(p.id), 15);
   const removed = removedFor(p.id);
   const facts: [string, string | null][] = [
@@ -73,12 +77,22 @@ export default async function PositionPage({ params, searchParams }: PageProps<"
         {ms.length ? (
           ms.map(({ c, m }) => (
             <div key={c.id} className={styles.match}>
-              <FitPill fit={m.fit!} />
+              <FitPill fit={m.fit!} j={verdict(p.id, c.id)} />
               <div>
                 <Link prefetch={false} href={`/admin/candidates/${c.id}`}>
                   <b>{c.full_name}</b>
                 </Link>
                 <div className={styles.why}>{m.why.join(" · ")}</div>
+                {(() => {
+                  const j = verdict(p.id, c.id);
+                  if (!j) return <div className={styles.checking}>Checking how they&rsquo;d suit the day-to-day…</div>;
+                  return (
+                    <>
+                      <div className={j.v === "paper" ? styles.checking : styles.aiWhy}>{j.why}</div>
+                      {j.ask && <div className={styles.ask}>Worth asking: {j.ask}</div>}
+                    </>
+                  );
+                })()}
               </div>
               <form action={markNotAFit.bind(null, p.id, c.id, true)} className={styles.notFit}>
                 <button type="submit" className="btn btn-ghost btn-small">
@@ -89,6 +103,21 @@ export default async function PositionPage({ params, searchParams }: PageProps<"
           ))
         ) : (
           <p className="muted small">No listed candidate fits this one yet. New candidates are checked automatically.</p>
+        )}
+        {doubts.length > 0 && (
+          <details className={styles.removed}>
+            <summary>Lined up on paper, but probably not the right kind of day for them ({doubts.length})</summary>
+            {doubts.map(({ c, j }) => (
+              <div key={c.id} className={styles.match}>
+                <div>
+                  <Link prefetch={false} href={`/admin/candidates/${c.id}`}>
+                    <b>{c.full_name}</b>
+                  </Link>
+                  <div className={styles.doubt}>{j.why}</div>
+                </div>
+              </div>
+            ))}
+          </details>
         )}
         {removed.length > 0 && (
           <details className={styles.removed}>
