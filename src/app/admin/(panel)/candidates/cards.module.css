@@ -1,12 +1,26 @@
-.search { max-width: 520px; margin-bottom: 18px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 430px), 1fr)); gap: 16px; }
+.bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.search { flex: 1 1 280px; min-width: 0; height: 46px; font-size: 16px; }
+.sort { width: auto; height: 46px; flex: 0 1 190px; }
+.bar :global(.bd-chip) { height: 46px; padding: 0 18px; }
+.views { display: inline-flex; border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; height: 46px; flex: none; }
+.views button { border: 0; background: #fff; color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; padding: 0 16px; cursor: pointer; }
+.views button.on { background: var(--ink); color: #fff; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.gap { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
+.chipsRow { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.chipsRow span { font-size: 12.5px; font-weight: 700; border: 1.5px solid var(--line); border-radius: 999px; padding: 3px 10px; }
+.chipsRow .dark { background: var(--ink); color: #fff; border-color: var(--ink); }
+.card h3 { font-size: 20px; margin: 0; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.card h3 a { color: var(--ink); text-decoration: none; }
+.card h3 a:hover { text-decoration: underline; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 16px; align-items: start; }
 .card { background: #fff; border: 1.5px solid var(--line); border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; }
 .top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
 .card h2 { font-size: 21px; margin: 0; }
 .card h2 a { color: var(--ink); text-decoration: none; }
 .card h2 a:hover { text-decoration: underline; }
 .meta { margin: 3px 0 0; font-size: 14px; color: var(--ink-3); }
-.hook { position: relative; margin: 14px 0 12px; padding: 10px 40px 10px 14px; background: #fff6dc; border-left: 5px solid var(--marigold); border-radius: 8px; font-family: var(--display); font-weight: 800; font-size: 18px; line-height: 1.25; }
+.hook { position: relative; margin: 14px 0 12px; padding: 10px 40px 10px 14px; background: #fff6dc; border-left: 5px solid var(--marigold); border-radius: 8px; font-family: var(--display); font-weight: 800; font-size: 17.5px; line-height: 1.25; }
 .hook small { display: block; font-family: var(--text); font-weight: 600; font-size: 12px; color: #8a5a00; margin-bottom: 2px; }
 .pen { position: absolute; top: 8px; right: 8px; border: 0; background: none; color: #8a5a00; cursor: pointer; font-size: 15px; padding: 4px 6px; }
 .empty { margin: 14px 0 12px; font-size: 14.5px; color: var(--ink-3); }

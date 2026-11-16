@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TRAIT_LIST, TRAITS, type Letter } from "@/lib/strengths";
 import { WGChips } from "./WGChips";
 import { RepPicker } from "./RepPicker";
 import { dateShort } from "@/lib/format";
+import { refreshMemory, saveHook } from "./memoryActions";
+import cs from "./cards.module.css";
 
 export type Row = {
   id: string;
@@ -34,6 +36,12 @@ export type Row = {
   interest: number;
   added: string;
   listed: string | null;
+  hook: string;
+  bullets: string[];
+  quote: string;
+  goodFor: string[];
+  clip: { face: boolean } | null;
+  clipNote: string;
 };
 
 const STATUS: [string, string][] = [
@@ -96,6 +104,21 @@ export function Board({ rows, start, repOptions }: { rows: Row[]; start: Start; 
   const [only, setOnly] = useState<string[]>([...(start.gold ? ["gold"] : []), ...(start.mine ? ["mine"] : [])]);
   const [sort, setSort] = useState("new");
   const [group, setGroup] = useState("");
+  const [view, setView] = useState<"cards" | "table">("cards");
+  const [more, setMore] = useState(false);
+  const [editing, setEditing] = useState("");
+  const [playing, setPlaying] = useState("");
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("tcc_browse_view") === "table") setView("table");
+    } catch {}
+  }, []);
+  const pickView = (v: "cards" | "table") => {
+    setView(v);
+    try {
+      localStorage.setItem("tcc_browse_view", v);
+    } catch {}
+  };
 
   const roles = useMemo(() => uniq(rows.flatMap((r) => r.roles.map(nice))), [rows]);
   const industries = useMemo(() => uniq(rows.flatMap((r) => r.industries.map(nice))), [rows]);
@@ -119,7 +142,11 @@ export function Board({ rows, start, repOptions }: { rows: Row[]; start: Start; 
       if (only.includes("assessed") && r.assessment !== "done") return false;
       if (only.includes("mine") && !r.mine) return false;
       if (only.includes("interest") && !r.interest) return false;
-      if (t && ![r.name, r.email, r.ref, r.headline, ...r.roles, ...r.industries, r.place].join(" ").toLowerCase().includes(t)) return false;
+      if (only.includes("clip") && !r.clip) return false;
+      if (t) {
+        const hay = [r.name, r.email, r.ref, r.headline, ...r.roles, ...r.industries, r.place, r.hook, r.quote, ...r.bullets, ...r.goodFor, ...((r.wg ?? "").slice(0, 2).split("") as Letter[]).map((l) => TRAITS[l]?.label)].join(" ").toLowerCase();
+        if (!t.split(/\s+/).every((w) => hay.includes(w))) return false;
+      }
       return true;
     });
     const by: Record<string, (a: Row, b: Row) => number> = {
@@ -158,7 +185,8 @@ export function Board({ rows, start, repOptions }: { rows: Row[]; start: Start; 
   }, [shown, group]);
 
   const toggle = (list: string[], set: (v: string[]) => void, v: string) => set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
-  const anyFilter = role || industry || strength || level || place || rep || maxPay || hours || only.length || q;
+  const picked = [role, industry, strength, level, place, rep, maxPay, hours].filter(Boolean).length;
+  const anyFilter = picked || only.length || q;
   const clear = () => {
     setHours(""); setRole(""); setIndustry(""); setStrength(""); setLevel(""); setPlace(""); setRep(""); setMaxPay(""); setOnly([]); setQ("");
   };
@@ -166,64 +194,67 @@ export function Board({ rows, start, repOptions }: { rows: Row[]; start: Start; 
 
   return (
     <div className="bd">
-      <div className="bd-status">
-        {STATUS.map(([v, l]) => (
-          <button key={v} type="button" className={`bd-chip ${status.includes(v) ? "on" : ""}`} onClick={() => toggle(status, setStatus, v)}>
-            {l} <span>{rows.filter((r) => r.status === v).length}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="bd-filters">
-        <label className="bd-field bd-search">
-          <span>Search</span>
-          <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, email, ref, role, word in headline…" />
-        </label>
-        <Sel label="Role" value={role} set={setRole} opts={roles} />
-        <Sel label="Industry" value={industry} set={setIndustry} opts={industries} />
-        <Sel label="Natural strength" value={strength} set={setStrength} opts={TRAIT_LIST.map((t) => [t.key, `${t.label} (${t.key})`] as [string, string])} />
-        <Sel label="Experience" value={level} set={setLevel} opts={levels} />
-        <Sel label="Salary up to" value={maxPay} set={setMaxPay} opts={[50000, 75000, 100000, 125000, 150000, 200000].map((n) => [String(n), k(n)] as [string, string])} />
-        <Sel label="Hours" value={hours} set={setHours} opts={[["full", "Full-time"], ["part", "Part-time"]]} />
-        <Sel label="Location" value={place} set={setPlace} opts={places} />
-        <Sel label="Rep" value={rep} set={setRep} opts={reps} />
-      </div>
-
-      <div className="bd-bar">
-        <div className="bd-only">
-          {[
-            ["mine", "Only mine"],
-            ["gold", "⭐ Gold standard"],
-            ["assessed", "Assessment done"],
-            ["interest", "Owners unlocked"],
-          ].map(([v, l]) => (
-            <button key={v} type="button" className={`bd-chip ${only.includes(v) ? "on" : ""}`} onClick={() => toggle(only, setOnly, v)}>
-              {l}
-            </button>
-          ))}
-          {anyFilter && (
-            <button type="button" className="bd-clear" onClick={clear}>
-              Clear filters
-            </button>
-          )}
+      <div className={cs.bar}>
+        <input className={`input ${cs.search}`} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search: bookkeeper, Monsey, calm under pressure, a name…" aria-label="Search candidates" />
+        <button type="button" className={`bd-chip ${more || picked ? "on" : ""}`} onClick={() => setMore(!more)} aria-expanded={more}>
+          Filters{picked ? <span>{picked}</span> : null}
+        </button>
+        <select className={`select ${cs.sort}`} value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
+          {SORTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+        <div className={cs.views} role="group" aria-label="View">
+          <button type="button" className={view === "cards" ? cs.on : ""} onClick={() => pickView("cards")}>Cards</button>
+          <button type="button" className={view === "table" ? cs.on : ""} onClick={() => pickView("table")}>Table</button>
         </div>
-        <div className="bd-sorts">
+      </div>
+
+      {more && (
+        <div className="bd-filters" style={{ marginBottom: 12 }}>
+          <Sel label="Role" value={role} set={setRole} opts={roles} />
+          <Sel label="Industry" value={industry} set={setIndustry} opts={industries} />
+          <Sel label="Natural strength" value={strength} set={setStrength} opts={TRAIT_LIST.map((t) => [t.key, `${t.label} (${t.key})`] as [string, string])} />
+          <Sel label="Experience" value={level} set={setLevel} opts={levels} />
+          <Sel label="Salary up to" value={maxPay} set={setMaxPay} opts={[50000, 75000, 100000, 125000, 150000, 200000].map((n) => [String(n), k(n)] as [string, string])} />
+          <Sel label="Hours" value={hours} set={setHours} opts={[["full", "Full-time"], ["part", "Part-time"]]} />
+          <Sel label="Location" value={place} set={setPlace} opts={places} />
+          <Sel label="Rep" value={rep} set={setRep} opts={reps} />
           <label className="bd-field">
             <span>Group by</span>
             <select className="select" value={group} onChange={(e) => setGroup(e.target.value)}>
               {GROUPS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </label>
-          <label className="bd-field">
-            <span>Sort</span>
-            <select className="select" value={sort} onChange={(e) => setSort(e.target.value)}>
-              {SORTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
-          </label>
         </div>
+      )}
+
+      <div className={cs.chips}>
+        {STATUS.map(([v, l]) => {
+          const n = rows.filter((r) => r.status === v).length;
+          return n || status.includes(v) ? (
+            <button key={v} type="button" className={`bd-chip ${status.includes(v) ? "on" : ""}`} onClick={() => toggle(status, setStatus, v)}>
+              {l} <span>{n}</span>
+            </button>
+          ) : null;
+        })}
+        <i className={cs.gap} />
+        {[
+          ["mine", "Only mine"],
+          ["gold", "⭐ Gold standard"],
+          ["clip", "▶ Has a clip"],
+          ["interest", "Owners unlocked"],
+        ].map(([v, l]) => (
+          <button key={v} type="button" className={`bd-chip ${only.includes(v) ? "on" : ""}`} onClick={() => toggle(only, setOnly, v)}>
+            {l}
+          </button>
+        ))}
+        {anyFilter ? (
+          <button type="button" className="bd-clear" onClick={clear}>
+            Clear
+          </button>
+        ) : null}
       </div>
 
-      <p className="small muted" style={{ margin: "4px 0 10px" }}>
+      <p className="small muted" style={{ margin: "10px 0 12px" }}>
         {shown.length} {shown.length === 1 ? "candidate" : "candidates"}
         {group === "strength" || group === "role" || group === "industry" ? ". Someone with two strengths or roles shows in each group." : ""}
       </p>
@@ -240,6 +271,83 @@ export function Board({ rows, start, repOptions }: { rows: Row[]; start: Start; 
                 {g} <span>{list.length}</span>
               </h2>
             )}
+            {view === "cards" ? (
+              <div className={cs.grid}>
+                {list.map((r) => {
+                  const strengths = r.wg ? (r.wg.slice(0, 2).split("") as Letter[]).map((l) => TRAITS[l].label) : [];
+                  const meta = [r.roles.slice(0, 2).map(nice).join(" / "), r.place && nice(r.place), r.level, pay(r)].filter(Boolean).join(" · ");
+                  return (
+                    <article key={r.id} className={cs.card}>
+                      <div className={cs.top}>
+                        {r.clip?.face && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img className={cs.face} src={`/api/admin/clip/${r.id}?kind=face`} alt="" loading="lazy" />
+                        )}
+                        <div className={cs.who}>
+                          <h3>
+                            <Link prefetch={false} href={`/admin/candidates/${r.id}`}>{r.name}</Link>
+                            {r.gold && <span className="bd-gold">⭐</span>}
+                          </h3>
+                          <p className={cs.meta}>{meta || "Profile not filled in yet"}</p>
+                        </div>
+                        {r.status !== "listed" && <span className="tag">{STATUS.find(([v]) => v === r.status)?.[1] ?? r.status}</span>}
+                      </div>
+                      {editing === r.id ? (
+                        <form action={saveHook.bind(null, r.id)} onSubmit={() => setEditing("")} className={cs.edit}>
+                          <input className="input" name="hook" defaultValue={r.hook} maxLength={140} autoFocus aria-label="Remember them as" />
+                          <button className="btn btn-small">Save</button>
+                          <button type="button" className="btn btn-small btn-ghost" onClick={() => setEditing("")}>Cancel</button>
+                        </form>
+                      ) : r.hook ? (
+                        <p className={cs.hook}>
+                          {r.hook}
+                          <button type="button" className={cs.pen} onClick={() => setEditing(r.id)} aria-label={`Edit the line for ${r.name}`}>✎</button>
+                        </p>
+                      ) : (
+                        <p className={cs.empty}>
+                          <button type="button" className={cs.link} onClick={() => setEditing(r.id)}>Add a line to remember them by</button>
+                        </p>
+                      )}
+                      {r.clip &&
+                        (playing === r.id ? (
+                          <video className={cs.video} src={`/api/admin/clip/${r.id}?kind=video`} poster={`/api/admin/clip/${r.id}?kind=photo`} controls autoPlay playsInline />
+                        ) : (
+                          <button type="button" className={cs.play} onClick={() => setPlaying(r.id)}>
+                            ▶ 30-second clip
+                          </button>
+                        ))}
+                      {r.bullets.length > 0 && (
+                        <ul>
+                          {r.bullets.map((b) => (
+                            <li key={b}>{b}</li>
+                          ))}
+                        </ul>
+                      )}
+                      {r.quote && <p className={cs.quote}>&ldquo;{r.quote.replace(/^["“]|["”]$/g, "")}&rdquo;</p>}
+                      {(strengths.length > 0 || r.goodFor.length > 0) && (
+                        <div className={cs.chipsRow}>
+                          {strengths.map((x) => (
+                            <span key={x} className={cs.dark}>{x}</span>
+                          ))}
+                          {r.goodFor.length > 0 && <span>Good for: {r.goodFor.join(", ")}</span>}
+                        </div>
+                      )}
+                      {r.clipNote && <p className={cs.note}>Clip: {r.clipNote}</p>}
+                      <div className={cs.foot}>
+                        <span>
+                          {r.mine ? "Your candidate" : r.rep ? `Rep: ${r.rep}` : "No rep yet"}
+                          {r.interest > 0 ? ` · ${r.interest} unlocked` : ""}
+                          {` · ${dateShort(r.listed && r.status === "listed" ? r.listed : r.added)}`}
+                        </span>
+                        <form action={refreshMemory.bind(null, r.id)}>
+                          <button className={cs.link} title="Write this card again from the latest notes and call">↻</button>
+                        </form>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
             <div className="table-wrap">
               <table className="table bd-table">
                 <thead>
@@ -305,6 +413,7 @@ export function Board({ rows, start, repOptions }: { rows: Row[]; start: Start; 
                 </tbody>
               </table>
             </div>
+            )}
           </section>
         ))
       )}

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { clipPath } from "@/lib/clips";
+import { clipPath } from "@/lib/clipInfo";
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
 

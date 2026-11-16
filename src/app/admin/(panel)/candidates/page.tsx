@@ -9,6 +9,8 @@ import { backfillWorkingGenius } from "@/lib/readAssessment";
 import { backfillStrengths } from "@/lib/strengthsBackfill";
 import { after } from "next/server";
 import { Board, type Row, type Start } from "./Board";
+import { backfillMemories, memoryOf } from "@/lib/memory";
+import { clipOf } from "@/lib/clipInfo";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Browse candidates" };
@@ -26,7 +28,7 @@ export default async function Browse({ searchParams }: PageProps<"/admin/candida
   const { data, error } = await db()
     .from("candidates")
     .select(
-      "id, status, full_name, email, headline, role_category, also_roles, industry, also_industries, level, location_region, work_mode, salary_min, salary_max, working_genius, assessment_path, created_at, listed_at, added_by, application",
+      "id, status, full_name, email, headline, highlights, role_category, also_roles, industry, also_industries, level, location_region, work_mode, salary_min, salary_max, working_genius, assessment_path, created_at, listed_at, added_by, application",
     );
   const cands = (data ?? []) as unknown as {
     id: string;
@@ -34,6 +36,7 @@ export default async function Browse({ searchParams }: PageProps<"/admin/candida
     full_name: string;
     email: string;
     headline: string | null;
+    highlights: string[] | null;
     role_category: string | null;
     also_roles: string[] | null;
     industry: string | null;
@@ -58,6 +61,7 @@ export default async function Browse({ searchParams }: PageProps<"/admin/candida
   // Reports uploaded before results were read automatically: catch up a few at a time.
   after(() => backfillWorkingGenius(3).catch(() => null));
   after(() => backfillStrengths().catch(() => null));
+  after(() => backfillMemories(3).catch(() => null));
 
   const interest = new Map<string, number>();
   for (const u of unlocks ?? []) interest.set(u.candidate_id as string, (interest.get(u.candidate_id as string) ?? 0) + 1);
@@ -67,7 +71,15 @@ export default async function Browse({ searchParams }: PageProps<"/admin/candida
     const l = parseResult(c.working_genius);
     const o = owners.get(c.id);
     const rep = o?.id;
+    const m = memoryOf(c);
+    const clip = clipOf(c.application);
     return {
+      hook: m.hook,
+      bullets: m.bullets,
+      quote: m.quote,
+      goodFor: m.good_for,
+      clip: clip ? { face: clip.face } : null,
+      clipNote: me.manager && !clip ? (c.application?.clip_error ?? "") : "",
       id: c.id,
       ref: refCode(c.id),
       name: c.full_name,
@@ -109,10 +121,7 @@ export default async function Browse({ searchParams }: PageProps<"/admin/candida
     <>
       <div className="page-head">
         <h1>Browse candidates</h1>
-        <p>
-          Every candidate on the team. Sort, filter and group to spot the right kind of person fast.{" "}
-          <a href="/admin/glance" style={{ fontWeight: 700 }}>See them as memory cards</a>
-        </p>
+        <p>Every candidate on the team, with one line to remember each by and a 30-second clip from their call.</p>
       </div>
       {typeof sp.deleted === "string" && (
         <p className="notice notice-good" role="status">

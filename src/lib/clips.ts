@@ -13,19 +13,8 @@ import { accessToken, callsAccount } from "./googleCalls";
 // onboarding call, so the team remembers who is who. Team only. The files live
 // in private storage and are only handed out to signed-in staff.
 
-const BUCKET = "resumes";
-export const clipPath = (id: string, kind: "video" | "photo" | "face") => `clips/${id}${kind === "video" ? ".mp4" : kind === "face" ? "-face.jpg" : ".jpg"}`;
-// Bump when the way clips are picked changes: older ones are quietly made again.
-const CLIP_V = 2;
-export type Clip = { at: string; start: number; face: boolean; v?: number };
-export function clipOf(app: Record<string, string> | null | undefined): Clip | null {
-  try {
-    const c = JSON.parse(app?.clip ?? "null") as Clip | null;
-    return c?.at && c.v === CLIP_V ? c : null;
-  } catch {
-    return null;
-  }
-}
+import { CLIP_BUCKET as BUCKET, CLIP_V, clipOf, clipPath, type Clip } from "./clipInfo";
+export { clipOf, clipPath, type Clip };
 
 function ffmpegPath() {
   const here = join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg");
