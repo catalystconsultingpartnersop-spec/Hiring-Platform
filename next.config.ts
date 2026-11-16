@@ -2,12 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Resume readers load their own files at runtime; keep them out of the bundle.
-  serverExternalPackages: ["unpdf", "mammoth", "@react-pdf/renderer"],
+  serverExternalPackages: ["unpdf", "mammoth", "@react-pdf/renderer", "ffmpeg-static", "sharp"],
   // The rep invitation PDF reads its fonts from disk.
   outputFileTracingIncludes: {
     "/api/admin/invite-pdf": ["./src/assets/fonts/**"],
     "/api/resume/[id]": ["./src/assets/fonts/**"],
     "/api/clean-resume/[id]": ["./src/assets/fonts/**"],
+    // The clip maker runs ffmpeg.
+    "/api/cron/clips": ["./node_modules/ffmpeg-static/ffmpeg"],
   },
   experimental: {
     serverActions: {

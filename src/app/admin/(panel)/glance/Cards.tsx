@@ -5,12 +5,13 @@ import { useState } from "react";
 import { refreshMemory, saveHook } from "./actions";
 import s from "./glance.module.css";
 
-export type Card = { id: string; name: string; meta: string; status: string; hook: string; bullets: string[]; quote: string; goodFor: string[]; strengths: string[]; rep: string; met: string };
+export type Card = { id: string; name: string; meta: string; status: string; hook: string; bullets: string[]; quote: string; goodFor: string[]; strengths: string[]; rep: string; met: string; clip: { face: boolean } | null; clipNote: string };
 const STATUS: Record<string, string> = { listed: "Listed", draft: "Draft", paused: "Paused", applied: "New" };
 
 export function Cards({ cards }: { cards: Card[] }) {
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState("");
+  const [playing, setPlaying] = useState("");
   const words = q.toLowerCase().split(/\s+/).filter(Boolean);
   const shown = cards.filter((c) => {
     const hay = [c.name, c.meta, c.hook, c.quote, ...c.bullets, ...c.goodFor, ...c.strengths].join(" ").toLowerCase();
@@ -24,7 +25,11 @@ export function Cards({ cards }: { cards: Card[] }) {
         {shown.map((c) => (
           <article key={c.id} className={s.card}>
             <div className={s.top}>
-              <div>
+              {c.clip && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className={s.face} src={`/api/admin/clip/${c.id}?kind=${c.clip.face ? "face" : "photo"}`} alt="" loading="lazy" />
+              )}
+              <div className={s.who}>
                 <h2>
                   <Link prefetch={false} href={`/admin/candidates/${c.id}`}>{c.name}</Link>
                 </h2>
@@ -64,6 +69,15 @@ export function Cards({ cards }: { cards: Card[] }) {
               ))}
               {c.goodFor.length > 0 && <span>Good for: {c.goodFor.join(", ")}</span>}
             </div>
+            {c.clip &&
+              (playing === c.id ? (
+                <video className={s.video} src={`/api/admin/clip/${c.id}?kind=video`} poster={`/api/admin/clip/${c.id}?kind=photo`} controls autoPlay playsInline />
+              ) : (
+                <button type="button" className={s.play} onClick={() => setPlaying(c.id)}>
+                  ▶ 30-second clip
+                </button>
+              ))}
+            {c.clipNote && <p className={s.note}>Clip: {c.clipNote}</p>}
             <div className={s.foot}>
               <span>{c.rep ? `Rep: ${c.rep} · ` : ""}Joined {c.met}</span>
               <form action={refreshMemory.bind(null, c.id)}>

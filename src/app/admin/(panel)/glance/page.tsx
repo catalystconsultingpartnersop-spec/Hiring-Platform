@@ -3,6 +3,7 @@ import { after } from "next/server";
 import { db } from "@/lib/db";
 import { LEVEL_LABEL } from "@/lib/format";
 import { backfillMemories, memoryOf } from "@/lib/memory";
+import { clipOf } from "@/lib/clips";
 import { effectiveReps, repOptions } from "@/lib/reps";
 import { requireStaff } from "@/lib/session";
 import { parseResult, TRAITS, type Letter } from "@/lib/strengths";
@@ -34,7 +35,10 @@ export default async function Glance({ searchParams }: { searchParams: Promise<{
     .map((c) => {
       const m = memoryOf(c);
       const l = parseResult(c.working_genius);
+      const clip = clipOf(c.application);
       return {
+        clip: clip ? { face: clip.face } : null,
+        clipNote: me.manager && !clip ? (c.application?.clip_error ?? "") : "",
         id: c.id,
         name: c.full_name,
         meta: [[c.role_category, ...(c.also_roles ?? [])].filter(Boolean).slice(0, 2).join(" / "), c.location_region, c.level ? LEVEL_LABEL[c.level] : null].filter(Boolean).join(" · "),

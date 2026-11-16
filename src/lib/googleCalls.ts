@@ -68,7 +68,7 @@ export async function disconnect() {
   await setSetting("google_calls", {});
 }
 
-async function accessToken(): Promise<string | null> {
+export async function accessToken(): Promise<string | null> {
   const acct = await callsAccount();
   if (!acct || !googleCallsConfigured()) return null;
   const res = await fetch("https://oauth2.googleapis.com/token", {
