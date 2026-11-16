@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db, PUBLIC_CANDIDATE_COLUMNS, type PublicCandidate } from "@/lib/db";
 import { positionsFor } from "@/lib/matching";
+import { hiddenMatches, pairKey } from "@/lib/matchHidden";
 import { openPositions, positionsReady } from "@/lib/positions";
 
 // One quiet, folded line on a candidate's page: the open positions they fit, and why.
@@ -8,7 +9,8 @@ export async function PositionsTheyFit({ candidateId, status }: { candidateId: s
   if (status === "archived" || status === "hired" || !(await positionsReady())) return null;
   const [{ data }, positions] = await Promise.all([db().from("candidates").select(PUBLIC_CANDIDATE_COLUMNS).eq("id", candidateId).maybeSingle(), openPositions()]);
   if (!data || !positions.length) return null;
-  const fits = positionsFor(data as unknown as PublicCandidate, positions, 8);
+  const hidden = await hiddenMatches();
+  const fits = positionsFor(data as unknown as PublicCandidate, positions.filter((p) => !hidden[pairKey(p.id, candidateId)]), 8);
   if (!fits.length) return null;
   return (
     <details className="panel" style={{ marginTop: 16 }}>

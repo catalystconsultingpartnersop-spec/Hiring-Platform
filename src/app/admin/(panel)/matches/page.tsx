@@ -3,6 +3,7 @@ import { requireStaff } from "@/lib/session";
 import { matchesFor, positionsFor } from "@/lib/matching";
 import { loadMatches } from "./data";
 import { FitPill } from "./FitPill";
+import { markNotAFit } from "./actions";
 import styles from "./matches.module.css";
 
 export const dynamic = "force-dynamic";
@@ -12,11 +13,11 @@ export const metadata = { title: "Matches" };
 export default async function MatchesPage({ searchParams }: PageProps<"/admin/matches">) {
   const me = await requireStaff();
   const sp = await searchParams;
-  const { ready, positions, candidates } = await loadMatches(me);
+  const { ready, positions, candidates, poolFor, isHidden } = await loadMatches(me);
 
-  const perPosition = positions.map((p) => ({ p, ms: matchesFor(p, candidates) }));
+  const perPosition = positions.map((p) => ({ p, ms: matchesFor(p, poolFor(p.id)) }));
   const perCandidate = candidates
-    .map((c) => ({ c, best: positionsFor(c, positions, 3) }))
+    .map((c) => ({ c, best: positionsFor(c, positions.filter((p) => !isHidden(p.id, c.id)), 3) }))
     .filter((x) => x.best.length)
     .sort((a, b) => b.best[0].m.score - a.best[0].m.score);
   const strong = perCandidate.filter((x) => x.best[0].m.fit === "strong").length;
@@ -93,7 +94,14 @@ export default async function MatchesPage({ searchParams }: PageProps<"/admin/ma
                           {best.length > 1 ? ` · +${best.length - 1} more` : ""}
                         </small>
                       </Link>
-                      <FitPill fit={best[0].m.fit!} />
+                      <span className={styles.rowEnd}>
+                        <FitPill fit={best[0].m.fit!} />
+                        <form action={markNotAFit.bind(null, best[0].p.id, c.id, true)}>
+                          <button type="submit" className={styles.x} title={`Not a fit for ${best[0].p.title}`} aria-label={`${c.full_name} is not a fit for ${best[0].p.title}`}>
+                            ✕
+                          </button>
+                        </form>
+                      </span>
                     </li>
                   ))}
                 </ul>

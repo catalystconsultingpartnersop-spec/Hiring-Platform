@@ -20,3 +20,10 @@
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
 .facts div { background: var(--wash); border-radius: 10px; padding: 8px 12px; }
 .facts span { display: block; font-size: 12px; color: var(--ink-2); }
+
+.notFit { margin-left: auto; flex: none; }
+.rowEnd { display: flex; align-items: center; gap: 8px; flex: none; }
+.x { border: 1px solid var(--line); background: #fff; color: var(--ink-3); border-radius: 999px; width: 28px; height: 28px; line-height: 1; font-size: 13px; cursor: pointer; }
+.x:hover { color: var(--rust); border-color: var(--rust); }
+.removed { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+.removed > summary { cursor: pointer; font-size: 14px; color: var(--ink-2); }

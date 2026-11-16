@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { db, logActivity } from "@/lib/db";
 import { requireStaff, staffActor } from "@/lib/session";
 import { allow, SLOW_DOWN } from "@/lib/throttle";
+import { setMatchHidden } from "@/lib/matchHidden";
 import { POSITION_FIELDS, readJobPost, type PositionDraft } from "@/lib/positions";
 
 export async function fillFromPost(text: string): Promise<{ draft?: PositionDraft; error?: string }> {
@@ -53,4 +54,14 @@ export async function setPositionStatus(id: string, status: "open" | "closed") {
   await logActivity(staffActor(me), status === "closed" ? "position_closed" : "position_reopened", { position_id: id });
   revalidatePath("/admin/matches");
   redirect(status === "closed" ? "/admin/matches?closed=1" : `/admin/matches/${id}`);
+}
+
+// "Not a fit" on one candidate for one position, and the way back.
+export async function markNotAFit(positionId: string, candidateId: string, hide: boolean) {
+  const me = await requireStaff();
+  await setMatchHidden(positionId, candidateId, hide, me.name || me.email);
+  await logActivity(staffActor(me), hide ? "match_removed" : "match_restored", { position_id: positionId, candidate_id: candidateId });
+  revalidatePath("/admin/matches");
+  revalidatePath(`/admin/matches/${positionId}`);
+  revalidatePath(`/admin/candidates/${candidateId}`);
 }

@@ -7,7 +7,7 @@ import { LEVEL_LABEL, WORK_MODE_LABEL, salaryRange } from "@/lib/format";
 import { loadMatches } from "../data";
 import { FitPill } from "../FitPill";
 import { PositionForm } from "../PositionForm";
-import { setPositionStatus } from "../actions";
+import { markNotAFit, setPositionStatus } from "../actions";
 import styles from "../matches.module.css";
 
 export const dynamic = "force-dynamic";
@@ -18,8 +18,9 @@ export default async function PositionPage({ params, searchParams }: PageProps<"
   const me = await requireStaff();
   const p = await getPosition(id);
   if (!p) notFound();
-  const { candidates } = await loadMatches(me);
-  const ms = matchesFor(p, candidates, 15);
+  const { poolFor, removedFor } = await loadMatches(me);
+  const ms = matchesFor(p, poolFor(p.id), 15);
+  const removed = removedFor(p.id);
   const facts: [string, string | null][] = [
     ["Company", p.company],
     ["Location", [p.location, p.work_mode ? WORK_MODE_LABEL[p.work_mode] ?? p.work_mode : null].filter(Boolean).join(" · ") || null],
@@ -79,10 +80,35 @@ export default async function PositionPage({ params, searchParams }: PageProps<"
                 </Link>
                 <div className={styles.why}>{m.why.join(" · ")}</div>
               </div>
+              <form action={markNotAFit.bind(null, p.id, c.id, true)} className={styles.notFit}>
+                <button type="submit" className="btn btn-ghost btn-small">
+                  ✕ Not a fit
+                </button>
+              </form>
             </div>
           ))
         ) : (
           <p className="muted small">No listed candidate fits this one yet. New candidates are checked automatically.</p>
+        )}
+        {removed.length > 0 && (
+          <details className={styles.removed}>
+            <summary>Marked not a fit ({removed.length})</summary>
+            {removed.map(({ c, by }) => (
+              <div key={c.id} className={styles.match}>
+                <div>
+                  <Link prefetch={false} href={`/admin/candidates/${c.id}`}>
+                    <b>{c.full_name}</b>
+                  </Link>
+                  <div className={styles.why}>Removed by {by}</div>
+                </div>
+                <form action={markNotAFit.bind(null, p.id, c.id, false)} className={styles.notFit}>
+                  <button type="submit" className="btn btn-ghost btn-small">
+                    Put back
+                  </button>
+                </form>
+              </div>
+            ))}
+          </details>
         )}
       </section>
       <details>
