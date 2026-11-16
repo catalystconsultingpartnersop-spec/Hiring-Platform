@@ -25,9 +25,9 @@ export function Cards({ cards }: { cards: Card[] }) {
         {shown.map((c) => (
           <article key={c.id} className={s.card}>
             <div className={s.top}>
-              {c.clip && (
+              {c.clip?.face && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img className={s.face} src={`/api/admin/clip/${c.id}?kind=${c.clip.face ? "face" : "photo"}`} alt="" loading="lazy" />
+                <img className={s.face} src={`/api/admin/clip/${c.id}?kind=face`} alt="" loading="lazy" />
               )}
               <div className={s.who}>
                 <h2>

@@ -15,11 +15,13 @@ import { accessToken, callsAccount } from "./googleCalls";
 
 const BUCKET = "resumes";
 export const clipPath = (id: string, kind: "video" | "photo" | "face") => `clips/${id}${kind === "video" ? ".mp4" : kind === "face" ? "-face.jpg" : ".jpg"}`;
-export type Clip = { at: string; start: number; face: boolean };
+// Bump when the way clips are picked changes: older ones are quietly made again.
+const CLIP_V = 2;
+export type Clip = { at: string; start: number; face: boolean; v?: number };
 export function clipOf(app: Record<string, string> | null | undefined): Clip | null {
   try {
     const c = JSON.parse(app?.clip ?? "null") as Clip | null;
-    return c?.at ? c : null;
+    return c?.at && c.v === CLIP_V ? c : null;
   } catch {
     return null;
   }
@@ -45,21 +47,27 @@ function run(args: string[], ms = 150_000): Promise<void> {
 type Entry = { participant: string; startTime?: string; endTime?: string };
 const secs = (iso?: string) => (iso ? Date.parse(iso) / 1000 : NaN);
 
-// Where the candidate talks the most in any 30 seconds (skipping the hellos).
-export function bestWindow(entries: { from: number; to: number }[], total: number, len = 30) {
-  if (!entries.length || !(total > len)) return Math.max(0, Math.floor(total * 0.4));
+// The 30-second stretches where the candidate talks the most (skipping the hellos), best first.
+export function topWindows(entries: { from: number; to: number }[], total: number, n = 4, len = 30): number[] {
+  if (!entries.length || !(total > len)) return [Math.max(0, Math.floor(total * 0.4))];
   const skip = total > 360 ? 120 : 0;
-  let best = skip;
-  let bestSum = -1;
+  const all: { t: number; sum: number }[] = [];
   for (let t = skip; t <= total - len; t += 5) {
     let sum = 0;
     for (const e of entries) sum += Math.max(0, Math.min(e.to, t + len) - Math.max(e.from, t));
-    if (sum > bestSum) [bestSum, best] = [sum, t];
+    all.push({ t, sum });
   }
-  return best;
+  all.sort((x, y) => y.sum - x.sum);
+  const out: number[] = [];
+  for (const w of all) {
+    if (out.length >= n) break;
+    if (out.every((t) => Math.abs(t - w.t) >= 60)) out.push(w.t);
+  }
+  return out.length ? out : [skip];
 }
+export const bestWindow = (entries: { from: number; to: number }[], total: number) => topWindows(entries, total, 1)[0];
 
-async function findRecording(space: string, candidateName: string, repName: string) {
+async function findRecording(space: string, candidateName: string, staffNames: string[]) {
   const token = await accessToken();
   if (!token) throw new Error("Google isn't connected.");
   const get = async (url: string) => {
@@ -87,7 +95,7 @@ async function findRecording(space: string, candidateName: string, repName: stri
   const calls = ((await callsAccount())?.email ?? "").split("@")[0].toLowerCase();
   const words = (s: string) => s.toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 1);
   const cw = words(candidateName);
-  const rw = words(repName);
+  const rw = staffNames.flatMap(words);
   const scored = (ps.participants ?? []).map((p) => {
     const n = p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName || "";
     const w = words(n);
@@ -112,15 +120,17 @@ async function findRecording(space: string, candidateName: string, repName: stri
   const talk = (id: string) => (speakers.get(id) ?? []).reduce((a, e) => a + e.to - e.from, 0);
   const cand = scored.filter((p) => p.rep === 0 || p.cand > p.rep).sort((a, b) => b.cand - a.cand || talk(b.id) - talk(a.id))[0];
   const total = pick.end - pick.start;
-  return { file: pick.file, token, total, start: bestWindow(cand ? (speakers.get(cand.id) ?? []) : [], total), candidateLabel: cand?.n ?? "" };
+  return { file: pick.file, token, total, starts: topWindows(cand ? (speakers.get(cand.id) ?? []) : [], total), candidateLabel: cand?.n ?? "" };
 }
 
-// Ask the AI where the candidate's face is in the still, so the picture can be cropped to them.
-async function faceBox(jpg: Buffer, candidateName: string, label: string, repName: string): Promise<{ x: number; y: number; w: number; h: number } | null> {
+// Ask the AI to look at one frame: whose name is on screen, and where the main face is.
+// null means the AI couldn't be asked at all.
+type Look = { label: string; x: number; y: number; w: number; h: number };
+async function look(jpg: Buffer): Promise<Look | null> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return null;
-  const prompt = `This is one frame from a recorded video call between a recruiter (${repName || "the rep"}) and a job candidate (${candidateName}${label && label !== candidateName ? `, shown on screen as "${label}"` : ""}). Video tiles usually have the person's name in a corner.
-Find the candidate's face. Reply with only JSON: {"x":0.0,"y":0.0,"w":0.0,"h":0.0} as fractions of the image (left, top, width, height of their face). If you can't tell which person is the candidate, or no face is visible, reply {"x":0,"y":0,"w":0,"h":0}.`;
+  const prompt = `This is one frame from a recorded video call. Video tiles usually show the person's name in a corner.
+Reply with only JSON: {"label":"the name text shown on the main (largest) video tile, or empty","x":0.0,"y":0.0,"w":0.0,"h":0.0} where x,y,w,h are the left, top, width and height of the face of the person in that main tile, as fractions of the image. If no face is clearly visible (camera off, avatar, shared screen), use zeros.`;
   for (const model of ["claude-sonnet-5-5", "claude-sonnet-4-5"]) {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -131,13 +141,18 @@ Find the candidate's face. Reply with only JSON: {"x":0.0,"y":0.0,"w":0.0,"h":0.
       if (r.status === 404 || r.status === 400) continue;
       return null;
     }
-    const j = (await r.json()) as { content: { text?: string }[] };
-    const text = j.content.map((x) => x.text ?? "").join("");
-    const b = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as { x: number; y: number; w: number; h: number };
-    return b.w > 0.03 && b.h > 0.03 && b.x >= 0 && b.y >= 0 && b.x + b.w <= 1.01 && b.y + b.h <= 1.01 ? b : null;
+    try {
+      const j = (await r.json()) as { content: { text?: string }[] };
+      const text = j.content.map((x) => x.text ?? "").join("");
+      const b = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as Look;
+      return { label: String(b.label ?? ""), x: +b.x || 0, y: +b.y || 0, w: +b.w || 0, h: +b.h || 0 };
+    } catch {
+      return null;
+    }
   }
   return null;
 }
+const hasFace = (b: Look) => b.w > 0.03 && b.h > 0.03 && b.x >= 0 && b.y >= 0 && b.x + b.w <= 1.01 && b.y + b.h <= 1.01;
 
 // ffmpeg reads the video through a tiny local relay: this code fetches the pieces
 // it asks for from Google (with our access), so ffmpeg never touches the network
@@ -168,6 +183,11 @@ export async function cut(input: string, start: number, out: string) {
   await run(["-y", "-ss", "8", "-i", `${out}.mp4`, "-frames:v", "1", "-q:v", "3", `${out}.jpg`], 30_000);
 }
 
+async function frameAt(input: string, at: number, out: string) {
+  await run(["-y", "-ss", String(Math.max(0, at)), "-i", input, "-frames:v", "1", "-vf", "scale=-2:480", "-q:v", "3", out], 90_000);
+  return readFile(out);
+}
+
 export async function makeClip(candidateId: string): Promise<{ ok: boolean; error?: string }> {
   const { data: c } = await db().from("candidates").select("id, full_name, application").eq("id", candidateId).maybeSingle();
   if (!c) return { ok: false, error: "No such candidate." };
@@ -176,16 +196,36 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
     const { data: calls } = await db().from("onboarding_calls").select("meet_space, staff(full_name)").eq("candidate_id", candidateId).neq("status", "cancelled").not("meet_space", "is", null).order("starts_at", { ascending: false }).limit(1);
     const call = (calls ?? [])[0] as unknown as { meet_space: string; staff: { full_name: string | null } | null } | undefined;
     if (!call) throw new Error("No recorded call.");
-    const rep = call.staff?.full_name ?? "";
-    const rec = await findRecording(call.meet_space, c.full_name, rep);
+    const { data: team } = await db().from("staff").select("full_name");
+    const staffNames = [...((team ?? []) as { full_name: string | null }[]).map((t) => t.full_name ?? ""), call.staff?.full_name ?? ""].filter(Boolean);
+    const rec = await findRecording(call.meet_space, c.full_name, staffNames);
     if (!rec) throw new Error("Google has no finished recording for this call.");
     const via = await relay(`https://www.googleapis.com/drive/v3/files/${rec.file}?alt=media&supportsAllDrives=true`, rec.token);
+    const wordsOf = (x: string) => x.toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 2);
+    const staffWords = staffNames.flatMap(wordsOf);
+    const candWords = wordsOf(c.full_name + " " + rec.candidateLabel);
+    // Look at one frame from each of the best stretches, and take the first that shows the candidate
+    // (a face, and not one of our own team's name on the tile).
+    let start = rec.starts[0];
+    let seenCandidate = false;
     try {
-      await cut(via.url, rec.start, out);
+      for (const t of rec.starts) {
+        const shot = await look(await frameAt(via.url, t + 12, `${out}-probe.jpg`));
+        if (!shot) break; // the AI can't be asked: go with the best stretch, without a face picture
+        const lw = wordsOf(shot.label);
+        const isStaff = lw.some((w) => staffWords.includes(w)) && !lw.some((w) => candWords.includes(w));
+        if (hasFace(shot) && !isStaff) {
+          start = t;
+          seenCandidate = true;
+          break;
+        }
+      }
+      await cut(via.url, start, out);
     } catch (e) {
       throw new Error(via.error() || (e as Error).message);
     } finally {
       via.close();
+      await rm(`${out}-probe.jpg`, { force: true }).catch(() => {});
     }
     const mp4 = await readFile(`${out}.mp4`);
     const jpg = await readFile(`${out}.jpg`);
@@ -199,7 +239,9 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
     // The face picture is a plain crop of the real frame, a little brighter and sharper. Nothing is invented.
     let face = false;
     try {
-      const box = await faceBox(jpg, c.full_name, rec.candidateLabel, rep);
+      const shot = seenCandidate ? await look(jpg) : null;
+      const lw = shot ? wordsOf(shot.label) : [];
+      const box = shot && hasFace(shot) && !(lw.some((w) => staffWords.includes(w)) && !lw.some((w) => candWords.includes(w))) ? shot : null;
       if (box) {
         const sharp = (await import("sharp")).default;
         const meta = await sharp(jpg).metadata();
@@ -216,9 +258,9 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
     const { data: fresh } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
     const app = { ...((fresh?.application as Record<string, string>) ?? {}) };
     delete app.clip_error;
-    app.clip = JSON.stringify({ at: new Date().toISOString(), start: Math.round(rec.start), face } satisfies Clip);
+    app.clip = JSON.stringify({ at: new Date().toISOString(), start: Math.round(start), face, v: CLIP_V } satisfies Clip);
     await db().from("candidates").update({ application: app }).eq("id", candidateId);
-    await logActivity("system", "clip_made", { candidate_id: candidateId, start: Math.round(rec.start), face });
+    await logActivity("system", "clip_made", { candidate_id: candidateId, start: Math.round(start), face, seen: seenCandidate });
     return { ok: true };
   } catch (e) {
     const error = ((e as Error).message ?? String(e)).slice(0, 300);
