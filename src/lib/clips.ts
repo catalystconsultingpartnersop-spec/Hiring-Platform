@@ -141,7 +141,14 @@ ${talkers.slice(0, 8).map((p, i) => `Speaker ${letters[i]} (shown as "${p.n || "
   const starts = topWindows(mine, total, 4, 30, others);
   // How much of each stretch is the candidate talking, and how much is anyone else.
   const share = (t: number) => ({ cand: overlap(mine, t, 30), others: overlap(others, t, 30) });
-  return { file: pick.file, token, total, starts, share, candidateLabel: cand.n };
+  // Moments when the candidate is mid-sentence: the places to look for a clear picture of them.
+  const moments: number[] = [];
+  for (const e of [...mine].sort((x, y) => y.to - y.from - (x.to - x.from))) {
+    if (moments.length >= 10 || e.to - e.from < 3) break;
+    const m = (e.from + e.to) / 2;
+    if (moments.every((x) => Math.abs(x - m) >= 20)) moments.push(m);
+  }
+  return { file: pick.file, token, total, starts, share, moments, candidateLabel: cand.n };
 }
 
 // Ask the AI to look at one frame: whose name is on screen, and where the main face is.
@@ -230,17 +237,28 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
     const solo = rec.starts.filter((t) => rec.share(t).cand >= 12 && rec.share(t).others <= 6);
     const tries = solo.length ? solo : rec.starts.filter((t) => rec.share(t).cand > rec.share(t).others * 2).slice(0, 2);
     if (!tries.length) throw new Error("No 30 seconds where the candidate talks without the rep.");
+    const staffOn = (label: string) => {
+      const lw = wordsOf(label);
+      return lw.some((w) => staffWords.includes(w)) && !lw.some((w) => candWords.includes(w));
+    };
+    const isThem = (shot: Look | null): shot is Look => !!shot && hasFace(shot) && !staffOn(shot.label);
     let start = tries[0];
     let seenCandidate = false;
+    let aiUp = true;
+    // The best still of the candidate found so far: the frame and where their face is in it.
+    let pic: { jpg: Buffer; box: Look } | null = null;
+    let mp4: Buffer;
+    let jpg: Buffer;
     try {
       for (const t of tries) {
-        const first = await look(await frameAt(via.url, t + 6, `${out}-probe.jpg`));
-        if (!first) break; // the AI can't be asked: go with the best stretch, without a face picture
-        const staffOn = (label: string) => {
-          const lw = wordsOf(label);
-          return lw.some((w) => staffWords.includes(w)) && !lw.some((w) => candWords.includes(w));
-        };
-        if (!hasFace(first) || staffOn(first.label)) continue;
+        const frame = await frameAt(via.url, t + 6, `${out}-probe.jpg`);
+        const first = await look(frame);
+        if (!first) {
+          aiUp = false; // the AI can't be asked: go with the best stretch, without a face picture
+          break;
+        }
+        if (!isThem(first)) continue;
+        pic ??= { jpg: frame, box: first };
         const later = await look(await frameAt(via.url, t + 22, `${out}-probe.jpg`));
         if (later && staffOn(later.label)) continue;
         start = t;
@@ -248,14 +266,26 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
         break;
       }
       await cut(via.url, start, out);
+      mp4 = await readFile(`${out}.mp4`);
+      jpg = await readFile(`${out}.jpg`);
+      // No picture yet? There is always a moment when the candidate is talking: go through those
+      // moments, wherever they are in the call, until one shows their face clearly.
+      if (!pic && aiUp) {
+        for (const m of rec.moments) {
+          const frame = await frameAt(via.url, m, `${out}-probe.jpg`).catch(() => null);
+          const shot = frame ? await look(frame) : null;
+          if (frame && isThem(shot)) {
+            pic = { jpg: frame, box: shot };
+            break;
+          }
+        }
+      }
     } catch (e) {
       throw new Error(via.error() || (e as Error).message);
     } finally {
       via.close();
       await rm(`${out}-probe.jpg`, { force: true }).catch(() => {});
     }
-    const mp4 = await readFile(`${out}.mp4`);
-    const jpg = await readFile(`${out}.jpg`);
     const store = db().storage.from(BUCKET);
     const up = async (path: string, body: Buffer, contentType: string) => {
       const { error } = await store.upload(path, body, { contentType, upsert: true });
@@ -263,21 +293,19 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
     };
     await up(clipPath(candidateId, "video"), mp4, "video/mp4");
     await up(clipPath(candidateId, "photo"), jpg, "image/jpeg");
-    // The face picture is a plain crop of the real frame, a little brighter and sharper. Nothing is invented.
+    // The face picture is a plain crop of a real frame, a little brighter and sharper. Nothing is invented.
     let face = false;
     try {
-      const shot = seenCandidate ? await look(jpg) : null;
-      const lw = shot ? wordsOf(shot.label) : [];
-      const box = shot && hasFace(shot) && !(lw.some((w) => staffWords.includes(w)) && !lw.some((w) => candWords.includes(w))) ? shot : null;
-      if (box) {
+      if (pic) {
+        const { box } = pic;
         const sharp = (await import("sharp")).default;
-        const meta = await sharp(jpg).metadata();
+        const meta = await sharp(pic.jpg).metadata();
         const W = meta.width ?? 0;
         const H = meta.height ?? 0;
         const side = Math.min(W, H, Math.round(Math.max(box.w * W, box.h * H) * 2.1));
         const left = Math.max(0, Math.min(W - side, Math.round((box.x + box.w / 2) * W - side / 2)));
         const top = Math.max(0, Math.min(H - side, Math.round((box.y + box.h / 2) * H - side * 0.45)));
-        const img = await sharp(jpg).extract({ left, top, width: side, height: side }).resize(360, 360).normalise().modulate({ brightness: 1.05 }).sharpen().jpeg({ quality: 86 }).toBuffer();
+        const img = await sharp(pic.jpg).extract({ left, top, width: side, height: side }).resize(360, 360).normalise().modulate({ brightness: 1.05 }).sharpen().jpeg({ quality: 86 }).toBuffer();
         await up(clipPath(candidateId, "face"), img, "image/jpeg");
         face = true;
       }
