@@ -58,20 +58,29 @@ export async function postToRoom(_prev: RoomState, form: FormData): Promise<Room
   return { ok: true };
 }
 
-export async function replyToPost(postId: number, _prev: RoomState, form: FormData): Promise<RoomState> {
+export async function replyToPost(postId: number | string, _prev: RoomState, form: FormData): Promise<RoomState> {
   const me = await requireStaff();
   const text = String(form.get("text") ?? "").trim().slice(0, 2000);
   const cands = await candIds(form, text);
   if (!text && !cands.length) return { error: "Write a reply or attach a candidate." };
   if (!(await allow(`room:${me.email}`, 30, 60))) return { error: SLOW_DOWN };
-  const { data: post } = await db().from("activity_log").select("id, actor, details").eq("id", postId).eq("action", "team_post").maybeSingle();
-  if (!post) return { error: "That post isn't there anymore." };
-  await logActivity(staffActor(me), "team_reply", { post_id: postId, text, cands, by_name: me.name, by_id: me.id });
-  const author = String(post.actor).replace(/^staff:/, "");
-  const link = `${teamUrl()}/admin/room#p${postId}`;
+  // A person's post, a gold announcement (minus its number) or a hire ("h:" and its id).
+  const key = String(postId);
+  let author = "";
+  if (/^h:[0-9a-f-]{36}$/i.test(key)) {
+    const { data: h } = await db().from("hires").select("id").eq("id", key.slice(2)).maybeSingle();
+    if (!h) return { error: "That post isn't there anymore." };
+  } else if (/^-?\d+$/.test(key)) {
+    const n = Number(key);
+    const { data: post } = await db().from("activity_log").select("id, actor").eq("id", Math.abs(n)).eq("action", n < 0 ? "gold_on" : "team_post").maybeSingle();
+    if (!post) return { error: "That post isn't there anymore." };
+    author = String(post.actor).replace(/^staff:/, "");
+  } else return { error: "That post isn't there anymore." };
+  await logActivity(staffActor(me), "team_reply", { post_id: /^-?\d+$/.test(key) ? Number(key) : key, text, cands, by_name: me.name, by_id: me.id });
+  const link = `${teamUrl()}/admin/room#p${key.replace(":", "")}`;
   const tagged = await notifyTagged(text, me, link);
   // The person who posted, plus everyone else already in the conversation.
-  after(() => emailReply({ postId, postAuthor: author, text, cands: cands.length, by: { email: me.email, name: me.name || me.email }, tagged, link }).catch(() => null));
+  after(() => emailReply({ postId: key, postAuthor: author, text, cands: cands.length, by: { email: me.email, name: me.name || me.email }, tagged, link }).catch(() => null));
   revalidatePath("/admin/room");
   return { ok: true };
 }
@@ -169,7 +178,7 @@ export async function editRoomText(id: number, _prev: RoomState, form: FormData)
   const { data: prev } = await db().from("activity_log").select("details").eq("action", "team_edit").eq("details->>id", String(id)).order("at", { ascending: false }).limit(1);
   const before = String((prev?.[0]?.details as { text?: string } | undefined)?.text ?? (row.details as { text?: string }).text ?? "");
   await logActivity(staffActor(me), "team_edit", { id, text });
-  const postId = row.action === "team_post" ? id : Number((row.details as { post_id?: number }).post_id);
+  const postId = row.action === "team_post" ? String(id) : String((row.details as { post_id?: number | string }).post_id ?? "").replace(":", "");
   await notifyTagged(text, me, `${teamUrl()}/admin/room#p${postId}`, await taggedIn(before, me.email));
   revalidatePath("/admin/room");
   return { ok: true };

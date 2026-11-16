@@ -53,7 +53,7 @@ export function Composer({ cands, meId, spot, names }: { cands: RoomCand[]; meId
   );
 }
 
-export function ReplyBox({ postId, cands, meId, context, names }: { postId: number; cands: RoomCand[]; meId: string | null; context: string; names: string[] }) {
+export function ReplyBox({ postId, cands, meId, context, names }: { postId: number | string; cands: RoomCand[]; meId: string | null; context: string; names: string[] }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [picked, setPicked] = useState<string[]>([]);

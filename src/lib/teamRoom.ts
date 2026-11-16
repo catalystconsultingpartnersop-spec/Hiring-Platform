@@ -20,6 +20,7 @@ export type RoomPost = {
   text: string;
   cands: string[];
   replies: RoomReply[];
+  ref?: string; // what replies hang on, for posts the site made itself
   edited?: boolean;
 };
 export type Specialty = "candidates" | "owners" | "both";
@@ -84,18 +85,12 @@ export async function loadRoom(): Promise<RoomPost[]> {
       cands: (r.details.cands as string[]) ?? [],
       replies: [],
     }));
-  const byId = new Map(posts.map((p) => [p.id, p]));
-  for (const r of [...rows].reverse()) {
-    if (r.action !== "team_reply" || removedReplies.has(r.id)) continue;
-    const p = byId.get(Number(r.details.post_id));
-    if (p) p.replies.push({ id: r.id, at: r.at, byName: String(r.details.by_name ?? email(r.actor)), byEmail: email(r.actor), text: textOf(r), edited: edits.has(r.id), cands: (r.details.cands as string[]) ?? [] });
-  }
   // New gold candidates, posted on their own.
   for (const r of rows.filter((x) => x.action === "gold_on")) {
     const { data: c } = await db().from("candidates").select("application, status").eq("id", String(r.details.candidate_id)).maybeSingle();
     const g = c ? goldOf(c as { status: string; application: Record<string, unknown> | null }) : null;
     if (!g) continue;
-    posts.push({ id: -r.id, at: r.at, kind: "auto_gold", byName: g.by_name, byEmail: "", text: g.why ?? "", cands: [String(r.details.candidate_id)], replies: [] });
+    posts.push({ id: -r.id, at: r.at, kind: "auto_gold", byName: g.by_name, byEmail: "", text: g.why ?? "", cands: [String(r.details.candidate_id)], replies: [], ref: String(-r.id) });
   }
   // Hires, celebrated.
   const { data: hires } = await db()
@@ -105,7 +100,14 @@ export async function loadRoom(): Promise<RoomPost[]> {
     .gte("paid_at", since);
   for (const h of (hires ?? []) as unknown as { id: string; paid_at: string; unlocks: { candidate_id: string; owners: { company: string | null } | null } | null }[]) {
     if (!h.unlocks) continue;
-    posts.push({ id: -1e12 - posts.length, at: h.paid_at, kind: "auto_hire", byName: "", byEmail: "", text: h.unlocks.owners?.company ?? "", cands: [h.unlocks.candidate_id], replies: [] });
+    posts.push({ id: -1e12 - posts.length, at: h.paid_at, kind: "auto_hire", byName: "", byEmail: "", text: h.unlocks.owners?.company ?? "", cands: [h.unlocks.candidate_id], replies: [], ref: `h:${h.id}` });
+  }
+  // Replies hang on a person's post, or on one the site posted itself.
+  const byId = new Map(posts.map((p) => [p.ref ?? String(p.id), p]));
+  for (const r of [...rows].reverse()) {
+    if (r.action !== "team_reply" || removedReplies.has(r.id)) continue;
+    const p = byId.get(String(r.details.post_id));
+    if (p) p.replies.push({ id: r.id, at: r.at, byName: String(r.details.by_name ?? email(r.actor)), byEmail: email(r.actor), text: textOf(r), edited: edits.has(r.id), cands: (r.details.cands as string[]) ?? [] });
   }
   return posts.sort((a, b) => b.at.localeCompare(a.at));
 }

@@ -46,7 +46,7 @@ export async function emailNewPost(o: { postId: number | null; kind: string; tex
 }
 
 // A reply: the person who posted and everyone else who replied in that thread.
-export async function emailReply(o: { postId: number; postAuthor: string; text: string; cands: number; by: { email: string; name: string }; tagged: string[]; link: string }) {
+export async function emailReply(o: { postId: number | string; postAuthor: string; text: string; cands: number; by: { email: string; name: string }; tagged: string[]; link: string }) {
   const { data } = await db().from("activity_log").select("actor").eq("action", "team_reply").eq("details->>post_id", String(o.postId));
   const people = new Set([o.postAuthor, ...((data ?? []) as { actor: string }[]).map((r) => String(r.actor).replace(/^staff:/, ""))].map((e) => e.toLowerCase()));
   const team = await teamMembers();

@@ -116,11 +116,47 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
           </div>
   ) : null;
 
+  const replies = (p: RoomPost) =>
+    p.replies.map((r) => (
+          <div key={r.id} className={s.reply}>
+            <div className={s.who}>
+              <span className={s.av} style={{ background: color(r.byName), width: 30, height: 30, fontSize: 12 }}>
+                {r.byName.slice(0, 1)}
+              </span>
+              <div>
+                <b>{r.byName}</b>
+                <small>{ago(r.at, now)}</small>
+              </div>
+              {(r.byEmail === me.email || me.manager) && (
+                <form action={removeReply.bind(null, r.id)} style={{ marginLeft: "auto" }}>
+                  <button type="submit" className={s.act}>
+                    Remove
+                  </button>
+                </form>
+              )}
+            </div>
+            {(r.text || r.byEmail === me.email) && <EditableText id={r.id} text={r.text} edited={r.edited} mine={r.byEmail === me.email} names={names} />}
+            <div className={s.cards}>
+              {cardsFor(r.cands, r.text).map((c) => (
+                <Card key={c.id} c={c} />
+              ))}
+            </div>
+          </div>
+        ));
+  const autoReply = (p: RoomPost) => (
+    <>
+      {replies(p)}
+      <div className={s.acts}>
+        <ReplyBox postId={p.ref ?? p.id} cands={cands} meId={me.id} context="" names={names} />
+      </div>
+    </>
+  );
+
   const post = (p: RoomPost) => {
     if (p.kind === "auto_hire") {
       const c = byId.get(p.cands[0]);
       return (
-        <article key={p.id} className={`${s.card} ${s.win}`}>
+        <article key={p.id} id={`p${(p.ref ?? "").replace(":", "")}`} className={`${s.card} ${s.win}`}>
           <div className={s.who}>
             <span className={s.av} style={{ background: "var(--moss)" }}>
               🎉
@@ -134,13 +170,14 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
           <p className={s.txt} style={{ margin: 0 }}>
             <b>{c?.first ?? "A candidate"}</b> was hired{p.text ? ` by ${p.text}` : ""}.{c?.repFirst ? <> Thanks to <b>{c.repFirst}</b>!</> : null} Mazel tov! 🎉
           </p>
+          {autoReply(p)}
         </article>
       );
     }
     if (p.kind === "auto_gold") {
       const c = byId.get(p.cands[0]);
       return (
-        <article key={p.id} className={s.card}>
+        <article key={p.id} id={`p${p.ref ?? ""}`} className={s.card}>
           <div className={s.who}>
             <span className={s.av} style={{ background: "var(--marigold)", color: "var(--ink)" }}>
               ⭐
@@ -155,6 +192,7 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
             {p.byName.split(" ")[0]} marked a candidate as gold{p.text ? `: “${p.text}”` : "."}
           </p>
           {c && <Card c={c} />}
+          {autoReply(p)}
         </article>
       );
     }
@@ -181,32 +219,7 @@ export default async function TeamRoom({ searchParams }: { searchParams: Promise
             <Card key={c.id} c={c} />
           ))}
         </div>
-        {p.replies.map((r) => (
-          <div key={r.id} className={s.reply}>
-            <div className={s.who}>
-              <span className={s.av} style={{ background: color(r.byName), width: 30, height: 30, fontSize: 12 }}>
-                {r.byName.slice(0, 1)}
-              </span>
-              <div>
-                <b>{r.byName}</b>
-                <small>{ago(r.at, now)}</small>
-              </div>
-              {(r.byEmail === me.email || me.manager) && (
-                <form action={removeReply.bind(null, r.id)} style={{ marginLeft: "auto" }}>
-                  <button type="submit" className={s.act}>
-                    Remove
-                  </button>
-                </form>
-              )}
-            </div>
-            {(r.text || r.byEmail === me.email) && <EditableText id={r.id} text={r.text} edited={r.edited} mine={r.byEmail === me.email} names={names} />}
-            <div className={s.cards}>
-              {cardsFor(r.cands, r.text).map((c) => (
-                <Card key={c.id} c={c} />
-              ))}
-            </div>
-          </div>
-        ))}
+        {replies(p)}
         <div className={s.acts}>
           <ReplyBox postId={p.id} cands={cands} meId={me.id} context={p.kind === "looking" ? p.text : ""} names={names} />
           {(mine || me.manager) && (
