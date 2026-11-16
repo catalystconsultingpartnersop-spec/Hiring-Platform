@@ -1085,19 +1085,30 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
   const plan = String(form.get("call_plan") ?? (form.get("move_calls") === "on" ? "keep" : "stay"));
   let moved = 0;
   let rebooked = 0;
+  let asked = 0;
   if (rep && plan !== "stay") {
     const { data: calls } = await db()
       .from("onboarding_calls")
-      .select("id, staff_id, starts_at, staff(email)")
+      .select("id, staff_id, starts_at, ends_at, staff(email)")
       .eq("candidate_id", candidateId)
       .eq("status", "booked")
       .gt("ends_at", new Date().toISOString());
     const { takeOverCall, closeDuplicateCalls, cancelCall } = await import("@/lib/calls");
-    for (const k of (calls ?? []) as unknown as { id: string; staff_id: string; starts_at: string; staff: { email: string } | null }[]) {
+    const { withinHours } = await import("@/lib/slots");
+    for (const k of (calls ?? []) as unknown as { id: string; staff_id: string; starts_at: string; ends_at: string; staff: { email: string } | null }[]) {
       if (k.staff_id === rep.id) continue;
       if (plan === "rebook") {
         if (await cancelCall(k.id, staffActor(me))) rebooked++;
         continue;
+      }
+      // Outside the new rep's hours, or they're busy then: ask them first. The call stays put until they say yes.
+      if (me.id !== rep.id) {
+        const { count } = await db().from("onboarding_calls").select("id", { count: "exact", head: true }).eq("staff_id", rep.id).eq("status", "booked").neq("candidate_id", candidateId).lt("starts_at", k.ends_at).gt("ends_at", k.starts_at);
+        if (count || !(await withinHours(rep.id, k.starts_at, k.ends_at))) {
+          const { askRepForTime } = await import("@/lib/timeAsk");
+          if (await askRepForTime(k.id, rep, { name: me.name || me.email, email: me.email, actor: staffActor(me) })) asked++;
+          continue;
+        }
       }
       if (!(await takeOverCall(k.id, rep.id))) continue;
       await closeDuplicateCalls(k.id);
@@ -1113,15 +1124,15 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
   revalidatePath(`/admin/candidates/${candidateId}`);
   return {
     ok: rep
-      ? `Assigned to ${rep.full_name || rep.email}${moved ? `. Their upcoming call moved too, and ${(rep.full_name || "they").split(" ")[0]} has the link` : ""}${rebooked ? ". Their call was cancelled, and they got an email to pick a new time" : ""}${tell ? ". The candidate was told about the new rep" : rebooked ? "" : ". The candidate wasn't emailed"}.`
+      ? `Assigned to ${rep.full_name || rep.email}${moved ? `. Their upcoming call moved too, and ${(rep.full_name || "they").split(" ")[0]} has the link` : ""}${rebooked ? ". Their call was cancelled, and they got an email to pick a new time" : ""}${asked ? `. ${(rep.full_name || "They").split(" ")[0]} was asked if the call time works. Until they say yes, the call stays where it is` : ""}${tell ? ". The candidate was told about the new rep" : rebooked ? "" : ". The candidate wasn't emailed"}.`
       : "Unassigned.",
   };
 }
 
 // Before switching a rep: is there a call booked with someone else, and is the new rep free then?
-export type CallPlanInfo = { when: string; with: string; busy: boolean; outside: boolean } | null;
+export type CallPlanInfo = { when: string; with: string; busy: boolean; outside: boolean; needsYes: boolean } | null;
 export async function callPlanInfo(candidateId: string, repId: string): Promise<CallPlanInfo> {
-  await requireStaff();
+  const me = await requireStaff();
   if (!repId) return null;
   const { data } = await db()
     .from("onboarding_calls")
@@ -1143,11 +1154,14 @@ export async function callPlanInfo(candidateId: string, repId: string): Promise<
     .lt("starts_at", k.ends_at)
     .gt("ends_at", k.starts_at);
   const { withinHours } = await import("@/lib/slots");
+  const outside = !(await withinHours(repId, k.starts_at, k.ends_at));
   return {
     when: new Date(k.starts_at).toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
     with: (k.staff?.full_name ?? "another rep").split(" ")[0],
     busy: !!count,
-    outside: !(await withinHours(repId, k.starts_at, k.ends_at)),
+    outside,
+    // Their open hours are their standing yes. Anything else, they're asked first (unless they're the one switching).
+    needsYes: (!!count || outside) && me.id !== repId,
   };
 }
 

@@ -54,6 +54,8 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
     status: string;
     staff: { full_name: string | null; email: string; time_zone: string | null };
   }[];
+  const { pendingAsks } = await import("@/lib/timeAsk");
+  const waiting = [...(await pendingAsks(callRows.filter((k) => k.status === "booked").map((k) => k.id))).values()];
 
   const { data: unlocks } = await db()
     .from("unlocks")
@@ -114,6 +116,11 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
           admin={me.manager}
           meId={me.id}
         />
+        {waiting.map((w) => (
+          <p key={w.to} className="notice" style={{ marginTop: 10 }}>
+            Waiting for {(w.to_name ?? "the new rep").split(" ")[0]} to confirm the call time. Until then, the call stays where it is.
+          </p>
+        ))}
         {callRows.length > 0 && (
           <p style={{ marginTop: 10 }}>
             Onboarding call:{" "}

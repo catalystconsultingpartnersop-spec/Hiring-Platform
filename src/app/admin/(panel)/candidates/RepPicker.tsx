@@ -41,7 +41,7 @@ export function RepPicker(p: { candidateId: string; value: string; options: [str
     start(async () => {
       const info = next ? await callPlanInfo(p.candidateId, next).catch(() => null) : null;
       if (!info) return save(next, "keep");
-      setPlan(info.busy ? "rebook" : "keep");
+      setPlan("keep");
       setAsk({ next, info });
     });
   }
@@ -86,14 +86,19 @@ export function RepPicker(p: { candidateId: string; value: string; options: [str
           </b>
           <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontWeight: 400, margin: 0 }}>
             <input type="radio" name={`plan-${p.candidateId}`} checked={plan === "keep"} onChange={() => setPlan("keep")} style={{ marginTop: 3 }} />
-            <span>
-              Keep the same time, with {nameOf(ask.next)}
-              {ask.info.busy ? (
-                <span style={{ display: "block", color: "var(--rust)", fontSize: 13.5 }}>{nameOf(ask.next)} already has another call at that time.</span>
-              ) : ask.info.outside ? (
-                <span style={{ display: "block", color: "#8a5a00", fontSize: 13.5 }}>That&rsquo;s outside {nameOf(ask.next)}&rsquo;s set hours.</span>
-              ) : null}
-            </span>
+            {ask.info.needsYes ? (
+              <span>
+                Ask {nameOf(ask.next)} if this time works
+                <span style={{ display: "block", color: "#8a5a00", fontSize: 13.5 }}>
+                  {ask.info.busy ? `${nameOf(ask.next)} has another call then.` : `It's outside ${nameOf(ask.next)}'s open hours.`} Nothing moves until {nameOf(ask.next)} says yes. The call stays with {ask.info.with} meanwhile.
+                </span>
+              </span>
+            ) : (
+              <span>
+                Keep the same time, with {nameOf(ask.next)}
+                <span className="muted" style={{ display: "block", fontSize: 13.5 }}>{nameOf(ask.next)} is open then.</span>
+              </span>
+            )}
           </label>
           <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontWeight: 400, margin: 0 }}>
             <input type="radio" name={`plan-${p.candidateId}`} checked={plan === "rebook"} onChange={() => setPlan("rebook")} style={{ marginTop: 3 }} />
