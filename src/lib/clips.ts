@@ -216,6 +216,68 @@ async function frameAt(input: string, at: number, out: string) {
   return readFile(out);
 }
 
+// The face picture is a plain crop of a real frame, a little brighter and sharper. Nothing is invented.
+async function faceCrop(jpg: Buffer, box: Look) {
+  const sharp = (await import("sharp")).default;
+  const meta = await sharp(jpg).metadata();
+  const W = meta.width ?? 0;
+  const H = meta.height ?? 0;
+  const side = Math.min(W, H, Math.round(Math.max(box.w * W, box.h * H) * 2.1));
+  const left = Math.max(0, Math.min(W - side, Math.round((box.x + box.w / 2) * W - side / 2)));
+  const top = Math.max(0, Math.min(H - side, Math.round((box.y + box.h / 2) * H - side * 0.45)));
+  return sharp(jpg).extract({ left, top, width: side, height: side }).resize(360, 360).normalise().modulate({ brightness: 1.05 }).sharpen().jpeg({ quality: 86 }).toBuffer();
+}
+
+// A clip that came out without a face picture gets one more look, once: the clip itself is left alone.
+export async function addPhoto(candidateId: string): Promise<boolean> {
+  const { data: c } = await db().from("candidates").select("id, full_name, application").eq("id", candidateId).maybeSingle();
+  const clip = clipOf(c?.application as Record<string, string> | null);
+  if (!c || !clip || clip.face) return false;
+  const out = join(tmpdir(), `photo-${candidateId}.jpg`);
+  let face = false;
+  try {
+    const { data: calls } = await db().from("onboarding_calls").select("meet_space, staff(full_name)").eq("candidate_id", candidateId).neq("status", "cancelled").not("meet_space", "is", null).order("starts_at", { ascending: false }).limit(1);
+    const call = (calls ?? [])[0] as unknown as { meet_space: string; staff: { full_name: string | null } | null } | undefined;
+    const { data: team } = await db().from("staff").select("full_name");
+    const staffNames = [...((team ?? []) as { full_name: string | null }[]).map((t) => t.full_name ?? ""), call?.staff?.full_name ?? ""].filter(Boolean);
+    const rec = call ? await findRecording(call.meet_space, c.full_name, staffNames) : null;
+    if (rec) {
+      const wordsOf = (x: string) => x.toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 2);
+      const staffWords = staffNames.flatMap(wordsOf);
+      const candWords = wordsOf(c.full_name + " " + rec.candidateLabel);
+      const via = await relay(`https://www.googleapis.com/drive/v3/files/${rec.file}?alt=media&supportsAllDrives=true`, rec.token);
+      const began = Date.now();
+      try {
+        // Their speaking moments, plus a few from inside the clip itself.
+        for (const m of [...rec.moments, clip.start + 4, clip.start + 12, clip.start + 20]) {
+          if (Date.now() - began > 110_000) break;
+          const frame = await frameAt(via.url, m, out).catch(() => null);
+          const shot = frame ? await look(frame) : null;
+          const lw = shot ? wordsOf(shot.label) : [];
+          if (frame && shot && hasFace(shot) && !(lw.some((w) => staffWords.includes(w)) && !lw.some((w) => candWords.includes(w)))) {
+            const { error } = await db().storage.from(BUCKET).upload(clipPath(candidateId, "face"), await faceCrop(frame, shot), { contentType: "image/jpeg", upsert: true });
+            face = !error;
+            if (face) break;
+          }
+        }
+      } finally {
+        via.close();
+      }
+    }
+  } catch {
+  } finally {
+    await rm(out, { force: true }).catch(() => {});
+  }
+  const { data: fresh } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
+  const app = { ...((fresh?.application as Record<string, string>) ?? {}) };
+  const now = clipOf(app);
+  if (!now) return false;
+  app.clip = JSON.stringify({ ...now, face: now.face || face, pt: 1 } satisfies Clip);
+  await db().from("candidates").update({ application: app }).eq("id", candidateId);
+  if (face) await logActivity("system", "clip_photo_added", { candidate_id: candidateId });
+  return face;
+}
+
 export async function makeClip(candidateId: string): Promise<{ ok: boolean; error?: string }> {
   const { data: c } = await db().from("candidates").select("id, full_name, application").eq("id", candidateId).maybeSingle();
   if (!c) return { ok: false, error: "No such candidate." };
@@ -298,20 +360,10 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
     };
     await up(clipPath(candidateId, "video"), mp4, "video/mp4");
     await up(clipPath(candidateId, "photo"), jpg, "image/jpeg");
-    // The face picture is a plain crop of a real frame, a little brighter and sharper. Nothing is invented.
     let face = false;
     try {
       if (pic) {
-        const { box } = pic;
-        const sharp = (await import("sharp")).default;
-        const meta = await sharp(pic.jpg).metadata();
-        const W = meta.width ?? 0;
-        const H = meta.height ?? 0;
-        const side = Math.min(W, H, Math.round(Math.max(box.w * W, box.h * H) * 2.1));
-        const left = Math.max(0, Math.min(W - side, Math.round((box.x + box.w / 2) * W - side / 2)));
-        const top = Math.max(0, Math.min(H - side, Math.round((box.y + box.h / 2) * H - side * 0.45)));
-        const img = await sharp(pic.jpg).extract({ left, top, width: side, height: side }).resize(360, 360).normalise().modulate({ brightness: 1.05 }).sharpen().jpeg({ quality: 86 }).toBuffer();
-        await up(clipPath(candidateId, "face"), img, "image/jpeg");
+        await up(clipPath(candidateId, "face"), await faceCrop(pic.jpg, pic.box), "image/jpeg");
         face = true;
       }
     } catch {}
@@ -374,7 +426,16 @@ export async function makeWaitingClips(max = 1) {
     tried++;
     if ((await makeClip(r.candidate_id)).ok) made++;
   }
-  return { made, tried, done: done + made, waiting: redo.length + fresh.length - tried };
+  // Nothing made this run? Use the time for one clip that's still missing its face picture.
+  let photo = false;
+  if (!made && Date.now() - began < 60_000) {
+    const need = uniq.find((r) => {
+      const k = clipOf(r.candidates!.application);
+      return k && !clipIsOld(k) && !k.face && !k.pt;
+    });
+    if (need) photo = await addPhoto(need.candidate_id);
+  }
+  return { made, tried, photo, done: done + made, waiting: redo.length + fresh.length - tried };
 }
 
 export async function clipUrl(candidateId: string, kind: "video" | "photo" | "face") {

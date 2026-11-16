@@ -5,7 +5,8 @@ export const CLIP_BUCKET = "resumes";
 export const clipPath = (id: string, kind: "video" | "photo" | "face") => `clips/${id}${kind === "video" ? ".mp4" : kind === "face" ? "-face.jpg" : ".jpg"}`;
 // Bump when the way clips are picked changes: older ones are quietly made again.
 export const CLIP_V = 3;
-export type Clip = { at: string; start: number; face: boolean; v?: number };
+// pt: the one extra look for a face picture has been done.
+export type Clip = { at: string; start: number; face: boolean; v?: number; pt?: number };
 export function clipOf(app: Record<string, string> | null | undefined): Clip | null {
   try {
     const c = JSON.parse(app?.clip ?? "null") as Clip | null;
