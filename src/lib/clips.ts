@@ -323,12 +323,15 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
     await logActivity("system", "clip_made", { candidate_id: candidateId, start: Math.round(start), face, seen: seenCandidate });
     return { ok: true };
   } catch (e) {
-    const error = ((e as Error).message ?? String(e)).slice(0, 300);
+    const raw = ((e as Error).message ?? String(e)).slice(0, 300);
+    // "ffmpeg null" is the video tool being stopped for taking too long: a slow moment, not a real problem.
+    const slow = /^ffmpeg null/.test(raw);
+    const error = slow ? "The recording took too long to read. Trying again soon." : raw;
     const { data: fresh } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
     const app = { ...((fresh?.application as Record<string, string>) ?? {}) };
     app.clip_error = error;
     // An older clip that can't be made again the careful way comes down: it may be showing the rep.
-    if (clipIsOld(clipOf(app))) delete app.clip;
+    if (!slow && clipIsOld(clipOf(app))) delete app.clip;
     app.clip_tried_at = new Date().toISOString();
     await db().from("candidates").update({ application: app }).eq("id", candidateId);
     await logActivity("system", "clip_failed", { candidate_id: candidateId, error });
@@ -354,10 +357,10 @@ export async function makeWaitingClips(max = 1) {
   const seen = new Set<string>();
   const uniq = rows.filter((r) => r.candidates && !seen.has(r.candidate_id) && seen.add(r.candidate_id));
   const done = uniq.filter((r) => clipOf(r.candidates!.application)).length;
-  // A failed one waits six hours before another try, unless the failure was a setting on Google's side
+  // A failed one waits six hours before another try (half an hour if it only ran out of time), unless the failure was a setting on Google's side
   // (then it's tried again as soon as that's fixed).
   const resting = (a: Record<string, string> | null) =>
-    !!a?.clip_tried_at && Date.now() - Date.parse(a.clip_tried_at) < 6 * 36e5 && !/has not been used|is disabled|isn't connected/i.test(a.clip_error ?? "");
+    !!a?.clip_tried_at && Date.now() - Date.parse(a.clip_tried_at) < (/took too long|^ffmpeg null/i.test(a.clip_error ?? "") ? 30 * 60e3 : 6 * 36e5) && !/has not been used|is disabled|isn't connected/i.test(a.clip_error ?? "");
   // Older clips that should be made again the careful way go first, then calls that have none yet.
   const fresh = uniq.filter((r) => !clipOf(r.candidates!.application) && !resting(r.candidates!.application));
   const redo = uniq.filter((r) => clipIsOld(clipOf(r.candidates!.application)) && !resting(r.candidates!.application));
