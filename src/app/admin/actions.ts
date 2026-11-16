@@ -1055,6 +1055,8 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
     if (!data || !data.active) return { error: "That rep isn't active." };
     rep = data;
   }
+  const { data: before } = await db().from("candidates").select("added_by").eq("id", candidateId).maybeSingle();
+  const prevRep = (before?.added_by as string | null) ?? null;
   const { data: c, error } = await db()
     .from("candidates")
     .update({ added_by: rep?.id ?? null })
@@ -1063,20 +1065,6 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
     .single();
   if (error || !c) return { error: "Couldn't save. Try again." };
   await logActivity(staffActor(me), "rep_assigned", { candidate: refCode(candidateId), rep: rep?.email ?? null });
-  if (rep && rep.id !== me.id && rep.email.toLowerCase() !== me.email.toLowerCase()) {
-    const app = (c.application ?? {}) as Record<string, string | undefined>;
-    await sendEmail({
-      to: rep.email,
-      ...teamExtra.assigned({
-        name: rep.full_name ?? "",
-        candidate: c.full_name,
-        email: c.email,
-        phone: c.phone,
-        lookingFor: app.looking_for ?? null,
-        link: `${teamUrl()}/admin/candidates/${candidateId}`,
-      }),
-    });
-  }
   // Their upcoming call goes with them, so the new rep has the recorded link
   // and can start the recording. The old rep is told; the candidate's link stays the same.
   // "keep": the call goes to the new rep at the same time. "rebook": the call is
@@ -1086,6 +1074,7 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
   let moved = 0;
   let rebooked = 0;
   let asked = 0;
+  let movedWhen = "";
   if (rep && plan !== "stay") {
     const { data: calls } = await db()
       .from("onboarding_calls")
@@ -1106,15 +1095,43 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
         const { count } = await db().from("onboarding_calls").select("id", { count: "exact", head: true }).eq("staff_id", rep.id).eq("status", "booked").neq("candidate_id", candidateId).lt("starts_at", k.ends_at).gt("ends_at", k.starts_at);
         if (count || !(await withinHours(rep.id, k.starts_at, k.ends_at))) {
           const { askRepForTime } = await import("@/lib/timeAsk");
-          if (await askRepForTime(k.id, rep, { name: me.name || me.email, email: me.email, actor: staffActor(me) })) asked++;
+          if (await askRepForTime(k.id, rep, { name: me.name || me.email, email: me.email, actor: staffActor(me), prevRep })) asked++;
           continue;
         }
       }
       if (!(await takeOverCall(k.id, rep.id))) continue;
       await closeDuplicateCalls(k.id);
       await logActivity(staffActor(me), "call_moved_with_rep", { call_id: k.id, to: rep.id });
+      movedWhen = new Date(k.starts_at).toLocaleString("en-US", { timeZone: "America/New_York", weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
       moved++;
     }
+  }
+  // The new rep hears about it in the switcher's own voice. If they were asked
+  // about the call time, that one note covers it.
+  if (rep && !asked && rep.id !== me.id && rep.email.toLowerCase() !== me.email.toLowerCase()) {
+    const app = (c.application ?? {}) as Record<string, string | undefined>;
+    const link = `${teamUrl()}/admin/candidates/${candidateId}`;
+    if (movedWhen) {
+      const { kit } = await import("@/lib/emailKit");
+      const first = (me.name || "The team").split(" ")[0];
+      await sendEmail({
+        to: rep.email,
+        subject: `${c.full_name} is yours, with a call on ${movedWhen}`,
+        html:
+          kit.hi(rep.full_name) +
+          kit.p(`I was thinking you should take <strong>${escapeHtml(c.full_name)}</strong>.`) +
+          kit.p(`There's a call already booked for <strong>${escapeHtml(movedWhen)}</strong>. That's inside your open hours, so it's on your calendar now. The call details are in a separate email.`) +
+          kit.button(link, `Open ${c.full_name.split(" ")[0]}'s page`) +
+          kit.p(`Thanks,<br>${escapeHtml(first)}`),
+        audience: "team",
+        replyTo: me.email,
+        fromName: me.name || undefined,
+      });
+    } else
+      await sendEmail({
+        to: rep.email,
+        ...teamExtra.assigned({ name: rep.full_name ?? "", candidate: c.full_name, email: c.email, phone: c.phone, lookingFor: app.looking_for ?? null, link }),
+      });
   }
   const tell = form.get("notify") === "on";
   if (rep && tell) {
@@ -1124,7 +1141,7 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
   revalidatePath(`/admin/candidates/${candidateId}`);
   return {
     ok: rep
-      ? `Assigned to ${rep.full_name || rep.email}${moved ? `. Their upcoming call moved too, and ${(rep.full_name || "they").split(" ")[0]} has the link` : ""}${rebooked ? ". Their call was cancelled, and they got an email to pick a new time" : ""}${asked ? `. ${(rep.full_name || "They").split(" ")[0]} was asked if the call time works. Until they say yes, the call stays where it is` : ""}${tell ? ". The candidate was told about the new rep" : rebooked ? "" : ". The candidate wasn't emailed"}.`
+      ? `Assigned to ${rep.full_name || rep.email}${moved ? `. Their upcoming call moved too, and ${(rep.full_name || "they").split(" ")[0]} has the link` : ""}${rebooked ? ". Their call was cancelled, and they got an email to pick a new time" : ""}${asked ? `. ${(rep.full_name || "They").split(" ")[0]} was asked to make an exception for the call time. Until they answer, the call stays where it is` : ""}${tell ? ". The candidate was told about the new rep" : rebooked ? "" : ". The candidate wasn't emailed"}.`
       : "Unassigned.",
   };
 }

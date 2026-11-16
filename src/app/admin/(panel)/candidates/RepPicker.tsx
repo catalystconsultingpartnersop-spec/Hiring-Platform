@@ -88,9 +88,9 @@ export function RepPicker(p: { candidateId: string; value: string; options: [str
             <input type="radio" name={`plan-${p.candidateId}`} checked={plan === "keep"} onChange={() => setPlan("keep")} style={{ marginTop: 3 }} />
             {ask.info.needsYes ? (
               <span>
-                Ask {nameOf(ask.next)} if this time works
+                Ask {nameOf(ask.next)} to make an exception for this time
                 <span style={{ display: "block", color: "#8a5a00", fontSize: 13.5 }}>
-                  {ask.info.busy ? `${nameOf(ask.next)} has another call then.` : `It's outside ${nameOf(ask.next)}'s open hours.`} Nothing moves until {nameOf(ask.next)} says yes. The call stays with {ask.info.with} meanwhile.
+                  {ask.info.busy ? `${nameOf(ask.next)} has another call then.` : `It's outside ${nameOf(ask.next)}'s open hours.`} {nameOf(ask.next)} can say yes, ask for a different time, or pass. Nothing moves until then.
                 </span>
               </span>
             ) : (

@@ -118,7 +118,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         />
         {waiting.map((w) => (
           <p key={w.to} className="notice" style={{ marginTop: 10 }}>
-            Waiting for {(w.to_name ?? "the new rep").split(" ")[0]} to confirm the call time. Until then, the call stays where it is.
+            Waiting for {(w.to_name ?? "the new rep").split(" ")[0]} to answer about the call time. Until then, the call stays where it is.
           </p>
         ))}
         {callRows.length > 0 && (

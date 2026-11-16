@@ -70,8 +70,8 @@ export const textTeam = {
   ownerBookedVideo: (staffId: string, name: string, role: string, when: string, token: string) =>
     toStaff(staffId, `${name} booked a call with us: ${when}. Hiring for ${role}.`, "lead_video", `lead_video:${token}:${staffId}`),
   // A candidate was switched to this rep with a call outside their hours: can they take it?
-  timeAsk: (staffId: string, cand: string, when: string, link: string, callId: string) =>
-    toStaff(staffId, `Can you take ${cand}'s call on ${when}? Yes or no: ${link}`, "rep_time_ask", `rep_time_ask:${callId}:${staffId}`),
+  timeAsk: (staffId: string, to: string, from: string, cand: string, when: string, link: string, callId: string) =>
+    toStaff(staffId, `Hi ${to}, it's ${from}. Could you take ${cand}? The call is booked for ${when}, outside your hours. Let me know: ${link}`, "rep_time_ask", `rep_time_ask:${callId}:${staffId}`),
   // A manager asked the rep to check on one introduction.
   nudge: (staffId: string, from: string, cand: string, company: string, key: string) =>
     toStaff(staffId, `${from} asked: can you check in on ${cand} and ${company}? ${teamUrl()}/admin`, "rep_nudge", `rep_nudge:${key}`),
