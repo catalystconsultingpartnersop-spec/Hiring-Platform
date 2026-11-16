@@ -277,8 +277,6 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
   }
 }
 
-// While this is being proven on real recordings, only this many clips get made in total.
-const CAP = 1;
 
 export async function makeWaitingClips(max = 1) {
   if (!(await callsAccount())?.videos) return { made: 0, why: "Video clips aren't allowed yet." };
@@ -298,7 +296,7 @@ export async function makeWaitingClips(max = 1) {
   // (then it's tried again as soon as that's fixed).
   const resting = (a: Record<string, string> | null) =>
     !!a?.clip_tried_at && Date.now() - Date.parse(a.clip_tried_at) < 6 * 36e5 && !/has not been used|is disabled|isn't connected/i.test(a.clip_error ?? "");
-  const todo = uniq.filter((r) => !clipOf(r.candidates!.application) && !resting(r.candidates!.application)).slice(0, Math.max(0, Math.min(max, CAP - done)));
+  const todo = uniq.filter((r) => !clipOf(r.candidates!.application) && !resting(r.candidates!.application)).slice(0, max);
   let made = 0;
   for (const r of todo) if ((await makeClip(r.candidate_id)).ok) made++;
   return { made, done: done + made, waiting: uniq.length - done - made };
