@@ -225,7 +225,7 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
     const { data: fresh } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
     const app = { ...((fresh?.application as Record<string, string>) ?? {}) };
     app.clip_error = error;
-    app.clip_tries = String(Number(app.clip_tries ?? 0) + 1);
+    app.clip_tried_at = new Date().toISOString();
     await db().from("candidates").update({ application: app }).eq("id", candidateId);
     await logActivity("system", "clip_failed", { candidate_id: candidateId, error });
     return { ok: false, error };
@@ -252,7 +252,11 @@ export async function makeWaitingClips(max = 1) {
   const seen = new Set<string>();
   const uniq = rows.filter((r) => r.candidates && !seen.has(r.candidate_id) && seen.add(r.candidate_id));
   const done = uniq.filter((r) => clipOf(r.candidates!.application)).length;
-  const todo = uniq.filter((r) => !clipOf(r.candidates!.application) && Number(r.candidates!.application?.clip_tries ?? 0) < 2).slice(0, Math.max(0, Math.min(max, CAP - done)));
+  // A failed one waits six hours before another try, unless the failure was a setting on Google's side
+  // (then it's tried again as soon as that's fixed).
+  const resting = (a: Record<string, string> | null) =>
+    !!a?.clip_tried_at && Date.now() - Date.parse(a.clip_tried_at) < 6 * 36e5 && !/has not been used|is disabled|isn't connected/i.test(a.clip_error ?? "");
+  const todo = uniq.filter((r) => !clipOf(r.candidates!.application) && !resting(r.candidates!.application)).slice(0, Math.max(0, Math.min(max, CAP - done)));
   let made = 0;
   for (const r of todo) if ((await makeClip(r.candidate_id)).ok) made++;
   return { made, done: done + made, waiting: uniq.length - done - made };
