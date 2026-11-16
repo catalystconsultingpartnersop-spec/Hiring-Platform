@@ -14,8 +14,11 @@ const SCOPES = [
   "https://www.googleapis.com/auth/meetings.space.settings",
   "https://www.googleapis.com/auth/meetings.space.readonly",
 ];
+// Optional: lets the site read the call videos Meet saved, to cut a short clip
+// and a still picture for the team's memory cards. Calls work fine without it.
+export const VIDEO_SCOPE = "https://www.googleapis.com/auth/drive.meet.readonly";
 
-type Saved = { refresh_token: string; email: string; connected_at: string };
+type Saved = { refresh_token: string; email: string; connected_at: string; videos?: boolean };
 
 const clientId = () => process.env.GOOGLE_CALLS_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || "";
 const clientSecret = () => process.env.GOOGLE_CALLS_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET || "";
@@ -35,7 +38,7 @@ export function connectUrl(origin: string) {
     client_id: clientId(),
     redirect_uri: callsRedirectUri(origin),
     response_type: "code",
-    scope: SCOPES.join(" "),
+    scope: [...SCOPES, VIDEO_SCOPE].join(" "),
     access_type: "offline",
     prompt: "consent select_account",
     include_granted_scopes: "true",
@@ -57,7 +60,7 @@ export async function finishConnect(code: string, origin: string) {
   if (missing.length) throw new Error("Please tick every box Google asks about, then connect again.");
   const info = await fetch("https://openidconnect.googleapis.com/v1/userinfo", { headers: { authorization: `Bearer ${tok.access_token}` } });
   const { email } = (await info.json()) as { email?: string };
-  await setSetting("google_calls", { refresh_token: tok.refresh_token, email: email ?? "", connected_at: new Date().toISOString() } satisfies Saved);
+  await setSetting("google_calls", { refresh_token: tok.refresh_token, email: email ?? "", connected_at: new Date().toISOString(), videos: (tok.scope ?? "").includes(VIDEO_SCOPE) } satisfies Saved);
   return email ?? "";
 }
 

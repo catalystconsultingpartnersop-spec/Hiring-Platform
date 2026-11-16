@@ -35,7 +35,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
           Connect one company Google account. Every onboarding call then gets its own Google Meet room that records and
           takes notes on its own. Reps keep their own email; they just get the link.
         </p>
-        {sp.google === "connected" && <p className="notice notice-good">Connected. New bookings get their own recorded Meet room.</p>}
+        {sp.google === "connected" && <p className="notice notice-good">Connected. New bookings get their own recorded Meet room.{acct?.videos ? " Video clips are allowed." : ""}</p>}
         {sp.google === "failed" && (
           <p className="notice notice-bad">That didn&rsquo;t connect{typeof sp.why === "string" ? `: ${sp.why}` : "."} Try again.</p>
         )}
@@ -51,6 +51,16 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
               </button>
             </form>
           </div>
+          {acct.videos ? (
+            <p className="small" style={{ margin: "10px 0 0", color: "var(--moss)", fontWeight: 600 }}>✓ Video clips allowed</p>
+          ) : (
+            <p style={{ margin: "12px 0 0" }}>
+              <a className="btn btn-gold btn-small" href="/api/google/calls/start">
+                Allow video clips
+              </a>{" "}
+              <span className="small muted">Lets the site make a 30-second clip and a picture from each call for the team. Calls keep working either way.</span>
+            </p>
+          )}
           <TestRoom />
           </>
         ) : configured ? (
