@@ -13,7 +13,8 @@ import { accessToken, callsAccount } from "./googleCalls";
 // onboarding call, so the team remembers who is who. Team only. The files live
 // in private storage and are only handed out to signed-in staff.
 
-import { CLIP_BUCKET as BUCKET, CLIP_V, clipOf, clipPath, type Clip } from "./clipInfo";
+import { CLIP_BUCKET as BUCKET, CLIP_V, clipIsOld, clipOf, clipPath, type Clip } from "./clipInfo";
+import { askAI } from "./callDraft";
 export { clipOf, clipPath, type Clip };
 
 function ffmpegPath() {
@@ -33,19 +34,18 @@ function run(args: string[], ms = 150_000): Promise<void> {
   });
 }
 
-type Entry = { participant: string; startTime?: string; endTime?: string };
+type Entry = { participant: string; text?: string; startTime?: string; endTime?: string };
+type Span = { from: number; to: number };
 const secs = (iso?: string) => (iso ? Date.parse(iso) / 1000 : NaN);
+const overlap = (es: Span[], t: number, len: number) => es.reduce((a, e) => a + Math.max(0, Math.min(e.to, t + len) - Math.max(e.from, t)), 0);
 
-// The 30-second stretches where the candidate talks the most (skipping the hellos), best first.
-export function topWindows(entries: { from: number; to: number }[], total: number, n = 4, len = 30): number[] {
+// The 30-second stretches where the candidate does the talking and nobody else does
+// (skipping the hellos), best first. Anyone else talking counts against a stretch.
+export function topWindows(entries: Span[], total: number, n = 4, len = 30, others: Span[] = []): number[] {
   if (!entries.length || !(total > len)) return [Math.max(0, Math.floor(total * 0.4))];
   const skip = total > 360 ? 120 : 0;
   const all: { t: number; sum: number }[] = [];
-  for (let t = skip; t <= total - len; t += 5) {
-    let sum = 0;
-    for (const e of entries) sum += Math.max(0, Math.min(e.to, t + len) - Math.max(e.from, t));
-    all.push({ t, sum });
-  }
+  for (let t = skip; t <= total - len; t += 5) all.push({ t, sum: overlap(entries, t, len) - 2 * overlap(others, t, len) });
   all.sort((x, y) => y.sum - x.sum);
   const out: number[] = [];
   for (const w of all) {
@@ -54,7 +54,7 @@ export function topWindows(entries: { from: number; to: number }[], total: numbe
   }
   return out.length ? out : [skip];
 }
-export const bestWindow = (entries: { from: number; to: number }[], total: number) => topWindows(entries, total, 1)[0];
+export const bestWindow = (entries: Span[], total: number) => topWindows(entries, total, 1)[0];
 
 async function findRecording(space: string, candidateName: string, staffNames: string[]) {
   const token = await accessToken();
@@ -90,7 +90,8 @@ async function findRecording(space: string, candidateName: string, staffNames: s
     const w = words(n);
     return { id: p.name, n, cand: w.filter((x) => cw.includes(x)).length, rep: w.filter((x) => rw.includes(x)).length + (calls && n.toLowerCase().includes(calls) ? 2 : 0) };
   });
-  const speakers = new Map<string, { from: number; to: number }[]>();
+  const speakers = new Map<string, Span[]>();
+  const said = new Map<string, string[]>();
   const ts = (await get(`https://meet.googleapis.com/v2/${pick.conf}/transcripts`)) as { transcripts?: { name: string; state: string }[] };
   for (const tr of ts.transcripts ?? []) {
     if (tr.state !== "FILE_GENERATED" && tr.state !== "ENDED") continue;
@@ -102,14 +103,45 @@ async function findRecording(space: string, candidateName: string, staffNames: s
         const to = secs(x.endTime) - pick.start;
         if (!(to > from)) continue;
         speakers.set(x.participant, [...(speakers.get(x.participant) ?? []), { from, to }]);
+        if (x.text && (said.get(x.participant)?.length ?? 0) < 40) said.set(x.participant, [...(said.get(x.participant) ?? []), x.text.slice(0, 200)]);
       }
       page = e.nextPageToken ?? "";
     } while (page);
   }
   const talk = (id: string) => (speakers.get(id) ?? []).reduce((a, e) => a + e.to - e.from, 0);
-  const cand = scored.filter((p) => p.rep === 0 || p.cand > p.rep).sort((a, b) => b.cand - a.cand || talk(b.id) - talk(a.id))[0];
   const total = pick.end - pick.start;
-  return { file: pick.file, token, total, starts: topWindows(cand ? (speakers.get(cand.id) ?? []) : [], total), candidateLabel: cand?.n ?? "" };
+  // Who is the candidate? First ask the AI to read what each person said: the candidate is the one
+  // being asked about their work. Names are the fallback. If neither is sure, no clip is made:
+  // no clip is better than a clip of our own rep.
+  const talkers = scored.filter((p) => talk(p.id) > 20);
+  let candId = "";
+  if (talkers.length >= 2 && process.env.ANTHROPIC_API_KEY) {
+    try {
+      const letters = "ABCDEFGH";
+      const { text } = await askAI(`This is from a recorded video call where a recruiter interviews a job candidate named ${candidateName}. The recruiter asks about the candidate's work history and what they want; the candidate talks about their own jobs, skills and goals. Our recruiters are: ${staffNames.join(", ")}.
+
+Which speaker is the candidate? Reply with only JSON: {"candidate":"A"} using the speaker's letter, or {"candidate":""} if you can't tell.
+
+${talkers.slice(0, 8).map((p, i) => `Speaker ${letters[i]} (shown as "${p.n || "unknown"}"):\n${(said.get(p.id) ?? []).slice(4, 24).join("\n")}`).join("\n\n")}`);
+      const j = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as { candidate?: string };
+      const i = letters.indexOf(String(j.candidate ?? "").trim().toUpperCase());
+      if (j.candidate && i >= 0 && talkers[i]) candId = talkers[i].id;
+    } catch {}
+  }
+  if (!candId) {
+    // By name only: someone whose shown name matches the candidate and not our team, or the only non-team person there.
+    const byName = scored.filter((p) => p.cand > 0 && p.cand > p.rep);
+    const outsiders = scored.filter((p) => p.rep === 0 && talk(p.id) > 20);
+    candId = byName[0]?.id ?? (outsiders.length === 1 ? outsiders[0].id : "");
+  }
+  if (!candId) throw new Error("Couldn't tell which person on the call is the candidate.");
+  const cand = scored.find((p) => p.id === candId)!;
+  const mine = speakers.get(candId) ?? [];
+  const others = [...speakers.entries()].filter(([id]) => id !== candId).flatMap(([, es]) => es);
+  const starts = topWindows(mine, total, 4, 30, others);
+  // How much of each stretch is the candidate talking, and how much is anyone else.
+  const share = (t: number) => ({ cand: overlap(mine, t, 30), others: overlap(others, t, 30) });
+  return { file: pick.file, token, total, starts, share, candidateLabel: cand.n };
 }
 
 // Ask the AI to look at one frame: whose name is on screen, and where the main face is.
@@ -193,21 +225,27 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
     const wordsOf = (x: string) => x.toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 2);
     const staffWords = staffNames.flatMap(wordsOf);
     const candWords = wordsOf(c.full_name + " " + rec.candidateLabel);
-    // Look at one frame from each of the best stretches, and take the first that shows the candidate
-    // (a face, and not one of our own team's name on the tile).
-    let start = rec.starts[0];
+    // Only stretches where the candidate does most of the talking. Then look at two frames from each,
+    // and take the first stretch that shows the candidate both times (a face, and not our own team's name on the tile).
+    const solo = rec.starts.filter((t) => rec.share(t).cand >= 12 && rec.share(t).others <= 6);
+    const tries = solo.length ? solo : rec.starts.filter((t) => rec.share(t).cand > rec.share(t).others * 2).slice(0, 2);
+    if (!tries.length) throw new Error("No 30 seconds where the candidate talks without the rep.");
+    let start = tries[0];
     let seenCandidate = false;
     try {
-      for (const t of rec.starts) {
-        const shot = await look(await frameAt(via.url, t + 12, `${out}-probe.jpg`));
-        if (!shot) break; // the AI can't be asked: go with the best stretch, without a face picture
-        const lw = wordsOf(shot.label);
-        const isStaff = lw.some((w) => staffWords.includes(w)) && !lw.some((w) => candWords.includes(w));
-        if (hasFace(shot) && !isStaff) {
-          start = t;
-          seenCandidate = true;
-          break;
-        }
+      for (const t of tries) {
+        const first = await look(await frameAt(via.url, t + 6, `${out}-probe.jpg`));
+        if (!first) break; // the AI can't be asked: go with the best stretch, without a face picture
+        const staffOn = (label: string) => {
+          const lw = wordsOf(label);
+          return lw.some((w) => staffWords.includes(w)) && !lw.some((w) => candWords.includes(w));
+        };
+        if (!hasFace(first) || staffOn(first.label)) continue;
+        const later = await look(await frameAt(via.url, t + 22, `${out}-probe.jpg`));
+        if (later && staffOn(later.label)) continue;
+        start = t;
+        seenCandidate = true;
+        break;
       }
       await cut(via.url, start, out);
     } catch (e) {
@@ -256,6 +294,8 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
     const { data: fresh } = await db().from("candidates").select("application").eq("id", candidateId).maybeSingle();
     const app = { ...((fresh?.application as Record<string, string>) ?? {}) };
     app.clip_error = error;
+    // An older clip that can't be made again the careful way comes down: it may be showing the rep.
+    if (clipIsOld(clipOf(app))) delete app.clip;
     app.clip_tried_at = new Date().toISOString();
     await db().from("candidates").update({ application: app }).eq("id", candidateId);
     await logActivity("system", "clip_failed", { candidate_id: candidateId, error });
@@ -285,7 +325,10 @@ export async function makeWaitingClips(max = 1) {
   // (then it's tried again as soon as that's fixed).
   const resting = (a: Record<string, string> | null) =>
     !!a?.clip_tried_at && Date.now() - Date.parse(a.clip_tried_at) < 6 * 36e5 && !/has not been used|is disabled|isn't connected/i.test(a.clip_error ?? "");
-  const todo = uniq.filter((r) => !clipOf(r.candidates!.application) && !resting(r.candidates!.application)).slice(0, max);
+  // New ones first, then older clips that should be made again the better way.
+  const fresh = uniq.filter((r) => !clipOf(r.candidates!.application) && !resting(r.candidates!.application));
+  const redo = uniq.filter((r) => clipIsOld(clipOf(r.candidates!.application)) && !resting(r.candidates!.application));
+  const todo = [...fresh, ...redo].slice(0, max);
   let made = 0;
   for (const r of todo) if ((await makeClip(r.candidate_id)).ok) made++;
   return { made, done: done + made, waiting: uniq.length - done - made };
