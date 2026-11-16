@@ -1079,17 +1079,26 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
   }
   // Their upcoming call goes with them, so the new rep has the recorded link
   // and can start the recording. The old rep is told; the candidate's link stays the same.
+  // "keep": the call goes to the new rep at the same time. "rebook": the call is
+  // cancelled and the candidate gets a link to pick a time with the new rep.
+  // "stay": the call is left with whoever has it.
+  const plan = String(form.get("call_plan") ?? (form.get("move_calls") === "on" ? "keep" : "stay"));
   let moved = 0;
-  if (rep && form.get("move_calls") === "on") {
+  let rebooked = 0;
+  if (rep && plan !== "stay") {
     const { data: calls } = await db()
       .from("onboarding_calls")
       .select("id, staff_id, starts_at, staff(email)")
       .eq("candidate_id", candidateId)
       .eq("status", "booked")
       .gt("ends_at", new Date().toISOString());
-    const { takeOverCall, closeDuplicateCalls } = await import("@/lib/calls");
+    const { takeOverCall, closeDuplicateCalls, cancelCall } = await import("@/lib/calls");
     for (const k of (calls ?? []) as unknown as { id: string; staff_id: string; starts_at: string; staff: { email: string } | null }[]) {
       if (k.staff_id === rep.id) continue;
+      if (plan === "rebook") {
+        if (await cancelCall(k.id, staffActor(me))) rebooked++;
+        continue;
+      }
       if (!(await takeOverCall(k.id, rep.id))) continue;
       await closeDuplicateCalls(k.id);
       await logActivity(staffActor(me), "call_moved_with_rep", { call_id: k.id, to: rep.id });
@@ -1104,8 +1113,41 @@ export async function assignRep(candidateId: string, _prev: FormState, form: For
   revalidatePath(`/admin/candidates/${candidateId}`);
   return {
     ok: rep
-      ? `Assigned to ${rep.full_name || rep.email}${moved ? `. Their upcoming call moved too, and ${(rep.full_name || "they").split(" ")[0]} has the link` : ""}${tell ? ". The candidate was told" : ". The candidate wasn't emailed"}.`
+      ? `Assigned to ${rep.full_name || rep.email}${moved ? `. Their upcoming call moved too, and ${(rep.full_name || "they").split(" ")[0]} has the link` : ""}${rebooked ? ". Their call was cancelled, and they got an email to pick a new time" : ""}${tell ? ". The candidate was told about the new rep" : rebooked ? "" : ". The candidate wasn't emailed"}.`
       : "Unassigned.",
+  };
+}
+
+// Before switching a rep: is there a call booked with someone else, and is the new rep free then?
+export type CallPlanInfo = { when: string; with: string; busy: boolean; outside: boolean } | null;
+export async function callPlanInfo(candidateId: string, repId: string): Promise<CallPlanInfo> {
+  await requireStaff();
+  if (!repId) return null;
+  const { data } = await db()
+    .from("onboarding_calls")
+    .select("id, staff_id, starts_at, ends_at, staff(full_name)")
+    .eq("candidate_id", candidateId)
+    .eq("status", "booked")
+    .gt("ends_at", new Date().toISOString())
+    .neq("staff_id", repId)
+    .order("starts_at")
+    .limit(1);
+  const k = (data ?? [])[0] as unknown as { id: string; starts_at: string; ends_at: string; staff: { full_name: string | null } | null } | undefined;
+  if (!k) return null;
+  const { count } = await db()
+    .from("onboarding_calls")
+    .select("id", { count: "exact", head: true })
+    .eq("staff_id", repId)
+    .eq("status", "booked")
+    .neq("candidate_id", candidateId)
+    .lt("starts_at", k.ends_at)
+    .gt("ends_at", k.starts_at);
+  const { withinHours } = await import("@/lib/slots");
+  return {
+    when: new Date(k.starts_at).toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
+    with: (k.staff?.full_name ?? "another rep").split(" ")[0],
+    busy: !!count,
+    outside: !(await withinHours(repId, k.starts_at, k.ends_at)),
   };
 }
 
