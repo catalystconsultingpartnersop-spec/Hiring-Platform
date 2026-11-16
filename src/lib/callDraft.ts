@@ -25,7 +25,7 @@ export type CallDraft = {
 
 const MODELS = ["claude-sonnet-5-5", "claude-sonnet-4-5"];
 
-async function askAI(prompt: string): Promise<{ text: string; stop: string }> {
+export async function askAI(prompt: string): Promise<{ text: string; stop: string }> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("The AI key isn't set up yet.");
   let last = "";
@@ -151,6 +151,8 @@ export async function draftFromCall(candidateId: string, opts: { notifyRep?: boo
   if (draft.private_notes && !String(c.admin_notes ?? "").includes("From the call (")) update.admin_notes = [c.admin_notes, `From the call (${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}):\n${draft.private_notes}`].filter(Boolean).join("\n\n");
   await db().from("candidates").update(update).eq("id", candidateId);
   await logActivity("system", "call_draft_made", { candidate_id: candidateId, call_id: call.id });
+  // The team's memory card is written from the same call.
+  await (await import("./memory")).makeMemory(candidateId).catch(() => false);
 
   if (opts.notifyRep && call.staff?.active) {
     await sendEmail({

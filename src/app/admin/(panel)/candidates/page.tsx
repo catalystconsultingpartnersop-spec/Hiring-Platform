@@ -109,7 +109,10 @@ export default async function Browse({ searchParams }: PageProps<"/admin/candida
     <>
       <div className="page-head">
         <h1>Browse candidates</h1>
-        <p>Every candidate on the team. Sort, filter and group to spot the right kind of person fast.</p>
+        <p>
+          Every candidate on the team. Sort, filter and group to spot the right kind of person fast.{" "}
+          <a href="/admin/glance" style={{ fontWeight: 700 }}>See them as memory cards</a>
+        </p>
       </div>
       {typeof sp.deleted === "string" && (
         <p className="notice notice-good" role="status">
