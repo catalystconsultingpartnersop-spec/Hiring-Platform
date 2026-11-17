@@ -131,10 +131,14 @@ ${talkers.slice(0, 8).map((p, i) => `Speaker ${letters[i]} (shown as "${p.n || "
   if (!candId) {
     // By name only: someone whose shown name matches the candidate and not our team, or the only non-team person there.
     const byName = scored.filter((p) => p.cand > 0 && p.cand > p.rep);
-    const outsiders = scored.filter((p) => p.rep === 0 && talk(p.id) > 20);
+    // (When Google kept no written record of the call, nobody has talking time: then anyone not on our team counts.)
+    const outsiders = scored.filter((p) => p.rep === 0 && (speakers.size === 0 || talk(p.id) > 20));
     candId = byName[0]?.id ?? (outsiders.length === 1 ? outsiders[0].id : "");
   }
-  if (!candId) throw new Error("Couldn't tell which person on the call is the candidate.");
+  if (!candId) {
+    const who = scored.map((p) => `"${p.n || "no name"}" ${Math.round(talk(p.id))}s`).join(", ");
+    throw new Error(`Couldn't tell which person on the call is the candidate (on the call: ${who || "nobody listed"}${speakers.size ? "" : "; Google kept no written record of this call"}).`);
+  }
   const cand = scored.find((p) => p.id === candId)!;
   const mine = speakers.get(candId) ?? [];
   const others = [...speakers.entries()].filter(([id]) => id !== candId).flatMap(([, es]) => es);
@@ -148,7 +152,8 @@ ${talkers.slice(0, 8).map((p, i) => `Speaker ${letters[i]} (shown as "${p.n || "
     const m = (e.from + e.to) / 2;
     if (moments.every((x) => Math.abs(x - m) >= 20)) moments.push(m);
   }
-  return { file: pick.file, token, total, starts, share, moments, candidateLabel: cand.n };
+  // noWords: Google kept no written record of who spoke when, so the picture is all there is to go on.
+  return { file: pick.file, token, total, starts, share, moments, candidateLabel: cand.n, noWords: mine.length === 0 };
 }
 
 // Ask the AI to look at one frame: whose name is on screen, and where the main face is.
@@ -299,8 +304,12 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
     const solo = rec.starts.filter((t) => rec.share(t).cand >= 12 && rec.share(t).others <= 6);
     // No stretch where they talk quite alone? Then the ones where they talk clearly more than anyone else.
     const mostly = rec.starts.filter((t) => rec.share(t).cand >= 8 && rec.share(t).cand > rec.share(t).others);
-    const tries = (solo.length ? solo : mostly).slice(0, 5);
+    // No written record of the call? Then look at moments spread through it and keep one where the
+    // candidate is the person on screen, twice in a row.
+    const spread = rec.noWords && rec.total > 240 ? Array.from({ length: 8 }, (_, i) => Math.round(120 + ((rec.total - 210) * i) / 8)) : [];
+    const tries = rec.noWords ? spread : (solo.length ? solo : mostly).slice(0, 5);
     if (!tries.length) {
+      if (rec.noWords) throw new Error("Google kept no written record of this call, and it's too short to pick a moment from.");
       const b = rec.share(rec.starts[0]);
       throw new Error(`No 30 seconds where the candidate does most of the talking (best: candidate ${Math.round(b.cand)}s, others ${Math.round(b.others)}s, shown as "${rec.candidateLabel}").`);
     }
@@ -328,10 +337,13 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
         pic ??= { jpg: frame, box: first };
         const later = await look(await frameAt(via.url, t + 22, `${out}-probe.jpg`));
         if (later && staffOn(later.label)) continue;
+        // Going by the picture alone, the candidate has to be there the second time too.
+        if (rec.noWords && !isThem(later)) continue;
         start = t;
         seenCandidate = true;
         break;
       }
+      if (rec.noWords && !seenCandidate) throw new Error("Google kept no written record of this call, and the candidate wasn't clearly on screen at the moments checked.");
       await cut(via.url, start, out);
       mp4 = await readFile(`${out}.mp4`);
       jpg = await readFile(`${out}.jpg`);
@@ -412,7 +424,9 @@ export async function makeWaitingClips(max = 1) {
   // A failed one waits six hours before another try (half an hour if it only ran out of time), unless the failure was a setting on Google's side
   // (then it's tried again as soon as that's fixed).
   const resting = (a: Record<string, string> | null) =>
-    !!a?.clip_tried_at && Date.now() - Date.parse(a.clip_tried_at) < (/took too long|^ffmpeg null/i.test(a.clip_error ?? "") ? 30 * 60e3 : 6 * 36e5) && !/has not been used|is disabled|isn't connected/i.test(a.clip_error ?? "");
+    !!a?.clip_tried_at && Date.now() - Date.parse(a.clip_tried_at) < (/took too long|^ffmpeg null/i.test(a.clip_error ?? "") ? 30 * 60e3 : 6 * 36e5) && !/has not been used|is disabled|isn't connected/i.test(a.clip_error ?? "") &&
+    // Notes written before the site learned to handle calls with no written record: those get a new try now.
+    !/is the candidate\.$|without the rep\.$|candidate 0s, others 0s/.test(a.clip_error ?? "");
   // Older clips that should be made again the careful way go first, then calls that have none yet.
   const fresh = uniq.filter((r) => !clipOf(r.candidates!.application) && !resting(r.candidates!.application));
   const redo = uniq.filter((r) => clipIsOld(clipOf(r.candidates!.application)) && !resting(r.candidates!.application));
