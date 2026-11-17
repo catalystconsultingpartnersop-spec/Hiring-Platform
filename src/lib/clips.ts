@@ -162,9 +162,12 @@ ${talkers.slice(0, 8).map((p, i) => `Speaker ${letters[i]} (shown as "${p.n || "
     const m = (e.from + e.to) / 2;
     if (moments.every((x) => Math.abs(x - m) >= 20)) moments.push(m);
   }
+  // How much talking is written down for the part clips are taken from (after the hellos).
+  const from = total > 360 ? 120 : 0;
+  const covered = overlap([...mine, ...others], from, Math.max(0, total - from));
   // noWords: Google kept no written record of who spoke when (or none for the part that was recorded),
   // so the picture is all there is to go on.
-  return { file: pick.file, token, total, starts, share, moments, candidateLabel: cand.n, noWords: overlap(mine, 0, total) < 5, teamLabels: scored.filter((p) => p.ours).map((p) => p.n) };
+  return { file: pick.file, token, total, starts, share, moments, candidateLabel: cand.n, noWords: overlap(mine, 0, total) < 5 || covered < 30, teamLabels: scored.filter((p) => p.ours).map((p) => p.n) };
 }
 
 // Ask the AI to look at one frame: whose name is on screen, and where the main face is.
