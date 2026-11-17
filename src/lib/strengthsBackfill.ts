@@ -13,7 +13,7 @@ export async function backfillStrengths(): Promise<number> {
     .order("at", { ascending: false })
     .limit(500);
   const rows = ((data ?? []) as { at: string; details: { email?: string; candidate_id?: string | null; result?: { v?: number; letters?: string } } }[]).filter(
-    (r) => r.details?.result?.v === 2 && r.details.result.letters && r.details.email && !r.details.candidate_id,
+    (r) => (r.details?.result?.v === 2 || r.details?.result?.v === 3) && r.details.result.letters && r.details.email && !r.details.candidate_id,
   );
   let filled = 0;
   const done = new Set<string>();

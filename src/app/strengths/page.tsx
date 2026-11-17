@@ -3,28 +3,16 @@ import { Assessment } from "./Assessment";
 import s from "./strengths.module.css";
 
 export const metadata: Metadata = {
-  title: "Discover your natural strengths",
-  description: "A short assessment that shows the kind of work that gives you energy, and where you could shine.",
+  title: "Discover how you\u2019re wired",
+  description: "Everyone has natural strengths. In about 8 minutes, see yours.",
   robots: { index: false, follow: false },
 };
 
 export default async function StrengthsPage({ searchParams }: PageProps<"/strengths">) {
   const t = (await searchParams).t;
   return (
-    <>
-      <section className={s.hero}>
-        <div className="wrap">
-          <p className={s.label}>Strengths Assessment</p>
-          <h1>Discover what you&rsquo;re naturally great at.</h1>
-          <p className={s.lead}>
-            A few minutes of honest answers, and you&rsquo;ll see the kind of work that gives you energy, what wears you down,
-            and where you could shine.
-          </p>
-        </div>
-      </section>
-      <div className={`wrap ${s.main}`}>
-        <Assessment token={typeof t === "string" ? t : null} />
-      </div>
-    </>
+    <div className={`wrap ${s.main}`}>
+      <Assessment token={typeof t === "string" ? t : null} />
+    </div>
   );
 }

@@ -1,10 +1,10 @@
 .hero { background: var(--ink); color: #fff; padding: clamp(44px, 7vw, 80px) 0 clamp(36px, 6vw, 64px); }
 .label { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 800; color: var(--marigold); }
 .hero h1 { font-size: clamp(36px, 6vw, 64px); line-height: 1.04; letter-spacing: -0.03em; max-width: 16ch; }
-.lead { margin: 18px 0 0; font-size: clamp(18px, 2vw, 21px); line-height: 1.5; color: rgba(255, 255, 255, 0.85); max-width: 46ch; }
+.lead { margin: 0 0 18px; font-size: 18px; line-height: 1.55; color: var(--ink-2); }
 .main { max-width: 760px; padding-top: clamp(28px, 5vw, 48px); padding-bottom: 72px; }
 
-.card { background: var(--wash); border-radius: var(--radius-lg); padding: clamp(20px, 4vw, 32px); }
+.card { background: #fff; box-shadow: 0 1px 0 var(--line), 0 10px 30px rgba(23, 33, 58, 0.06); border-radius: var(--radius-lg); padding: clamp(20px, 4vw, 32px); }
 .card h2 { font-size: 26px; margin-bottom: 8px; }
 .muted { color: var(--ink-2); margin: 0 0 18px; line-height: 1.6; }
 .hint { color: var(--ink-3); font-size: 14px; text-align: right; margin-top: 8px; }
@@ -16,7 +16,7 @@
 
 .q { padding: 18px 0; border-bottom: 1px solid var(--line); }
 .q p { margin: 0 0 12px; font-size: 18px; font-weight: 600; line-height: 1.4; }
-.scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.scale { display: grid; gap: 9px; }
 .scale button, .pair button {
   font: inherit; cursor: pointer; border: 1.5px solid var(--line); background: #fff; color: var(--ink);
   border-radius: var(--radius-sm); padding: 10px 4px; font-size: 14px; font-weight: 600; line-height: 1.2; min-height: 48px;
@@ -58,8 +58,6 @@
 .pilot { margin-top: 36px; padding: 16px 18px; background: var(--wash); border-radius: var(--radius); color: var(--ink-2); font-size: 15px; }
 
 @media (max-width: 600px) {
-  .scale { grid-template-columns: repeat(5, 1fr); gap: 4px; }
-  .scale button { font-size: 12px; padding: 8px 2px; }
   .pair, .topGrid { grid-template-columns: 1fr; }
   .bar { grid-template-columns: 110px 1fr; font-size: 14px; }
 }
@@ -86,3 +84,26 @@
 .nextLabel { text-transform: uppercase; letter-spacing: 0.08em; font-size: 13px; font-weight: 800; color: var(--marigold) !important; margin: 0 !important; }
 .nextWhen { font-size: 20px; font-weight: 800; color: #fff !important; }
 .nextRow { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+
+/* v3: one question at a time */
+.main { max-width: 640px; }
+.eyebrow { display: inline-block; background: var(--marigold-soft); color: #6b4f00; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 11px; border-radius: 99px; margin-bottom: 14px; }
+.title { font-size: clamp(34px, 6vw, 46px); line-height: 1.04; letter-spacing: -0.02em; margin: 0 0 12px; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
+.facts span { background: var(--wash); border-radius: 99px; padding: 7px 13px; font-size: 14px; font-weight: 600; }
+.tips { display: grid; gap: 10px; margin-bottom: 18px; }
+.tip { display: flex; gap: 12px; align-items: flex-start; background: var(--wash); border-radius: var(--radius); padding: 14px; }
+.tip i { flex: 0 0 32px; height: 32px; border-radius: 10px; background: var(--ink); color: var(--marigold); display: flex; align-items: center; justify-content: center; font-style: normal; font-weight: 800; font-family: var(--display); }
+.tip b { display: block; font-size: 16px; margin-bottom: 2px; }
+.tip span { font-size: 15px; color: var(--ink-2); line-height: 1.45; }
+.note { font-size: 15px; color: var(--ink-2); border-left: 3px solid var(--marigold); padding: 2px 0 2px 12px; margin: 0 0 20px; line-height: 1.5; }
+.fade { animation: fadeUp 0.28s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.prompt { margin: 22px 0 8px; font-size: 17px; color: var(--ink-2); }
+.item { font-size: clamp(26px, 4.4vw, 32px); line-height: 1.18; letter-spacing: -0.01em; margin: 0 0 24px; min-height: 2.4em; font-weight: 600; }
+.scale button { display: flex; align-items: center; gap: 12px; text-align: left; padding: 0 16px; min-height: 56px; font-size: 16.5px; border-radius: var(--radius); }
+.dot { flex: 0 0 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); }
+.scale button.on .dot { background: var(--marigold); border-color: var(--marigold); }
+.nav { align-items: center; }
+.close { background: #fff; border: 1.5px dashed var(--marigold); border-radius: var(--radius); padding: 14px 16px; color: var(--ink-2); line-height: 1.5; margin: 0 0 6px; }
+.close b { color: var(--ink); }

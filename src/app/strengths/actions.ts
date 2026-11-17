@@ -1,6 +1,6 @@
 "use server";
 
-import { Answers, baseComplete, MAX_EXTRA, Result, score, TRAITS, validExtra } from "@/lib/assessment";
+import { Answers, Result, score, TRAITS, validAnswers } from "@/lib/assessment";
 import { db, logActivity } from "@/lib/db";
 import { readSignedToken, signedToken } from "@/lib/session";
 import { COMPANY_TZ, formatInZone } from "@/lib/time";
@@ -14,8 +14,7 @@ export async function submitAssessment(name: string, email: string, answers: Ans
   name = String(name ?? "").trim().slice(0, 80);
   email = String(email ?? "").trim().slice(0, 120);
   if (!name) return { error: "Please add your name." };
-  if (!answers || !baseComplete(answers) || !validExtra(answers.extra) || answers.extra.length !== MAX_EXTRA)
-    return { error: "A few questions still need an answer." };
+  if (!validAnswers(answers)) return { error: "A few questions still need an answer." };
   if (!(await allow("assessment", 8, 60))) return { error: SLOW_DOWN };
 
   const result = score(answers);

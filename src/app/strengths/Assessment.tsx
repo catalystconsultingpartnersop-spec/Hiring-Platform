@@ -1,30 +1,24 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Answers, ITEMS, MAX_EXTRA, nextExtra, PAIRS, Result, SCALE, SNIPPETS, TRAITS } from "@/lib/assessment";
+import { Answers, closeCall, ITEMS, LENSES, nextExtra, questionById, Result, TOTAL_MAX, TRAITS } from "@/lib/assessment";
 import { describe, type Letter } from "@/lib/strengths";
 import { submitAssessment, type NextStep } from "./actions";
 import s from "./strengths.module.css";
 
-const SAVE = "tcc-strengths-v2";
-const PAGES = [
-  { part: 1, items: ITEMS.slice(0, 8) },
-  { part: 1, items: ITEMS.slice(8, 16) },
-  { part: 1, items: ITEMS.slice(16, 24) },
-  { part: 2 },
-  { part: 3 },
-] as const;
-const TOTAL = ITEMS.length + PAIRS.length + MAX_EXTRA;
-
-type Saved = { step: number; name: string; email: string; a: Answers };
-const empty: Answers = { items: {}, pairs: {}, extra: [] };
+const SAVE = "tcc-strengths-v3";
+type Stage = "intro" | "part" | "q" | "more";
+type Saved = { stage: Stage; i: number; name: string; email: string; a: Answers };
+const empty: Answers = { items: {}, extra: [] };
 
 export function Assessment({ token }: { token: string | null }) {
-  const [step, setStep] = useState(-1); // -1 intro, 0..4 pages
+  const [stage, setStage] = useState<Stage>("intro");
+  const [i, setI] = useState(0); // which question, counting the 30 main ones then any backups
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [a, setA] = useState<Answers>(empty);
   const [result, setResult] = useState<Result | null>(null);
+  const [near, setNear] = useState<[Letter, Letter] | null>(null);
   const [after, setAfter] = useState<NextStep | null>(null);
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
@@ -35,41 +29,34 @@ export function Assessment({ token }: { token: string | null }) {
       if (raw) {
         const v = JSON.parse(raw) as Saved;
         // Pick up where they left off (saved in this browser only).
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setStep(v.step);
+        /* eslint-disable react-hooks/set-state-in-effect */
+        setStage(v.stage);
+        setI(v.i);
         setName(v.name);
         setEmail(v.email);
         setA({ ...empty, ...v.a });
+        /* eslint-enable react-hooks/set-state-in-effect */
       }
     } catch {}
   }, []);
   useEffect(() => {
     if (result) return;
     try {
-      localStorage.setItem(SAVE, JSON.stringify({ step, name, email, a }));
+      localStorage.setItem(SAVE, JSON.stringify({ stage, i, name, email, a }));
     } catch {}
-  }, [step, name, email, a, result]);
+  }, [stage, i, name, email, a, result]);
 
-  const go = (n: number) => {
+  const list = ITEMS.concat(a.extra.map((id) => questionById(id)!).filter(Boolean));
+  const answered = Object.keys(a.items).length;
+  const top = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
+  function finish(final: Answers) {
     setError("");
-    setStep(n);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const page = step >= 0 ? PAGES[step] : null;
-  const next = page?.part === 3 ? nextExtra(a) : null;
-  const pageDone =
-    !page ||
-    ("items" in page && page.items.every((q) => a.items[q.id])) ||
-    (page.part === 2 && PAIRS.every((p) => a.pairs[p.id])) ||
-    (page.part === 3 && !next);
-  const answered = Object.keys(a.items).length + Object.keys(a.pairs).length + a.extra.length;
-
-  function finish() {
     start(async () => {
-      const r = await submitAssessment(name, email, a, token).catch(() => ({ error: "Something went wrong. Try again." }) as { error: string });
+      const r = await submitAssessment(name, email, final, token).catch(() => ({ error: "Something went wrong. Try again." }) as { error: string });
       if ("result" in r && r.result) {
         setResult(r.result);
+        setNear(r.result.clear ? null : closeCall(final));
         setAfter(r.next ?? null);
         try {
           localStorage.removeItem(SAVE);
@@ -79,16 +66,84 @@ export function Assessment({ token }: { token: string | null }) {
     });
   }
 
-  if (result) return <Results name={name} r={result} next={after} />;
+  function answer(v: number) {
+    const q = list[i];
+    const next: Answers = { ...a, items: { ...a.items, [q.id]: v } };
+    setA(next);
+    setTimeout(() => {
+      const n = i + 1;
+      top();
+      if (n < ITEMS.length) {
+        setI(n);
+        if (n % 6 === 0) setStage("part");
+        return;
+      }
+      if (n < list.length) return setI(n);
+      const id = nextExtra(next);
+      if (id) {
+        setA({ ...next, extra: [...next.extra, id] });
+        setI(n);
+        if (!next.extra.length) setStage("more");
+        return;
+      }
+      finish(next);
+    }, 220);
+  }
 
-  if (step < 0)
+  function back() {
+    setError("");
+    top();
+    if (stage === "part") {
+      if (i === 0) setStage("intro");
+      else {
+        setI(i - 1);
+        setStage("q");
+      }
+      return;
+    }
+    if (i >= ITEMS.length) {
+      // Backups depend on the answers before them, so stepping back undoes the last one.
+      const last = a.extra.at(-1)!;
+      const items = { ...a.items };
+      delete items[last];
+      setA({ items, extra: a.extra.slice(0, -1) });
+      setI(i - 1);
+    } else if (i % 6 === 0) setStage("part");
+    else setI(i - 1);
+  }
+
+  if (result) return <Results name={name} r={result} near={near} next={after} />;
+
+  if (stage === "intro")
     return (
       <div className={s.card}>
-        <h2>Before you start</h2>
-        <p className={s.muted}>
-          About 8 minutes. There are no right or wrong answers. Go with your gut, and answer for what gives you energy and
-          joy, not just what you&rsquo;re able to do.
+        <span className={s.eyebrow}>Before you start</span>
+        <h1 className={s.title}>Discover how you&rsquo;re wired.</h1>
+        <p className={s.lead}>
+          Everyone has natural strengths. In about 8 minutes, see yours: the work that gives you energy, the work that drains
+          you, and where you&rsquo;ll do your best.
         </p>
+        <div className={s.facts}>
+          <span>30 to {TOTAL_MAX} questions</span>
+          <span>About 8 minutes</span>
+          <span>No right or wrong</span>
+        </div>
+        <div className={s.tips}>
+          {[
+            ["Find a calm moment", "Not between meetings or on the run. Get comfortable. This is about you."],
+            ["Think about your best days", "Answer for what gives you energy and joy, not what you’re able to do or what your job asks of you."],
+            ["Go with your gut", "Your first answer is usually the true one."],
+          ].map(([h, p], n) => (
+            <div key={h} className={s.tip}>
+              <i>{n + 1}</i>
+              <div>
+                <b>{h}</b>
+                <span>{p}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className={s.note}>Some questions will feel familiar. That&rsquo;s on purpose. We ask the same thing from a few angles to get you right.</p>
         <label className="field">
           <span>Your name</span>
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
@@ -97,131 +152,122 @@ export function Assessment({ token }: { token: string | null }) {
           <span>Email (optional)</span>
           <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
         </label>
-        <button className="btn btn-gold" style={{ marginTop: 22 }} disabled={!name.trim()} onClick={() => go(0)}>
-          Start
+        <button
+          className="btn btn-gold"
+          style={{ marginTop: 22, width: "100%" }}
+          disabled={!name.trim()}
+          onClick={() => {
+            setStage("part");
+            setI(0);
+            top();
+          }}
+        >
+          Let&rsquo;s begin
         </button>
       </div>
     );
 
-  // Back from the follow-ups undoes the last one, since each depends on the ones before.
-  const back = () => {
-    if (page?.part === 3 && a.extra.length) setA((x) => ({ ...x, extra: x.extra.slice(0, -1) }));
-    else go(step - 1);
-  };
+  const bar = (
+    <div className={s.progress} aria-label={`${answered} answered`}>
+      <div style={{ width: `${Math.max(3, Math.min(100, (answered / (a.extra.length ? ITEMS.length + a.extra.length + 2 : ITEMS.length + 4)) * 100))}%` }} />
+    </div>
+  );
 
+  if (stage === "part") {
+    const li = Math.floor(i / 6);
+    const lens = LENSES[li];
+    return (
+      <div>
+        {bar}
+        <p className={s.partLabel}>
+          Part {li + 1} of 5 · {answered} answered
+        </p>
+        <div className={`${s.card} ${s.fade}`}>
+          <span className={s.eyebrow}>
+            Part {li + 1} · {lens.part}
+          </span>
+          <h2>{lens.prompt.replace("…", "")}</h2>
+          <p className={s.muted}>{lens.intro}</p>
+          <button className="btn btn-primary" style={{ width: "100%" }} onClick={() => setStage("q")}>
+            Start part {li + 1}
+          </button>
+        </div>
+        <div className={s.nav}>
+          <button className="btn btn-ghost" onClick={back}>
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === "more")
+    return (
+      <div>
+        {bar}
+        <p className={s.partLabel}>Almost there · {answered} answered</p>
+        <div className={`${s.card} ${s.fade}`}>
+          <span className={s.eyebrow}>Getting it right</span>
+          <h2>A few of your strengths are close.</h2>
+          <p className={s.muted}>We&rsquo;ll ask a handful more, from different angles, so your result is really you. This only happens when it&rsquo;s needed.</p>
+          <button className="btn btn-primary" style={{ width: "100%" }} onClick={() => setStage("q")}>
+            Keep going
+          </button>
+        </div>
+      </div>
+    );
+
+  const q = list[i];
+  const lens = LENSES[q.lens];
+  const cur = a.items[q.id];
   return (
     <div>
-      <div className={s.progress} aria-label={`${answered} of ${TOTAL} answered`}>
-        <div style={{ width: `${Math.max(3, (answered / TOTAL) * 100)}%` }} />
-      </div>
+      {bar}
       <p className={s.partLabel}>
-        Part {page!.part} of 3 · {answered} of {TOTAL} answered
+        {i >= ITEMS.length ? "Getting it right" : `Part ${q.lens + 1} of 5 · ${lens.part}`} · {answered} answered
       </p>
-      <p className={s.change}>
-        {page!.part === 3 ? "Changed your mind? Tap Back." : "Changed your mind? Tap a different answer. Use Back to fix an earlier page."}
-      </p>
-
-      {page && "items" in page && (
-        <>
-          <h2 className={s.ask}>How much energy does this give you?</h2>
-          {page.items.map((q) => (
-            <div key={q.id} className={s.q}>
-              <p>{q.text}</p>
-              <div className={s.scale} role="radiogroup" aria-label={q.text}>
-                {SCALE.map((o) => (
-                  <button
-                    key={o.v}
-                    type="button"
-                    role="radio"
-                    aria-checked={a.items[q.id] === o.v}
-                    className={a.items[q.id] === o.v ? s.on : ""}
-                    onClick={() => setA((x) => ({ ...x, items: { ...x.items, [q.id]: o.v } }))}
-                  >
-                    {o.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </>
-      )}
-
-      {page?.part === 2 && (
-        <>
-          <h2 className={s.ask}>Which would you rather spend your day doing?</h2>
-          <p className={s.muted}>Even if you like both, pick one.</p>
-          {PAIRS.map((p) => (
-            <div key={p.id} className={s.pair} role="radiogroup">
-              {([
-                [p.a, p.at],
-                [p.b, p.bt],
-              ] as [Letter, string][]).map(([k, t]) => (
-                <button
-                  key={k}
-                  type="button"
-                  role="radio"
-                  aria-checked={a.pairs[p.id] === k}
-                  className={a.pairs[p.id] === k ? s.on : ""}
-                  onClick={() => setA((x) => ({ ...x, pairs: { ...x.pairs, [p.id]: k } }))}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          ))}
-        </>
-      )}
-
-      {page?.part === 3 &&
-        (next ? (
-          <>
-            <h2 className={s.ask}>A few last ones to sharpen your result</h2>
-            <p className={s.muted}>
-              Which gives you more energy? Question {a.extra.length + 1} of {MAX_EXTRA}.
-            </p>
-            <div className={s.pair} role="radiogroup">
-              {([
-                [next.a, SNIPPETS[next.a][next.ai]],
-                [next.b, SNIPPETS[next.b][next.bi]],
-              ] as [Letter, string][]).map(([k, t]) => (
-                <button key={k} type="button" role="radio" aria-checked={false} onClick={() => setA((x) => ({ ...x, extra: [...x.extra, { ...next, pick: k }] }))}>
-                  {t}
-                </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className={s.card}>
-            <h2>That&rsquo;s everything</h2>
-            <p className={s.muted} style={{ margin: 0 }}>
-              Tap below to see how you&rsquo;re wired. Once you do, your answers are final.
-            </p>
-          </div>
-        ))}
-
+      <div key={q.id} className={s.fade}>
+        <p className={s.prompt}>{lens.prompt}</p>
+        <h2 className={s.item}>{q.text}</h2>
+        <div className={s.scale} role="radiogroup" aria-label={q.text}>
+          {lens.scale
+            .map((label, n) => ({ label, v: n + 1 }))
+            .reverse()
+            .map((o) => (
+              <button
+                key={o.v}
+                type="button"
+                role="radio"
+                aria-checked={cur === o.v}
+                className={cur === o.v ? s.on : ""}
+                disabled={pending}
+                onClick={() => answer(o.v)}
+              >
+                <span className={s.dot} />
+                {o.label}
+              </button>
+            ))}
+        </div>
+      </div>
       <div className={s.nav}>
         <button className="btn btn-ghost" onClick={back} disabled={pending}>
           Back
         </button>
-        {step < PAGES.length - 1 ? (
-          <button className="btn btn-gold" disabled={!pageDone} onClick={() => go(step + 1)}>
-            Next
-          </button>
-        ) : (
-          !next && (
-            <button className="btn btn-gold" disabled={pending} onClick={finish}>
-              {pending ? "Working it out…" : "See my results"}
-            </button>
-          )
-        )}
+        <span className={s.hint}>{pending ? "Working it out…" : "Tap an answer to continue"}</span>
       </div>
-      {!pageDone && page?.part !== 3 && <p className={s.hint}>Answer each one to continue.</p>}
-      {error && <p className="notice notice-bad">{error}</p>}
+      {error && (
+        <p className="notice notice-bad">
+          {error}{" "}
+          <button className="btn btn-ghost btn-small" onClick={() => finish(a)}>
+            Try again
+          </button>
+        </p>
+      )}
     </div>
   );
 }
 
-function Results({ name, r, next }: { name: string; r: Result; next: NextStep | null }) {
+function Results({ name, r, near, next }: { name: string; r: Result; near: [Letter, Letter] | null; next: NextStep | null }) {
   const first = name.trim().split(/\s+/)[0];
   const top = r.order.slice(0, 2);
   const d = describe(r.letters);
@@ -239,6 +285,12 @@ function Results({ name, r, next }: { name: string; r: Result; next: NextStep | 
       {d && (
         <p className={s.typeLine}>
           <b>{d.name}.</b> {d.line}
+        </p>
+      )}
+      {near && (
+        <p className={s.close}>
+          <b>A close call.</b> {TRAITS[near[0]].label} and {TRAITS[near[1]].label} came out almost even for you. Both are real.
+          Your call with our team is a good place to talk it through.
         </p>
       )}
       {next && <WhatsNext next={next} />}
