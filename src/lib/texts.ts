@@ -50,6 +50,8 @@ export const textOwner = {
     sendText({ to: o.phone, kind: "owner_keep_going", once: `owner_keep_going:${meetingId}`, body: `${first(cand)} would like to keep going. Set up the next step here: ${profile(candidateId)}` }),
   references: (o: { phone: string | null }, cand: string, candidateId: string, unlockId: string) =>
     sendText({ to: o.phone, kind: "owner_refs", once: `owner_refs:${unlockId}:${new Date().toISOString().slice(0, 10)}`, body: `${first(cand)} sent references. See them here: ${profile(candidateId)}` }),
+  checkIn: (o: { phone: string | null }, cand: string, candidateId: string, unlockId: string) =>
+    sendText({ to: o.phone, kind: "owner_check_in", once: `owner_check_in:${unlockId}:${new Date().toISOString().slice(0, 10)}`, body: `${first(cand)} is checking in and is still interested. See where things stand: ${profile(candidateId)}` }),
   inAnHour: (o: { phone: string | null }, cand: string, what: string, clock: string, meetingId: string) =>
     sendText({ to: o.phone, kind: "owner_meeting_reminder", once: `owner_meeting_reminder:${meetingId}`, body: `Reminder: your ${what} with ${first(cand)} is today at ${clock}.` }),
   videoCallBooked: (o: { phone: string | null }, names: string, when: string, token: string) =>

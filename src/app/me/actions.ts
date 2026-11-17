@@ -12,8 +12,9 @@ import { candidateUrl, teamUrl } from "@/lib/format";
 
 import { candidateHired, repFor } from "@/lib/notify";
 import { money, refCode } from "@/lib/format";
-import { Meeting, Reference, RefRequest } from "@/lib/path";
-import { emailBooked, emailCandidateDeclined, emailNeedOtherTimes, emailRefsGiven, emailVerdict } from "@/lib/pathEmails";
+import { loadPath, Meeting, pathState, Reference, RefRequest } from "@/lib/path";
+import { checkInState, lastCheckIns, waitingOnThem } from "@/lib/checkIn";
+import { emailBooked, emailCandidateCheckIn, emailCandidateDeclined, emailNeedOtherTimes, emailRefsGiven, emailVerdict } from "@/lib/pathEmails";
 import { currentCandidateId, endCandidateSession, hashToken, isOwnerEmail, newLoginToken, startCandidateSession } from "@/lib/session";
 
 export type LinkState = { sent?: string; error?: string };
@@ -211,6 +212,34 @@ export async function candidateKeepGoing(meetingId: string) {
     console.error(e);
   }
   redirect("/me?done=yes#intros");
+}
+
+// "Check in": the candidate hasn't heard back, and asks us to send the employer a friendly note.
+export async function checkInWithEmployer(unlockId: string) {
+  const c = await me();
+  const { data } = await db()
+    .from("unlocks")
+    .select("id, confirmed_at, passed_at, candidate_declined_at, hires(status, created_at)")
+    .eq("id", unlockId)
+    .eq("candidate_id", c.id)
+    .not("confirmed_at", "is", null)
+    .maybeSingle();
+  const u = data as { id: string; confirmed_at: string; passed_at: string | null; candidate_declined_at: string | null; hires: { status: string; created_at: string }[] } | null;
+  if (!u) redirect("/me");
+  const now = Date.now();
+  const [paths, last] = await Promise.all([loadPath([u.id]), lastCheckIns([u.id])]);
+  const p = pathState(u, paths, { hireStatus: [...u.hires].sort((a, b) => b.created_at.localeCompare(a.created_at))[0]?.status, candidateStatus: c.status, nowMs: now });
+  const next = waitingOnThem(p);
+  const state = checkInState({ p, confirmedAt: u.confirmed_at, meetings: paths.meetings, refs: paths.refs, lastAt: last.get(u.id) ?? null, nowMs: now });
+  // Too soon, or not their move: nothing is sent (the button isn't shown then either).
+  if (next && state.can) {
+    try {
+      await emailCandidateCheckIn(u.id, next);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  redirect("/me?done=checkin#intros");
 }
 
 // "Not for me": politely decline this employer, at any step.

@@ -145,6 +145,16 @@ export async function emailCandidateDeclined(unlockId: string, note: string | nu
   await logActivity(`candidate:${c.cand.email}`, "candidate_declined_employer", { candidate: refCode(c.cand.id), company: c.owner.company, note });
 }
 
+// The candidate checked in with an employer they're waiting to hear from.
+export async function emailCandidateCheckIn(unlockId: string, next: "call" | "meeting" | "word") {
+  const c = await pathCtx(unlockId);
+  if (!c) return;
+  await sendEmail({ to: c.owner.email, ...toOwner.candidateCheckIn({ name: c.owner.full_name, candidate: c.cand.full_name, candidateId: c.cand.id, next }) });
+  await textOwner.checkIn(c.owner, c.cand.full_name, c.cand.id, unlockId).catch(() => null);
+  await toRep(c, `${c.cand.full_name} checked in with ${company(c)}`, `<strong>${e(c.cand.full_name)}</strong> hadn't heard back from <strong>${e(company(c))}</strong> and pressed &ldquo;Check in&rdquo; on their page. We sent ${e(company(c))} a friendly note. Nothing for you to do.`);
+  await logActivity(`candidate:${c.cand.email}`, "candidate_check_in", { unlock_id: unlockId, candidate: refCode(c.cand.id), company: c.owner.company });
+}
+
 // 6. After a call or meeting: how did it go?
 export async function emailAskFeedback(m: Meeting) {
   const c = await pathCtx(m.unlock_id);

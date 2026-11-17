@@ -16,6 +16,7 @@ import { loadPath, pathState } from "@/lib/path";
 import { hideMyProfile, showMyProfile, signOutCandidate } from "./actions";
 import { candidateUrl } from "@/lib/format";
 import { Intro, Intros } from "./Intros";
+import { checkInState, lastCheckIns } from "@/lib/checkIn";
 import { TellAFriend } from "./TellAFriend";
 import styles from "./me.module.css";
 
@@ -33,6 +34,7 @@ const DONE: Record<string, React.ReactNode> = {
   "promise-live": "Thank you! You've signed your candidate agreement, and your profile is now live for employers.",
   texts: "Done. We'll text you when something happens.",
   notexts: "Done. No texts; we'll keep emailing you.",
+  checkin: "Done. We sent them a friendly note that you're still interested.",
   badphone: "That doesn't look like a US mobile number. Use 10 digits, like 917 555 0123.",
   looking: "Thanks for letting us know. We're on it, and your rep is here if you need anything.",
   booked: "You're booked. We've emailed you both a calendar invite.",
@@ -82,16 +84,28 @@ export default async function MyPage({ searchParams }: PageProps<"/me">) {
   const meetCount = urows.length;
   const NOW = nowMs();
   const paths = await loadPath(urows.map((u) => u.id));
-  const intros: Intro[] = urows.map((u) => ({
-    id: u.id,
-    company: u.owners.company || "An employer",
-    contact: u.owners.full_name,
-    path: pathState(u, paths, {
+  const checkIns = await lastCheckIns(urows.map((u) => u.id));
+  const intros: Intro[] = urows.map((u) => {
+    const path = pathState(u, paths, {
       hireStatus: [...u.hires].sort((a, b) => b.created_at.localeCompare(a.created_at))[0]?.status,
       candidateStatus: c.status,
       nowMs: NOW,
-    }),
-  }));
+    });
+    return {
+      id: u.id,
+      company: u.owners.company || "An employer",
+      contact: u.owners.full_name,
+      path,
+      checkIn: checkInState({
+        p: path,
+        confirmedAt: (u as URow & { confirmed_at?: string | null }).confirmed_at ?? null,
+        meetings: paths.meetings.filter((m) => m.unlock_id === u.id),
+        refs: paths.refs.filter((r) => r.unlock_id === u.id),
+        lastAt: checkIns.get(u.id) ?? null,
+        nowMs: NOW,
+      }),
+    };
+  });
   const myTz = (calls?.[0] as Call | undefined)?.candidate_time_zone || "America/New_York";
   const views = c.profile_views ?? 0;
   const first = c.full_name.split(" ")[0];

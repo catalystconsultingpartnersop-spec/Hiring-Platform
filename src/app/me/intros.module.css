@@ -27,3 +27,7 @@
   .refs fieldset { grid-template-columns: 1fr; }
   .pick :global(.btn) { justify-self: stretch; }
 }
+
+/* "Check in": a quiet spot under a card when the candidate is waiting to hear back. */
+.checkin { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.checkin p { margin: 0 0 8px; font-size: 14.5px; color: var(--ink-2); }

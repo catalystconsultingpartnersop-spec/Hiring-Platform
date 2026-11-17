@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { MODE_LABEL, PathState } from "@/lib/path";
 import { formatInZone } from "@/lib/time";
-import { candidateKeepGoing, declineEmployer, noTimesWork, pickTime, sendReferences } from "./actions";
+import type { CheckIn } from "@/lib/checkIn";
+import { candidateKeepGoing, checkInWithEmployer, declineEmployer, noTimesWork, pickTime, sendReferences } from "./actions";
 import styles from "./intros.module.css";
 
-export type Intro = { id: string; company: string; contact: string | null; path: PathState };
+export type Intro = { id: string; company: string; contact: string | null; path: PathState; checkIn?: CheckIn };
 
 // Each employer who wants to meet the candidate, and what to do next.
 export function Intros({ intros, tz, now }: { intros: Intro[]; tz: string; now: number }) {
@@ -23,6 +24,8 @@ export function Intros({ intros, tz, now }: { intros: Intro[]; tz: string; now: 
     </section>
   );
 }
+
+const day = (iso: string, tz: string) => new Date(iso).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: tz });
 
 function IntroCard({ intro, tz, now }: { intro: Intro; tz: string; now: number }) {
   const { stage, meeting: m, refs } = intro.path;
@@ -176,6 +179,24 @@ function IntroCard({ intro, tz, now }: { intro: Intro; tz: string; now: number }
         <span className={`tag ${stage === "hired" ? "tag-good" : closed ? "" : "tag-gold"}`}>{status}</span>
       </div>
       <div className={styles.body}>{body}</div>
+      {!closed && intro.checkIn && (intro.checkIn.can || intro.checkIn.lastAt) && (
+        <div className={styles.checkin}>
+          {intro.checkIn.lastAt && (
+            <p>
+              You checked in on {day(intro.checkIn.lastAt, tz)}. We let {co} know you&rsquo;re still interested.
+              {!intro.checkIn.can && intro.checkIn.againAt ? ` You can check in again from ${day(intro.checkIn.againAt, tz)}.` : ""}
+            </p>
+          )}
+          {intro.checkIn.can && (
+            <form action={checkInWithEmployer.bind(null, intro.id)}>
+              {!intro.checkIn.lastAt && <p>Haven&rsquo;t heard back? We&rsquo;ll send {co} a friendly note that you&rsquo;re still interested.</p>}
+              <button className="btn btn-small btn-ghost" type="submit">
+                Check in with {co}
+              </button>
+            </form>
+          )}
+        </div>
+      )}
       {!closed && stage !== "hired" && (
         <details className={styles.more}>
           <summary>Not for me</summary>

@@ -171,6 +171,27 @@ export const owner = {
       button(`${siteUrl()}/candidates`, "See other candidates"),
   }),
 
+  // The candidate pressed "Check in" on their page. Kind, short, never pushy.
+  candidateCheckIn: (o: { name: string | null; candidate: string; candidateId: string; next: "call" | "meeting" | "word" }): Mail => {
+    const c = esc(first(o.candidate));
+    return {
+      audience: "owner",
+      subject: `${first(o.candidate)} is checking in`,
+      html:
+        hi(o.name) +
+        p(`${c} asked us to check in with you. ${c} is still interested and wanted to see where things stand.`) +
+        p(
+          o.next === "call"
+            ? `Whenever you're ready, you can offer a few times for a first call on ${c}'s page, and ${c} picks one.`
+            : o.next === "meeting"
+              ? `Whenever you're ready, you can offer a few times to meet on ${c}'s page, and ${c} picks one.`
+              : `A quick word on ${c}'s page about what's next is all it takes.`,
+        ) +
+        p(`And if you've gone a different direction, that's completely fine. Letting us know on ${c}'s page means ${c} isn't left waiting.`) +
+        button(`${siteUrl()}/candidates/${o.candidateId}#next`, `Open ${first(o.candidate)}'s page`),
+    };
+  },
+
   askFeedback: (o: { name: string | null; candidate: string; candidateId: string; m: MeetingInfo }): Mail => ({
     audience: "owner",
     subject: `How was your ${what(o.m)} with ${first(o.candidate)}?`,
