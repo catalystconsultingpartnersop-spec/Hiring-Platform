@@ -163,11 +163,13 @@ ${talkers.slice(0, 8).map((p, i) => `Speaker ${letters[i]} (shown as "${p.n || "
     if (moments.every((x) => Math.abs(x - m) >= 20)) moments.push(m);
   }
   // How much talking is written down for the part clips are taken from (after the hellos).
+  // For the note when no clip can be made: who talked for how long in the recording, by the written record.
+  const tally = scored.map((p) => `"${p.n || "no name"}"${p.ours ? " (ours)" : ""} ${Math.round(overlap(speakers.get(p.id) ?? [], 0, total))}s`).join(", ") + `; recording is ${Math.round(total / 60)} min`;
   const from = total > 360 ? 120 : 0;
   const covered = overlap([...mine, ...others], from, Math.max(0, total - from));
   // noWords: Google kept no written record of who spoke when (or none for the part that was recorded),
   // so the picture is all there is to go on.
-  return { file: pick.file, token, total, starts, share, moments, candidateLabel: cand.n, noWords: overlap(mine, 0, total) < 5 || covered < 30, teamLabels: scored.filter((p) => p.ours).map((p) => p.n) };
+  return { file: pick.file, token, total, starts, share, moments, candidateLabel: cand.n, tally, noWords: overlap(mine, 0, total) < 5 || covered < 30, teamLabels: scored.filter((p) => p.ours).map((p) => p.n) };
 }
 
 // Ask the AI to look at one frame: whose name is on screen, and where the main face is.
@@ -325,7 +327,7 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
     if (!tries.length) {
       if (rec.noWords) throw new Error("Google kept no written record of this call, and it's too short to pick a moment from.");
       const b = rec.share(rec.starts[0]);
-      throw new Error(`No 30 seconds where the candidate does most of the talking (best stretch: candidate ${Math.round(b.cand)}s, others ${Math.round(b.others)}s, shown as "${rec.candidateLabel}").`);
+      throw new Error(`No 30 seconds where the candidate does most of the talking (best stretch: candidate ${Math.round(b.cand)}s, others ${Math.round(b.others)}s, shown as "${rec.candidateLabel}"). Talking in the whole recording: ${rec.tally}.`);
     }
     const staffOn = (label: string) => {
       const lw = wordsOf(label);
@@ -471,7 +473,7 @@ export async function makeWaitingClips(max = 1) {
   const resting = (a: Record<string, string> | null) =>
     !!a?.clip_tried_at && Date.now() - Date.parse(a.clip_tried_at) < (/took too long|^ffmpeg null/i.test(a.clip_error ?? "") ? 30 * 60e3 : 6 * 36e5) && !/has not been used|is disabled|isn't connected/i.test(a.clip_error ?? "") &&
     // Notes written before the site learned to handle calls with no written record: those get a new try now.
-    !/is the candidate\.$|without the rep\.$|\(best: candidate 0s, others 0s/.test(a.clip_error ?? "");
+    !/is the candidate\.$|without the rep\.$|\(best: candidate 0s, others 0s|shown as "[^"]*"\)\.$/.test(a.clip_error ?? "");
   // Older clips that should be made again the careful way go first, then calls that have none yet.
   const fresh = uniq.filter((r) => !clipOf(r.candidates!.application) && !resting(r.candidates!.application));
   const redo = uniq.filter((r) => clipIsOld(clipOf(r.candidates!.application)) && !resting(r.candidates!.application));
