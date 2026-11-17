@@ -39,3 +39,11 @@
 .play:hover { background: var(--ink); color: #fff; }
 .video { width: 100%; border-radius: 12px; margin: 0 0 12px; background: #000; aspect-ratio: 16 / 9; }
 .note { margin: 0 0 10px; font-size: 12.5px; color: var(--rust); overflow-wrap: anywhere; }
+
+/* All six Strengths Assessment letters, small, at the foot of the card (the team's eyes only). */
+.footEnd { display: flex; align-items: center; gap: 12px; }
+.six { display: inline-flex; gap: 4px; }
+.six b { font-size: 12px; letter-spacing: 0.08em; border-radius: 99px; padding: 2px 8px; }
+.good { background: var(--moss-soft); color: #1f4a31; }
+.mid { background: var(--marigold-soft); color: #5c4300; }
+.bad { background: var(--rust-soft); color: #7d2a1e; }

@@ -339,9 +339,18 @@ export function Board({ rows, start, repOptions }: { rows: Row[]; start: Start; 
                           {r.interest > 0 ? ` · ${r.interest} unlocked` : ""}
                           {` · ${dateShort(r.listed && r.status === "listed" ? r.listed : r.added)}`}
                         </span>
-                        <form action={refreshMemory.bind(null, r.id)}>
-                          <button className={cs.link} title="Write this card again from the latest notes and call">↻</button>
-                        </form>
+                        <span className={cs.footEnd}>
+                          {(r.wg ?? "").length === 6 && (
+                            <span className={cs.six} title="Strengths Assessment: natural strengths, can do well, wears them down">
+                              <b className={cs.good}>{r.wg!.slice(0, 2)}</b>
+                              <b className={cs.mid}>{r.wg!.slice(2, 4)}</b>
+                              <b className={cs.bad}>{r.wg!.slice(4)}</b>
+                            </span>
+                          )}
+                          <form action={refreshMemory.bind(null, r.id)}>
+                            <button className={cs.link} title="Write this card again from the latest notes and call">↻</button>
+                          </form>
+                        </span>
                       </div>
                     </article>
                   );
