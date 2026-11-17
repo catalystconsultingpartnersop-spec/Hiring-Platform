@@ -3,6 +3,7 @@ import { CandidateSide } from "./CandidateSide";
 import { requireAdmin } from "@/lib/session";
 import { getTiers } from "@/lib/catalog";
 import { callsAccount, callsRedirectUri, googleCallsConfigured } from "@/lib/googleCalls";
+import { callTeam } from "@/lib/callTeam";
 import { dateShort } from "@/lib/format";
 import { addTier, removeTier, disconnectGoogleCalls } from "../../actions";
 import { TiersForm } from "./TiersForm";
@@ -11,7 +12,7 @@ import { TestRoom } from "./TestRoom";
 export default async function SettingsPage({ searchParams }: PageProps<"/admin/settings">) {
   await requireAdmin();
   const sp = await searchParams;
-  const [tiers, acct] = await Promise.all([getTiers(), callsAccount()]);
+  const [tiers, acct, team] = await Promise.all([getTiers(), callsAccount(), callTeam().then((x) => x.names).catch(() => [] as string[])]);
   const configured = googleCallsConfigured();
   return (
     <div style={{ maxWidth: 640 }}>
@@ -52,7 +53,14 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
             </form>
           </div>
           {acct.videos ? (
+            <>
             <p className="small" style={{ margin: "10px 0 0", color: "var(--moss)", fontWeight: 600 }}>✓ Video clips allowed</p>
+            {team.length > 0 && (
+              <p className="small" style={{ margin: "6px 0 0", color: "var(--slate)" }}>
+                On calls, the site knows these as our team: {team.join(", ")}. It learns this by itself from who is on many candidates&rsquo; calls, so clips always show the candidate.
+              </p>
+            )}
+            </>
           ) : (
             <p style={{ margin: "12px 0 0" }}>
               <a className="btn btn-gold btn-small" href="/api/google/calls/start">

@@ -13,6 +13,7 @@ import { accessToken, callsAccount } from "./googleCalls";
 // onboarding call, so the team remembers who is who. Team only. The files live
 // in private storage and are only handed out to signed-in staff.
 
+import { callTeam, noteCall, personKeys, scannedCalls } from "./callTeam";
 import { CLIP_BUCKET as BUCKET, CLIP_V, clipIsOld, clipOf, clipPath, type Clip } from "./clipInfo";
 import { askAI } from "./callDraft";
 export { clipOf, clipPath, type Clip };
@@ -56,7 +57,7 @@ export function topWindows(entries: Span[], total: number, n = 4, len = 30, othe
 }
 export const bestWindow = (entries: Span[], total: number) => topWindows(entries, total, 1)[0];
 
-async function findRecording(space: string, candidateName: string, staffNames: string[]) {
+async function findRecording(space: string, candidateName: string, staffNames: string[], candidateId = "") {
   const token = await accessToken();
   if (!token) throw new Error("Google isn't connected.");
   const get = async (url: string) => {
@@ -79,16 +80,21 @@ async function findRecording(space: string, candidateName: string, staffNames: s
 
   // Who is the candidate? Not the rep, not the company calls account; best name match wins.
   const ps = (await get(`https://meet.googleapis.com/v2/${pick.conf}/participants?pageSize=100`)) as {
-    participants?: { name: string; signedinUser?: { displayName?: string }; anonymousUser?: { displayName?: string }; phoneUser?: { displayName?: string } }[];
+    participants?: { name: string; signedinUser?: { user?: string; displayName?: string }; anonymousUser?: { displayName?: string }; phoneUser?: { displayName?: string } }[];
   };
+  const shown = (p: NonNullable<typeof ps.participants>[number]) => p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName || "";
+  // Remember who was here (that's how the site gets to know our own team), then ask who it already knows.
+  if (candidateId) await noteCall(space, candidateId, (ps.participants ?? []).map((p) => ({ user: p.signedinUser?.user, name: shown(p) }))).catch(() => {});
+  const known = await callTeam().catch(() => ({ keys: new Set<string>(), names: [] as string[] }));
   const calls = ((await callsAccount())?.email ?? "").split("@")[0].toLowerCase();
   const words = (s: string) => s.toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 1);
   const cw = words(candidateName);
   const rw = staffNames.flatMap(words);
   const scored = (ps.participants ?? []).map((p) => {
-    const n = p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName || "";
+    const n = shown(p);
     const w = words(n);
-    return { id: p.name, n, cand: w.filter((x) => cw.includes(x)).length, rep: w.filter((x) => rw.includes(x)).length + (calls && n.toLowerCase().includes(calls) ? 2 : 0) };
+    const ours = personKeys({ user: p.signedinUser?.user, name: n }).some((k) => known.keys.has(k));
+    return { id: p.name, n, ours, cand: w.filter((x) => cw.includes(x)).length, rep: w.filter((x) => rw.includes(x)).length + (calls && n.toLowerCase().includes(calls) ? 2 : 0) + (ours ? 3 : 0) };
   });
   const speakers = new Map<string, Span[]>();
   const said = new Map<string, string[]>();
@@ -115,7 +121,10 @@ async function findRecording(space: string, candidateName: string, staffNames: s
   // no clip is better than a clip of our own rep.
   const talkers = scored.filter((p) => talk(p.id) > 20);
   let candId = "";
-  if (talkers.length >= 2 && process.env.ANTHROPIC_API_KEY) {
+  // The site knows someone on this call as ours, and exactly one other person is here: that's the candidate.
+  const notOurs = scored.filter((p) => p.rep === 0 && (speakers.size === 0 || talk(p.id) > 20));
+  if (scored.some((p) => p.ours) && notOurs.length === 1) candId = notOurs[0].id;
+  if (!candId && talkers.length >= 2 && process.env.ANTHROPIC_API_KEY) {
     try {
       const letters = "ABCDEFGH";
       const { text } = await askAI(`This is from a recorded video call where a recruiter interviews a job candidate named ${candidateName}. The recruiter asks about the candidate's work history and what they want; the candidate talks about their own jobs, skills and goals. Our recruiters are: ${staffNames.join(", ")}.
@@ -125,7 +134,8 @@ Which speaker is the candidate? Reply with only JSON: {"candidate":"A"} using th
 ${talkers.slice(0, 8).map((p, i) => `Speaker ${letters[i]} (shown as "${p.n || "unknown"}"):\n${(said.get(p.id) ?? []).slice(4, 24).join("\n")}`).join("\n\n")}`);
       const j = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as { candidate?: string };
       const i = letters.indexOf(String(j.candidate ?? "").trim().toUpperCase());
-      if (j.candidate && i >= 0 && talkers[i]) candId = talkers[i].id;
+      // Never someone the site knows as ours, whatever the reading says.
+      if (j.candidate && i >= 0 && talkers[i] && !talkers[i].ours) candId = talkers[i].id;
     } catch {}
   }
   if (!candId) {
@@ -136,7 +146,7 @@ ${talkers.slice(0, 8).map((p, i) => `Speaker ${letters[i]} (shown as "${p.n || "
     candId = byName[0]?.id ?? (outsiders.length === 1 ? outsiders[0].id : "");
   }
   if (!candId) {
-    const who = scored.map((p) => `"${p.n || "no name"}" ${Math.round(talk(p.id))}s`).join(", ");
+    const who = scored.map((p) => `"${p.n || "no name"}"${p.ours ? " (ours)" : ""} ${Math.round(talk(p.id))}s`).join(", ");
     throw new Error(`Couldn't tell which person on the call is the candidate (on the call: ${who || "nobody listed"}${speakers.size ? "" : "; Google kept no written record of this call"}).`);
   }
   const cand = scored.find((p) => p.id === candId)!;
@@ -153,7 +163,7 @@ ${talkers.slice(0, 8).map((p, i) => `Speaker ${letters[i]} (shown as "${p.n || "
     if (moments.every((x) => Math.abs(x - m) >= 20)) moments.push(m);
   }
   // noWords: Google kept no written record of who spoke when, so the picture is all there is to go on.
-  return { file: pick.file, token, total, starts, share, moments, candidateLabel: cand.n, noWords: mine.length === 0 };
+  return { file: pick.file, token, total, starts, share, moments, candidateLabel: cand.n, noWords: mine.length === 0, teamLabels: scored.filter((p) => p.ours).map((p) => p.n) };
 }
 
 // Ask the AI to look at one frame: whose name is on screen, and where the main face is.
@@ -245,10 +255,10 @@ export async function addPhoto(candidateId: string): Promise<boolean> {
     const call = (calls ?? [])[0] as unknown as { meet_space: string; staff: { full_name: string | null } | null } | undefined;
     const { data: team } = await db().from("staff").select("full_name");
     const staffNames = [...((team ?? []) as { full_name: string | null }[]).map((t) => t.full_name ?? ""), call?.staff?.full_name ?? ""].filter(Boolean);
-    const rec = call ? await findRecording(call.meet_space, c.full_name, staffNames) : null;
+    const rec = call ? await findRecording(call.meet_space, c.full_name, staffNames, candidateId) : null;
     if (rec) {
       const wordsOf = (x: string) => x.toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 2);
-      const staffWords = staffNames.flatMap(wordsOf);
+      const staffWords = [...staffNames, ...rec.teamLabels].flatMap(wordsOf);
       const candWords = wordsOf(c.full_name + " " + rec.candidateLabel);
       const via = await relay(`https://www.googleapis.com/drive/v3/files/${rec.file}?alt=media&supportsAllDrives=true`, rec.token);
       const began = Date.now();
@@ -293,11 +303,11 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
     if (!call) throw new Error("No recorded call.");
     const { data: team } = await db().from("staff").select("full_name");
     const staffNames = [...((team ?? []) as { full_name: string | null }[]).map((t) => t.full_name ?? ""), call.staff?.full_name ?? ""].filter(Boolean);
-    const rec = await findRecording(call.meet_space, c.full_name, staffNames);
+    const rec = await findRecording(call.meet_space, c.full_name, staffNames, candidateId);
     if (!rec) throw new Error("Google has no finished recording for this call.");
     const via = await relay(`https://www.googleapis.com/drive/v3/files/${rec.file}?alt=media&supportsAllDrives=true`, rec.token);
     const wordsOf = (x: string) => x.toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 2);
-    const staffWords = staffNames.flatMap(wordsOf);
+    const staffWords = [...staffNames, ...rec.teamLabels].flatMap(wordsOf);
     const candWords = wordsOf(c.full_name + " " + rec.candidateLabel);
     // Only stretches where the candidate does most of the talking. Then look at two frames from each,
     // and take the first stretch that shows the candidate both times (a face, and not our own team's name on the tile).
@@ -407,16 +417,47 @@ export async function makeClip(candidateId: string): Promise<{ ok: boolean; erro
 }
 
 
+async function learnTeam(calls: { candidate_id: string; meet_space: string }[], max: number) {
+  const token = await accessToken();
+  if (!token) return;
+  const done = await scannedCalls();
+  const get = async (url: string) => {
+    const r = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
+    if (!r.ok) throw new Error(String(r.status));
+    return r.json();
+  };
+  let n = 0;
+  for (const c of calls) {
+    if (n >= max) break;
+    if (!c.meet_space || done.has(c.meet_space)) continue;
+    n++;
+    try {
+      const recs = (await get(`https://meet.googleapis.com/v2/conferenceRecords?filter=${encodeURIComponent(`space.name="${c.meet_space}"`)}`)) as { conferenceRecords?: { name: string }[] };
+      const people: { user?: string; name: string }[] = [];
+      for (const conf of recs.conferenceRecords ?? []) {
+        const ps = (await get(`https://meet.googleapis.com/v2/${conf.name}/participants?pageSize=100`)) as {
+          participants?: { signedinUser?: { user?: string; displayName?: string }; anonymousUser?: { displayName?: string }; phoneUser?: { displayName?: string } }[];
+        };
+        for (const p of ps.participants ?? []) people.push({ user: p.signedinUser?.user, name: p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName || "" });
+      }
+      // A call nobody joined yet isn't counted, so it's looked at again later.
+      if (people.length) await noteCall(c.meet_space, c.candidate_id, people);
+    } catch {}
+  }
+}
+
 export async function makeWaitingClips(max = 1) {
   if (!(await callsAccount())?.videos) return { made: 0, why: "Video clips aren't allowed yet." };
   const { data: calls } = await db()
     .from("onboarding_calls")
-    .select("candidate_id, ends_at, candidates(application)")
+    .select("candidate_id, meet_space, ends_at, candidates(application)")
     .neq("status", "cancelled")
     .not("meet_space", "is", null)
     .lt("ends_at", new Date(Date.now() - 45 * 60_000).toISOString())
     .order("ends_at", { ascending: false })
     .limit(300);
+  // First, a quick look at who was on calls not counted yet: that's how the site learns who our own team is.
+  await learnTeam(((calls ?? []) as unknown as { candidate_id: string; meet_space: string }[]), 25).catch(() => {});
   const rows = (calls ?? []) as unknown as { candidate_id: string; candidates: { application: Record<string, string> | null } | null }[];
   const seen = new Set<string>();
   const uniq = rows.filter((r) => r.candidates && !seen.has(r.candidate_id) && seen.add(r.candidate_id));
