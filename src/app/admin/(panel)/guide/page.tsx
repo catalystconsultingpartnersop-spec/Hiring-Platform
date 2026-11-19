@@ -290,9 +290,9 @@ export default async function RepGuide() {
         <li id="profile" style={{ scrollMarginTop: 16 }}>
           <h3>Write their profile</h3>
           <p>
-            If their call was recorded, most of this is already drafted for you: open them from Candidates and start at the
+            If their call was recorded, most of this is already drafted for you: open them from Browse candidates and start at the
             &ldquo;From the call&rdquo; box. Otherwise, click <Link href="/admin/candidates/new">+ Add candidate</Link> (or
-            open them from Candidates). Add their
+            open them from Browse candidates). Add their
             resume, which fills in their details. Their strengths fill in by themselves once they take our Strengths Assessment;
             you can change the order if the call tells you otherwise. The site then suggests roles and words for the headline. Fill in role,
             location and salary, then a headline and a short story.
