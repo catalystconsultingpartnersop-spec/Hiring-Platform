@@ -7,6 +7,8 @@ import { commissionPercent } from "@/lib/settings";
 import { commissionTerms } from "@/lib/adminData";
 import { FINDER_PCT } from "@/lib/finder";
 import { db } from "@/lib/db";
+import { partners } from "@/lib/contact";
+import { staffPhones } from "@/lib/staffPhones";
 import styles from "./guide.module.css";
 
 export const metadata: Metadata = { title: "Rep guide" };
@@ -17,6 +19,16 @@ export default async function RepGuide() {
   const pct = await commissionPercent();
   const { data: row } = me.id ? await db().from("staff").select("*").eq("id", me.id).maybeSingle() : { data: null };
   const team = teamUrl().replace(/^https?:\/\//, "");
+  // Who a rep turns to when stuck: the partner (Shloimy). The partner himself turns to Heshy.
+  const [lead] = await partners();
+  const leadPhone = lead ? (await staffPhones())[lead.id] : null;
+  const leadName = (lead?.full_name ?? "").split(" ")[0];
+  const stuck =
+    lead && lead.id !== me.id && leadName
+      ? leadPhone
+        ? `Text ${leadName} at ${leadPhone}`
+        : `Ask ${leadName} in the Team Room`
+      : `Text Heshy at ${contactPhone()}`;
 
   return (
     <article className={styles.guide}>
@@ -75,7 +87,7 @@ export default async function RepGuide() {
         </div>
         <div>
           <strong>Stuck?</strong>
-          <span>Text Heshy at {contactPhone()}</span>
+          <span>{stuck}</span>
         </div>
       </div>
 
