@@ -114,8 +114,7 @@ export default async function Browse({ searchParams }: PageProps<"/admin/candida
   const start: Start =
     q || sp.gold === "1"
       ? { status: [], q, gold: sp.gold === "1" }
-      : { status: [view ?? (rows.some((r) => r.status === "applied") ? "applied" : "listed")], mine: sp.mine === "1" };
-  if (!view && !q && sp.gold !== "1" && start.status[0] === "applied") start.status.push("listed");
+      : { status: [view ?? "listed"], mine: sp.mine === "1" };
 
   return (
     <>
