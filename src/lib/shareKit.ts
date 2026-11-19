@@ -51,7 +51,13 @@ export type Kit = { id: string; name: string; tag?: string; about: string; image
 
 export function ownerKits(ref?: string | null): Kit[] {
   const link = shareLink(ref);
+  // These two open the candidates themselves, as the button on the picture says.
+  const browse = `${siteUrl()}/candidates${ref ? `?r=${refSlug(ref)}` : ""}`;
+  const coached = (ending: string) =>
+    `Our candidates come coached.\n\nBefore you meet anyone, we've worked with them one on one: what they're naturally great at, what wears them down, and the kind of work they belong in.\n\n${ending}\n\nOne flat fee, when you hire.\n\nBrowse candidates: ${browse}`;
   return [
+    { id: "coached-built", name: "Coached: built for the role", tag: "New", about: "Our candidates come coached. Opens the candidates.", image: "/share/owner-coached-built.png", message: coached("We help each person find theirs. So the one you hire is built for the role."), link: browse },
+    { id: "coached-fit", name: "Coached: fit the role", tag: "New", about: "The same poster with a different last line. Opens the candidates.", image: "/share/owner-coached-fit.png", message: coached("We help each person find theirs, so the people you meet fit the role, not just fill it."), link: browse },
     { id: "four-reasons", name: "Four reasons", tag: "New", about: "Everything we do, as a short list.", image: "/share/owner-four-reasons.png", message: concept(ref, "Tell us the position, and half an hour later you can have a qualified candidate to consider."), link },
     { id: "concept-short", name: "Short and clear", tag: "New", about: "The whole offer in the fewest words.", image: "/share/owner-concept-short.png", message: concept(ref, "Tell us the position. A qualified candidate to consider, in half an hour."), link },
     { id: "handpicked", name: "Handpicked by you", tag: "New", about: "For owners who want to stay in charge of who they meet.", image: "/share/owner-handpicked.png", message: concept(ref, HALF_HOUR), link },
