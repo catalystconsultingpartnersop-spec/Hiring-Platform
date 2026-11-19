@@ -134,8 +134,10 @@ export default async function RepGuide() {
             <Link href="/admin/candidates">Browse candidates</Link>
           </p>
           <p>
-            Every candidate on the team. Pick a status (new applications, listed, drafts…), filter, sort and group. Tap{" "}
-            <b>Only mine</b> for yours. You can view anyone; you edit your own. <b>⭐ Gold standard</b> shows the ones reps marked as worth placing.
+            Every candidate on the team, as cards: a photo, a 30-second clip from their call, the key points, and their
+            six Strengths Assessment letters. Search, filter, or tap <b>Only mine</b> for yours. Prefer a list? Switch to{" "}
+            <b>Table</b>. You can view anyone; you edit your own. <b>⭐ Gold standard</b> shows the ones reps marked as worth
+            placing.
           </p>
         </div>
         <div>
@@ -143,6 +145,12 @@ export default async function RepGuide() {
             <Link href="/admin/room">Team Room</Link>
           </p>
           <p>Spotlight great candidates, ask &ldquo;who has someone?&rdquo;, celebrate hires, and join team calls.</p>
+        </div>
+        <div>
+          <p className={styles.label}>
+            <Link href="/admin/messages">Messages</Link>
+          </p>
+          <p>Questions from owners who unlocked your candidates. Answer there and they get an email.</p>
         </div>
         <div>
           <p className={styles.label}>
@@ -166,7 +174,7 @@ export default async function RepGuide() {
           <p className={styles.label}>
             <Link href="/admin/hours">My hours</Link>
           </p>
-          <p>When candidates can book you, and the video link they join.</p>
+          <p>When candidates can book you. Add your mobile there and tick <b>Text me</b> to get a text when a call is booked or changed.</p>
         </div>
         <div>
           <p className={styles.label}>
@@ -182,6 +190,12 @@ export default async function RepGuide() {
         </div>
         <div>
           <p className={styles.label}>
+            <Link href="/admin/matches">Matches</Link>
+          </p>
+          <p>Open positions and the candidates who could fit. The site lines them up by itself. See one that isn&rsquo;t right? Tap ✕.</p>
+        </div>
+        <div>
+          <p className={styles.label}>
             <Link href="/admin/guide">Rep guide</Link>
           </p>
           <p>This page. Come back any time.</p>
@@ -193,13 +207,40 @@ export default async function RepGuide() {
         <h2>Built to make you faster.</h2>
         <ul style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 8 }}>
           <li>
+            <b>Candidate cards with a clip.</b> <Link href="/admin/candidates">Browse candidates</Link> now shows each person as a
+            card: a photo and a 30-second clip from their call, the key points, and their six strengths letters. It&rsquo;s the
+            quickest way to remember who is good for what when a position opens. The site makes the clip and photo by itself after
+            a recorded call.
+          </li>
+          <li>
+            <b>Texts.</b> Add your mobile on <Link href="/admin/hours">My hours</Link> and tick <b>Text me</b>. You get a text when a
+            candidate books or changes a call, and a short summary each morning.
+          </li>
+          <li>
+            <b>Messages from owners.</b> An owner who unlocked your candidate can ask you about them.{" "}
+            <Link href="/admin/messages">Answer in Messages</Link> and they get an email.
+          </li>
+          <li>
+            <b>Taking over a candidate with a call booked.</b> When a candidate moves to you and their call is inside your hours, it
+            simply becomes yours. If it&rsquo;s outside your hours, you get a short note asking: yes, a different time, or no
+            thanks.
+          </li>
+          <li>
+            <b>Candidates can check in.</b> A candidate waiting to hear back from an employer can press Check in, and the site
+            sends the employer a friendly note. You get a heads-up. Nothing for you to do.
+          </li>
+          <li>
+            <b>Smarter matches.</b> The site reads what it knows about each candidate against what the job&rsquo;s day is like, and
+            only lines up the ones that fit. <Link href="/admin/matches">See Matches</Link>
+          </li>
+          <li>
             <b>The Team Room.</b> One place for the team: spotlight a candidate, post &ldquo;looking for&hellip;&rdquo; when an owner
             needs someone, attach candidates in one tap, and schedule team calls that record themselves and send everyone the
             notes. <Link href="/admin/room">Open it</Link>
           </li>
           <li>
-            <b>See every candidate.</b> Candidates shows yours by default; switch to Everyone to browse the whole team&rsquo;s.
-            Other reps&rsquo; candidates are view-only.
+            <b>See every candidate.</b> Browse candidates shows the whole team&rsquo;s; tap <b>Only mine</b> for yours. Other
+            reps&rsquo; candidates are view-only.
           </li>
           <li>
             <b>Suggest a candidate.</b> Know an owner who&rsquo;d want to meet someone? Tap <b>Suggest</b> on their page and send it
