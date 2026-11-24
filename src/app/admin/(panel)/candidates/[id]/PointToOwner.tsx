@@ -153,7 +153,7 @@ export function PointToOwner({ candidateId, headline, link, repFirst, mine, firs
 
   return (
     <section className="panel" style={{ marginTop: 18, borderColor: "var(--marigold)" }}>
-      <h2 style={{ fontSize: 18, margin: "0 0 4px" }}>💡 Pass this profile to someone you know</h2>
+      <h2 style={{ fontSize: 18, margin: "0 0 4px" }}>💬 Send to an owner you know</h2>
       <p className="small muted" style={{ margin: "0 0 10px" }}>
         They see the anonymous profile, no name until they sign. Send it from here, or copy it and send it your own way.
       </p>

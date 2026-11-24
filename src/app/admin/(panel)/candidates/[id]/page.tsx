@@ -102,7 +102,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         <h1>{c.full_name}</h1>
         {c.status === "listed" && (
           <div style={{ margin: "8px 0 4px" }}>
-            <ShareJump target="share-cand" label="📣 Share this candidate" />
+            <ShareJump target="share-cand" label="📣 Post on your status" />
             <OpenOnHash target="share-cand" />
           </div>
         )}
@@ -144,7 +144,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
             const slug = me.id ? refSlug(me.name.split(" ")[0] || me.email.split("@")[0]) : "";
             return (
               <details className="panel" id="share-cand" style={{ marginTop: 14, scrollMarginTop: 12 }}>
-                <summary style={{ cursor: "pointer", fontWeight: 700 }}>📣 Share this candidate: a teaser for business owners</summary>
+                <summary style={{ cursor: "pointer", fontWeight: 700 }}>📣 Post on your status: a teaser for business owners</summary>
                 <ShareCandidate id={c.id} d={d} link={`${siteUrl()}/c/${refCode(c.id)}${slug ? `?r=${slug}` : ""}`} />
               </details>
             );

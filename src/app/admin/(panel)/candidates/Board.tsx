@@ -346,7 +346,7 @@ export function Board({ rows, start, repOptions }: { rows: Row[]; start: Start; 
                         <span className={cs.footEnd}>
                           {r.status === "listed" && (
                             <Link prefetch={false} className={cs.share} href={`/admin/candidates/${r.id}#share-cand`} title="Make a teaser poster for your WhatsApp status">
-                              📣 Share
+                              📣 Post
                             </Link>
                           )}
                           {(r.wg ?? "").length === 6 && (
