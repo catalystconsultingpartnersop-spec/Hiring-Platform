@@ -1,6 +1,7 @@
 import { askAI } from "./callDraft";
 import { db } from "./db";
 import { LEVEL_LABEL } from "./format";
+import { hoursLabel } from "./hours";
 import { memoryOf } from "./memory";
 import { describe, parseResult, TRAITS, type Letter } from "./strengths";
 
@@ -13,7 +14,7 @@ const town = (s: string | null) => (s ?? "").replace(/,?\s*(NY|NJ|New York|New J
 export function candPosterDefaults(c: C) {
   const app = c.application ?? {};
   const title = [c.role_category, ...(c.also_roles ?? [])].filter(Boolean).slice(0, 2).join(" / ") || (c.headline ?? "A candidate");
-  const meta = [town(c.location_region), c.level ? LEVEL_LABEL[c.level] : null, app.hours || null].filter(Boolean).join(" · ");
+  const meta = [town(c.location_region), c.level ? LEVEL_LABEL[c.level] : null, hoursLabel(app.hours) || null].filter(Boolean).join(" · ");
   // Strengths Assessment wording: natural strengths = "Great at", can do well = "Good at".
   const l = parseResult(c.working_genius) as Letter[];
   const great = l.length === 6 ? l.slice(0, 2).map((x) => TRAITS[x].label).join(" · ") : "";
