@@ -10,7 +10,7 @@ export default async function NewPosition() {
   return (
     <div style={{ display: "grid", gap: 14, paddingBlock: "8px 40px" }}>
       <Link href="/admin/matches" className="small muted">
-        Openings
+        Matches
       </Link>
       <h1 style={{ margin: 0 }}>Add an opening</h1>
       <p className="muted" style={{ margin: 0 }}>Private. We write it up and find who fits, automatically.</p>

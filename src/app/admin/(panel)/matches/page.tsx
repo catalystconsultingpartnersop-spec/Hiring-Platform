@@ -11,7 +11,7 @@ import { markNotAFit } from "./actions";
 import styles from "./matches.module.css";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Openings" };
+export const metadata = { title: "Matches" };
 export const maxDuration = 300;
 
 // Open positions we know about, and which candidates fit them. Private to the team.
@@ -77,8 +77,8 @@ export default async function MatchesPage({ searchParams }: PageProps<"/admin/ma
     <div className={styles.page}>
       <div className={styles.head}>
         <div>
-          <h1>Openings</h1>
-          <p className="muted">Jobs we know about, written up, and the candidates who fit them. Private: never shown on the site.</p>
+          <h1>Matches</h1>
+          <p className="muted">Open jobs we know about, written up, and the candidates who fit them. Private: never shown on the site.</p>
         </div>
         {ready && (
           <Link className="btn btn-gold" href="/admin/matches/new">

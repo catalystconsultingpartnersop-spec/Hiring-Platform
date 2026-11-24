@@ -76,7 +76,7 @@ export default async function OpeningPage({ params, searchParams }: PageProps<"/
   return (
     <div className={styles.page}>
       <Link href="/admin/matches" className="small muted">
-        Openings
+        Matches
       </Link>
       <div className={styles.head}>
         <div>
