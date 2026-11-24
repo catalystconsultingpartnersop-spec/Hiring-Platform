@@ -2,7 +2,7 @@ import { askAI } from "./callDraft";
 import { db } from "./db";
 import { LEVEL_LABEL } from "./format";
 import { memoryOf } from "./memory";
-import { parseResult, TRAITS, type Letter } from "./strengths";
+import { describe, parseResult, TRAITS, type Letter } from "./strengths";
 
 // A candidate as a poster for business owners: who's available, and their personality
 // in three short lines. Never a name or a face. The rep can change any of it.
@@ -14,23 +14,21 @@ export function candPosterDefaults(c: C) {
   const app = c.application ?? {};
   const title = [c.role_category, ...(c.also_roles ?? [])].filter(Boolean).slice(0, 2).join(" / ") || (c.headline ?? "A candidate");
   const meta = [town(c.location_region), c.level ? LEVEL_LABEL[c.level] : null, app.hours || null].filter(Boolean).join(" · ");
-  let lines: string[] = [];
-  try {
-    lines = JSON.parse(app.poster_lines ?? "[]");
-  } catch {}
-  if (!lines.length) {
-    const l = parseResult(c.working_genius) as Letter[];
-    lines = l.length === 6 ? l.slice(0, 2).map((x) => TRAITS[x].label) : [];
-  }
-  return { title, meta, lines: lines.slice(0, 3) };
+  // Strengths Assessment wording: natural strengths = "Great at", can do well = "Good at".
+  const l = parseResult(c.working_genius) as Letter[];
+  const great = l.length === 6 ? l.slice(0, 2).map((x) => TRAITS[x].label).join(" · ") : "";
+  const good = l.length === 6 ? l.slice(2, 4).map((x) => TRAITS[x].label).join(" · ") : "";
+  const type = describe(c.working_genius)?.name ?? "";
+  const experience = (app.poster_exp || (c.headline ?? "")).trim().replace(/\.$/, "");
+  return { title, meta, experience, great, good, type };
 }
 
-// Three short personality lines, written once from what the team knows, then kept.
+// One short, enticing line of experience for the poster, written once, then kept.
 export async function ensureCandPosterLines(id: string): Promise<void> {
   const { data } = await db().from("candidates").select("id, full_name, headline, role_category, also_roles, highlights, working_genius, admin_notes, application").eq("id", id).maybeSingle();
   if (!data) return;
   const app = (data.application ?? {}) as Record<string, string>;
-  if (app.poster_lines) return;
+  if (app.poster_exp) return;
   const m = memoryOf(data as unknown as Parameters<typeof memoryOf>[0]);
   const l = parseResult(data.working_genius as string | null) as Letter[];
   const facts = [
@@ -44,10 +42,10 @@ export async function ensureCandPosterLines(id: string): Promise<void> {
     .join("\n");
   if (!facts.trim()) return;
   try {
-    const raw = (await askAI(`From what we know about this job candidate, write 3 very short lines (2 to 5 words each) describing their PERSONALITY and how they work, for a poster aimed at business owners, e.g. "Calm under pressure", "Owns the details", "Customers love him". Only what's supported below. No names. Reply with only the 3 lines, one per line, no bullets.\n\n${facts.slice(0, 3000)}`)).text;
-    const lines = raw.split("\n").map((x) => x.replace(/^[-•*\d.\s]+/, "").trim().replace(/\.$/, "")).filter((x) => x && x.length <= 40).slice(0, 3);
-    if (!lines.length) return;
-    await db().from("candidates").update({ application: { ...app, poster_lines: JSON.stringify(lines) } }).eq("id", id);
+    const raw = (await askAI(`From what we know about this job candidate, write ONE short line (at most 60 characters) about their EXPERIENCE that would make a business owner want to meet them, e.g. "10 years running a busy contractor's front office" or "Built a 20-person ops team from scratch". Concrete, true to the facts below, no name, no hype words. Reply with only the line.\n\n${facts.slice(0, 3000)}`)).text;
+    const line = raw.split("\n").map((x) => x.replace(/^["'\-•*\s]+|["'\s]+$/g, "").replace(/\.$/, "")).find((x) => x.length > 8 && x.length <= 70);
+    if (!line) return;
+    await db().from("candidates").update({ application: { ...app, poster_exp: line } }).eq("id", id);
   } catch (e) {
     console.error("candidate poster lines", e);
   }

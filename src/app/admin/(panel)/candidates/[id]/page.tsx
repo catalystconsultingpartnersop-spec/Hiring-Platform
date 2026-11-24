@@ -21,7 +21,7 @@ import { dateShort, feeFor, money, refCode } from "@/lib/format";
 
 import { deleteCandidate, resendPromise } from "../../../actions";
 import { CandidateForm } from "../CandidateForm";
-import { ShareJob } from "../../matches/ShareJob";
+import { ShareCandidate } from "../ShareCandidate";
 import { ShareJump } from "../../matches/ShareJump";
 import { candPosterDefaults } from "@/lib/candPoster";
 import { after } from "next/server";
@@ -139,12 +139,12 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         {c.status === "listed" &&
           (() => {
             const d = candPosterDefaults(c as unknown as Parameters<typeof candPosterDefaults>[0]);
-            if (!(c.application as Record<string, string> | null)?.poster_lines) after(() => import("@/lib/candPoster").then((m) => m.ensureCandPosterLines(c.id)).then(() => null, () => null));
+            if (!(c.application as Record<string, string> | null)?.poster_exp) after(() => import("@/lib/candPoster").then((m) => m.ensureCandPosterLines(c.id)).then(() => null, () => null));
             const slug = me.id ? refSlug(me.name.split(" ")[0] || me.email.split("@")[0]) : "";
             return (
               <details className="panel" id="share-cand" style={{ marginTop: 14, scrollMarginTop: 12 }}>
-                <summary style={{ cursor: "pointer", fontWeight: 700 }}>📣 Share this candidate: a poster for business owners</summary>
-                <ShareJob kind="cand" id={c.id} title={d.title} meta={d.meta} lines={d.lines} link={`${siteUrl()}/c/${refCode(c.id)}${slug ? `?r=${slug}` : ""}`} />
+                <summary style={{ cursor: "pointer", fontWeight: 700 }}>📣 Share this candidate: a teaser for business owners</summary>
+                <ShareCandidate id={c.id} d={d} link={`${siteUrl()}/c/${refCode(c.id)}${slug ? `?r=${slug}` : ""}`} />
               </details>
             );
           })()}
