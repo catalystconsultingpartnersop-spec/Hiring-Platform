@@ -3,8 +3,8 @@ import { isCheckAccount } from "@/lib/session";
 import { logKnownExpenses } from "@/lib/knownExpenses";
 import Link from "next/link";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { commissionOf, commissionTerms, earnsCommission, finderSharesFor, HireRow, loadAgreements, repName, StaffLite, stageOf } from "@/lib/adminData";
-import { FINDER_PCT, HOW_LABEL } from "@/lib/finder";
+import { commissionOf, earnsCommission, finderSharesFor, HireRow, loadAgreements, repName, StaffLite, stageOf } from "@/lib/adminData";
+import { CAND_PCT, FINDER_PCT, GROWTH_PCT, HESHY_PCT, HOW_LABEL, REFERRER_PCT, ownerCredits } from "@/lib/finder";
 import { db } from "@/lib/db";
 import { isOwnerEmail } from "@/lib/session";
 import { dateShort, money, refCode } from "@/lib/format";
@@ -13,9 +13,8 @@ import { receiptNumber } from "@/lib/receipt";
 import { requireAdmin } from "@/lib/session";
 import { commissionPercent } from "@/lib/settings";
 import { deleteExpense, markCommissionPaid, payRepAll, setCommissionAmount, undoCommissionPaid } from "../../actions";
-import { CommissionRateForm } from "./CommissionRateForm";
 import { allReferrers } from "@/lib/referrers";
-import { payReferrer, toggleReferrer } from "./referrerActions";
+import { payReferrer, saveOwnerCredit, toggleReferrer } from "./referrerActions";
 import { ExpenseForm } from "./ExpenseForm";
 import styles from "../admin.module.css";
 import { RefundButton } from "../RefundButton";
@@ -130,10 +129,16 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
     const comm =
       paid.filter((h) => earnsCommission(h, h.rep)).reduce((s, h) => s + commissionOf(h, pct, h.rep), 0) +
       paid.reduce((s, h) => s + (finders.get(h.id)?.cents ?? 0), 0);
-    const exp = expenses.filter((e) => match(e.spent_on)).reduce((s, e) => s + e.amount_cents, 0);
-    return { in: gross - refunds, refunds, comm, exp, net: gross - refunds - comm - exp };
+    const exp = expenses.filter((e) => match(e.spent_on) && e.category !== "Marketing").reduce((s, e) => s + e.amount_cents, 0);
+    const growthSpent = expenses.filter((e) => match(e.spent_on) && e.category === "Marketing").reduce((s, e) => s + e.amount_cents, 0);
+    const growth = paid.filter((h) => h.status !== "refunded").reduce((s, h) => s + Math.round((h.amount_cents * GROWTH_PCT) / 100), 0);
+    return { in: gross - refunds, refunds, comm, exp, growth, growthSpent, net: gross - refunds - comm - growth - exp };
   };
-  const { in: pIn, refunds: pRefunds, comm: pComm, exp: pExp, net: pNet } = totals(inPeriod);
+  const { in: pIn, refunds: pRefunds, comm: pComm, exp: pExp, growth: pGrowth, net: pNet } = totals(inPeriod);
+  const everAll = totals(() => true);
+  const bucket = everAll.growth - everAll.growthSpent;
+  const credits = await ownerCredits();
+  const pickable = [...people.values()].filter((p) => !isOwnerEmail(p.email) && !isCheckAccount(p.email) && (p as StaffLite & { active?: boolean }).active !== false);
   const inProgress = agreements.filter((a) => ["considering", "checkout"].includes(stageOf(a)));
   const pipeline = inProgress.reduce((s, a) => s + (a.fee_cents ?? 0), 0);
 
@@ -169,7 +174,17 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
         <div>
           <h1>Finance</h1>
           <p>
-            Money in, what reps are owed, expenses, and what&rsquo;s left. Fees are set in <Link href="/admin/settings">Fee settings</Link>.
+            Money in, who&rsquo;s owed what, expenses, and what&rsquo;s left. Fees are set in <Link href="/admin/settings">Fee settings</Link>.
+          </p>
+          <p className="small" style={{ margin: "6px 0 0", display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <b>Every fee:</b>
+            <span className="tag">{CAND_PCT}% whoever brought the candidate</span>
+            <span className="tag">{FINDER_PCT}% whoever brought the owner</span>
+            <span className="tag">{HESHY_PCT}% you</span>
+            <span className="tag tag-gold">{GROWTH_PCT}% growth bucket</span>
+          </p>
+          <p className="small muted" style={{ margin: "4px 0 0" }}>
+            Same person brought both? They get {CAND_PCT + FINDER_PCT}%. Owner came in on his own, or you brought them? That {FINDER_PCT}% is yours. A referral partner&rsquo;s owner: {REFERRER_PCT}% to them, the rest to you.
           </p>
         </div>
         <a className="btn btn-ghost btn-small" href="/admin/payments-csv">
@@ -212,15 +227,19 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
         </div>
         <div className={styles.stat}>
           <strong>{money(pComm)}</strong>
-          <span>Rep commissions earned</span>
+          <span>Reps&rsquo; shares earned</span>
         </div>
+        <a className={styles.stat} href="#growth">
+          <strong>{money(pGrowth)}</strong>
+          <span>Into the growth bucket ({GROWTH_PCT}%). Balance: {money(bucket)}</span>
+        </a>
         <div className={styles.stat}>
           <strong>{money(pExp)}</strong>
-          <span>Expenses</span>
+          <span>Other expenses</span>
         </div>
         <div className={`${styles.stat} ${styles.statActive}`}>
           <strong style={{ color: pNet < 0 ? "var(--rust)" : undefined }}>{money(pNet)}</strong>
-          <span>Left for the company</span>
+          <span>Yours, after reps, growth and expenses</span>
         </div>
         <Link className={styles.stat} href={`${qs("owed", "")}#payments`}>
           <strong>{money(sum(owed) + finderOwedTotal)}</strong>
@@ -238,7 +257,6 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
           <thead>
             <tr>
               <th>Rep</th>
-              <th>Terms</th>
               <th>Hires</th>
               <th>Earned</th>
               <th>Paid</th>
@@ -261,7 +279,6 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
                       <Link href={`${qs("all", r.rep.id)}#payments`}>Their hires</Link>
                     </div>
                   </td>
-                  <td className="small">{commissionTerms(r.rep, pct)}</td>
                   <td>{r.hires}</td>
                   <td>{r.paid + r.owed ? money(r.paid + r.owed) : "—"}</td>
                   <td>{r.paid ? money(r.paid) : "—"}</td>
@@ -284,7 +301,6 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
           </tbody>
         </table>
       </div>
-      <CommissionRateForm pct={pct} />
 
       <h2 className={styles.h3} style={{ marginTop: 28 }}>Referral partners</h2>
       <p className="small muted" style={{ marginTop: -6 }}>
@@ -353,9 +369,10 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
               <th>Month</th>
               <th>Fees collected</th>
               <th>Refunds</th>
-              <th>Rep commissions</th>
-              <th>Expenses</th>
-              <th>Left for the company</th>
+              <th>Reps&rsquo; shares</th>
+              <th>Growth bucket</th>
+              <th>Other expenses</th>
+              <th>Yours</th>
             </tr>
           </thead>
           <tbody>
@@ -365,6 +382,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
                 <td>{m.in ? money(m.in) : "—"}</td>
                 <td>{m.refunds ? money(m.refunds) : "—"}</td>
                 <td>{m.comm ? money(m.comm) : "—"}</td>
+                <td>{m.growth ? money(m.growth) : "—"}</td>
                 <td>{m.exp ? money(m.exp) : "—"}</td>
                 <td>
                   <strong style={{ color: m.net < 0 ? "var(--rust)" : undefined }}>{money(m.net)}</strong>
@@ -373,6 +391,22 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
             ))}
           </tbody>
         </table>
+      </div>
+
+      <h2 className={styles.h3} id="growth" style={{ marginTop: 28, scrollMarginTop: 16 }}>Growth bucket</h2>
+      <div className={styles.stats}>
+        <div className={styles.stat}>
+          <strong>{money(everAll.growth)}</strong>
+          <span>In: {GROWTH_PCT}% of every fee, all time</span>
+        </div>
+        <div className={styles.stat}>
+          <strong>{money(everAll.growthSpent)}</strong>
+          <span>Spent: expenses marked Marketing / growth</span>
+        </div>
+        <div className={`${styles.stat} ${styles.statActive}`}>
+          <strong style={{ color: bucket < 0 ? "var(--rust)" : undefined }}>{money(bucket)}</strong>
+          <span>Left to spend on growth</span>
+        </div>
       </div>
 
       <h2 className={styles.h3} style={{ marginTop: 28 }}>Expenses</h2>
@@ -449,8 +483,8 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
                 <th>Hired</th>
                 <th>By</th>
                 <th>Fee</th>
-                <th>Rep</th>
-                <th>Commission</th>
+                <th>Who gets what</th>
+                <th>Candidate share</th>
               </tr>
             </thead>
             <tbody>
@@ -488,16 +522,47 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
                         )}
                       </div>
                     </td>
-                    <td>
-                      {repName(h.rep) ?? <span className="muted">Applied online</span>}
-                      {finders.get(h.id) && (
-                        <div className="small" style={{ marginTop: 6 }}>
-                          Finder&rsquo;s share ({FINDER_PCT}%): <strong>{nameOf(finders.get(h.id)!.staffId)}</strong>{" "}
-                          {money(finders.get(h.id)!.cents)}{" "}
-                          {finders.get(h.id)!.paidAt ? <span className="tag tag-good">Paid out</span> : <span className="tag tag-gold">Owed</span>}
-                          <div className="muted">{HOW_LABEL[finders.get(h.id)!.how]}</div>
-                        </div>
-                      )}
+                    <td className="small" style={{ minWidth: 260 }}>
+                      {(() => {
+                        const f = finders.get(h.id);
+                        const live = h.status === "paid" || h.status === "hired";
+                        if (!live) return <span className="muted">Refunded: nothing to split.</span>;
+                        const cand = earns ? amount : 0;
+                        const own = f?.cents ?? 0;
+                        const growth = Math.round((h.amount_cents * GROWTH_PCT) / 100);
+                        const yours = h.amount_cents - cand - own - growth;
+                        const cur = credits[h.id] ?? "auto";
+                        return (
+                          <div style={{ display: "grid", gap: 4 }}>
+                            <div>
+                              Candidate: <b>{earns ? repName(h.rep) : h.rep ? "You" : "Nobody (applied online), so it's yours"}</b> {earns ? money(cand) : ""}
+                            </div>
+                            <div>
+                              Owner: <b>{f ? nameOf(f.staffId) : "Nobody, so it's yours"}</b> {f ? money(own) : ""}{" "}
+                              {f && (f.paidAt ? <span className="tag tag-good">Paid out</span> : <span className="tag tag-gold">Owed</span>)}
+                              {f && <div className="muted">{HOW_LABEL[f.how]}</div>}
+                              {!f?.paidAt && (
+                                <form action={saveOwnerCredit.bind(null, h.id)} className={styles.inline} style={{ marginTop: 4 }}>
+                                  <select key={cur} className="select" name="who" defaultValue={cur} aria-label="Who brought the owner" style={{ maxWidth: 190, padding: "4px 8px", fontSize: 13 }}>
+                                    <option value="auto">Site&rsquo;s guess</option>
+                                    <option value="none">Nobody / me</option>
+                                    {pickable.map((p) => (
+                                      <option key={p.id} value={p.id}>{repName(p)}</option>
+                                    ))}
+                                    {Object.values(referrers).map((r) => (
+                                      <option key={r.code} value={`ref:${r.code}`}>{r.name} (referral partner)</option>
+                                    ))}
+                                  </select>
+                                  <button className="btn btn-small btn-ghost" type="submit">Change</button>
+                                </form>
+                              )}
+                            </div>
+                            <div>
+                              You: <b>{money(yours)}</b> · Growth bucket: <b>{money(growth)}</b>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td>
                       {!earns ? (

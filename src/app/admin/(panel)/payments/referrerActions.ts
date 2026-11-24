@@ -3,9 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { logActivity } from "@/lib/db";
 import { finderSharesFor, loadAgreements } from "@/lib/adminData";
-import { markFinderPaid } from "@/lib/finder";
+import { markFinderPaid, setOwnerCredit } from "@/lib/finder";
 import { allReferrers, setReferrerOff } from "@/lib/referrers";
 import { requireAdmin, staffActor } from "@/lib/session";
+
+// Heshy or a manager says who brought in the business owner for one hire.
+// "auto" lets the site decide again; "none" means nobody (it goes to Heshy).
+export async function saveOwnerCredit(hireId: string, form: FormData) {
+  const me = await requireAdmin();
+  const who = String(form.get("who") ?? "auto");
+  await setOwnerCredit(hireId, who === "auto" ? null : who);
+  await logActivity(staffActor(me), "owner_credit_set", { hire_id: hireId, who });
+  revalidatePath("/admin/payments");
+}
 
 // Pays out everything owed to one referral partner.
 export async function payReferrer(code: string) {

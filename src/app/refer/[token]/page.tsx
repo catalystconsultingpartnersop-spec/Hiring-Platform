@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { finderSharesFor, loadAgreements } from "@/lib/adminData";
-import { FINDER_PCT } from "@/lib/finder";
+import { REFERRER_PCT as FINDER_PCT } from "@/lib/finder";
 import { money } from "@/lib/format";
 import { ownersReferredBy, referLink, referrerByToken } from "@/lib/referrers";
 import { ShareBox } from "./ShareBox";

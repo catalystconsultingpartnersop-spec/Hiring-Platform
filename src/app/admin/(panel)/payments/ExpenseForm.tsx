@@ -22,7 +22,7 @@ export function ExpenseForm() {
         <span>Category</span>
         <select className="select" name="category" defaultValue="Software">
           {CATEGORIES.map((c) => (
-            <option key={c}>{c}</option>
+            <option key={c} value={c}>{c === "Marketing" ? "Marketing / growth (from the growth bucket)" : c}</option>
           ))}
         </select>
       </label>

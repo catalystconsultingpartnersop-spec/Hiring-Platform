@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { FINDER_PCT } from "@/lib/finder";
+import { REFERRER_PCT as FINDER_PCT } from "@/lib/finder";
 import { ReferForm } from "./ReferForm";
 
 export const metadata: Metadata = {

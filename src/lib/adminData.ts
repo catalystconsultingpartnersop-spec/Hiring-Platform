@@ -1,6 +1,6 @@
 import { db, Hire } from "./db";
 import { isOwnerEmail } from "./session";
-import { finderShares, type FinderShare } from "./finder";
+import { CAND_PCT, finderShares, type FinderShare } from "./finder";
 
 export type StaffLite = {
   id: string;
@@ -90,20 +90,18 @@ export function repName(p: StaffLite | undefined) {
 // Commission for a hire: a fixed override, or the default % of the fee.
 // A hire's commission: a hand-set amount if there is one, otherwise the rep's
 // own terms (percent or flat per hire), otherwise the default percent.
-export function commissionOf(h: HireRow, percent: number, rep?: StaffLite) {
+// Since Nov 24, 2026 every rep gets the same 30% for a candidate they brought in.
+// Amounts already paid out were frozen when paid, so history doesn't change.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function commissionOf(h: HireRow, _percent?: number, _rep?: StaffLite) {
   if (h.commission_cents != null) return h.commission_cents;
-  const v = rep?.commission_value != null ? Number(rep.commission_value) : null;
-  if (rep?.commission_type === "flat" && v != null) return Math.round(v * 100);
-  if (rep?.commission_type === "percent" && v != null) return Math.round((h.amount_cents * v) / 100);
-  return Math.round((h.amount_cents * percent) / 100);
+  return Math.round((h.amount_cents * CAND_PCT) / 100);
 }
 
 // In words, e.g. "15% of each fee" or "$750 per hire".
-export function commissionTerms(rep: Pick<StaffLite, "commission_type" | "commission_value"> | null | undefined, percent: number) {
-  const v = rep?.commission_value != null ? Number(rep.commission_value) : null;
-  if (rep?.commission_type === "flat" && v != null) return `$${v.toLocaleString("en-US")} per hire`;
-  if (rep?.commission_type === "percent" && v != null) return `${v}% of each fee`;
-  return `${percent}% of each fee`;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function commissionTerms(_rep?: unknown, _percent?: number) {
+  return `${CAND_PCT}% of each fee`;
 }
 
 // Does this hire earn a rep commission at all?

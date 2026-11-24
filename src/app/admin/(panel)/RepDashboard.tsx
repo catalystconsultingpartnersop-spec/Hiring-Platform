@@ -169,7 +169,7 @@ export async function RepDashboard({ staffId, name, self, nowIso }: { staffId: s
             </table>
           )}
           <p className="small muted" style={{ margin: "12px 0 0" }}>
-            {self ? "Your" : "Their"} commission: {commissionTerms(me, pct)}, unless agreed otherwise for a hire. Plus a {FINDER_PCT}% introduction share when the site records that {self ? "you" : "they"} introduced the business owner who hires (Suggest, or {self ? "your" : "their"} link), on anyone&rsquo;s candidate.
+            {self ? "Your" : "Their"} pay: {commissionTerms(me, pct)} on {self ? "your" : "their"} candidates, plus {FINDER_PCT}% when {self ? "you" : "they"} brought in the business owner who hires, on anyone&rsquo;s candidate. Bring in both and it&rsquo;s both.
           </p>
           </div>
         </details>

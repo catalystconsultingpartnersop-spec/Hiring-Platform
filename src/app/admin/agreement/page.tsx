@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { brandName } from "@/lib/format";
 
 import { REP_AGREEMENT_VERSION, repAgreementText, repTerms } from "@/lib/repAgreement";
-import { FINDER_PCT } from "@/lib/finder";
+import { CAND_PCT, FINDER_PCT } from "@/lib/finder";
 import { requireStaff } from "@/lib/session";
 import { commissionPercent } from "@/lib/settings";
 import { SignRep } from "./SignRep";
@@ -56,17 +56,14 @@ export default async function RepAgreementPage({ searchParams }: PageProps<"/adm
         )}
         {(row.agreement_version ?? "") < REP_AGREEMENT_VERSION && (
           <div className="panel" style={{ marginTop: 16, background: "#fff8e1", borderColor: "#f3d27a" }}>
-            <p style={{ margin: "0 0 6px", fontWeight: 800 }}>Added November 5, 2026: your introduction share</p>
+            <p style={{ margin: "0 0 6px", fontWeight: 800 }}>Updated November 24, 2026: one simple split for everyone</p>
             <p style={{ margin: "0 0 6px" }}>
-              On top of your commission below, when you introduce a business owner through the site and they hire, you earn{" "}
-              <b>{FINDER_PCT}% of the fee we collect</b> for that hire, on anyone&rsquo;s candidate, yours included. Your main work
-              is still with candidates; this is an extra.
+              On every fee: <b>{CAND_PCT}%</b> to whoever brought the candidate, <b>{FINDER_PCT}%</b> to whoever brought the business
+              owner. Bring in both and you earn both ({CAND_PCT + FINDER_PCT}%). This applies to every hire not yet paid out.
             </p>
             <p className="small muted" style={{ margin: 0 }}>
-              It counts only when the site records the introduction: you used Suggest on the candidate, or the owner signed up
-              through your link. Introductions made outside the site can&rsquo;t be tracked, so they aren&rsquo;t credited. If two
-              people introduced the same owner to the same candidate, the first one recorded counts. Paid on the same schedule as
-              your commission. Commissions are private.
+              The site records who brought in each owner (sending a candidate from the site, or your link). We confirm it before
+              paying. Paid within 30 days after we collect the fee and the candidate starts. Commissions are private.
             </p>
           </div>
         )}

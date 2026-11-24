@@ -513,7 +513,7 @@ export const team = {
         `<strong>Your terms</strong><br>` +
           (o.isAdmin
             ? "Admin access to the back office."
-            : `<strong>1. Your candidates:</strong> ${esc(o.terms)} when a candidate you brought in is hired.<br><strong>2. Your introductions (extra):</strong> ${FINDER_PCT}% of the fee on any hire where you introduced the business owner through the site, on anyone&rsquo;s candidate. <span style="font-size:13px;color:#5b6475">Only introductions the site records count: Suggest, or your link. Offline introductions can&rsquo;t be credited.</span><br>Paid within 30 days after we collect the fee and the candidate starts work. Your commission is private. Independent contractor. Candidates never pay anything.`) +
+            : `<strong>1. Your candidates:</strong> ${esc(o.terms)} when a candidate you brought in is hired.<br><strong>2. Your business owners:</strong> ${FINDER_PCT}% of the fee on any hire where you brought in the business owner, on anyone&rsquo;s candidate. Bring in both and you earn both. <span style="font-size:13px;color:#5b6475">The site records it when you use Send or your link.</span><br>Paid within 30 days after we collect the fee and the candidate starts work. Your commission is private. Independent contractor. Candidates never pay anything.`) +
           (o.note ? `<br>${esc(o.note)}` : ""),
       ) +
       p(`<strong>Candidates come first.</strong> Your main work is with candidates. If you also know business owners, introducing them is a welcome extra, and it pays too.`) +
@@ -526,7 +526,7 @@ ${o.isAdmin ? "" : '<li style="margin:6px 0"><strong>Sign your rep agreement.</s
 <li style="margin:6px 0"><strong>Say hi in the <a href="${teamUrl()}/admin/room" style="color:#17213a">Team Room</a></strong> and pick your focus there. It&rsquo;s where the team spotlights great candidates, asks &ldquo;who has someone?&rdquo; and holds team calls.</li>
 <li style="margin:6px 0"><strong>Find your first candidates.</strong> Send the &ldquo;looking for work&rdquo; picture from your <a href="${teamUrl()}/admin/share" style="color:#17213a">Share kit</a> to your network. Anyone who signs up through your link is added as yours. You can also add someone yourself with <a href="${teamUrl()}/admin/candidates/new" style="color:#17213a">+ Add candidate</a>.</li>
 </ol>` +
-      p(`<strong>Know business owners?</strong> Two easy ways, and both credit you: send them the owner picture from your <a href="${teamUrl()}/admin/share" style="color:#17213a">Share kit</a> (one picture, one short message, your own link, and the site does the rest), or open any candidate and tap <strong>Suggest</strong> to send that profile to an owner you know. If they hire, you earn your ${FINDER_PCT}% introduction share.`) +
+      p(`<strong>Know business owners?</strong> Two easy ways, and both credit you: send them the owner picture from your <a href="${teamUrl()}/admin/share" style="color:#17213a">Share kit</a> (one picture, one short message, your own link, and the site does the rest), or open any candidate and tap <strong>Suggest</strong> to send that profile to an owner you know. If they hire, you earn your ${FINDER_PCT}% owner share.`) +
       (o.workEmail
         ? box(`<strong>Your work email is on its way:</strong> ${esc(o.workEmail)}. Google will email you a link to sign in and choose a password. Until then, everything works with this email, so you can start today.`)
         : "") +

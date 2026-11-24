@@ -1,15 +1,15 @@
 import { legalEntity } from "./agreement";
-import { FINDER_PCT } from "./finder";
+import { CAND_PCT, FINDER_PCT } from "./finder";
 
 // The short agreement every rep signs before using the back office. Each
 // signature stores the exact text and version signed. Have a lawyer review it.
-export const REP_AGREEMENT_VERSION = "2026-11-05";
+export const REP_AGREEMENT_VERSION = "2026-11-24";
 
 export function repAgreementText(opts: { brand: string; repName: string; percent: number; flat?: number | null }) {
-  const pay =
-    opts.flat != null
-      ? `$${opts.flat.toLocaleString("en-US")} for each hire of a candidate you brought in, once we have actually collected the placement fee for that hire`
-      : `${opts.percent}% of the placement fee we actually collect for that candidate's hire`;
+  // Everyone is on the same 30% now; the old per-rep options are kept only so older calls still compile.
+  void opts.percent;
+  void opts.flat;
+  const pay = `${CAND_PCT}% of the placement fee we actually collect for that candidate's hire`;
   const us = `${legalEntity()}, doing business as ${opts.brand}`;
   return `REP AGREEMENT
 Independent representative
@@ -32,7 +32,7 @@ This Agreement is between ${us} ("we" or "us") and ${opts.repName || "the person
 
 4. COMMISSION
 4.1 Your candidates: for each candidate you bring in, we pay you ${pay}, unless we agree a different amount in writing for a specific hire.
-4.2 Your introductions: when you introduce a business owner through our site, by passing a candidate's profile to them through the site or by the owner signing up through your personal link, and that owner hires any candidate on our site, we also pay you ${FINDER_PCT}% of the placement fee we actually collect for that hire. This applies to anyone's candidate, including your own. Only introductions recorded on our site count: a candidate you passed to the owner using the site, or an owner who signed up through your link. Introductions made outside the site (by phone, in person, a forwarded screenshot, or any other way the site cannot record) do not earn this share, and we do not review claims for them. If more than one person introduced the same owner to the same candidate, the first introduction recorded on our site counts.
+4.2 Your business owners: when you bring in the business owner who hires, we also pay you ${FINDER_PCT}% of the placement fee we actually collect for that hire. This applies to anyone's candidate, including your own, so if you brought in both the candidate and the owner, you earn both shares. Our site records who brought in each owner (a candidate you passed to them through the site, or the owner signing up through your personal link). We confirm who brought in the owner before paying, and may correct it where the site's record is wrong. Our decision on this is final.
 4.3 Commission is paid within 30 days after the later of (a) our receiving the fee and (b) the candidate's first day of work.
 4.4 If a fee is refunded, no commission is owed on it, and any commission already paid on it will be repaid or deducted from future commission.
 4.5 We may change your commission for future hires with 30 days' written notice. Changes never affect fees already collected.

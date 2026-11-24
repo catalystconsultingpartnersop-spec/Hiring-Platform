@@ -82,7 +82,7 @@ export default async function RepGuide() {
         <div>
           <strong>Your pay</strong>
           <span>
-            {commissionTerms(row, pct)} on your candidates, plus {FINDER_PCT}% on owners you introduce. <a href="#pay">How it works</a>
+            {commissionTerms(row, pct)} on your candidates, plus {FINDER_PCT}% on owners you bring in. <a href="#pay">How it works</a>
           </span>
         </div>
         <div>
@@ -93,35 +93,32 @@ export default async function RepGuide() {
 
       <section id="pay" className={styles.mission} style={{ scrollMarginTop: 16 }}>
         <p className={styles.missionLabel}>How you earn</p>
-        <h2>Your candidates, plus an extra.</h2>
+        <h2>Your candidates, and your business owners.</h2>
         <div className={styles.two}>
           <div>
             <p className={styles.label}>1. Your candidates</p>
             <p>
-              When a candidate you brought in is hired, you earn <b>{commissionTerms(row, pct)}</b>. That&rsquo;s the rate set for
-              you, and it&rsquo;s the rate you get.
+              When a candidate you brought in is hired, you earn <b>{commissionTerms(row, pct)}</b>. Same for everyone on the team.
             </p>
           </div>
           <div>
-            <p className={styles.label}>2. Extra: your introductions</p>
+            <p className={styles.label}>2. Your business owners</p>
             <p>
-              When you introduce a business owner through the site and they hire, you earn <b>{FINDER_PCT}% of the fee</b>. On
-              anyone&rsquo;s candidate, yours included. It counts when you tap <b>Suggest</b> on a candidate and send it to the
-              owner, or when the owner signs up through your Share kit link.
+              When you bring in the business owner who hires, you earn <b>{FINDER_PCT}% of the fee</b>. On anyone&rsquo;s candidate,
+              yours included. The site records it when you send a candidate to the owner from the site, or the owner signs up
+              through your Share kit link.
             </p>
           </div>
         </div>
         <p className={styles.tip} style={{ marginTop: 10 }}>
-          Example, on a $5,000 fee: your own candidate is hired, you earn your rate (at 40%, that&rsquo;s $2,000). You also introduced the owner? Add $
-          {((5000 * FINDER_PCT) / 100).toLocaleString("en-US")}. Commission is paid within 30 days after we collect the fee and the
+          Example, on a $5,000 fee: your candidate is hired, you earn $1,500. You also brought in the owner? Add $
+          {((5000 * FINDER_PCT) / 100).toLocaleString("en-US")}, so $3,000 in all. Commission is paid within 30 days after we collect the fee and the
           candidate starts. It&rsquo;s private: other reps never see yours, and you never see theirs. Track it on your{" "}
           <Link href="/admin#earnings">dashboard</Link>.
         </p>
         <p className="small muted" style={{ margin: "8px 0 0" }}>
-          Small print: the {FINDER_PCT}% counts only when the site records the introduction, meaning you used <b>Suggest</b> or the
-          owner came through your link. Introductions made outside the site (a phone call, in person, a forwarded screenshot)
-          can&rsquo;t be tracked, so they aren&rsquo;t credited, and we can&rsquo;t review claims for them. Use the site and
-          it&rsquo;s counted automatically.
+          Small print: the site records who brought in each owner when you send a candidate from the site or the owner uses your
+          link. We confirm it before paying. Use the site and it&rsquo;s counted automatically.
         </p>
         <p className={styles.missionLabel} style={{ marginTop: 18 }}>
           Candidates come first
@@ -256,7 +253,7 @@ export default async function RepGuide() {
           </li>
           <li>
             <b>Suggest a candidate.</b> Know an owner who&rsquo;d want to meet someone? Tap <b>Suggest</b> on their page and send it
-            by WhatsApp, text or email. You earn the {FINDER_PCT}% introduction share if they hire. <a href="#owners">More</a>
+            by WhatsApp, text or email. You earn the {FINDER_PCT}% owner share if they hire. <a href="#owners">More</a>
           </li>
           <li>
             <b>⭐ Gold standard.</b> Met someone great? Mark your candidate as gold so the team knows they&rsquo;re worth placing.
@@ -398,7 +395,7 @@ export default async function RepGuide() {
         <p>
           <b>Or send the share kit.</b> Your link carries your name, so every owner who joins through it is credited to you. You don&rsquo;t need to follow
           up or explain anything. The page they land on does that, and the site takes it from there. Your time still goes to
-          candidates. Either way, if they hire, you earn your {FINDER_PCT}% introduction share.
+          candidates. Either way, if they hire, you earn your {FINDER_PCT}% owner share.
         </p>
       </section>
 
