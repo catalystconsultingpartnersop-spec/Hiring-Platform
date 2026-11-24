@@ -6,6 +6,7 @@ import { aiMatches, bestFor, matchStages, refreshMatches } from "@/lib/aiMatch";
 import { manualMatches, openingProfiles, writePendingProfiles } from "@/lib/openings";
 import { LEVEL_LABEL, WORK_MODE_LABEL, salaryRange } from "@/lib/format";
 import { OpeningsBrowser, type OpeningRow } from "./OpeningsBrowser";
+import { SixLetters } from "../candidates/SixLetters";
 import { loadMatches } from "./data";
 import { markNotAFit } from "./actions";
 import styles from "./matches.module.css";
@@ -137,7 +138,10 @@ export default async function MatchesPage({ searchParams }: PageProps<"/admin/ma
                   {perCandidate.slice(0, 40).map(({ c, best }) => (
                     <li key={c.id}>
                       <Link prefetch={false} href={`/admin/candidates/${c.id}`}>
-                        <b>{c.full_name}</b>
+                        <b>
+                          {c.full_name}
+                          <SixLetters wg={c.working_genius} />
+                        </b>
                         <small>
                           {best[0].p.title}
                           {best[0].p.company ? ` at ${best[0].p.company}` : ""}

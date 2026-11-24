@@ -13,6 +13,7 @@ import { loadMatches } from "../data";
 import { PositionForm } from "../PositionForm";
 import { SendToOwner } from "../SendToOwner";
 import { TalkBox } from "../../TalkBox";
+import { SixLetters } from "../../candidates/SixLetters";
 import { addNote, addPick, markNotAFit, rematch, saveCompanyCard, setPositionStatus } from "../actions";
 import styles from "../matches.module.css";
 
@@ -192,6 +193,7 @@ export default async function OpeningPage({ params, searchParams }: PageProps<"/
                     <b>{c.full_name}</b>
                   </Link>
                   {repName(c.id) && <span className={styles.muted}> · {repName(c.id)}</span>}
+                  <SixLetters wg={c.working_genius} />
                   {st && (
                     <span className={`${styles.stage} ${st.stale ? styles.stale : ""}`}>
                       {STAGE[st.stage]} {ago(st.at)}
@@ -231,6 +233,7 @@ export default async function OpeningPage({ params, searchParams }: PageProps<"/
                   <Link prefetch={false} href={`/admin/candidates/${a.id}`}>
                     <b>{unlisted.get(a.id)!.full_name}</b>
                   </Link>
+                  <SixLetters wg={unlisted.get(a.id)!.working_genius} />
                   <div className={styles.why}>{a.why}</div>
                   <div className={styles.flag}>Needs: {a.missing}</div>
                 </div>
