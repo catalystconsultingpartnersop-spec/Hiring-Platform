@@ -17,6 +17,7 @@ export type OpeningProfile = {
   role: string; // closest role
   level: string; // beginner | experienced | senior | ""
   hours: string; // e.g. Full-time, Part-time, "" if not said
+  poster?: string[]; // 3 very short lines for the job poster ("Great with numbers")
   phone?: string; // the owner's phone, when it came from a call-back request
   notes?: string[]; // notes from calls with the owner, newest last
   at: string;
@@ -102,6 +103,7 @@ Reply with only JSON:
   "day": "1 to 2 sentences: what the day is likely like — pace (rushed or steady), setting (desk, shop floor, warehouse, in the field, remote), people (customers, a team, mostly alone)",
   "thrives": ["3 short lines: the kind of person who does well in this job — temperament and strengths, not years of experience"],
   "ask": ["the 2 to 5 most useful things we still don't know and should ask the owner, as short questions (e.g. Pay range?). Skip anything already known."],
+  "poster": ["3 very short, warm lines (2 to 5 words each) for a job poster aimed at candidates, completing 'You'd be great if you're…', e.g. Great with numbers / Calm under pressure / Ready to lead a team"],
   "role": "the closest of: ${ROLE_LIST.join(", ")}",
   "level": "beginner, experienced, senior, or empty if unclear",
   "hours": "Full-time, Part-time, or empty if not said",
@@ -119,6 +121,7 @@ Reply with only JSON:
     job: String(out.job ?? "").slice(0, 800),
     day: String(out.day ?? "").slice(0, 600),
     thrives: (Array.isArray(out.thrives) ? out.thrives : []).map(String).slice(0, 4),
+    poster: (Array.isArray(out.poster) ? out.poster : []).map((x) => String(x).trim().replace(/\.$/, "")).filter((x) => x && x.length <= 40).slice(0, 3),
     ask: (Array.isArray(out.ask) ? out.ask : []).map(String).slice(0, 6),
     role: String(out.role ?? ""),
     level: ["beginner", "experienced", "senior"].includes(String(out.level)) ? String(out.level) : "",
@@ -230,5 +233,22 @@ export async function polishCompanyNotes(company: string, raw: string): Promise<
     return out && out.length < 2000 ? out : text;
   } catch {
     return text;
+  }
+}
+
+// Short poster lines for openings written up before posters existed. Made once, then kept.
+export async function ensurePosterLines(positionId: string): Promise<string[] | null> {
+  const all = await openingProfiles();
+  const cur = all[positionId];
+  if (!cur || cur.poster?.length || !cur.thrives?.length) return cur?.poster ?? null;
+  try {
+    const raw = (await askAI(`Turn these into 3 very short, warm lines (2 to 5 words each) for a job poster aimed at candidates, completing "You'd be great if you're…". Example: Great with numbers. Reply with only the 3 lines, one per line, no bullets.\n\n${cur.thrives.join("\n")}`)).text;
+    const lines = raw.split("\n").map((x) => x.replace(/^[-•*\d.\s]+/, "").trim().replace(/\.$/, "")).filter((x) => x && x.length <= 40).slice(0, 3);
+    if (!lines.length) return null;
+    all[positionId] = { ...cur, poster: lines };
+    await setSetting(KEY, all);
+    return lines;
+  } catch {
+    return null;
   }
 }

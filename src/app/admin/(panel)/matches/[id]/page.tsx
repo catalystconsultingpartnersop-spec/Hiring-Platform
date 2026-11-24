@@ -39,6 +39,7 @@ export default async function OpeningPage({ params, searchParams }: PageProps<"/
   const ai = store[p.id];
   // Missing or out of date: write it up (and match) right after this page answers.
   const stale = !prof?.job || prof.sig !== profileSig(p, prof.notes ?? []);
+  if (prof?.job && !prof.poster?.length) after(() => import("@/lib/openings").then((m) => m.ensurePosterLines(p.id)).then(() => null, () => null));
   if (stale || !ai)
     after(async () => {
       if (stale) await writeOpeningProfile(p).catch(() => null);

@@ -13,7 +13,8 @@ const town = (s: string | null) => (s ?? "").replace(/,?\s*(NY|NJ|New York|New J
 export function jobPosterDefaults(p: Position, prof: OpeningProfile | null) {
   const title = p.title.replace(/\s+/g, " ").trim().replace(/^./, (c) => c.toUpperCase());
   const meta = [town(p.location), prof?.hours || null, salaryRange(p.salary_min, p.salary_max)].filter(Boolean).join(" · ");
-  const lines = (prof?.thrives ?? []).map(short).filter((l) => l.length > 3).slice(0, 3);
+  // The AI's short poster lines when we have them; otherwise the first, short part of each "who does well" line.
+  const lines = prof?.poster?.length ? prof.poster : (prof?.thrives ?? []).map(short).filter((l) => l.length > 3 && l.length <= 36).slice(0, 3);
   return { title, meta, lines };
 }
 
