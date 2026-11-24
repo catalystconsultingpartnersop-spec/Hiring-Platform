@@ -27,6 +27,41 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const { data, error } = await db().from("staff").select("*").eq("id", me.id).maybeSingle();
     if (!error && data && "agreement_signed_at" in data && !data.agreement_signed_at) redirect("/admin/agreement");
   }
+  const topLinks = (
+    <>
+      {!admin && me.manager && <NavLink href="/admin/reps">Team</NavLink>}
+      <NavLink href={!admin && me.manager ? "/admin?mine=1" : "/admin"}>{admin ? "Dashboard" : "My dashboard"}</NavLink>
+      <NavLink href="/admin/candidates">Browse candidates</NavLink>
+      <NavLink href="/admin/matches">Matches</NavLink>
+      <NavLink href="/admin/quick-intro">Quick intro</NavLink>
+      {admin && <NavLink href="/admin/agreements">Introductions</NavLink>}
+      <NavLink href="/admin/inbox">
+        Inbox{waiting + (openRequests ?? 0) ? <span className={styles.badge}>{waiting + (openRequests ?? 0)}</span> : null}
+      </NavLink>
+      <NavLink href="/admin/room">
+        Team Room{roomNew ? <span className={styles.badge}>{roomNew}</span> : null}
+      </NavLink>
+      {!admin && <NavLink href="/admin/calls">{me.manager ? "Calls" : "My calls"}</NavLink>}
+    </>
+  );
+  const moreLinks = (
+    <>
+      {admin && <Link href="/admin/calls">Calls</Link>}
+      {admin && <Link href="/admin/clients">Clients</Link>}
+      {admin && <Link href="/admin/payments">Finance</Link>}
+      {me.manager && <Link href="/admin/analytics">Analytics</Link>}
+      {admin && <Link href="/admin/reps">Reps</Link>}
+      {admin && <Link href="/admin/team">Team</Link>}
+      <Link href="/admin/share">Share kit</Link>
+      {me.id && <Link href="/admin/booking-link">My booking link</Link>}
+      <Link href="/admin/hours">My hours</Link>
+      {admin && <Link href="/admin/invite">Invite a rep</Link>}
+      <Link href="/admin/assessments">Strengths Assessment</Link>
+      {admin && <Link href="/admin/settings">Fee settings</Link>}
+      {admin && <Link href="/admin/activity">Activity</Link>}
+      <Link href="/admin/guide">Rep guide</Link>
+    </>
+  );
   return (
     <div className="wrap">
       <Suspense fallback={null}>
@@ -35,39 +70,23 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <nav className={styles.bar} aria-label="Admin">
         <Suspense fallback={null}>
           <div className={styles.links}>
-            {!admin && me.manager && <NavLink href="/admin/reps">Team</NavLink>}
-            <NavLink href={!admin && me.manager ? "/admin?mine=1" : "/admin"}>{admin ? "Dashboard" : "My dashboard"}</NavLink>
-            <NavLink href="/admin/candidates">Browse candidates</NavLink>
-            <NavLink href="/admin/matches">Matches</NavLink>
-            <NavLink href="/admin/quick-intro">Quick intro</NavLink>
-            {admin && <NavLink href="/admin/agreements">Introductions</NavLink>}
-            <NavLink href="/admin/inbox">
-              Inbox{waiting + (openRequests ?? 0) ? <span className={styles.badge}>{waiting + (openRequests ?? 0)}</span> : null}
-            </NavLink>
-            <NavLink href="/admin/room">
-              Team Room{roomNew ? <span className={styles.badge}>{roomNew}</span> : null}
-            </NavLink>
-            {!admin && <NavLink href="/admin/calls">{me.manager ? "Calls" : "My calls"}</NavLink>}
+            {topLinks}
           </div>
         </Suspense>
         <div className={styles.side}>
-          <MoreMenu className={styles.more}>
+          {/* Phones: one menu with everything, instead of a row that runs off the screen. */}
+          <MoreMenu className={`${styles.more} ${styles.phoneMenu}`}>
+            <summary>☰ Menu</summary>
+            <div>
+              <Suspense fallback={null}>{topLinks}</Suspense>
+              <hr className={styles.menuRule} />
+              {moreLinks}
+            </div>
+          </MoreMenu>
+          <MoreMenu className={`${styles.more} ${styles.deskMore}`}>
             <summary>More</summary>
             <div>
-              {admin && <Link href="/admin/calls">Calls</Link>}
-              {admin && <Link href="/admin/clients">Clients</Link>}
-              {admin && <Link href="/admin/payments">Finance</Link>}
-              {me.manager && <Link href="/admin/analytics">Analytics</Link>}
-              {admin && <Link href="/admin/reps">Reps</Link>}
-              {admin && <Link href="/admin/team">Team</Link>}
-              <Link href="/admin/share">Share kit</Link>
-              {me.id && <Link href="/admin/booking-link">My booking link</Link>}
-              <Link href="/admin/hours">My hours</Link>
-              {admin && <Link href="/admin/invite">Invite a rep</Link>}
-              <Link href="/admin/assessments">Strengths Assessment</Link>
-              {admin && <Link href="/admin/settings">Fee settings</Link>}
-              {admin && <Link href="/admin/activity">Activity</Link>}
-              <Link href="/admin/guide">Rep guide</Link>
+              {moreLinks}
             </div>
           </MoreMenu>
           <Link href="/admin/candidates/new" className={styles.addLink}>

@@ -156,3 +156,15 @@ a.stat:hover { outline: 1.5px solid var(--ink); }
 }
 .more > div a { padding: 8px 10px; border-radius: 8px; }
 .more > div a:hover { background: var(--wash); }
+
+.phoneMenu { display: none; }
+.menuRule { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
+.phoneMenu > div { left: 0; right: auto; min-width: 230px; max-height: 75vh; overflow-y: auto; }
+.phoneMenu > div a { display: flex; align-items: center; gap: 6px; padding: 9px 10px; border-radius: 8px; border-bottom: 0; }
+.phoneMenu > summary::after { content: ""; }
+@media (max-width: 700px) {
+  .links { display: none; }
+  .deskMore { display: none; }
+  .phoneMenu { display: block; }
+  .side { justify-content: space-between; }
+}
