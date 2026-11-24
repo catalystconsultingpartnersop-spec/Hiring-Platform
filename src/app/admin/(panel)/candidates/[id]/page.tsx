@@ -21,6 +21,10 @@ import { dateShort, feeFor, money, refCode } from "@/lib/format";
 
 import { deleteCandidate, resendPromise } from "../../../actions";
 import { CandidateForm } from "../CandidateForm";
+import { ShareJob } from "../../matches/ShareJob";
+import { ShareJump } from "../../matches/ShareJump";
+import { candPosterDefaults } from "@/lib/candPoster";
+import { after } from "next/server";
 import { RepPicker } from "../RepPicker";
 import { PositionsTheyFit } from "../PositionsTheyFit";
 import { ReminderOption, Reminders } from "../Reminders";
@@ -96,6 +100,11 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
           )}
         </p>
         <h1>{c.full_name}</h1>
+        {c.status === "listed" && (
+          <div style={{ margin: "8px 0 4px" }}>
+            <ShareJump target="share-cand" label="📣 Share this candidate" />
+          </div>
+        )}
         {!canEdit && <ViewOnly candidateId={c.id} addedBy={(c as unknown as { added_by: string | null }).added_by ?? null} />}
         <GoldBadge
           candidateId={c.id}
@@ -127,6 +136,18 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
             Everything else was saved, but {sp.resume}. Attach it again in section 1 and save.
           </p>
         )}
+        {c.status === "listed" &&
+          (() => {
+            const d = candPosterDefaults(c as unknown as Parameters<typeof candPosterDefaults>[0]);
+            if (!(c.application as Record<string, string> | null)?.poster_lines) after(() => import("@/lib/candPoster").then((m) => m.ensureCandPosterLines(c.id)).then(() => null, () => null));
+            const slug = me.id ? refSlug(me.name.split(" ")[0] || me.email.split("@")[0]) : "";
+            return (
+              <details className="panel" id="share-cand" style={{ marginTop: 14, scrollMarginTop: 12 }}>
+                <summary style={{ cursor: "pointer", fontWeight: 700 }}>📣 Share this candidate: a poster for business owners</summary>
+                <ShareJob kind="cand" id={c.id} title={d.title} meta={d.meta} lines={d.lines} link={`${siteUrl()}/c/${refCode(c.id)}${slug ? `?r=${slug}` : ""}`} />
+              </details>
+            );
+          })()}
         <RO edit={canEdit}>
           <PromiseRow c={c as Candidate & { promise_signed_at?: string | null; promise_name?: string | null; promise_requested_at?: string | null; list_on_sign?: boolean }} />
         </RO>
