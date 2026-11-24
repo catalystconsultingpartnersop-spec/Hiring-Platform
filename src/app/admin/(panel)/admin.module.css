@@ -7,8 +7,8 @@
   font-weight: 600;
   font-size: 14px;
 }
-.links { display: flex; align-items: stretch; gap: 0 15px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-.links a { display: flex; align-items: center; white-space: nowrap; padding: 17px 0 14px; border-bottom: 3px solid transparent; }
+.links { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0 18px; min-width: 0; }
+.links a { display: flex; align-items: center; white-space: nowrap; padding: 13px 0 10px; border-bottom: 3px solid transparent; }
 .links a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--marigold); }
 .side { display: flex; align-items: center; gap: 14px; flex: none; }
 
@@ -39,9 +39,12 @@
 @media (max-width: 1240px) {
   .bar { font-size: 14.5px; flex-direction: column-reverse; align-items: stretch; gap: 0; }
   .side { justify-content: flex-end; padding: 10px 0 2px; }
-  .links { overflow-x: auto; gap: 0 20px; scrollbar-width: none; margin: 0 calc(var(--gutter) * -1); padding: 0 var(--gutter); }
+  .links a { padding: 11px 0 9px; }
+}
+/* Phones: one row that scrolls sideways. Wider screens: every link shows, on two rows if needed. */
+@media (max-width: 700px) {
+  .links { flex-wrap: nowrap; overflow-x: auto; gap: 0 20px; scrollbar-width: none; margin: 0 calc(var(--gutter) * -1); padding: 0 var(--gutter); }
   .links::-webkit-scrollbar { display: none; }
-  .links a { padding: 12px 0 10px; }
 }
 
 .stats {
