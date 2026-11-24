@@ -344,6 +344,11 @@ export function Board({ rows, start, repOptions }: { rows: Row[]; start: Start; 
                           {` · ${dateShort(r.listed && r.status === "listed" ? r.listed : r.added)}`}
                         </span>
                         <span className={cs.footEnd}>
+                          {r.status === "listed" && (
+                            <Link prefetch={false} className={cs.share} href={`/admin/candidates/${r.id}#share-cand`} title="Make a teaser poster for your WhatsApp status">
+                              📣 Share
+                            </Link>
+                          )}
                           {(r.wg ?? "").length === 6 && (
                             <span className={cs.six} title="Strengths Assessment: natural strengths, can do well, wears them down">
                               <b className={cs.good}>{r.wg!.slice(0, 2)}</b>

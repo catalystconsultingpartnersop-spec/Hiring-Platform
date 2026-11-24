@@ -47,3 +47,5 @@
 .good { background: var(--moss-soft); color: #1f4a31; }
 .mid { background: var(--marigold-soft); color: #5c4300; }
 .bad { background: var(--rust-soft); color: #7d2a1e; }
+.share { font-size: 13px; font-weight: 700; background: #f2b300; color: #17213a; border-radius: 99px; padding: 3px 11px; text-decoration: none; white-space: nowrap; }
+.share:hover { background: #ffc61a; }

@@ -22,7 +22,7 @@ import { dateShort, feeFor, money, refCode } from "@/lib/format";
 import { deleteCandidate, resendPromise } from "../../../actions";
 import { CandidateForm } from "../CandidateForm";
 import { ShareCandidate } from "../ShareCandidate";
-import { ShareJump } from "../../matches/ShareJump";
+import { OpenOnHash, ShareJump } from "../../matches/ShareJump";
 import { candPosterDefaults } from "@/lib/candPoster";
 import { after } from "next/server";
 import { RepPicker } from "../RepPicker";
@@ -103,6 +103,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
         {c.status === "listed" && (
           <div style={{ margin: "8px 0 4px" }}>
             <ShareJump target="share-cand" label="📣 Share this candidate" />
+            <OpenOnHash target="share-cand" />
           </div>
         )}
         {!canEdit && <ViewOnly candidateId={c.id} addedBy={(c as unknown as { added_by: string | null }).added_by ?? null} />}
