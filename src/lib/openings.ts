@@ -103,7 +103,7 @@ Reply with only JSON:
   "day": "1 to 2 sentences: what the day is likely like — pace (rushed or steady), setting (desk, shop floor, warehouse, in the field, remote), people (customers, a team, mostly alone)",
   "thrives": ["3 short lines: the kind of person who does well in this job — temperament and strengths, not years of experience"],
   "ask": ["the 2 to 5 most useful things we still don't know and should ask the owner, as short questions (e.g. Pay range?). Skip anything already known."],
-  "poster": ["3 very short, warm lines (2 to 5 words each) for a job poster aimed at candidates, completing 'You'd be great if you're…', e.g. Great with numbers / Calm under pressure / Ready to lead a team"],
+  "poster": ["3 very short, warm lines (2 to 5 words each) for a job poster aimed at candidates, describing the personality this job needs, read under 'Do you have the personality for this?', e.g. Detail-minded and steady / Calm when it gets busy / Ready to lead a team"],
   "role": "the closest of: ${ROLE_LIST.join(", ")}",
   "level": "beginner, experienced, senior, or empty if unclear",
   "hours": "Full-time, Part-time, or empty if not said",
@@ -242,7 +242,7 @@ export async function ensurePosterLines(positionId: string): Promise<string[] | 
   const cur = all[positionId];
   if (!cur || cur.poster?.length || !cur.thrives?.length) return cur?.poster ?? null;
   try {
-    const raw = (await askAI(`Turn these into 3 very short, warm lines (2 to 5 words each) for a job poster aimed at candidates, completing "You'd be great if you're…". Example: Great with numbers. Reply with only the 3 lines, one per line, no bullets.\n\n${cur.thrives.join("\n")}`)).text;
+    const raw = (await askAI(`Turn these into 3 very short, warm lines (2 to 5 words each) for a job poster aimed at candidates, describing the personality this job needs, read under "Do you have the personality for this?". Example: Calm when it gets busy. Reply with only the 3 lines, one per line, no bullets.\n\n${cur.thrives.join("\n")}`)).text;
     const lines = raw.split("\n").map((x) => x.replace(/^[-•*\d.\s]+/, "").trim().replace(/\.$/, "")).filter((x) => x && x.length <= 40).slice(0, 3);
     if (!lines.length) return null;
     all[positionId] = { ...cur, poster: lines };

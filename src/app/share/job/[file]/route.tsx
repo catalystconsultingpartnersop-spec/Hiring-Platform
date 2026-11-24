@@ -4,7 +4,7 @@ import { getPosition } from "@/lib/positions";
 import { openingProfile } from "@/lib/openings";
 import { jobPosterDefaults } from "@/lib/jobPoster";
 
-// A job opening as a poster for candidates: /share/job/<opening id>-status.png (tall,
+// A job opening as a poster talking to candidates ("Do you have the personality for this?"): /share/job/<opening id>-status.png (tall,
 // for WhatsApp status) or <id>.png (square-ish, for chats). Team only. The rep can
 // change the words with ?t= (title) &m= (place, hours, pay) &l= (a line, up to 3).
 const NAVY = "#17213a";
@@ -57,12 +57,12 @@ export async function GET(req: Request, ctx: { params: Promise<{ file: string }>
           <div style={{ width: 16, height: 16, borderRadius: 8, background: NAVY, marginRight: 16 }} />
           Looking for work?
         </div>
-        <div style={{ marginTop: tall ? 70 : 44, fontFamily: "B", fontWeight: 800, fontSize: 54, letterSpacing: -1.5, color: SOFT }}>Now hiring:</div>
+        <div style={{ marginTop: tall ? 70 : 44, fontFamily: "B", fontWeight: 800, fontSize: 50, letterSpacing: -1.5, color: SOFT }}>Job opening:</div>
         <div style={{ display: "flex", marginTop: 6, fontFamily: "B", fontWeight: 800, fontSize: size, lineHeight: 1.0, letterSpacing: -3, color: GOLD }}>{title}</div>
         {meta ? <div style={{ display: "flex", marginTop: 30, fontSize: 40, fontWeight: 700, color: "#fff" }}>{meta}</div> : null}
         {lines.length ? (
-          <div style={{ display: "flex", flexDirection: "column", marginTop: tall ? 70 : 44 }}>
-            <div style={{ fontSize: 34, color: SOFT, marginBottom: 18 }}>You&rsquo;d be great if you&rsquo;re:</div>
+          <div style={{ display: "flex", flexDirection: "column", marginTop: tall ? 80 : 44 }}>
+            <div style={{ display: "flex", fontFamily: "B", fontWeight: 800, fontSize: tall ? 64 : 54, lineHeight: 1.05, letterSpacing: -2, color: "#fff", marginBottom: 26 }}>Do you have the personality for this?</div>
             {lines.map((l) => (
               <div key={l} style={{ display: "flex", alignItems: "flex-start", fontSize: 42, fontWeight: 700, lineHeight: 1.2, marginBottom: 16 }}>
                 <Check />
@@ -73,7 +73,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ file: string }>
         ) : null}
       </div>
       <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: band, display: "flex", flexDirection: "column", background: GOLD, color: NAVY, padding: tall ? "56px 84px 0" : "40px 84px 0", fontFamily: "B", fontWeight: 800 }}>
-        <div style={{ fontSize: 30 }}>Interested, or know someone? Start here:</div>
+        <div style={{ fontSize: 30 }}>Sounds like you, or someone you know? Start here:</div>
         <div style={{ display: "flex", alignItems: "center", fontSize: 50, letterSpacing: -1, marginTop: 4 }}>
           thecandidatecollection.com/join
           <svg width="44" height="44" viewBox="0 0 24 24" style={{ marginLeft: 14, marginTop: 6 }}>

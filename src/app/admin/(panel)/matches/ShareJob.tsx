@@ -19,7 +19,8 @@ export function ShareJob({ id, title, meta, lines, link }: { id: string; title: 
     }, 500);
     return () => clearTimeout(timer);
   }, [t, m, l]);
-  const caption = `Now hiring: ${t}${m ? ` (${m})` : ""}.\n\nLooking for work, or know someone who'd be great for this? Start here, it takes a couple of minutes:\n${link}`;
+  const said = l.filter((x) => x.trim());
+  const caption = `Job opening: ${t}${m ? ` (${m})` : ""}.\n\nDo you have the personality for this?${said.length ? `\n${said.map((x) => `✓ ${x}`).join("\n")}` : ""}\n\nSounds like you, or someone you know? Start here, it takes a couple of minutes:\n${link}`;
   const file = t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "job";
   return (
     <div className={styles.share}>
@@ -33,7 +34,7 @@ export function ShareJob({ id, title, meta, lines, link }: { id: string; title: 
           <input className="input" value={m} onChange={(e) => setM(e.target.value)} maxLength={80} placeholder="Brooklyn · Full-time · Top pay for the right person" />
         </label>
         <div className="field" style={{ margin: 0 }}>
-          <span>You&rsquo;d be great if you&rsquo;re:</span>
+          <span>Do you have the personality for this? (3 short lines)</span>
           {l.map((x, i) => (
             <input key={i} className="input" style={{ marginTop: i ? 6 : 0 }} value={x} maxLength={60} onChange={(e) => setL((cur) => cur.map((y, j) => (j === i ? e.target.value : y)))} placeholder={["Great with numbers", "Calm under pressure", "Ready to lead a team"][i]} />
           ))}

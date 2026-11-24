@@ -13,6 +13,7 @@ import { loadMatches } from "../data";
 import { PositionForm } from "../PositionForm";
 import { SendToOwner } from "../SendToOwner";
 import { ShareJob } from "../ShareJob";
+import { ShareJump } from "../ShareJump";
 import { jobPosterDefaults } from "@/lib/jobPoster";
 import { candidateLink } from "@/lib/shareKit";
 import { TalkBox } from "../../TalkBox";
@@ -108,11 +109,14 @@ export default async function OpeningPage({ params, searchParams }: PageProps<"/
             </div>
           )}
         </div>
-        <form action={setPositionStatus.bind(null, p.id, p.status === "closed" ? "open" : "closed")}>
-          <button className="btn btn-ghost btn-small" type="submit">
-            {p.status === "closed" ? "Reopen" : "Filled or closed"}
-          </button>
-        </form>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          {p.status === "open" && <ShareJump />}
+          <form action={setPositionStatus.bind(null, p.id, p.status === "closed" ? "open" : "closed")}>
+            <button className="btn btn-ghost btn-small" type="submit">
+              {p.status === "closed" ? "Reopen" : "Filled or closed"}
+            </button>
+          </form>
+        </div>
       </div>
       {sp.saved === "1" && <p className="notice notice-good">Saved. The write-up and matches update in a minute.</p>}
 
@@ -292,7 +296,7 @@ export default async function OpeningPage({ params, searchParams }: PageProps<"/
       </section>
 
       {p.status === "open" && (
-        <details className={styles.box}>
+        <details className={styles.box} id="share-job" style={{ scrollMarginTop: 12 }}>
           <summary style={{ cursor: "pointer", fontWeight: 700 }}>📣 Share this job: a poster for WhatsApp status</summary>
           {(() => {
             const d = jobPosterDefaults(p, prof);

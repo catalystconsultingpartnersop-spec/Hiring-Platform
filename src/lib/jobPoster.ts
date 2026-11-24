@@ -19,5 +19,5 @@ export function jobPosterDefaults(p: Position, prof: OpeningProfile | null) {
 }
 
 export function jobCaption(title: string, meta: string, link: string) {
-  return `Now hiring: ${title}${meta ? ` (${meta})` : ""}.\n\nLooking for work, or know someone who'd be great for this? Start here, it takes a couple of minutes:\n${link}`;
+  return `Job opening: ${title}${meta ? ` (${meta})` : ""}.\n\nDo you have the personality for this? Sounds like you, or someone you know? Start here, it takes a couple of minutes:\n${link}`;
 }
