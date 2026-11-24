@@ -52,6 +52,10 @@ const STATUS: [string, string][] = [
   ["hired", "Hired"],
   ["archived", "Archived"],
 ];
+// How a hire happened, shown on the card (the filter above still groups them all as Hired).
+const LABEL: Record<string, string> = { hired_us: "Hired through us", hired_elsewhere: "Hired elsewhere" };
+const baseStatus = (s: string) => (s.startsWith("hired") ? "hired" : s);
+const statusLabel = (s: string) => LABEL[s] ?? STATUS.find(([v]) => v === s)?.[1] ?? s;
 const SORTS: [string, string][] = [
   ["new", "Newest first"],
   ["payLow", "Salary: low to high"],
@@ -129,7 +133,7 @@ export function Board({ rows, start, repOptions }: { rows: Row[]; start: Start; 
   const shown = useMemo(() => {
     const t = q.trim().toLowerCase();
     let out = rows.filter((r) => {
-      if (status.length && !status.includes(r.status)) return false;
+      if (status.length && !status.includes(baseStatus(r.status))) return false;
       if (role && !r.roles.some((x) => nice(x) === role)) return false;
       if (industry && !r.industries.some((x) => nice(x) === industry)) return false;
       if (strength && !(r.wg ?? "").slice(0, 2).includes(strength)) return false;
@@ -229,7 +233,7 @@ export function Board({ rows, start, repOptions }: { rows: Row[]; start: Start; 
 
       <div className={cs.chips}>
         {STATUS.map(([v, l]) => {
-          const n = rows.filter((r) => r.status === v).length;
+          const n = rows.filter((r) => baseStatus(r.status) === v).length;
           return n || status.includes(v) ? (
             <button key={v} type="button" className={`bd-chip ${status.includes(v) ? "on" : ""}`} onClick={() => toggle(status, setStatus, v)}>
               {l} <span>{n}</span>
@@ -290,7 +294,7 @@ export function Board({ rows, start, repOptions }: { rows: Row[]; start: Start; 
                           </h3>
                           <p className={cs.meta}>{meta || "Profile not filled in yet"}</p>
                         </div>
-                        {r.status !== "listed" && <span className="tag">{STATUS.find(([v]) => v === r.status)?.[1] ?? r.status}</span>}
+                        {r.status !== "listed" && <span className="tag">{statusLabel(r.status)}</span>}
                       </div>
                       {editing === r.id ? (
                         <form action={saveHook.bind(null, r.id)} onSubmit={() => setEditing("")} className={cs.edit}>
@@ -381,7 +385,7 @@ export function Board({ rows, start, repOptions }: { rows: Row[]; start: Start; 
                         {r.interest > 0 && <span className="bd-int" title="Owners who unlocked them">{r.interest} unlocked</span>}
                         <div className="small muted">
                           {r.ref}
-                          {r.status !== "listed" ? ` · ${STATUS.find(([v]) => v === r.status)?.[1] ?? r.status}` : ""}
+                          {r.status !== "listed" ? ` · ${statusLabel(r.status)}` : ""}
                           {r.available ? ` · ${r.available}` : ""}
                           {` · ${r.listed && r.status === "listed" ? "listed" : "added"} ${dateShort(r.listed && r.status === "listed" ? r.listed : r.added)}`}
                         </div>

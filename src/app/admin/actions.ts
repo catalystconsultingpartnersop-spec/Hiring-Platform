@@ -217,7 +217,10 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
   const actor = staffActor(me);
   const get = (k: string) => String(form.get(k) ?? "").trim();
 
-  const status = get("status") || "draft";
+  // "Hired elsewhere" is a hire that isn't ours (no fee); stored as hired, with how in the application.
+  const rawStatus = get("status") || "draft";
+  const hiredHow = rawStatus === "hired_elsewhere" ? "elsewhere" : rawStatus === "hired" ? "us" : null;
+  const status = rawStatus === "hired_elsewhere" ? "hired" : rawStatus;
   // Extra roles and industries: unique, not repeating the main one, at most 10.
   const many = (k: string, main: string) =>
     [...new Set(form.getAll(k).map((x) => String(x).trim().slice(0, 60)).filter((x) => x && x.toLowerCase() !== main.toLowerCase()))].slice(0, 10);
@@ -280,13 +283,24 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
     const { error } = await db().from("candidates").update(record).eq("id", id);
     if (error) return { error: `Could not save: ${error.message}` };
     if (before?.status !== status) await logActivity(actor, "candidate_status", { candidate: refCode(id), from: before?.status, to: status });
+    // Record how they were hired (through us, or elsewhere), whenever it's set or changed.
+    if (hiredHow) {
+      const { data: cur } = await db().from("candidates").select("application").eq("id", id).maybeSingle();
+      const app = { ...((cur?.application ?? {}) as Record<string, string>) };
+      if (app.hired_how !== hiredHow) {
+        app.hired_how = hiredHow;
+        await db().from("candidates").update({ application: app }).eq("id", id);
+        if (before?.status === "hired") await logActivity(actor, "candidate_hired_how", { candidate: refCode(id), how: hiredHow });
+      }
+    }
     if (before?.status !== "hired" && status === "hired") {
       // Hired outside the site's payment flow: still tell everyone.
       const notice = await candidateHired(id, null, null, {});
       const { data: c } = await db().from("candidates").select("full_name").eq("id", id).single();
+      const elsewhere = hiredHow === "elsewhere";
       await emailAdmin(
-        `Marked hired: ${c?.full_name} (${refCode(id)})`,
-        `<p>${escapeHtml(me.name)} marked <strong>${escapeHtml(c?.full_name ?? "")}</strong> (${refCode(id)}) as hired from the back office. No payment went through the site for this hire.</p>
+        `${elsewhere ? "Hired elsewhere" : "Marked hired through us"}: ${c?.full_name} (${refCode(id)})`,
+        `<p>${escapeHtml(me.name)} marked <strong>${escapeHtml(c?.full_name ?? "")}</strong> (${refCode(id)}) as ${elsewhere ? "hired elsewhere, not through us. No fee is owed. They're off the site." : "hired through us, from the back office. No payment went through the site for this hire, so the fee still needs to be collected."}</p>
 <p><a href="${teamUrl()}/admin/candidates/${id}">Open their profile</a></p>
 ${hireSummaryHtml(notice)}`,
       );

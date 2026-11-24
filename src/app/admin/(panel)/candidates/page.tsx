@@ -86,7 +86,7 @@ export default async function Browse({ searchParams }: PageProps<"/admin/candida
       email: c.email ?? "",
       repId: rep ?? "",
       repNote: o?.viaCall ? "from their call" : undefined,
-      status: c.status,
+      status: c.status === "hired" ? (c.application?.hired_how === "elsewhere" ? "hired_elsewhere" : c.application?.hired_how === "us" ? "hired_us" : "hired") : c.status,
       headline: c.headline,
       roles: [c.role_category, ...(c.also_roles ?? [])].filter((x): x is string => !!x?.trim()),
       industries: [c.industry, ...(c.also_industries ?? [])].filter((x): x is string => !!x?.trim()),

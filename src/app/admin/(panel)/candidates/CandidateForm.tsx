@@ -1106,7 +1106,7 @@ export function CandidateForm({
               <select
                 className="select"
                 name="status"
-                defaultValue={waitingToSign ? "listed" : c.status}
+                defaultValue={waitingToSign ? "listed" : c.status === "hired" && (c.application as Record<string, string> | null)?.hired_how === "elsewhere" ? "hired_elsewhere" : c.status}
               >
                 <option value="listed">
                   {waitingToSign
@@ -1116,7 +1116,8 @@ export function CandidateForm({
                 <option value="draft">Draft: hidden</option>
                 <option value="paused">Paused: hidden</option>
                 <option value="applied">New application</option>
-                <option value="hired">Hired</option>
+                <option value="hired">Hired through us</option>
+                <option value="hired_elsewhere">Hired elsewhere (not through us)</option>
                 <option value="archived">Archived</option>
               </select>
             </label>
