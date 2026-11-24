@@ -294,16 +294,37 @@ export async function saveCandidate(id: string | null, _prev: FormState, form: F
       }
     }
     if (before?.status !== "hired" && status === "hired") {
-      // Hired outside the site's payment flow: still tell everyone.
-      const notice = await candidateHired(id, null, null, {});
-      const { data: c } = await db().from("candidates").select("full_name").eq("id", id).single();
       const elsewhere = hiredHow === "elsewhere";
-      await emailAdmin(
-        `${elsewhere ? "Hired elsewhere" : "Marked hired through us"}: ${c?.full_name} (${refCode(id)})`,
-        `<p>${escapeHtml(me.name)} marked <strong>${escapeHtml(c?.full_name ?? "")}</strong> (${refCode(id)}) as ${elsewhere ? "hired elsewhere, not through us. No fee is owed. They're off the site." : "hired through us, from the back office. No payment went through the site for this hire, so the fee still needs to be collected."}</p>
+      const { data: c } = await db().from("candidates").select("full_name").eq("id", id).single();
+      const unlockId = elsewhere ? "" : get("hired_unlock");
+      if (unlockId && /^[0-9a-f-]{36}$/i.test(unlockId)) {
+        // Hired through us by an owner who unlocked them: charge their card on file.
+        // A paid charge does the rest (off the site, others told, rep told, receipt, your email).
+        // Only you and partners charge a card; a rep's pick comes to you to confirm.
+        const r = me.role === "admin" || me.manager ? await chargeCardOnFile(unlockId, actor) : ({ ok: false, error: `${me.name} (a rep) marked this. Check it's right, then charge it from Introductions.` } as const);
+        if (!r.ok) {
+          // Couldn't charge: still mark the hire with the right owner, and tell Heshy to collect.
+          const { data: u } = await db().from("unlocks").select("owners(email, full_name, company, phone)").eq("id", unlockId).maybeSingle();
+          const owner = (u as unknown as { owners: { email: string; full_name: string | null; company: string | null; phone: string | null } } | null)?.owners ?? null;
+          const notice = await candidateHired(id, owner, null, {});
+          await emailAdmin(
+            `Hired through us, card NOT charged: ${c?.full_name} (${refCode(id)})`,
+            `<p>${escapeHtml(me.name)} marked <strong>${escapeHtml(c?.full_name ?? "")}</strong> (${refCode(id)}) as hired by <strong>${escapeHtml(owner?.company || owner?.full_name || owner?.email || "an owner")}</strong>.</p>
+<p><strong>The card on file wasn't charged:</strong> ${escapeHtml(r.error)}<br>The fee still needs to be collected.</p>
+<p><a href="${teamUrl()}/admin/agreements">Open Introductions to try again</a></p>
+${hireSummaryHtml(notice)}`,
+          );
+        }
+      } else {
+        // Hired elsewhere (no fee), or through us with no owner on the site to charge.
+        const notice = await candidateHired(id, null, null, { elsewhere });
+        await emailAdmin(
+          `${elsewhere ? "Hired elsewhere" : "Marked hired through us"}: ${c?.full_name} (${refCode(id)})`,
+          `<p>${escapeHtml(me.name)} marked <strong>${escapeHtml(c?.full_name ?? "")}</strong> (${refCode(id)}) as ${elsewhere ? "hired elsewhere, not through us. No fee is owed. They're off the site." : "hired through us. No owner unlocked them on the site, so there was no card to charge: the fee needs to be collected."}</p>
 <p><a href="${teamUrl()}/admin/candidates/${id}">Open their profile</a></p>
 ${hireSummaryHtml(notice)}`,
-      );
+        );
+      }
     }
     if (before?.status === "listed" && status === "archived") await tellShortlisters(id, "removed");
     if (before?.status === "hired" && status === "listed") {

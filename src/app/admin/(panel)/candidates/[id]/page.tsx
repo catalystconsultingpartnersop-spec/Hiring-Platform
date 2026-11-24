@@ -63,6 +63,26 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
     .eq("candidate_id", id)
     .order("signed_at", { ascending: false });
 
+  // Owners who could have hired them (for "Hired through us"): those who unlocked them.
+  // Best guess first: the one who met them most, then the most recent.
+  const { data: hirerRows } = await db()
+    .from("unlocks")
+    .select("id, signed_at, fee_cents, card_pm, passed_at, owners(full_name, company, email, card_pm, stripe_customer_id), meetings(status)")
+    .eq("candidate_id", id)
+    .not("confirmed_at", "is", null);
+  type HR = { id: string; signed_at: string; fee_cents: number | null; card_pm: string | null; passed_at: string | null; owners: { full_name: string | null; company: string | null; email: string; card_pm: string | null; stripe_customer_id: string | null }; meetings: { status: string }[] };
+  const hirers = ((hirerRows ?? []) as unknown as HR[])
+    .map((u) => ({
+      unlockId: u.id,
+      label: [u.owners.company, u.owners.full_name].filter(Boolean).join(" · ") || u.owners.email,
+      met: (u.meetings ?? []).filter((m) => m.status === "booked").length,
+      card: !!((u.card_pm || u.owners.card_pm) && u.owners.stripe_customer_id),
+      fee: u.fee_cents,
+      passed: !!u.passed_at,
+      at: u.signed_at,
+    }))
+    .sort((a, b) => Number(a.passed) - Number(b.passed) || b.met - a.met || b.at.localeCompare(a.at));
+
   return (
     <>
       <div className="page-head" style={{ paddingBottom: 8 }}>
@@ -182,7 +202,7 @@ export default async function EditCandidate({ params, searchParams }: PageProps<
       {canEdit && me.id && <CallNow candidateId={c.id} first={c.full_name.split(" ")[0]} callEmail={await callEmailFor({ id: me.id, email: me.email })} />}
       {canEdit && <ReminderPanel c={c} hasCall={callRows.some((k) => k.status !== "cancelled")} />}
       <RO edit={canEdit}>
-        <CandidateForm c={c} tierFeeLabel={tierFee != null ? money(tierFee) : "set by hand"} isAdmin={me.role === "admin"} />
+        <CandidateForm c={c} tierFeeLabel={tierFee != null ? money(tierFee) : "set by hand"} isAdmin={me.role === "admin"} hirers={hirers} />
       </RO>
       {me.role === "admin" && (
         <details className="panel" style={{ marginTop: 32, borderColor: "var(--rust-soft)" }} open={typeof sp.delete_error === "string"}>

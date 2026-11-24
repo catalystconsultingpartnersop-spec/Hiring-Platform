@@ -55,6 +55,18 @@ export async function candidateHired(
   const { data: c } = await db().from("candidates").select("full_name, email, phone").eq("id", candidateId).single();
   if (!c) return { rep, repEmailed: false, toldOwners };
   const first = (rep.full_name ?? "").split(" ")[0] || "there";
+  // Hired somewhere else, not through us: just so the rep knows. Nothing for them to do.
+  if (details.elsewhere) {
+    const sent = await sendEmail({
+      to: rep.email,
+      subject: `${c.full_name} was hired elsewhere`,
+      html: `<p>Hi ${escapeHtml(first)},</p>
+<p>Just so you know: <strong>${escapeHtml(c.full_name)}</strong> (${refCode(candidateId)}) was hired elsewhere, not through us. They're off the site now. Nothing for you to do.</p>
+<p><a href="${teamUrl()}/admin/candidates/${candidateId}">Open their profile</a></p>`,
+    });
+    await logActivity("system", "rep_notified_of_hire", { candidate: refCode(candidateId), rep: rep.email, elsewhere: true });
+    return { rep, repEmailed: sent.ok, toldOwners };
+  }
   const who = owner?.company ? `<strong>${escapeHtml(owner.company)}</strong>` : "an employer";
   const sent = await sendEmail({
     to: rep.email,

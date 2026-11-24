@@ -38,7 +38,7 @@ export async function markPaidFromSession(sessionId: string) {
 }
 
 // Marks a pending hire paid and sends the receipt. Safe to call twice.
-export type HireDetails = { jobTitle?: string; startDate?: string };
+export type HireDetails = { jobTitle?: string; startDate?: string; elsewhere?: boolean };
 
 export async function markHirePaid(hireId: string, paymentIntent: string | null, viaCardOnFile = false, details: HireDetails = {}) {
   const { data: hire } = await db()

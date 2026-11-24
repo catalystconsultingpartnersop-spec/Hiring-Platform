@@ -69,10 +69,12 @@ export function CandidateForm({
   c,
   tierFeeLabel,
   isAdmin,
+  hirers = [],
 }: {
   c: Candidate | null;
   tierFeeLabel: string;
   isAdmin: boolean;
+  hirers?: { unlockId: string; label: string; met: number; card: boolean; fee: number | null; passed: boolean }[];
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(
     saveCandidate.bind(null, c?.id ?? null),
@@ -108,6 +110,8 @@ export function CandidateForm({
   const [role, setRole] = useState(v("role_category"));
   const [level, setLevel] = useState(v("level"));
   const [mode, setMode] = useState(v("work_mode"));
+  const startStatus = !c ? "draft" : waitingToSign ? "listed" : c.status === "hired" && (c.application as Record<string, string> | null)?.hired_how === "elsewhere" ? "hired_elsewhere" : c.status;
+  const [statusPick, setStatusPick] = useState(startStatus);
   const [hours, setHours] = useState((c?.application as Record<string, string> | undefined)?.hours ?? "");
   const [avail, setAvail] = useState(
     (c?.application as Record<string, string> | undefined)?.available ?? "",
@@ -1106,7 +1110,8 @@ export function CandidateForm({
               <select
                 className="select"
                 name="status"
-                defaultValue={waitingToSign ? "listed" : c.status === "hired" && (c.application as Record<string, string> | null)?.hired_how === "elsewhere" ? "hired_elsewhere" : c.status}
+                value={statusPick}
+                onChange={(e) => setStatusPick(e.target.value)}
               >
                 <option value="listed">
                   {waitingToSign
@@ -1121,6 +1126,26 @@ export function CandidateForm({
                 <option value="archived">Archived</option>
               </select>
             </label>
+            {statusPick === "hired" && c?.status !== "hired" && (
+              hirers.length ? (
+                <label className="field" style={{ margin: 0 }}>
+                  <span>Which owner hired them?</span>
+                  <select className="select" name="hired_unlock" defaultValue={hirers[0].unlockId}>
+                    {hirers.map((h, i) => (
+                      <option key={h.unlockId} value={h.unlockId}>
+                        {h.label}
+                        {h.met ? ` · met ${h.met}x` : ""}
+                        {i === 0 && hirers.length > 1 ? " · best guess" : ""}
+                        {h.card ? "" : " · no card on file"}
+                      </option>
+                    ))}
+                  </select>
+                  <small>Saving charges the fee to that owner&rsquo;s card on file.</small>
+                </label>
+              ) : (
+                <small style={{ maxWidth: 320 }}>No owner unlocked them on the site, so there&rsquo;s no card to charge. You&rsquo;ll get an email to collect the fee.</small>
+              )
+            )}
             <button className="btn btn-gold" type="submit" disabled={pending}>
               {pending ? "Saving…" : "Save"}
             </button>
