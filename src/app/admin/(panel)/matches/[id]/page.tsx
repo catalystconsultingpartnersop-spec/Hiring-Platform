@@ -12,6 +12,9 @@ import { db } from "@/lib/db";
 import { loadMatches } from "../data";
 import { PositionForm } from "../PositionForm";
 import { SendToOwner } from "../SendToOwner";
+import { ShareJob } from "../ShareJob";
+import { jobPosterDefaults } from "@/lib/jobPoster";
+import { candidateLink } from "@/lib/shareKit";
 import { TalkBox } from "../../TalkBox";
 import { SixLetters } from "../../candidates/SixLetters";
 import { addNote, addPick, markNotAFit, rematch, saveCompanyCard, setPositionStatus } from "../actions";
@@ -286,6 +289,16 @@ export default async function OpeningPage({ params, searchParams }: PageProps<"/
           </details>
         )}
       </section>
+
+      {p.status === "open" && (
+        <details className={styles.box}>
+          <summary style={{ cursor: "pointer", fontWeight: 700 }}>📣 Share this job: a poster for WhatsApp status</summary>
+          {(() => {
+            const d = jobPosterDefaults(p, prof);
+            return <ShareJob id={p.id} title={d.title} meta={d.meta} lines={d.lines} link={candidateLink(me.id ? me.name.split(" ")[0] || me.email.split("@")[0] : "")} />;
+          })()}
+        </details>
+      )}
 
       {p.company && (
         <details className={styles.box}>

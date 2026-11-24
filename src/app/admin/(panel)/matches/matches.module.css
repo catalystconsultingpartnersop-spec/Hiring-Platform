@@ -54,3 +54,6 @@
 .card:hover { border-color: var(--gold, #f0b400); }
 .card small { color: var(--ink-2); font-size: 13px; }
 .card p { margin: 6px 0 0; font-size: 14px; line-height: 1.45; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.share { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 20px; align-items: start; margin-top: 12px; }
+.poster { width: 100%; border-radius: 14px; border: 1px solid var(--line); }
+@media (max-width: 640px) { .share { grid-template-columns: 1fr; } .poster { max-width: 280px; } }
