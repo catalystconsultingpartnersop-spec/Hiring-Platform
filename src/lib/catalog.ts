@@ -7,6 +7,7 @@ import { db, FeeTier, PublicCandidate, PUBLIC_CANDIDATE_COLUMNS } from "./db";
 import { profileOf, TRAITS, wiredFor } from "./strengths";
 import { blockedIdsFor, isBlockedFor } from "./blocklist";
 import { currentOwner } from "./session";
+import { privateIds } from "./privateCandidates";
 
 const DEFAULT_TIERS: FeeTier[] = [
   { id: "t1", max_salary: 100000, fee_cents: 500000, sort: 1 },
@@ -54,9 +55,11 @@ const cachedListed = unstable_cache(
       .eq("status", "listed")
       .order("listed_at", { ascending: false });
     if (error) throw error;
-    return ((data ?? []) as unknown as PublicCandidate[]).map(tidyRoles);
+    // Privately introduced candidates (Quick intro) stay off Browse.
+    const hidden = await privateIds();
+    return ((data ?? []) as unknown as PublicCandidate[]).filter((c) => !hidden.has(c.id)).map(tidyRoles);
   },
-  ["catalog-listed", "v3-hours"],
+  ["catalog-listed", "v4-private"],
   { revalidate: 30, tags: [CATALOG_TAG] },
 );
 

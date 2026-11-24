@@ -6,6 +6,7 @@ import { callbackAnswerers } from "./ownerLeads";
 import { canonicalRoles } from "./roles";
 import { isOwnerEmail } from "./session";
 import { sendText, textNumber } from "./sms";
+import { privateIds } from "./privateCandidates";
 
 // "Tell me when": a business owner browsing leaves a role and a cell number, and
 // gets a text when a candidate in that role is listed. Kept in activity_log.
@@ -64,7 +65,9 @@ export async function textRoleWatchers(nowMs = Date.now()) {
     .select("id, role_category, also_roles, headline, listed_at")
     .eq("status", "listed")
     .gte("listed_at", new Date(nowMs - 2 * 864e5).toISOString());
-  const cands = (fresh ?? []) as { id: string; role_category: string | null; also_roles: string[] | null; headline: string | null; listed_at: string }[];
+  const all = (fresh ?? []) as { id: string; role_category: string | null; also_roles: string[] | null; headline: string | null; listed_at: string }[];
+  const hidden = await privateIds();
+  const cands = all.filter((c) => !hidden.has(c.id));
   if (!cands.length) return 0;
   const { data } = await db().from("activity_log").select("at, details").eq("action", "role_watch").gte("at", new Date(nowMs - 365 * 864e5).toISOString());
   let sent = 0;

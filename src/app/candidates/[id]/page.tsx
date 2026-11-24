@@ -118,7 +118,10 @@ export default async function CandidatePage({ params, searchParams }: PageProps<
   }
   const [tiers, { rows }, page] = await Promise.all([getTiers(), allListed(), loadOwnerPage(id)]);
   const similar = similarTo(c, rows).map((s) => ({ c: s, fee: feeFor(s, tiers), reason: similarReason(c, s) }));
-  return <Teaser c={c} page={page} fee={feeFor(c, tiers)} similar={similar} rep={repInfo} />;
+  // A Quick intro: the rep knows them personally (no onboarding call).
+  const { data: app } = await db().from("candidates").select("application").eq("id", id).maybeSingle();
+  const known = !!(app as { application?: Record<string, unknown> } | null)?.application?.quick_intro;
+  return <Teaser c={c} page={page} fee={feeFor(c, tiers)} similar={similar} rep={repInfo} known={known} />;
 }
 
 // The few facts an owner checks first, as tiles.
@@ -190,7 +193,7 @@ function HowWork({ c }: { c: PublicCandidate }) {
   );
 }
 
-function Profile({ c, page }: { c: PublicCandidate; page: OwnerPage | null }) {
+function Profile({ c, page, known }: { c: PublicCandidate; page: OwnerPage | null; known?: boolean }) {
   const label = roleLine(c);
   const intro = page?.intro || c.summary;
   return (
@@ -246,10 +249,17 @@ function Profile({ c, page }: { c: PublicCandidate; page: OwnerPage | null }) {
         <span className={styles.vetMark} aria-hidden="true">
           ✓
         </span>
-        <p>
-          <b>We met them one-on-one.</b> We went through their experience, learned how they work best, and checked what
-          they&rsquo;re looking for, before listing them here.
-        </p>
+        {known ? (
+          <p>
+            <b>Someone on our team knows them personally.</b> They told us what this person is great at and what
+            they&rsquo;re looking for.
+          </p>
+        ) : (
+          <p>
+            <b>We met them one-on-one.</b> We went through their experience, learned how they work best, and checked what
+            they&rsquo;re looking for, before listing them here.
+          </p>
+        )}
       </div>
       <p className={styles.ref}>
         {refCode(c.id)}
@@ -265,7 +275,9 @@ function Teaser({
   fee,
   similar,
   rep,
+  known,
 }: {
+  known?: boolean;
   rep: { first: string; met: boolean; bio: Bio | null } | null;
   c: PublicCandidate;
   page: OwnerPage | null;
@@ -279,7 +291,7 @@ function Teaser({
       </Link>
       <div className={styles.grid}>
         <article>
-          <Profile c={c} page={page} />
+          <Profile c={c} page={page} known={known} />
         </article>
         <aside className={styles.side}>
           <div className={styles.deal}>
@@ -445,7 +457,7 @@ function Unlocked({
           <NextSteps c={c} path={path} again={again} step={step} guests={guests} busy={busy} />
           {/* Right under the next step, so owners on a phone see it without scrolling past the whole profile. */}
           {!passed && !taken && (!status || status === "pending") && repCall && <div className={styles.talkSlot}>{repCall}</div>}
-          <Profile c={c} page={parseOwnerPage((c as { application?: Record<string, string> }).application?.owner_page)} />
+          <Profile c={c} page={parseOwnerPage((c as { application?: Record<string, string> }).application?.owner_page)} known={!!(c as { application?: Record<string, unknown> }).application?.quick_intro} />
           {c.full_profile && (
             <section className={styles.full}>
               <h2>Full profile</h2>
