@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { quickIntro, type QuickIntroResult } from "./actions";
+import { TalkBox } from "../TalkBox";
 
 const digits = (p?: string) => {
   const d = String(p ?? "").replace(/\D/g, "");
@@ -83,8 +84,8 @@ export function QuickIntroForm() {
       </div>
       <label className="field" style={{ marginTop: 18 }}>
         <span>What they&rsquo;re great at</span>
-        <textarea className="textarea" name="about" required placeholder="Handyman, fixes anything, reliable, great with tenants. Wants steady full-time." style={{ minHeight: 96 }} />
-        <small>A sentence or two is plenty. Tap the mic on your keyboard to say it.</small>
+        <TalkBox name="about" required rows={3} placeholder="Handyman, fixes anything, reliable, great with tenants. Wants steady full-time." />
+        <small>A sentence or two is plenty. Type it, or tap Speak and say it.</small>
       </label>
       <div className="grid-2" style={{ marginTop: 18 }}>
         <label className="field">

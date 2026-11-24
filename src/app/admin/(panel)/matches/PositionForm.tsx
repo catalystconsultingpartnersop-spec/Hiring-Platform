@@ -4,6 +4,7 @@ import { useActionState, useState, useTransition } from "react";
 import type { PositionDraft } from "@/lib/positions";
 import { ROLE_LIST } from "@/lib/writingHelp";
 import { fillFromPost, savePosition } from "./actions";
+import { SpeakButton } from "../candidates/SpeakButton";
 
 const LEVELS = [
   ["", "Not said"],
@@ -44,8 +45,11 @@ export function PositionForm({ id, start }: { id: string | null; start: Position
             rows={6}
             value={post}
             onChange={(e) => setPost(e.target.value)}
-            placeholder="Paste the whole post (a website, an email, a WhatsApp message), or just type one line: Press brake operator, Linden NJ, needs someone now."
+            placeholder="Paste the whole post (a website, an email, a WhatsApp message), or just type or say one line: Press brake operator, Linden NJ, needs someone now."
           />
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 6 }}>
+            <SpeakButton onText={(t) => setPost((cur) => (cur.trim() ? `${cur.trimEnd()} ${t}` : t))} />
+          </div>
           <button
             type="button"
             className="btn btn-gold btn-small"

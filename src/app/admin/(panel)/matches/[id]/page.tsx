@@ -11,6 +11,7 @@ import { db } from "@/lib/db";
 import { loadMatches } from "../data";
 import { PositionForm } from "../PositionForm";
 import { SendToOwner } from "../SendToOwner";
+import { TalkBox } from "../../TalkBox";
 import { addNote, markNotAFit, rematch, saveCompanyCard, setPositionStatus } from "../actions";
 import styles from "../matches.module.css";
 
@@ -138,7 +139,7 @@ export default async function OpeningPage({ params, searchParams }: PageProps<"/
           )}
           {prof?.phone && <p style={{ marginTop: 10 }}>Owner&rsquo;s phone: {prof.phone}</p>}
           <form action={addNote.bind(null, p.id)} style={{ marginTop: 12 }}>
-            <textarea className="textarea" name="note" rows={2} placeholder="What did the owner say? (pay, hours, what they're like…)" />
+            <TalkBox name="note" rows={2} placeholder="What did the owner say? (pay, hours, what they're like…) Type or tap Speak." />
             <button className="btn btn-ghost btn-small" type="submit" style={{ marginTop: 6 }}>
               Add to this opening
             </button>
@@ -254,7 +255,7 @@ export default async function OpeningPage({ params, searchParams }: PageProps<"/
         <details className={styles.box}>
           <summary style={{ cursor: "pointer", fontWeight: 700 }}>About {p.company}</summary>
           <form action={saveCompanyCard.bind(null, p.id, p.company)} style={{ marginTop: 10 }}>
-            <textarea className="textarea" name="about" rows={3} defaultValue={card?.about ?? ""} placeholder="What the business is like: what they do, size, pace, the boss, the culture. Used for every opening there." />
+            <TalkBox name="about" rows={3} defaultValue={card?.about ?? ""} placeholder="What the business is like: what they do, size, pace, the boss, the culture. Used for every opening there." />
             <button className="btn btn-ghost btn-small" type="submit" style={{ marginTop: 6 }}>
               Save
             </button>
