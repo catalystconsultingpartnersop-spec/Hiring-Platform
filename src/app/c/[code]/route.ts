@@ -19,6 +19,19 @@ export async function GET(req: Request, ctx: RouteContext<"/c/[code]">) {
   // "&s=…": a profile a rep suggested to someone. Note the open so the rep knows to follow up.
   const s = (new URL(req.url).searchParams.get("s") ?? "").toLowerCase();
   if (s) after(() => recordPointedOpen(s).catch(() => null));
+  // "&o=…": a match sent for an opening. Note the open (once a day), so the match shows "Opened".
+  const o = (new URL(req.url).searchParams.get("o") ?? "").toLowerCase().replace(/[^0-9a-f]/g, "").slice(0, 8);
+  if (o && hits.length === 1) {
+    const cid = hits[0].id;
+    after(async () => {
+      const { data: p } = await db().from("positions").select("id");
+      const pid = (p ?? []).map((x) => x.id as string).find((id) => id.startsWith(o));
+      if (!pid) return;
+      const day = new Date().toISOString().slice(0, 10);
+      const { data: seen } = await db().from("activity_log").select("id").eq("action", "match_opened").eq("details->>position_id", pid).eq("details->>candidate_id", cid).gte("at", day).limit(1);
+      if (!seen?.length) await db().from("activity_log").insert({ actor: "public", action: "match_opened", details: { position_id: pid, candidate_id: cid } });
+    });
+  }
   const res = NextResponse.redirect(hits.length === 1 ? `${siteUrl()}/candidates/${hits[0].id}${q}` : `${siteUrl()}/candidates${q}`);
   // This link is for business owners: always open the profile, even on a phone that
   // once opened a candidate link (and was set to show only the candidate side).

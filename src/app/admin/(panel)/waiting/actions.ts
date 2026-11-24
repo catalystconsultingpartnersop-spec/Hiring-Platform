@@ -9,12 +9,19 @@ export async function markLeadCalled(leadId: string, form: FormData) {
   const me = await requireStaff();
   if (!me.manager) return;
   if (!/^\d+$/.test(leadId)) return;
-  const { data } = await db().from("activity_log").select("id").eq("id", leadId).in("action", ["owner_callback_request", "owner_meeting_request"]).maybeSingle();
+  const { data } = await db().from("activity_log").select("id, details").eq("id", leadId).in("action", ["owner_callback_request", "owner_meeting_request"]).maybeSingle();
   if (!data) return;
   const note = String(form.get("note") ?? "").trim().slice(0, 300) || null;
   // Two buttons on the same row: "I called them", or "Not calling back".
   const outcome = form.get("outcome") === "declined" ? "declined" : "called";
   await logActivity(staffActor(me), "owner_lead_done", { lead_id: leadId, by: me.name || me.email, note, outcome });
+  // What they said on the call goes onto their opening, and the write-up and matches update.
+  const phone = String((data.details as { phone?: string } | null)?.phone ?? "").replace(/\D/g, "");
+  if (note && phone) {
+    const { data: ps } = await db().from("positions").select("id").like("source", `lead:${phone}:%`);
+    const { addOpeningNote } = await import("@/lib/openings");
+    for (const p of ps ?? []) await addOpeningNote(p.id as string, note, (me.name || me.email).split(" ")[0]);
+  }
   for (const p of ["/admin", "/admin/reps", "/admin/waiting"]) revalidatePath(p);
 }
 

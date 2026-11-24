@@ -29,6 +29,15 @@ export async function GET(req: NextRequest) {
   await (await import("@/lib/timeAsk")).lapseAsks().catch((e) => console.error("call time asks", e));
   // The second look at new matches, so they're ready before anyone opens the page or an owner is told.
   await (await import("@/lib/matchJudge")).judgePending(5).catch((e) => console.error("match second look", e));
+  // Openings: write up any new or changed ones, then match them (only when something changed).
+  try {
+    const { openPositions } = await import("@/lib/positions");
+    const open = await openPositions();
+    await (await import("@/lib/openings")).writePendingProfiles(open, 2);
+    await (await import("@/lib/aiMatch")).refreshMatches(await openPositions(), 2);
+  } catch (e) {
+    console.error("openings and matches", e);
+  }
   const { textRoleWatchers } = await import("@/lib/roleWatch");
   await textRoleWatchers().catch((e) => console.error("role watch texts", e));
   const { meetingHourTexts } = await import("@/lib/repMorning");

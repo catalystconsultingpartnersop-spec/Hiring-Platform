@@ -38,13 +38,13 @@ export function PositionForm({ id, start }: { id: string | null; start: Position
     <div style={{ display: "grid", gap: 18, maxWidth: 760 }}>
       {!id && (
         <section className="panel">
-          <h2 style={{ fontSize: 18, margin: "0 0 6px" }}>Paste the job post</h2>
+          <h2 style={{ fontSize: 18, margin: "0 0 6px" }}>Paste the job post, or one line</h2>
           <textarea
             className="textarea"
             rows={6}
             value={post}
             onChange={(e) => setPost(e.target.value)}
-            placeholder="Paste the whole post here: from a website, an email, or a WhatsApp message."
+            placeholder="Paste the whole post (a website, an email, a WhatsApp message), or just type one line: Press brake operator, Linden NJ, needs someone now."
           />
           <button
             type="button"

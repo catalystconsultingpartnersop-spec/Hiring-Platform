@@ -1,42 +1,61 @@
 import Link from "next/link";
 import { requireStaff } from "@/lib/session";
-import { matchesFor, positionsFor } from "@/lib/matching";
+import { positionsFor } from "@/lib/matching";
 import { after } from "next/server";
-import { judgePending } from "@/lib/matchJudge";
+import { aiMatches, bestFor, matchStages, refreshMatches } from "@/lib/aiMatch";
+import { writePendingProfiles } from "@/lib/openings";
 import { loadMatches } from "./data";
-import { FitPill } from "./FitPill";
 import { markNotAFit } from "./actions";
 import styles from "./matches.module.css";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Matches" };
+export const metadata = { title: "Openings" };
+export const maxDuration = 300;
 
 // Open positions we know about, and which candidates fit them. Private to the team.
 export default async function MatchesPage({ searchParams }: PageProps<"/admin/matches">) {
   const me = await requireStaff();
   const sp = await searchParams;
-  const { ready, positions, candidates, poolFor, isHidden, verdict } = await loadMatches(me);
-  after(() => judgePending(4).catch(() => null));
+  const { ready, positions, candidates, poolFor, isHidden } = await loadMatches(me);
+  const store = await aiMatches();
+  // Write up and match anything new or changed, right after the page answers.
+  after(async () => {
+    await writePendingProfiles(positions, 2).catch(() => null);
+    await refreshMatches(positions, 2).catch(() => null);
+  });
 
-  const perPosition = positions.map((p) => ({ p, ms: matchesFor(p, poolFor(p.id)) }));
+  const perPosition = positions.map((p) => ({ p, ms: bestFor(p, poolFor(p.id), store) }));
+  // Each candidate's best openings: the AI's picks where we have them.
   const perCandidate = candidates
-    .map((c) => ({ c, best: positionsFor(c, positions.filter((p) => !isHidden(p.id, c.id)), 3) }))
+    .map((c) => {
+      const ai = positions
+        .filter((p) => store[p.id] && !isHidden(p.id, c.id))
+        .flatMap((p) => store[p.id].list.filter((x) => x.id === c.id).map((x) => ({ p, m: { score: x.fit === "strong" ? 2 : 1, fit: x.fit, why: [x.why] } })));
+      const old = positionsFor(c, positions.filter((p) => !store[p.id] && !isHidden(p.id, c.id)), 3);
+      return { c, best: [...ai, ...old].sort((a, b) => (b.m.fit === "strong" ? 1 : 0) - (a.m.fit === "strong" ? 1 : 0)).slice(0, 3) };
+    })
     .filter((x) => x.best.length)
-    .sort((a, b) => b.best[0].m.score - a.best[0].m.score);
-  const top = (x: (typeof perCandidate)[number]) => verdict(x.best[0].p.id, x.c.id);
-  const strong = perCandidate.filter((x) => (top(x)?.v === "strong" || top(x)?.v === "good" ? top(x)!.v : x.best[0].m.fit) === "strong" && top(x)?.v !== "paper").length;
+    .sort((a, b) => (b.best[0].m.fit === "strong" ? 1 : 0) - (a.best[0].m.fit === "strong" ? 1 : 0));
+  const strong = perCandidate.filter((x) => x.best[0].m.fit === "strong").length;
   const noFit = perPosition.filter((x) => !x.ms.length).length;
+  // Sent matches waiting on the owner for 3+ days: time for a friendly follow-up.
+  const byId = new Map(candidates.map((c) => [c.id, c]));
+  const waiting = (
+    await Promise.all(
+      positions.map(async (p) => [...(await matchStages(p)).entries()].filter(([cid, st]) => st.stale && byId.has(cid)).map(([cid, st]) => ({ p, c: byId.get(cid)!, st }))),
+    )
+  ).flat();
 
   return (
     <div className={styles.page}>
       <div className={styles.head}>
         <div>
-          <h1>Matches</h1>
-          <p className="muted">Open positions we know about, and the candidates who fit them. Private: never shown on the site.</p>
+          <h1>Openings</h1>
+          <p className="muted">Jobs we know about, written up, and the candidates who fit them. Private: never shown on the site.</p>
         </div>
         {ready && (
           <Link className="btn btn-gold" href="/admin/matches/new">
-            + Add a position
+            + Add an opening
           </Link>
         )}
       </div>
@@ -50,7 +69,7 @@ export default async function MatchesPage({ searchParams }: PageProps<"/admin/ma
           <div className={styles.nums}>
             <div>
               <b>{positions.length}</b>
-              <span>open positions</span>
+              <span>open jobs</span>
             </div>
             <div>
               <b>{strong}</b>
@@ -58,12 +77,29 @@ export default async function MatchesPage({ searchParams }: PageProps<"/admin/ma
             </div>
             <div>
               <b>{noFit}</b>
-              <span>positions with no fit yet</span>
+              <span>openings with no fit yet</span>
             </div>
           </div>
+          {waiting.length > 0 && (
+            <section className={styles.box} style={{ background: "#fff8e1", borderColor: "#f0d77a" }}>
+              <h2>Waiting on the owner</h2>
+              <ul className={styles.rows}>
+                {waiting.map(({ p, c, st }) => (
+                  <li key={p.id + c.id}>
+                    <Link prefetch={false} href={`/admin/matches/${p.id}`}>
+                      <b>
+                        {c.full_name} for {p.title}
+                      </b>
+                      <small>{st.stage === "opened" ? "The owner opened it, then nothing." : "Sent, not opened yet."} A friendly follow-up is due.</small>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           <div className={styles.cols}>
             <section className={styles.box}>
-              <h2>Open positions</h2>
+              <h2>Openings</h2>
               {perPosition.length ? (
                 <ul className={styles.rows}>
                   {perPosition.map(({ p, ms }) => (
@@ -81,7 +117,7 @@ export default async function MatchesPage({ searchParams }: PageProps<"/admin/ma
                   ))}
                 </ul>
               ) : (
-                <p className="muted small">No open positions yet. Add the first one: paste a job post and the site fills it in.</p>
+                <p className="muted small">No openings yet. Add the first one: paste a job post, or just type one line.</p>
               )}
             </section>
             <section className={styles.box}>
@@ -97,10 +133,10 @@ export default async function MatchesPage({ searchParams }: PageProps<"/admin/ma
                           {best[0].p.company ? ` at ${best[0].p.company}` : ""}
                           {best.length > 1 ? ` · +${best.length - 1} more` : ""}
                         </small>
-                        {verdict(best[0].p.id, c.id)?.why && <small className={styles.aiWhy}>{verdict(best[0].p.id, c.id)!.why}</small>}
+                        <small className={styles.aiWhy}>{best[0].m.why[0]}</small>
                       </Link>
                       <span className={styles.rowEnd}>
-                        <FitPill fit={best[0].m.fit!} j={verdict(best[0].p.id, c.id)} />
+                        <span className={`tag ${best[0].m.fit === "strong" ? "tag-good" : "tag-gold"}`}>{best[0].m.fit === "strong" ? "Strong" : "Good"}</span>
                         <form action={markNotAFit.bind(null, best[0].p.id, c.id, true)}>
                           <button type="submit" className={styles.x} title={`Not a fit for ${best[0].p.title}`} aria-label={`${c.full_name} is not a fit for ${best[0].p.title}`}>
                             ✕
@@ -111,7 +147,7 @@ export default async function MatchesPage({ searchParams }: PageProps<"/admin/ma
                   ))}
                 </ul>
               ) : (
-                <p className="muted small">No matches yet. They show up here as positions are added.</p>
+                <p className="muted small">No matches yet. They show up here as openings are added.</p>
               )}
             </section>
           </div>

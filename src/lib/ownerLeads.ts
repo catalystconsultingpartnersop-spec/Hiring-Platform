@@ -151,13 +151,9 @@ export async function fileCallback(o: { role: string; name: string; phone: strin
   const { sentBy } = await import("./shareKit");
   const ref = await sentBy();
   await logActivity(`public:${o.phone}`, "owner_callback_request", { role: o.role, name: o.name, phone: o.phone, email: o.email || undefined, business: o.business || undefined, from: o.from, ref: ref ?? undefined });
-  await db()
-    .from("positions")
-    .insert({ title: o.role, company: o.business || null, source: "callback", contact_name: o.name, contact_email: o.email || null, needs: `Call back: ${o.phone}`, added_by: "callback" })
-    .then(
-      () => null,
-      () => null,
-    );
+  // What they're hiring for becomes an opening: written up and matched automatically.
+  const { openingFromLead } = await import("./openings");
+  await openingFromLead({ key: `${o.phone.replace(/\D/g, "")}:${o.role.trim().toLowerCase()}`, role: o.role, name: o.name, business: o.business, phone: o.phone, email: o.email }).catch(() => null);
   // Both leaders get the text: this is the one where minutes matter.
   const { textTeam } = await import("./texts");
   const key = `${o.phone.replace(/\D/g, "")}:${new Date().toISOString().slice(0, 16)}`;

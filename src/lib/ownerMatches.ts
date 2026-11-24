@@ -1,6 +1,7 @@
 import { db, logActivity, type PublicCandidate } from "./db";
 import { allListed } from "./catalog";
-import { matchesFor, type Position } from "./matching";
+import { matchesFor, scoreMatch, type Position } from "./matching";
+import { aiMatches } from "./aiMatch";
 import { positionsReady } from "./positions";
 import { getSetting, setSetting } from "./settings";
 import { sendEmail } from "./email";
@@ -36,10 +37,16 @@ export type OwnerFit = { p: Position; list: { c: PublicCandidate; why: string; s
 export async function ownerFits(ownerId: string, max = 3): Promise<OwnerFit[]> {
   const positions = await ownerPositions(ownerId);
   if (!positions.length) return [];
-  const [{ rows }, seen, hidden, judged] = await Promise.all([allListed(), alreadySeen(ownerId), hiddenMatches(), judgedMatches()]);
+  const [{ rows }, seen, hidden, judged, ai] = await Promise.all([allListed(), alreadySeen(ownerId), hiddenMatches(), judgedMatches(), aiMatches()]);
   const pool = rows.filter((c) => !seen.has(c.id));
+  // The AI's picks when we have them (the owner sees plain facts as the reason, never the team's notes).
+  const byId = new Map(pool.map((c) => [c.id, c]));
   return positions
-    .map((p) => ({ p, list: matchesFor(p, pool.filter((c) => !hidden[pairKey(p.id, c.id)] && passes(judged[pairKey(p.id, c.id)])), max).map(({ c, m }) => ({ c, why: ownerWhy(m.why), strong: m.fit === "strong" })) }))
+    .map((p) =>
+      ai[p.id]
+        ? { p, list: ai[p.id].list.filter((x) => byId.has(x.id) && !hidden[pairKey(p.id, x.id)]).slice(0, max).map((x) => ({ c: byId.get(x.id)!, why: ownerWhy(scoreMatch(byId.get(x.id)!, p).why), strong: x.fit === "strong" })) }
+        : { p, list: matchesFor(p, pool.filter((c) => !hidden[pairKey(p.id, c.id)] && passes(judged[pairKey(p.id, c.id)])), max).map(({ c, m }) => ({ c, why: ownerWhy(m.why), strong: m.fit === "strong" })) },
+    )
     .filter((x) => x.list.length);
 }
 

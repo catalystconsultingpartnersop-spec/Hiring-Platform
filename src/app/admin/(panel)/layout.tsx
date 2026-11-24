@@ -39,6 +39,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <NavLink href={!admin && me.manager ? "/admin?mine=1" : "/admin"}>{admin ? "Dashboard" : "My dashboard"}</NavLink>
             <NavLink href="/admin/candidates">Browse candidates</NavLink>
             <NavLink href="/admin/quick-intro">Quick intro</NavLink>
+            <NavLink href="/admin/matches">Openings</NavLink>
             {admin && <NavLink href="/admin/agreements">Introductions</NavLink>}
             {admin && <NavLink href="/admin/clients">Clients</NavLink>}
             <NavLink href="/admin/messages">
@@ -68,7 +69,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               {admin && <Link href="/admin/invite">Invite a rep</Link>}
               <Link href="/admin/assessments">Strengths Assessment</Link>
               {admin && <Link href="/admin/settings">Fee settings</Link>}
-              <Link href="/admin/matches">Matches</Link>
               {admin && <Link href="/admin/activity">Activity</Link>}
               <Link href="/admin/guide">Rep guide</Link>
             </div>
