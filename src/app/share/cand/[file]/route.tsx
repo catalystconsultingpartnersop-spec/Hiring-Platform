@@ -2,19 +2,14 @@ import { ImageResponse } from "next/og";
 import { currentStaff } from "@/lib/session";
 import { db } from "@/lib/db";
 import { candPosterDefaults } from "@/lib/candPoster";
+import { posterTheme } from "@/lib/posterThemes";
 
 // A candidate as a teaser poster for business owners: /share/cand/<id>-status.png (tall,
 // WhatsApp status) or <id>.png (for chats). Team only, listed candidates only, never a name.
 // Words: ?t= title, m= where/level/hours, y= type, e= experience, g= great at, d= good at.
 // Colors: ?th= navy | gold | light.
-const NAVY = "#17213a";
-const GOLD = "#f2b300";
 
-const THEMES = {
-  navy: { bg: NAVY, grad: "radial-gradient(circle at 0% 30%, #2a3660 0%, rgba(42,54,96,0) 55%)", ink: "#ffffff", soft: "#c9d0e0", accent: GOLD, card: "rgba(255,255,255,0.08)", cardLine: "rgba(255,255,255,0.18)", pillBg: GOLD, pillInk: NAVY, band: GOLD, bandInk: NAVY },
-  gold: { bg: GOLD, grad: "radial-gradient(circle at 100% 0%, #ffd34d 0%, rgba(255,211,77,0) 60%)", ink: NAVY, soft: "#5c4a12", accent: NAVY, card: "rgba(255,255,255,0.55)", cardLine: "rgba(23,33,58,0.15)", pillBg: NAVY, pillInk: GOLD, band: NAVY, bandInk: "#ffffff" },
-  light: { bg: "#f6f3ea", grad: "radial-gradient(circle at 0% 0%, #fff8dc 0%, rgba(255,248,220,0) 60%)", ink: NAVY, soft: "#5d6579", accent: "#c28f00", card: "#ffffff", cardLine: "#e6e1d2", pillBg: NAVY, pillInk: "#ffffff", band: NAVY, bandInk: "#ffffff" },
-} as const;
+
 
 let fonts: Promise<{ name: string; data: ArrayBuffer; weight: 500 | 700 | 800; style: "normal" }[]> | null = null;
 function loadFonts(origin: string) {
@@ -47,22 +42,23 @@ export async function GET(req: Request, ctx: { params: Promise<{ file: string }>
   const exp = pick("e", d.experience, 80);
   const great = pick("g", d.great, 70);
   const good = pick("d", d.good, 70);
-  const th = THEMES[(q.get("th") as keyof typeof THEMES) in THEMES ? (q.get("th") as keyof typeof THEMES) : "navy"];
+  const th = posterTheme(q.get("th"));
 
   const tall = !!m[2];
   const H = tall ? 1920 : 1350;
   const band = tall ? 300 : 200;
+  const topH = tall ? 230 : 160;
   const size = title.length > 34 ? 84 : title.length > 22 ? 100 : 118;
   const rows: [string, string][] = ([["Experience", exp], ["Great at", great], ["Good at", good]] as [string, string][]).filter(([, v]) => v);
 
   const body = (
     <div style={{ width: 1080, height: H, display: "flex", flexDirection: "column", backgroundColor: th.bg, backgroundImage: th.grad, color: th.ink, fontFamily: "I", fontWeight: 500, position: "relative" }}>
-      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: H - band, padding: tall ? "110px 84px" : "60px 84px" }}>
-        <div style={{ display: "flex", alignSelf: "flex-start", alignItems: "center", background: th.pillBg, color: th.pillInk, fontFamily: "B", fontWeight: 800, fontSize: 44, letterSpacing: -1, borderRadius: 999, padding: "14px 36px 17px 30px" }}>
-          <div style={{ width: 16, height: 16, borderRadius: 8, background: th.pillInk, marginRight: 16 }} />
-          Available now
-        </div>
-        <div style={{ display: "flex", marginTop: tall ? 64 : 40, fontFamily: "B", fontWeight: 800, fontSize: size, lineHeight: 1.0, letterSpacing: -3, color: th.accent }}>{title}</div>
+      <div style={{ display: "flex", alignItems: "center", height: topH, background: th.top, color: th.topInk, padding: "0 84px", fontFamily: "B", fontWeight: 800, fontSize: tall ? 76 : 64, letterSpacing: -2 }}>
+        <div style={{ width: 26, height: 26, borderRadius: 13, background: th.topInk, marginRight: 26 }} />
+        Candidate available
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: H - band - topH, padding: tall ? "60px 84px" : "40px 84px" }}>
+        <div style={{ display: "flex", fontFamily: "B", fontWeight: 800, fontSize: size, lineHeight: 1.0, letterSpacing: -3, color: th.accent }}>{title}</div>
         {type ? <div style={{ display: "flex", marginTop: 18, fontFamily: "B", fontWeight: 800, fontSize: 46, letterSpacing: -1, color: th.ink }}>{`A natural ${type.toLowerCase()}`}</div> : null}
         {meta ? <div style={{ display: "flex", marginTop: 14, fontSize: 36, fontWeight: 700, color: th.soft }}>{meta}</div> : null}
         {rows.length ? (

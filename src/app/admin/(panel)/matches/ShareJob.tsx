@@ -12,20 +12,21 @@ export function ShareJob({ id, title, meta, lines, link, kind = "job" }: { id: s
   const [m, setM] = useState(meta);
   const [l, setL] = useState<string[]>([lines[0] ?? "", lines[1] ?? "", lines[2] ?? ""]);
   const [q, setQ] = useState("");
+  const [th, setTh] = useState("navy");
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => {
-      const u = new URLSearchParams({ t, m });
+      const u = new URLSearchParams({ t, m, th });
       l.filter((x) => x.trim()).forEach((x) => u.append("l", x));
       setQ(u.toString());
     }, 500);
     return () => clearTimeout(timer);
-  }, [t, m, l]);
+  }, [t, m, l, th]);
   const said = l.filter((x) => x.trim());
   const checks = said.length ? `\n${said.map((x) => `✓ ${x}`).join("\n")}` : "";
   const caption = cand
     ? `Available now: ${t}${m ? ` (${m})` : ""}.\n\nIs this the personality you need?${checks}\n\nMet by our team. See the profile: ${link}`
-    : `Job opening: ${t}${m ? ` (${m})` : ""}.\n\nDo you have the personality for this?${checks}\n\nSounds like you, or someone you know? Start here, it takes a couple of minutes:\n${link}`;
+    : `Open position: ${t}${m ? ` (${m})` : ""}.\n\nDo you have the personality for this?${checks}\n\nSounds like you, or someone you know? Start here, it takes a couple of minutes:\n${link}`;
   const file = t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "job";
   return (
     <div className={styles.share}>
@@ -43,6 +44,17 @@ export function ShareJob({ id, title, meta, lines, link, kind = "job" }: { id: s
           {l.map((x, i) => (
             <input key={i} className="input" style={{ marginTop: i ? 6 : 0 }} value={x} maxLength={60} onChange={(e) => setL((cur) => cur.map((y, j) => (j === i ? e.target.value : y)))} placeholder={["Great with numbers", "Calm under pressure", "Ready to lead a team"][i]} />
           ))}
+        </div>
+        <div className="field" style={{ margin: 0 }}>
+          <span>Color</span>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {([["navy", "Navy", "#17213a"], ["gold", "Gold", "#f2b300"], ["light", "Light", "#f6f3ea"]] as const).map(([k, label, c]) => (
+              <button key={k} type="button" className={`btn btn-small ${th === k ? "btn-gold" : "btn-ghost"}`} onClick={() => setTh(k)}>
+                <span style={{ display: "inline-block", width: 14, height: 14, borderRadius: 7, background: c, border: "1px solid #c9cfdd", marginRight: 6, verticalAlign: "-2px" }} />
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
           <a className="btn btn-gold btn-small" href={`${base}/${id}-status.png?${q}`} download={`${file}-status.png`}>

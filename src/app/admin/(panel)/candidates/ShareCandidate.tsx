@@ -23,7 +23,7 @@ export function ShareCandidate({ id, d, link }: { id: string; d: D; link: string
   }, [v, th]);
   const set = (k: keyof D) => (e: { target: { value: string } }) => setV((cur) => ({ ...cur, [k]: e.target.value }));
   const caption = [
-    `Available now: ${v.title}${v.meta ? ` (${v.meta})` : ""}.`,
+    `Candidate available: ${v.title}${v.meta ? ` (${v.meta})` : ""}.`,
     v.type ? `A natural ${v.type.toLowerCase()}.` : "",
     v.experience ? `Experience: ${v.experience}.` : "",
     v.great ? `Great at: ${v.great}.` : "",
