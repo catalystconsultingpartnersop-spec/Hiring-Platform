@@ -4,7 +4,7 @@ import { refCode, teamUrl } from "./format";
 import { hiddenMatches, pairKey } from "./matchHidden";
 import { matchesFor, type Match, type Position } from "./matching";
 import { memoryOf } from "./memory";
-import { companyCard, openingProfiles, type OpeningProfile } from "./openings";
+import { companyCard, manualMatches, openingProfiles, type OpeningProfile } from "./openings";
 import { effectiveReps } from "./reps";
 import { getSetting, setSetting } from "./settings";
 import { parseResult, TRAITS, type Letter } from "./strengths";
@@ -102,6 +102,11 @@ async function lessonsFor(p: Position, byId: Map<string, Cand>): Promise<Lessons
     if (pid === p.id) here.push(`${c?.full_name ?? "Someone"}: not a fit${why ? ` (${why})` : ""}`);
     else if (why && c) general.push(`${c.role_category ?? "candidate"} for "${pos.get(pid)?.title ?? "a job"}": not a fit because ${why}`);
   }
+  // People the team picked by hand for this opening: learn what they saw.
+  for (const m of (await manualMatches())[p.id] ?? []) {
+    const c = byId.get(m.id);
+    if (c) here.push(`${m.by} on our team picked ${c.full_name} (${c.headline ?? c.role_category}) for this opening${m.why ? `: "${m.why}"` : ""}`);
+  }
   // What this owner did before with our candidates: who they passed on (and why), who they hired.
   if (p.contact_email) {
     const { data: done } = await db().from("activity_log").select("action, details").eq("actor", `owner:${p.contact_email.toLowerCase()}`).in("action", ["hire_decided", "candidate_passed"]).order("at", { ascending: false }).limit(50);
@@ -155,6 +160,8 @@ LISTED CANDIDATES (ready to send)
 ${listed.map((c, i) => brief(c, `L${i + 1}`)).join("\n\n")}
 
 ${unlisted.length ? `NOT LISTED YET (profiles still being finished)\n${unlisted.map((c, i) => brief(c, `U${i + 1}`)).join("\n\n")}` : ""}
+
+Be helpful and a little creative, with logic: look past job titles to what people have actually done and what they're like. Transferable skills count (a restaurant shift manager can run a busy office; a yeshiva administrator can coordinate projects). If you include a less obvious pick, the "why" must make the connection clear.
 
 Rules:
 - "strong": you'd confidently suggest them. "good": a real option, worth a call. Leave out anyone weaker. Zero picks is fine.

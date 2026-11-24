@@ -3,7 +3,9 @@ import { requireStaff } from "@/lib/session";
 import { positionsFor } from "@/lib/matching";
 import { after } from "next/server";
 import { aiMatches, bestFor, matchStages, refreshMatches } from "@/lib/aiMatch";
-import { writePendingProfiles } from "@/lib/openings";
+import { manualMatches, openingProfiles, writePendingProfiles } from "@/lib/openings";
+import { LEVEL_LABEL, WORK_MODE_LABEL, salaryRange } from "@/lib/format";
+import { OpeningsBrowser, type OpeningRow } from "./OpeningsBrowser";
 import { loadMatches } from "./data";
 import { markNotAFit } from "./actions";
 import styles from "./matches.module.css";
@@ -24,7 +26,32 @@ export default async function MatchesPage({ searchParams }: PageProps<"/admin/ma
     await refreshMatches(positions, 2).catch(() => null);
   });
 
-  const perPosition = positions.map((p) => ({ p, ms: bestFor(p, poolFor(p.id), store) }));
+  const [profs, manual] = await Promise.all([openingProfiles(), manualMatches()]);
+  const perPosition = positions.map((p) => {
+    const ms = bestFor(p, poolFor(p.id), store);
+    const pool = new Set(poolFor(p.id).map((c) => c.id));
+    const hand = (manual[p.id] ?? []).filter((m) => pool.has(m.id) && !ms.some((x) => x.c.id === m.id));
+    return { p, ms, hand };
+  });
+  const nameOf = new Map(candidates.map((c) => [c.id, c.full_name]));
+  const rows: OpeningRow[] = perPosition.map(({ p, ms, hand }) => {
+    const pr = profs[p.id];
+    const lvl = p.level || pr?.level;
+    return {
+      id: p.id,
+      title: p.title,
+      company: p.company,
+      place: p.location,
+      role: pr?.role || p.role_category || "",
+      tags: [pr?.role || p.role_category, lvl && (LEVEL_LABEL[lvl] ?? lvl), pr?.hours, salaryRange(p.salary_min, p.salary_max), p.work_mode && (WORK_MODE_LABEL[p.work_mode] ?? p.work_mode)].filter(Boolean) as string[],
+      job: pr?.job || p.description || "",
+      added: new Date(p.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      addedMs: Date.parse(p.created_at),
+      matches: ms.length + hand.length,
+      strong: ms.filter((x) => x.m.fit === "strong").length + hand.length,
+      top: [...hand.map((h) => nameOf.get(h.id) ?? ""), ...ms.map((x) => x.c.full_name)].filter(Boolean).slice(0, 3),
+    };
+  });
   // Each candidate's best openings: the AI's picks where we have them.
   const perCandidate = candidates
     .map((c) => {
@@ -97,29 +124,12 @@ export default async function MatchesPage({ searchParams }: PageProps<"/admin/ma
               </ul>
             </section>
           )}
+          {rows.length ? (
+            <OpeningsBrowser rows={rows} mine={!me.manager} />
+          ) : (
+            <p className="muted small">No openings yet. Add the first one: paste a job post, or just type or say one line.</p>
+          )}
           <div className={styles.cols}>
-            <section className={styles.box}>
-              <h2>Openings</h2>
-              {perPosition.length ? (
-                <ul className={styles.rows}>
-                  {perPosition.map(({ p, ms }) => (
-                    <li key={p.id}>
-                      <Link prefetch={false} href={`/admin/matches/${p.id}`}>
-                        <b>{p.title}</b>
-                        <small>{[p.company, p.location].filter(Boolean).join(" · ") || " "}</small>
-                      </Link>
-                      {ms.length ? (
-                        <span className={`tag ${ms[0].m.fit === "strong" ? "tag-good" : "tag-gold"}`}>{ms.length} fit</span>
-                      ) : (
-                        <span className="tag">No fit yet</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="muted small">No openings yet. Add the first one: paste a job post, or just type one line.</p>
-              )}
-            </section>
             <section className={styles.box}>
               <h2>{me.manager ? "Candidates and what they fit" : "Your candidates and what they fit"}</h2>
               {perCandidate.length ? (

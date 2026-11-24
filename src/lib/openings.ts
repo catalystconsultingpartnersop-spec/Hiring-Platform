@@ -203,3 +203,32 @@ export async function openingsForContact(email: string | null | undefined): Prom
   const { data } = await db().from("positions").select("id").eq("status", "open").eq("contact_email", email.toLowerCase());
   return (data ?? []).map((d) => d.id as string);
 }
+
+// Picks the team made by hand ("I think Bentzy fits this"). Shown with the AI's picks,
+// and the AI learns from them.
+export type ManualPick = { id: string; by: string; why: string; at: string };
+const MKEY = "manual_matches";
+export async function manualMatches(): Promise<Record<string, ManualPick[]>> {
+  return getSetting<Record<string, ManualPick[]>>(MKEY, {});
+}
+export async function addManualMatch(positionId: string, candidateId: string, by: string, why: string) {
+  const all = await manualMatches();
+  const list = (all[positionId] ?? []).filter((x) => x.id !== candidateId);
+  list.unshift({ id: candidateId, by, why: why.trim().slice(0, 400), at: new Date().toISOString() });
+  all[positionId] = list.slice(0, 20);
+  await setSetting(MKEY, all);
+}
+
+// Clean up spoken or rough notes about a company into a few clear sentences. Facts only.
+export async function polishCompanyNotes(company: string, raw: string): Promise<string> {
+  const text = raw.trim();
+  if (text.length < 20) return text;
+  try {
+    const out = (
+      await askAI(`Rewrite these notes about the business "${company}" as 1 to 4 clear, plain sentences for a recruiting team's private card. They may be spoken out loud, so fix the words and grammar. Keep every fact (what they do, size, pace, the boss, culture, quirks). Add nothing that isn't said. Reply with only the rewritten text.\n\nNotes:\n${text.slice(0, 3000)}`)
+    ).text.trim();
+    return out && out.length < 2000 ? out : text;
+  } catch {
+    return text;
+  }
+}

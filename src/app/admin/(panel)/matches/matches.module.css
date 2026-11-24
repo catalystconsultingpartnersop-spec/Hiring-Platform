@@ -47,3 +47,10 @@
 .sent { margin-top: 10px; background: var(--wash); border-radius: 12px; padding: 12px; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
 .muted { color: var(--ink-3); font-size: 13px; }
 @media (max-width: 640px) { .match { flex-wrap: wrap; } .acts { margin-left: 0; width: 100%; justify-content: flex-start; } }
+.filters { display: grid; grid-template-columns: minmax(200px, 2fr) repeat(3, minmax(130px, 1fr)) auto; gap: 8px; align-items: center; }
+@media (max-width: 900px) { .filters { grid-template-columns: 1fr 1fr; } .filters > :first-child { grid-column: 1 / -1; } }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-top: 12px; }
+.card { display: grid; gap: 4px; align-content: start; border: 1px solid var(--line); border-radius: 12px; padding: 14px; text-decoration: none; color: inherit; background: #fff; min-width: 0; }
+.card:hover { border-color: var(--gold, #f0b400); }
+.card small { color: var(--ink-2); font-size: 13px; }
+.card p { margin: 6px 0 0; font-size: 14px; line-height: 1.45; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }

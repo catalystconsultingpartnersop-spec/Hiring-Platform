@@ -5,14 +5,15 @@ import { requireStaff } from "@/lib/session";
 import { getPosition, POSITION_FIELDS, type PositionDraft } from "@/lib/positions";
 import { LEVEL_LABEL, WORK_MODE_LABEL, salaryRange } from "@/lib/format";
 import { aiMatches, bestFor, matchPool, matchStages, type Stage } from "@/lib/aiMatch";
-import { companyCard, openingProfile, profileSig, writeOpeningProfile } from "@/lib/openings";
+import { companyCard, manualMatches, openingProfile, profileSig, writeOpeningProfile } from "@/lib/openings";
+import { matchableCandidates } from "@/lib/positions";
 import { effectiveReps } from "@/lib/reps";
 import { db } from "@/lib/db";
 import { loadMatches } from "../data";
 import { PositionForm } from "../PositionForm";
 import { SendToOwner } from "../SendToOwner";
 import { TalkBox } from "../../TalkBox";
-import { addNote, markNotAFit, rematch, saveCompanyCard, setPositionStatus } from "../actions";
+import { addNote, addPick, markNotAFit, rematch, saveCompanyCard, setPositionStatus } from "../actions";
 import styles from "../matches.module.css";
 
 export const dynamic = "force-dynamic";
@@ -39,9 +40,20 @@ export default async function OpeningPage({ params, searchParams }: PageProps<"/
       if (stale) await writeOpeningProfile(p).catch(() => null);
       await (await import("@/lib/aiMatch")).runMatch(p).catch(() => null);
     });
-  const ms = bestFor(p, poolFor(p.id), store, 8);
   const removed = removedFor(p.id);
-  const reps = await effectiveReps(candidates.map((c) => ({ id: c.id, added_by: c.added_by })));
+  const gone = new Set(removed.map((r) => r.c.id));
+  // Picks the team made by hand come first; then the site's own picks.
+  const everyone = await matchableCandidates();
+  const allById = new Map(everyone.map((c) => [c.id, c]));
+  const manual = ((await manualMatches())[p.id] ?? []).filter((m) => allById.has(m.id) && !gone.has(m.id));
+  const picked = new Set(manual.map((m) => m.id));
+  const ms = [
+    ...manual.map((m) => ({ c: allById.get(m.id)!, m: { score: 1000, fit: "strong" as const, why: [m.why || "Picked by hand"] }, flag: undefined as string | undefined, ai: false, by: m.by })),
+    ...bestFor(p, poolFor(p.id), store, 8)
+      .filter((x) => !picked.has(x.c.id))
+      .map((x) => ({ ...x, by: null as string | null })),
+  ];
+  const reps = await effectiveReps(everyone.map((c) => ({ id: c.id, added_by: c.added_by })));
   const { data: staff } = await db().from("staff").select("id, full_name");
   const repName = (cid: string) => ((staff ?? []).find((s) => s.id === reps.get(cid)?.id)?.full_name ?? "").split(" ")[0];
   // "Almost": not listed yet, but would fit once their profile is finished (yours only, for reps).
@@ -170,11 +182,11 @@ export default async function OpeningPage({ params, searchParams }: PageProps<"/
         </div>
         {ai ? <p className={styles.muted}>Checked {ago(ai.at)} against every candidate. New candidates are checked automatically.</p> : <p className={styles.muted}>Finding matches… refresh in a minute.</p>}
         {ms.length ? (
-          ms.map(({ c, m, flag }) => {
+          ms.map(({ c, m, flag, by }) => {
             const st = stages.get(c.id);
             return (
               <div key={c.id} className={styles.match}>
-                <span className={`tag ${m.fit === "strong" ? "tag-good" : "tag-gold"}`}>{m.fit === "strong" ? "Strong" : "Good"}</span>
+                {by ? <span className="tag tag-gold">Picked by {by}</span> : <span className={`tag ${m.fit === "strong" ? "tag-good" : "tag-gold"}`}>{m.fit === "strong" ? "Strong" : "Good"}</span>}
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <Link prefetch={false} href={`/admin/candidates/${c.id}`}>
                     <b>{c.full_name}</b>
@@ -226,6 +238,27 @@ export default async function OpeningPage({ params, searchParams }: PageProps<"/
             ))}
           </div>
         )}
+        <details className={styles.removed}>
+          <summary>Know someone who fits? Add them yourself</summary>
+          <form action={addPick.bind(null, p.id)} style={{ display: "grid", gap: 8, marginTop: 10, maxWidth: 560 }}>
+            <select className="select" name="candidate" required defaultValue="">
+              <option value="" disabled>
+                Pick a candidate
+              </option>
+              {[...everyone]
+                .sort((a, b) => a.full_name.localeCompare(b.full_name))
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.full_name} · {c.headline ?? c.role_category ?? ""}
+                  </option>
+                ))}
+            </select>
+            <TalkBox name="why" rows={2} placeholder="Why they fit (optional). Type or tap Speak." />
+            <button className="btn btn-gold btn-small" type="submit" style={{ justifySelf: "start" }}>
+              Add as a match
+            </button>
+          </form>
+        </details>
         {removed.length > 0 && (
           <details className={styles.removed}>
             <summary>Marked not a fit ({removed.length})</summary>

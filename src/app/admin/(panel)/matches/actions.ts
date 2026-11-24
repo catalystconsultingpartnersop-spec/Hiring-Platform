@@ -80,8 +80,9 @@ export async function markNotAFit(positionId: string, candidateId: string, hide:
 // The company's card: what the business is like, used for every opening there.
 export async function saveCompanyCard(positionId: string, company: string, form: FormData) {
   const me = await requireStaff();
-  const { setCompanyCard } = await import("@/lib/openings");
-  await setCompanyCard(company, String(form.get("about") ?? ""), me.name || me.email);
+  const { setCompanyCard, polishCompanyNotes } = await import("@/lib/openings");
+  const about = await polishCompanyNotes(company, String(form.get("about") ?? ""));
+  await setCompanyCard(company, about, me.name || me.email);
   revalidatePath(`/admin/matches/${positionId}`);
 }
 
@@ -152,4 +153,19 @@ export async function sendMatch(positionId: string, candidateId: string): Promis
   await logMatchSent(staffActor(me), positionId, candidateId, p.contact_email || p.contact_name || "");
   // No page refresh here: the rep still needs the "Text it" button on screen.
   return { text, phone: (await openingProfile(positionId))?.phone, emailed, link };
+}
+
+// "I think this person fits": any rep can suggest any listed candidate for an opening.
+// Credit for a hire stays with the candidate's own rep.
+export async function addPick(positionId: string, form: FormData) {
+  const me = await requireStaff();
+  const candidateId = String(form.get("candidate") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(candidateId)) return;
+  const { addManualMatch } = await import("@/lib/openings");
+  await addManualMatch(positionId, candidateId, (me.name || me.email).split(" ")[0], String(form.get("why") ?? ""));
+  await setMatchHidden(positionId, candidateId, false, me.name || me.email);
+  await logActivity(staffActor(me), "match_picked", { position_id: positionId, candidate_id: candidateId });
+  revalidatePath(`/admin/matches/${positionId}`);
+  revalidatePath("/admin/matches");
+  revalidatePath(`/admin/candidates/${candidateId}`);
 }
