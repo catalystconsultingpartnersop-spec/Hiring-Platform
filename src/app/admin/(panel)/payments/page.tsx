@@ -34,6 +34,7 @@ const VIEWS = [
   ["all", "All"],
   ["owed", "Commission owed"],
   ["paidout", "Commission paid out"],
+  ["generic", "Generic owners"],
   ["refunded", "Refunded"],
 ] as const;
 
@@ -75,7 +76,11 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
   const paidOut = earning.filter((h) => h.commission_paid_at);
   const sum = (rs: Row[]) => rs.reduce((s, h) => s + commissionOf(h, pct, h.rep), 0);
   // The finder's share: 5% to whoever found the business owner.
-  const finders = await finderSharesFor(agreements);
+  const heshyFound = new Set<string>();
+  const finders = await finderSharesFor(agreements, heshyFound);
+  // Generic: the owner came in on their own (no rep, no referral partner, not Heshy).
+  // The 30% still goes to Heshy, but it's tracked apart.
+  const isGeneric = (h: { id: string; status: string }) => (h.status === "paid" || h.status === "hired") && !finders.has(h.id) && !heshyFound.has(h.id);
   const finderList = [...finders.values()];
   const finderOwed = finderList.filter((f) => !f.paidAt);
   const finderOwedTotal = finderOwed.reduce((s, f) => s + f.cents, 0);
@@ -113,6 +118,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
   let shown = all;
   if (view === "owed") shown = owed;
   if (view === "paidout") shown = paidOut;
+  if (view === "generic") shown = all.filter(isGeneric);
   if (view === "refunded") shown = all.filter((h) => h.status === "refunded");
   if (repFilter) shown = shown.filter((h) => h.rep?.id === repFilter);
 
@@ -132,9 +138,11 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
     const exp = expenses.filter((e) => match(e.spent_on) && e.category !== "Marketing").reduce((s, e) => s + e.amount_cents, 0);
     const growthSpent = expenses.filter((e) => match(e.spent_on) && e.category === "Marketing").reduce((s, e) => s + e.amount_cents, 0);
     const growth = paid.filter((h) => h.status !== "refunded").reduce((s, h) => s + Math.round((h.amount_cents * GROWTH_PCT) / 100), 0);
-    return { in: gross - refunds, refunds, comm, exp, growth, growthSpent, net: gross - refunds - comm - growth - exp };
+    const gen = paid.filter(isGeneric);
+    const generic = { n: gen.length, cents: gen.reduce((s, h) => s + Math.round((h.amount_cents * FINDER_PCT) / 100), 0) };
+    return { in: gross - refunds, refunds, comm, exp, growth, growthSpent, generic, net: gross - refunds - comm - growth - exp };
   };
-  const { in: pIn, refunds: pRefunds, comm: pComm, exp: pExp, growth: pGrowth, net: pNet } = totals(inPeriod);
+  const { in: pIn, refunds: pRefunds, comm: pComm, exp: pExp, growth: pGrowth, generic: pGeneric, net: pNet } = totals(inPeriod);
   const everAll = totals(() => true);
   const bucket = everAll.growth - everAll.growthSpent;
   const credits = await ownerCredits();
@@ -184,7 +192,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
             <span className="tag tag-gold">{GROWTH_PCT}% growth bucket</span>
           </p>
           <p className="small muted" style={{ margin: "4px 0 0" }}>
-            Same person brought both? They get {CAND_PCT + FINDER_PCT}%. Owner came in on his own, or you brought them? That {FINDER_PCT}% is yours. A referral partner&rsquo;s owner: {REFERRER_PCT}% to them, the rest to you.
+            Same person brought both? They get {CAND_PCT + FINDER_PCT}%. You brought the owner? That {FINDER_PCT}% is yours. Owner came in on their own? It&rsquo;s yours too, counted as <b>generic</b> so you can track it. A referral partner&rsquo;s owner: {REFERRER_PCT}% to them, the rest to you.
           </p>
         </div>
         <a className="btn btn-ghost btn-small" href="/admin/payments-csv">
@@ -245,6 +253,10 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
           <strong>{money(sum(owed) + finderOwedTotal)}</strong>
           <span>Owed now, reps and referral partners ({owed.length + finderOwed.length} share{owed.length + finderOwed.length === 1 ? "" : "s"})</span>
         </Link>
+        <Link className={styles.stat} href={`${qs("generic", "")}#payments`}>
+          <strong>{pGeneric.n}</strong>
+          <span>Generic owner placements (owner came in on their own). {money(pGeneric.cents)} of owner share went to you</span>
+        </Link>
         <Link className={styles.stat} href="/admin/agreements?stage=considering">
           <strong>{money(pipeline)}</strong>
           <span>In progress: fees if {inProgress.length} introduction{inProgress.length === 1 ? "" : "s"} hire</span>
@@ -304,7 +316,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
 
       <h2 className={styles.h3} style={{ marginTop: 28 }}>Referral partners</h2>
       <p className="small muted" style={{ marginTop: -6 }}>
-        Anyone can sign up at <a href="/refer" target="_blank">/refer</a> for their own link. When a business owner who came through it hires, they get {FINDER_PCT}% of the fee.
+        Anyone can sign up at <a href="/refer" target="_blank">/refer</a> for their own link. When a business owner who came through it hires, they get {REFERRER_PCT}% of the fee.
       </p>
       {refRows.length === 0 ? (
         <p className="panel panel-wash small">No one has signed up yet.</p>
@@ -371,6 +383,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
               <th>Refunds</th>
               <th>Reps&rsquo; shares</th>
               <th>Growth bucket</th>
+              <th>Generic owners</th>
               <th>Other expenses</th>
               <th>Yours</th>
             </tr>
@@ -383,6 +396,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
                 <td>{m.refunds ? money(m.refunds) : "—"}</td>
                 <td>{m.comm ? money(m.comm) : "—"}</td>
                 <td>{m.growth ? money(m.growth) : "—"}</td>
+                <td>{m.generic.n ? `${m.generic.n} · ${money(m.generic.cents)}` : "—"}</td>
                 <td>{m.exp ? money(m.exp) : "—"}</td>
                 <td>
                   <strong style={{ color: m.net < 0 ? "var(--rust)" : undefined }}>{money(m.net)}</strong>
@@ -530,7 +544,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
                         const cand = earns ? amount : 0;
                         const own = f?.cents ?? 0;
                         const growth = Math.round((h.amount_cents * GROWTH_PCT) / 100);
-                        const yours = h.amount_cents - cand - own - growth;
+                        const yours = h.amount_cents - cand - own - growth; // includes the owner share when it's Heshy's or generic
                         const cur = credits[h.id] ?? "auto";
                         return (
                           <div style={{ display: "grid", gap: 4 }}>
@@ -538,14 +552,17 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
                               Candidate: <b>{earns ? repName(h.rep) : h.rep ? "You" : "Nobody (applied online), so it's yours"}</b> {earns ? money(cand) : ""}
                             </div>
                             <div>
-                              Owner: <b>{f ? nameOf(f.staffId) : "Nobody, so it's yours"}</b> {f ? money(own) : ""}{" "}
+                              Owner: <b>{f ? nameOf(f.staffId) : heshyFound.has(h.id) ? "You (you brought them)" : "Generic (came in on their own)"}</b>{" "}
+                              {f ? money(own) : money(Math.round((h.amount_cents * FINDER_PCT) / 100))}{" "}
+                              {!f && !heshyFound.has(h.id) && <span className="tag tag-gold">Generic, to you</span>}{" "}
                               {f && (f.paidAt ? <span className="tag tag-good">Paid out</span> : <span className="tag tag-gold">Owed</span>)}
                               {f && <div className="muted">{HOW_LABEL[f.how]}</div>}
                               {!f?.paidAt && (
                                 <form action={saveOwnerCredit.bind(null, h.id)} className={styles.inline} style={{ marginTop: 4 }}>
                                   <select key={cur} className="select" name="who" defaultValue={cur} aria-label="Who brought the owner" style={{ maxWidth: 190, padding: "4px 8px", fontSize: 13 }}>
                                     <option value="auto">Site&rsquo;s guess</option>
-                                    <option value="none">Nobody / me</option>
+                                    <option value="me">Me (I brought them)</option>
+                                    <option value="none">Generic (came in on their own)</option>
                                     {pickable.map((p) => (
                                       <option key={p.id} value={p.id}>{repName(p)}</option>
                                     ))}

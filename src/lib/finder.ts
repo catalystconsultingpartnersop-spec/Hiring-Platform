@@ -59,6 +59,9 @@ const digits = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "").sl
 // Works out the finder for each paid hire. One pass, few queries.
 export async function finderShares(
   hires: { id: string; amount_cents: number; status: string; unlock_id: string; candidate_id: string; signed_at: string; repId: string | null; owner: { email: string; phone: string | null; referred_by?: string | null } }[],
+  // Filled with hires where Heshy himself brought the owner. Every other hire
+  // with no owner share is "generic": the owner came in on their own.
+  heshyFound?: Set<string>,
 ): Promise<Map<string, FinderShare>> {
   const out = new Map<string, FinderShare>();
   const live = hires.filter((h) => h.status === "paid" || h.status === "hired");
@@ -87,11 +90,16 @@ export async function finderShares(
     const set = credits[h.id];
     if (set) {
       if (set === "none") continue;
+      if (set === "me") {
+        heshyFound?.add(h.id);
+        continue;
+      }
       if (set.startsWith("ref:")) {
         if (referrers[set.slice(4)]) out.set(h.id, { hireId: h.id, staffId: set, cents: Math.round((h.amount_cents * REFERRER_PCT) / 100), how: "referrer", paidAt: null, set: true });
         continue;
       }
       const s = byId.get(set);
+      if (s && isOwnerEmail(s.email)) heshyFound?.add(h.id);
       if (!s || isOwnerEmail(s.email)) continue;
       out.set(h.id, { hireId: h.id, staffId: s.id, cents: Math.round((h.amount_cents * FINDER_PCT) / 100), how: "set", paidAt: null, set: true });
       continue;
@@ -119,7 +127,8 @@ export async function finderShares(
     }
     // 3. Nobody brought them: the owner share goes to Heshy.
     if (!who) continue;
-    // Heshy finding the owner himself: the company keeps it.
+    // Heshy finding the owner himself: his like anyone else's, tracked apart from generic.
+    if (who && isOwnerEmail(who.email)) heshyFound?.add(h.id);
     if (!who || isOwnerEmail(who.email)) continue;
     out.set(h.id, { hireId: h.id, staffId: who.id, cents: Math.round((h.amount_cents * FINDER_PCT) / 100), how, paidAt: null });
   }

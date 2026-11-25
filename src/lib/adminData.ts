@@ -47,13 +47,14 @@ export async function loadAgreements() {
 }
 
 // The finder's share on every paid hire (who found the business owner).
-export async function finderSharesFor(rows: AgreementRow[]): Promise<Map<string, FinderShare>> {
+export async function finderSharesFor(rows: AgreementRow[], heshyFound?: Set<string>): Promise<Map<string, FinderShare>> {
   return finderShares(
     rows.flatMap((a) =>
       a.hires
         .filter((h) => h.paid_at)
         .map((h) => ({ id: h.id, amount_cents: h.amount_cents, status: h.status, unlock_id: a.id, candidate_id: a.candidate_id, signed_at: a.signed_at, repId: h.rep_id ?? a.candidates.added_by, owner: a.owners })),
     ),
+    heshyFound,
   );
 }
 
