@@ -146,10 +146,10 @@ export async function summaryPdf(id: string): Promise<{ filename: string; conten
             <View style={s.col}>
               <Text style={s.h}>Natural strengths</Text>
               <Bullets items={p.primary.map((l) => `${TRAITS[l].label}: ${TRAITS[l].short.toLowerCase()}`)} />
-              {p.secondary.length ? (
+              {p.close ? (
                 <>
-                  <Text style={s.h}>Also does well</Text>
-                  <Bullets items={p.secondary.map((l) => `${TRAITS[l].label}: ${TRAITS[l].short.toLowerCase()}`)} />
+                  <Text style={s.h}>Close behind</Text>
+                  <Bullets items={[`${TRAITS[p.close].label}: ${TRAITS[p.close].short.toLowerCase()}`]} />
                 </>
               ) : null}
             </View>

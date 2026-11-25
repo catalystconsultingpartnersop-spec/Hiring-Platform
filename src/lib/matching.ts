@@ -147,7 +147,8 @@ export function scoreMatch(c: PublicCandidate, p: Position): Match {
   const needs = norm(`${p.needs ?? ""} ${p.description ?? ""}`);
   if (needs) {
     const prof = profileOf(c.working_genius);
-    const top = [...prof.primary, ...prof.secondary];
+    // Natural strengths and the 3rd (close behind) count. The 4th leans toward the bottom, so it doesn't.
+    const top = [...prof.primary, ...(prof.close ? [prof.close] : [])];
     let added = 0;
     for (const l of top) {
       if (added >= 2) break;

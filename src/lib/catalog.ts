@@ -178,7 +178,7 @@ function matches(c: PublicCandidate, f: CatalogFilters, skip?: FilterKey) {
       c.location_region,
       c.type_label || prof.type?.name,
       c.best_line,
-      ...[...prof.primary, ...prof.secondary].map((l) => TRAITS[l].label),
+      ...[...prof.primary, ...(prof.close ? [prof.close] : [])].map((l) => TRAITS[l].label),
       ...wiredFor(c),
       ...c.highlights,
     ]

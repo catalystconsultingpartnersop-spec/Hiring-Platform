@@ -4,7 +4,7 @@ import { hiddenMatches, pairKey } from "./matchHidden";
 import { matchesFor, type Position } from "./matching";
 import { matchableCandidates, openPositions, positionsReady } from "./positions";
 import { getSetting, setSetting } from "./settings";
-import { parseResult, TRAITS, type Letter } from "./strengths";
+import { READING_RULE, resultInWords } from "./strengths";
 
 // The second look at a match. The first look compares facts (role, town, pay,
 // level). This one asks what a person who knows the candidate would ask:
@@ -31,8 +31,8 @@ function about(c: Full) {
     const m = JSON.parse(app.memory ?? "{}") as { hook?: string; bullets?: string[]; quote?: string };
     card = [m.hook, ...(m.bullets ?? []), m.quote && `In their words: "${m.quote}"`].filter(Boolean).join("\n");
   } catch {}
-  const l = parseResult(c.working_genius) as Letter[];
-  const strengths = l.length === 6 ? `Strengths Assessment: most natural at ${l.slice(0, 2).map((x) => TRAITS[x].label).join(" and ")}; worn down by ${l.slice(4, 6).map((x) => TRAITS[x].label).join(" and ")}.` : "";
+  const words = resultInWords(c.working_genius);
+  const strengths = words ? `${READING_RULE}\nTheir Strengths Assessment: ${words}.` : "";
   const parts = [
     app.rep_take && `The rep who met them says: ${app.rep_take}`,
     card && `Team memory card:\n${card}`,

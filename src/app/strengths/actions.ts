@@ -22,13 +22,14 @@ export async function submitAssessment(name: string, email: string, answers: Ans
   await logActivity("assessment", "assessment_taken", { name, email, answers, result, candidate_id: candidateId });
 
   const label = (ks: string) => ks.split("").map((k) => TRAITS[k as keyof typeof TRAITS].label).join(" + ");
-  const [t, m, l] = [result.letters.slice(0, 2), result.letters.slice(2, 4), result.letters.slice(4)];
+  const [t, c, m, l] = [result.letters.slice(0, 2), result.letters.slice(2, 3), result.letters.slice(3, 4), result.letters.slice(4)];
   await emailAdmin(
     `${name} took the strengths assessment: ${label(t)}`,
     `<p><strong>${escapeHtml(name)}</strong>${email ? ` (${escapeHtml(email)})` : ""} just took the strengths assessment.</p>
-<p><strong>Result:</strong> ${t} / ${m} / ${l}<br>
+<p><strong>Result:</strong> ${t} / ${c} / ${m} / ${l}<br>
 <strong>Natural strengths:</strong> ${label(t)}<br>
-<strong>Can do well:</strong> ${label(m)}<br>
+<strong>Close behind:</strong> ${label(c)}<br>
+<strong>Doable, in doses:</strong> ${label(m)}<br>
 <strong>Wears them down:</strong> ${label(l)}</p>
 <p>${result.order.map((k) => `${k} ${result.scores[k]}`).join(" · ")}${result.clear ? "" : " · (some close calls)"}</p>
 <p><a href="${teamUrl()}/admin/assessments">See all results</a></p>`,
@@ -99,7 +100,8 @@ async function emailResult(name: string, email: string, result: Result, next: Ne
     html: `<p>Hi ${first},</p>
 <p>Thanks for taking our Strengths Assessment. Here's how you're wired:</p>
 <p><strong>Your natural strengths:</strong> ${lab(result.order.slice(0, 2))}<br>
-<strong>You can do these well:</strong> ${lab(result.order.slice(2, 4))}<br>
+<strong>Close behind (nearly as strong):</strong> ${lab(result.order.slice(2, 3))}<br>
+<strong>Doable, in doses:</strong> ${lab(result.order.slice(3, 4))}<br>
 <strong>These wear you down:</strong> ${lab(result.order.slice(4, 6))}</p>
 ${nextHtml}`,
   });

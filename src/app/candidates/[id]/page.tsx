@@ -179,9 +179,8 @@ function HowWork({ c }: { c: PublicCandidate }) {
               {TRAITS[l].label}
             </span>
           ))}
-          {p.secondary.map((l) => (
-            <span key={l}>{TRAITS[l].label}</span>
-          ))}
+          {/* The 3rd is close to the top, so it's shown. The 4th leans toward the bottom, so it isn't. */}
+          {p.close && <span>{TRAITS[p.close].label}</span>}
           {own.map((w) => (
             <span key={w}>{w.charAt(0).toUpperCase() + w.slice(1)}</span>
           ))}

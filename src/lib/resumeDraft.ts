@@ -1,6 +1,6 @@
 import { cleanLanguages } from "./languages";
 import { ANONYMITY_RULES } from "./anonymity";
-import { TRAITS, describe, parseResult } from "./strengths";
+import { TRAITS, describe, parseResult, READING_RULE } from "./strengths";
 import { INDUSTRY_LIST, ROLE_LIST } from "./writingHelp";
 import { sourceOrder } from "./repTake";
 
@@ -36,7 +36,7 @@ function prompt(opts: { letters: string; lookingFor: string; repTake: string; te
       ? `Their Strengths Assessment result (in these exact plain words, never naming the assessment): natural strengths: ${l
           .slice(0, 2)
           .map((x) => TRAITS[x].label.toLowerCase())
-          .join(" and ")}${d ? ` ("${d.name}": ${d.line})` : ""}${l.length >= 4 ? `; also good at ${l.slice(2, 4).map((x) => TRAITS[x].label.toLowerCase()).join(" and ")}` : ""}.`
+          .join(" and ")}${d ? ` ("${d.name}": ${d.line})` : ""}${l.length >= 3 ? `; close behind (a real strength): ${TRAITS[l[2]].label.toLowerCase()}` : ""}${l.length >= 4 ? `; in the middle, doable but closer to the bottom (never call it a strength): ${TRAITS[l[3]].label.toLowerCase()}` : ""}.\n${READING_RULE}`
       : "No assessment result yet.";
   const drains = l.length === 6 ? `Never describe them as strong at ${l.slice(4).map((x) => TRAITS[x].label.toLowerCase()).join(" or ")}: that's the work that wears them down.` : "";
   return `You help a hiring platform turn a candidate's resume into their profile. Business owners browse these profiles BEFORE they know who the person is, then sign to see the full details.

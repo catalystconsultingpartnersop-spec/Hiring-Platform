@@ -10,7 +10,7 @@ What changes for you:
 
 1. You don't ask candidates to buy anything or send you results. Their booking email links to our assessment, and the day-before reminder does too.
 
-2. When they finish, their result lands on their profile by itself, and you get an email. On their profile it shows as six strengths: two natural strengths, two they can do well, and two that wear them down. You can still change the order if the call tells you otherwise.
+2. When they finish, their result lands on their profile by itself, and you get an email. On their profile it shows as six strengths: two natural strengths, a third that is close behind them, a fourth that is doable but closer to the bottom, and two that wear them down. You can still change the order if the call tells you otherwise.
 
 3. The six, in our words: Big-picture thinking, Fresh ideas, Sound judgment, Getting people moving, Supporting the team, Finishing the job.
 

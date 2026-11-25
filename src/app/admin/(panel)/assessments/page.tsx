@@ -47,7 +47,8 @@ export default async function AssessmentsPage() {
                 <th>Who</th>
                 <th>Result</th>
                 <th>Natural strengths</th>
-                <th>Can do well</th>
+                <th>Close behind</th>
+                <th>Doable, in doses</th>
                 <th>Wears them down</th>
               </tr>
             </thead>
@@ -66,7 +67,7 @@ export default async function AssessmentsPage() {
                     </td>
                     <td style={{ whiteSpace: "nowrap", fontWeight: 700 }}>
                       {x.letters ? (
-                        `${x.letters.slice(0, 2)} / ${x.letters.slice(2, 4)} / ${x.letters.slice(4)}`
+                        `${x.letters.slice(0, 2)} / ${x.letters.slice(2, 3)} / ${x.letters.slice(3, 4)} / ${x.letters.slice(4)}`
                       ) : (
                         <>
                           <span className="small muted">Earlier version</span>
@@ -81,7 +82,8 @@ export default async function AssessmentsPage() {
                       )}
                     </td>
                     <td><strong>{x.top.join(" + ")}</strong></td>
-                    <td>{x.mid.join(", ")}</td>
+                    <td>{x.close.join(", ")}</td>
+                    <td className="muted">{x.okay.join(", ")}</td>
                     <td>{x.low.join(", ")}</td>
                   </tr>
                 );

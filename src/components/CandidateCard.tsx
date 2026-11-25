@@ -38,7 +38,8 @@ export function WorksBest({ c, detail = false, compact = false }: { c: PublicCan
       </div>
     );
   const main = p.primary.map((l) => lower(TRAITS[l].label));
-  const also = p.secondary.map((l) => lower(TRAITS[l].label));
+  // Only the 3rd: it's close to the top. The 4th leans toward the bottom, so it's never called a strength.
+  const also = p.close ? [lower(TRAITS[p.close].label)] : [];
   return (
     <div className={detail ? "works-best works-best-lg" : "works-best"}>
       {p.type && <span className="works-type">{p.type.name}</span>}

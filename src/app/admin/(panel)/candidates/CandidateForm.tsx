@@ -502,7 +502,7 @@ export function CandidateForm({
               timeZone: "America/New_York",
             })}
             {ours.converted ? " (converted from the earlier version)" : ""}:{" "}
-            <b>{`${ours.letters.slice(0, 2)} ${ours.letters.slice(2, 4)} ${ours.letters.slice(4)}`}</b>
+            <b>{`${ours.letters.slice(0, 2)} ${ours.letters.slice(2, 3)} ${ours.letters.slice(3, 4)} ${ours.letters.slice(4)}`}</b>
             {code !== ours.letters && (
               <>
                 {" "}
@@ -555,7 +555,7 @@ export function CandidateForm({
             Result:{" "}
             <strong>
               {code
-                ? `${code.slice(0, 2)} ${code.slice(2, 4)} ${code.slice(4)}`.trim()
+                ? `${code.slice(0, 2)} ${code.slice(2, 3)} ${code.slice(3, 4)} ${code.slice(4)}`.replace(/\s+/g, " ").trim()
                 : "not set"}
             </strong>
           </span>

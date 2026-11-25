@@ -7,7 +7,7 @@ import { memoryOf } from "./memory";
 import { companyCard, manualMatches, openingProfiles, type OpeningProfile } from "./openings";
 import { effectiveReps } from "./reps";
 import { getSetting, setSetting } from "./settings";
-import { parseResult, TRAITS, type Letter } from "./strengths";
+import { READING_RULE, resultInWords } from "./strengths";
 import { sendText } from "./sms";
 import { staffPhones } from "./staffPhones";
 
@@ -60,7 +60,6 @@ const money = (n: number | null) => (n ? `$${Math.round(n / 1000)}k` : "");
 function brief(c: Cand, tag: string) {
   const app = c.application ?? {};
   const m = memoryOf(c);
-  const l = parseResult(c.working_genius) as Letter[];
   const lines = [
     `[${tag}] ${c.headline ?? ""}`.trim(),
     [c.role_category, ...(c.also_roles ?? [])].filter(Boolean).join(", "),
@@ -70,7 +69,7 @@ function brief(c: Cand, tag: string) {
     m.good_for?.length ? `Good for: ${m.good_for.join(", ")}` : "",
     app.rep_take && `Rep: ${app.rep_take.slice(0, 400)}`,
     app.looking_for && `Wants: ${app.looking_for.slice(0, 200)}`,
-    l.length === 6 && `Natural strengths: ${l.slice(0, 2).map((x) => TRAITS[x].label).join(", ")}; drained by ${l.slice(4, 6).map((x) => TRAITS[x].label).join(", ")}`,
+    resultInWords(c.working_genius) && `Strengths Assessment: ${resultInWords(c.working_genius)}`,
     !m.ready && c.summary && c.summary.slice(0, 300),
   ];
   return lines.filter(Boolean).join("\n");
@@ -150,7 +149,9 @@ export async function runMatch(p: Position, pool?: { listed: Cand[]; unlisted: C
     .filter(Boolean)
     .join("\n");
 
-  const prompt = `You are the matchmaker for a small recruiting team that personally meets every candidate. Pick the candidates who would genuinely do well in this job — the way a recruiter who knows them would, not by matching words. A bookkeeper-controller fits "Director of Billing" even if the word "billing" never appears. A calm person who wants a set routine does NOT fit a rushed store counter, even if the title lines up.
+  const prompt = `You are the matchmaker for a small recruiting team that personally meets every candidate. ${READING_RULE}
+
+Pick the candidates who would genuinely do well in this job — the way a recruiter who knows them would, not by matching words. A bookkeeper-controller fits "Director of Billing" even if the word "billing" never appears. A calm person who wants a set routine does NOT fit a rushed store counter, even if the title lines up.
 
 THE OPENING
 ${opening}

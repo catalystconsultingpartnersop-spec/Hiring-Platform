@@ -2,9 +2,12 @@ import { lowerRole } from "./format";
 // How a candidate works best, in plain business language, generated from their
 // Working Genius result.
 //
-// The admin enters the result as the six letters in order, strongest first
-// (e.g. "GTDEIW"): the first two are the candidate's main strength, the middle
-// two are secondary, and the last two are the kinds of work that drain them.
+// The result is the six letters in order, strongest first (e.g. "GTDEIW").
+// How we read it, everywhere on the site (see TIERS below):
+//   1st and 2nd: natural strengths.
+//   3rd: close behind the top two, a real strength.
+//   4th: in the middle and doable, but closer to the bottom two.
+//   5th and 6th: the work that wears them down.
 // Owners never see the assessment's name, letters or terms; only the wording
 // below, which is our own.
 
@@ -176,20 +179,49 @@ function pairKey(a: Letter, b: Letter) {
   return [a, b].sort((x, y) => ORDER.indexOf(x) - ORDER.indexOf(y)).join("");
 }
 
+// How we read a Strengths Assessment result. Heshy's rule, to be applied everywhere on the site:
+// the top two are natural strengths; the third is close to the top; the fourth is still in the
+// middle and okay, but closer to the bottom; the bottom two wear the person down.
+export const TIERS = {
+  top: { name: "Natural strengths", you: "Your natural strengths", them: "natural strengths", note: "The work that gives energy." },
+  close: { name: "Close behind", you: "Close behind", them: "close behind their natural strengths", note: "Nearly as strong as the top two. A real strength to lean on." },
+  okay: { name: "Doable, in doses", you: "Doable, in doses", them: "doable, in doses", note: "Fine to do, but it leans toward the work that tires them." },
+  low: { name: "Wears them down", you: "These wear you down", them: "the work that wears them down", note: "Can be done when needed, just not all day." },
+} as const;
+
+// The same rule, word for word, for every AI prompt that reads a result.
+export const READING_RULE =
+  "How to read a Strengths Assessment result (six kinds of work, strongest first): the 1st and 2nd are natural strengths. The 3rd is close behind them: a real strength, nearly as strong. The 4th is in the middle: doable and okay, but closer to the bottom two, so never present it as a strength. The 5th and 6th wear the person down.";
+
 export type Profile = {
-  primary: Letter[];
-  secondary: Letter[];
-  draining: Letter[];
+  primary: Letter[]; // 1st and 2nd
+  close: Letter | null; // 3rd
+  okay: Letter | null; // 4th
+  draining: Letter[]; // 5th and 6th
   type: PairText | null;
 };
 
 export function profileOf(raw: string | null | undefined): Profile {
   const l = parseResult(raw);
   const primary = l.slice(0, 2);
-  const secondary = l.slice(2, 4);
+  const close = l[2] ?? null;
+  const okay = l[3] ?? null;
   const draining = l.length === 6 ? l.slice(4, 6) : [];
   const type = primary.length === 2 ? PAIRS[pairKey(primary[0], primary[1])] ?? null : null;
-  return { primary, secondary, draining, type };
+  return { primary, close, okay, draining, type };
+}
+
+// The result spelled out in plain words for AI prompts, tier by tier.
+export function resultInWords(raw: string | null | undefined): string | null {
+  const p = profileOf(raw);
+  if (p.primary.length < 2) return null;
+  const n = (ls: Letter[]) => ls.map((l) => TRAITS[l].label.toLowerCase()).join(" and ");
+  return [
+    `natural strengths: ${n(p.primary)}`,
+    p.close && `close behind (a real strength): ${n([p.close])}`,
+    p.okay && `in the middle (doable, closer to the bottom, not a strength): ${n([p.okay])}`,
+    p.draining.length && `wears them down: ${n(p.draining)}`,
+  ].filter(Boolean).join("; ");
 }
 
 const joinAnd = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}` : xs[0] ?? "");
@@ -204,7 +236,8 @@ export function describe(raw: string | null | undefined) {
     line: p.type.line,
     wiredFor: [...p.type.wiredFor],
     thrives: `Thrives in ${p.type.thrives}.`,
-    alsoBrings: p.secondary.length ? `${cap(joinAnd(p.secondary.map((l) => TRAITS[l].adds)))}.` : null,
+    // Only the 3rd: it's close to the top. The 4th leans toward the bottom, so it's never sold as a strength.
+    alsoBrings: p.close ? `${cap(TRAITS[p.close].adds)}.` : null,
     bestAlongside: p.draining.length
       ? `Does their best work on a team with someone who ${joinAnd(p.draining.map((l) => TRAITS[l].partner))}.`
       : null,

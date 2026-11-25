@@ -1,6 +1,7 @@
 // Our own Strengths Assessment, built around the six kinds of work (the letters W I D G E T, the
 // same ones staff enter on candidate profiles). The questions and wording are our own. The result
-// is 2 natural strengths, 2 they can do well, and 2 that wear them down.
+// is read by the rule in strengths.ts (TIERS): 1st and 2nd natural strengths, 3rd close behind,
+// 4th in the middle (doable, closer to the bottom), 5th and 6th wear them down.
 
 import { TRAITS, type Letter } from "./strengths";
 
@@ -202,18 +203,19 @@ const OLD_NAMES: Record<string, string> = {
   build: "Hands-on",
 };
 
-export type Summary = { top: string[]; mid: string[]; low: string[]; letters: string | null };
+export type Summary = { top: string[]; close: string[]; okay: string[]; low: string[]; letters: string | null };
 
 export function summarize(result: unknown): Summary | null {
   const x = result as { v?: number; order?: Letter[]; letters?: string; top?: string[]; next?: string[]; low?: string[] };
   if (!x) return null;
   if ((x.v === 2 || x.v === 3) && Array.isArray(x.order)) {
     const n = (ks: Letter[]) => ks.map((k) => TRAITS[k].label);
-    return { top: n(x.order.slice(0, 2)), mid: n(x.order.slice(2, 4)), low: n(x.order.slice(4, 6)), letters: x.letters ?? null };
+    return { top: n(x.order.slice(0, 2)), close: n(x.order.slice(2, 3)), okay: n(x.order.slice(3, 4)), low: n(x.order.slice(4, 6)), letters: x.letters ?? null };
   }
   if (Array.isArray(x.top)) {
     const n = (ks: string[] = []) => ks.map((k) => OLD_NAMES[k] ?? k);
-    return { top: n(x.top), mid: n(x.next), low: n(x.low), letters: null };
+    const next = n(x.next);
+    return { top: n(x.top), close: next.slice(0, 1), okay: next.slice(1, 2), low: n(x.low), letters: null };
   }
   return null;
 }

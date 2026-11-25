@@ -322,7 +322,8 @@ export default async function RepGuide() {
           <p>
             You get an email and calendar invite for every booking. On the call, get to know them: what gives them
             energy, what drains them, what they&rsquo;ve done, what they want next. Walk through their Strengths Assessment
-            together: their two natural strengths (the work that gives them energy), the two they can do well, and the two
+            together: their two natural strengths (the work that gives them energy), the third (close behind, a real
+            strength), the fourth (doable and okay, but closer to the bottom, so not a strength to sell), and the two
             that wear them down. Then talk about the roles where that would shine. Be warm. For many people, this is the first time
             someone has really listened.
           </p>

@@ -73,7 +73,11 @@
 .tierGrid b { font-size: 17px; }
 .tierGrid span { font-size: 14.5px; color: var(--ink-2); line-height: 1.4; }
 .t1 { background: #fff6d6; border: 2px solid var(--marigold); }
-.t2 { background: var(--wash); }
+.t2 { background: #fffbea; border: 1.5px solid var(--marigold-soft); }
+.t2b { background: var(--wash); }
+.midRow { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.midRow .tierGrid { grid-template-columns: 1fr; }
+@media (max-width: 600px) { .midRow { grid-template-columns: 1fr; gap: 0; } }
 .t3 { background: #fff; border: 1.5px dashed var(--line); }
 .t3 .tierGrid div { background: var(--wash); }
 @media (max-width: 600px) { .tierGrid { grid-template-columns: 1fr; } }

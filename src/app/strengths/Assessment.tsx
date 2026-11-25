@@ -273,7 +273,9 @@ function Results({ name, r, near, next }: { name: string; r: Result; near: [Lett
   const d = describe(r.letters);
   const tiers: [string, string, Letter[], string][] = [
     ["Your natural strengths", "This is the work that gives you energy. Look for a job built around it.", top, s.t1],
-    ["You can do these well", "You're good at these, in doses. They don't drain you, and they don't fuel you either.", r.order.slice(2, 4), s.t2],
+    // Heshy's rule (TIERS in lib/strengths): the 3rd is close to the top; the 4th is okay but closer to the bottom.
+    ["Close behind", "Nearly as strong as your top two. A real strength you can lean on.", r.order.slice(2, 3), s.t2],
+    ["Doable, in doses", "You can do this fine. It just leans toward the work that tires you.", r.order.slice(3, 4), s.t2b],
     ["These wear you down", "You can do some of it. Just don't build your whole day around it.", r.order.slice(4, 6), s.t3],
   ];
   return (
@@ -294,7 +296,9 @@ function Results({ name, r, near, next }: { name: string; r: Result; near: [Lett
         </p>
       )}
       {next && <WhatsNext next={next} />}
-      {tiers.map(([h, p, ks, cls]) => (
+      {[tiers.slice(0, 1), tiers.slice(1, 3), tiers.slice(3)].map((row, i) => (
+        <div key={i} className={i === 1 ? s.midRow : undefined}>
+      {row.map(([h, p, ks, cls]) => (
         <section key={h} className={`${s.tier} ${cls}`}>
           <h3>{h}</h3>
           <div className={s.tierGrid}>
@@ -307,6 +311,8 @@ function Results({ name, r, near, next }: { name: string; r: Result; near: [Lett
           </div>
           <p>{p}</p>
         </section>
+      ))}
+        </div>
       ))}
       {d && (
         <section className={s.block}>
