@@ -17,36 +17,61 @@ export const TRAITS = {
     short: "Sees the bigger picture and asks the questions that matter",
     adds: "steps back to ask whether the work is pointed in the right direction",
     partner: "sets the bigger direction",
+    // The 3rd (close behind) adds this flavor to the type, and leans the "thrives in" roles.
+    flavor: "with a big-picture side",
+    lean: "where someone needs to think ahead and ask why",
+    // The 4th (doable, in doses): used in advice only, never as a strength.
+    doses: "big-picture planning",
   },
   I: {
     label: "Fresh ideas",
     short: "Comes up with new ways to solve problems",
     adds: "brings fresh ideas when the usual approach isn't working",
     partner: "comes up with new approaches",
+
+    flavor: "with a creative streak",
+    lean: "where there's room to improve how things are done",
+    doses: "coming up with new ideas",
   },
   D: {
     label: "Sound judgment",
     short: "Has good instincts about what will and won't work",
     adds: "has a good feel for which ideas are worth pursuing",
     partner: "makes the judgment calls",
+
+    flavor: "with sharp instincts",
+    lean: "where good judgment calls matter",
+    doses: "making judgment calls",
   },
   G: {
     label: "Getting people moving",
     short: "Rallies people and gets things started",
     adds: "can get others on board and moving when it counts",
     partner: "rallies the team and gets things started",
+
+    flavor: "with a spark for rallying people",
+    lean: "where there's a team to get moving",
+    doses: "rallying people",
   },
   E: {
     label: "Supporting the team",
     short: "Notices what others need and helps them succeed",
     adds: "pitches in readily when a teammate needs a hand",
     partner: "gives day-to-day support and encouragement",
+
+    flavor: "with a caring side",
+    lean: "where people rely on them day to day",
+    doses: "helping others with their work",
   },
   T: {
     label: "Finishing the job",
     short: "Drives work over the finish line",
     adds: "can push through the last details to get things done",
     partner: "drives the final details to completion",
+
+    flavor: "with a strong finish",
+    lean: "where work has to be carried all the way through",
+    doses: "detailed follow-through",
   },
 } as const;
 
@@ -231,13 +256,18 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export function describe(raw: string | null | undefined) {
   const p = profileOf(raw);
   if (!p.type) return null;
+  const close = p.close ? TRAITS[p.close] : null;
   return {
     name: p.type.name,
+    // The type, shaded by the 3rd (it's close to the top), e.g. "Gets it done right, with a caring side".
+    title: close ? `${p.type.name}, ${close.flavor}` : p.type.name,
     line: p.type.line,
     wiredFor: [...p.type.wiredFor],
-    thrives: `Thrives in ${p.type.thrives}.`,
+    thrives: close ? `Thrives in ${p.type.thrives}, especially ${close.lean}.` : `Thrives in ${p.type.thrives}.`,
     // Only the 3rd: it's close to the top. The 4th leans toward the bottom, so it's never sold as a strength.
     alsoBrings: p.close ? `${cap(TRAITS[p.close].adds)}.` : null,
+    // Advice only (team views, Team Fit, AI). Never shown to owners as a strength.
+    inDoses: p.okay ? `Can handle ${TRAITS[p.okay].doses} in doses; best not as the core of the job.` : null,
     bestAlongside: p.draining.length
       ? `Does their best work on a team with someone who ${joinAnd(p.draining.map((l) => TRAITS[l].partner))}.`
       : null,

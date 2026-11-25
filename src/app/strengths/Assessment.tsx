@@ -286,7 +286,7 @@ function Results({ name, r, near, next }: { name: string; r: Result; near: [Lett
       </h2>
       {d && (
         <p className={s.typeLine}>
-          <b>{d.name}.</b> {d.line}
+          <b>{d.title}.</b> {d.line}
         </p>
       )}
       {near && (

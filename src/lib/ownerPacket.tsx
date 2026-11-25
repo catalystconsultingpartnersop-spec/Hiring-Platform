@@ -106,7 +106,7 @@ export async function summaryPdf(id: string): Promise<{ filename: string; conten
   const app = c.application ?? {};
   const p = profileOf(c.working_genius);
   const d = describe(c.working_genius);
-  const typeName = (app.type_label ?? "").trim() || d?.name || "";
+  const typeName = (app.type_label ?? "").trim() || d?.title || "";
   const typeLine = (app.best_line ?? "").trim() || d?.line || "";
   const facts = [
     [c.role_category, c.industry].filter(Boolean).join(" in "),

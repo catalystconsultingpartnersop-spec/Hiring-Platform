@@ -573,18 +573,19 @@ export function CandidateForm({
           <div className={styles.preview} aria-live="polite">
             <p className={styles.previewLabel}>What owners will see</p>
             <p>
-              <strong>{d.name}.</strong> {d.line}
+              <strong>{d.title}.</strong> {d.line}
             </p>
             <p>Wired for {d.wiredFor.join(", ")}.</p>
             <p>
               {d.thrives} {d.alsoBrings}
             </p>
-            {d.bestAlongside && (
+            {(d.bestAlongside || d.inDoses) && (
               <>
                 <p className={styles.previewLabel} style={{ marginTop: 12 }}>
                   Only the team sees this
                 </p>
-                <p>{d.bestAlongside}</p>
+                {d.inDoses && <p>{d.inDoses}</p>}
+                {d.bestAlongside && <p>{d.bestAlongside}</p>}
               </>
             )}
           </div>

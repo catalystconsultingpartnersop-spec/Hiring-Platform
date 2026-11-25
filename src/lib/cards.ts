@@ -116,7 +116,7 @@ async function activate(unlock: Unlock, owner: Owner, pmId: string, label: strin
   const { describe } = await import("./strengths");
   const { availabilityLabel } = await import("./availability");
   const d = describe(cand?.working_genius);
-  const typeName = (app.type_label ?? "").trim() || d?.name;
+  const typeName = (app.type_label ?? "").trim() || d?.title;
   const typeLine = (app.best_line ?? "").trim() || d?.line;
   const agreementFile = await (await import("./agreementPdf"))
     .agreementPdf(unlock.agreement_text, sig)

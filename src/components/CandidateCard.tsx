@@ -33,7 +33,7 @@ export function WorksBest({ c, detail = false, compact = false }: { c: PublicCan
   if (ownType || ownLine)
     return (
       <div className={detail ? "works-best works-best-lg" : "works-best"}>
-        {(ownType || p.type) && <span className="works-type">{ownType || p.type?.name}</span>}
+        {(ownType || p.type) && <span className="works-type">{ownType || (detail ? describe(c.working_genius)?.title : p.type?.name)}</span>}
         {(ownLine || p.primary.length > 0) && <p className="works-main">{ownLine || bestAtText(c)}</p>}
       </div>
     );
@@ -42,7 +42,8 @@ export function WorksBest({ c, detail = false, compact = false }: { c: PublicCan
   const also = p.close ? [lower(TRAITS[p.close].label)] : [];
   return (
     <div className={detail ? "works-best works-best-lg" : "works-best"}>
-      {p.type && <span className="works-type">{p.type.name}</span>}
+      {/* On the full profile the type carries the 3rd's flavor; small cards keep it short (the "also strong at" line covers the 3rd). */}
+      {p.type && <span className="works-type">{detail ? describe(c.working_genius)?.title : p.type.name}</span>}
       <p className="works-main">
         Best at {joinAnd(main)}
         {!compact && also.length > 0 && <span className="works-also">. Also strong at {joinAnd(also)}</span>}.
