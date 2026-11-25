@@ -4,7 +4,7 @@ import { logKnownExpenses } from "@/lib/knownExpenses";
 import Link from "next/link";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { commissionOf, earnsCommission, finderSharesFor, HireRow, loadAgreements, repName, StaffLite, stageOf } from "@/lib/adminData";
-import { CAND_PCT, FINDER_PCT, GROWTH_PCT, HESHY_PCT, HOW_LABEL, REFERRER_PCT, ownerCredits } from "@/lib/finder";
+import { CAND_PCT, FINDER_PCT, GROWTH_PCT, HESHY_PCT, HOW_LABEL, REFERRER_PCT, genericCandidates, ownerAmounts, ownerCredits } from "@/lib/finder";
 import { db } from "@/lib/db";
 import { isOwnerEmail } from "@/lib/session";
 import { dateShort, money, refCode } from "@/lib/format";
@@ -14,7 +14,7 @@ import { requireAdmin } from "@/lib/session";
 import { commissionPercent } from "@/lib/settings";
 import { deleteExpense, markCommissionPaid, payRepAll, setCommissionAmount, undoCommissionPaid } from "../../actions";
 import { allReferrers } from "@/lib/referrers";
-import { payReferrer, saveOwnerCredit, toggleReferrer } from "./referrerActions";
+import { payReferrer, saveCandidateCredit, saveOwnerAmount, saveOwnerCredit, toggleReferrer } from "./referrerActions";
 import { ExpenseForm } from "./ExpenseForm";
 import styles from "../admin.module.css";
 import { RefundButton } from "../RefundButton";
@@ -145,7 +145,8 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
   const { in: pIn, refunds: pRefunds, comm: pComm, exp: pExp, growth: pGrowth, generic: pGeneric, net: pNet } = totals(inPeriod);
   const everAll = totals(() => true);
   const bucket = everAll.growth - everAll.growthSpent;
-  const credits = await ownerCredits();
+  const [credits, ownerSet, genCands] = await Promise.all([ownerCredits(), ownerAmounts(), genericCandidates()]);
+  const genCand = new Set(genCands);
   const pickable = [...people.values()].filter((p) => !isOwnerEmail(p.email) && !isCheckAccount(p.email) && (p as StaffLite & { active?: boolean }).active !== false);
   const inProgress = agreements.filter((a) => ["considering", "checkout"].includes(stageOf(a)));
   const pipeline = inProgress.reduce((s, a) => s + (a.fee_cents ?? 0), 0);
@@ -549,7 +550,29 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
                         return (
                           <div style={{ display: "grid", gap: 4 }}>
                             <div>
-                              Candidate: <b>{earns ? repName(h.rep) : h.rep ? "You" : "Nobody (applied online), so it's yours"}</b> {earns ? money(cand) : ""}
+                              Candidate: <b>{earns ? repName(h.rep) : genCand.has(h.id) || !h.rep ? "Generic (applied online)" : "You (you brought them)"}</b>{" "}
+                              {earns ? money(cand) : money(Math.round((h.amount_cents * CAND_PCT) / 100))}{" "}
+                              {!earns && (genCand.has(h.id) || !h.rep) && <span className="tag tag-gold">Generic, to you</span>}
+                              {!h.commission_paid_at && (
+                                <form action={saveCandidateCredit.bind(null, h.id)} className={styles.inline} style={{ marginTop: 4 }}>
+                                  <select
+                                    key={`c${h.rep?.id ?? ""}${genCand.has(h.id)}`}
+                                    className="select"
+                                    name="who"
+                                    defaultValue={genCand.has(h.id) ? "generic" : earns ? h.rep!.id : h.rep ? "me" : "auto"}
+                                    aria-label="Who brought the candidate"
+                                    style={{ maxWidth: 190, padding: "4px 8px", fontSize: 13 }}
+                                  >
+                                    <option value="auto">Their rep on file</option>
+                                    <option value="me">Me (I brought them)</option>
+                                    <option value="generic">Generic (applied online)</option>
+                                    {pickable.map((p) => (
+                                      <option key={p.id} value={p.id}>{repName(p)}</option>
+                                    ))}
+                                  </select>
+                                  <button className="btn btn-small btn-ghost" type="submit">Change</button>
+                                </form>
+                              )}
                             </div>
                             <div>
                               Owner: <b>{f ? nameOf(f.staffId) : heshyFound.has(h.id) ? "You (you brought them)" : "Generic (came in on their own)"}</b>{" "}
@@ -571,6 +594,14 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
                                     ))}
                                   </select>
                                   <button className="btn btn-small btn-ghost" type="submit">Change</button>
+                                </form>
+                              )}
+                              {f && !f.paidAt && (
+                                <form action={saveOwnerAmount.bind(null, h.id)} className={styles.inline} style={{ marginTop: 4 }}>
+                                  <span>$</span>
+                                  <input key={`a${own}`} className="input" name="amount" defaultValue={(own / 100).toFixed(0)} aria-label="Owner share in dollars" style={{ width: 90, padding: "4px 8px" }} />
+                                  <button className="btn btn-small btn-ghost" type="submit" title="Save a different amount for this owner share (empty = standard)">Set</button>
+                                  {ownerSet[h.id] != null && <span className="muted">set by hand</span>}
                                 </form>
                               )}
                             </div>

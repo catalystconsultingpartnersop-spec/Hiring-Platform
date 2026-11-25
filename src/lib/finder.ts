@@ -30,6 +30,28 @@ const CREDIT = "owner_credit";
 export async function ownerCredits(): Promise<Record<string, string>> {
   return getSetting<Record<string, string>>(CREDIT, {});
 }
+// Hand-set dollar amount for the owner share of one hire (cents), before it's paid.
+export async function ownerAmounts(): Promise<Record<string, number>> {
+  return getSetting<Record<string, number>>("owner_amount", {});
+}
+export async function setOwnerAmount(hireId: string, cents: number | null) {
+  const cur = await ownerAmounts();
+  if (cents == null) delete cur[hireId];
+  else cur[hireId] = cents;
+  await setSetting("owner_amount", cur);
+}
+// Hires whose candidate came in on their own (applied online, no rep): the
+// candidate share goes to Heshy, tracked as generic.
+export async function genericCandidates(): Promise<string[]> {
+  return getSetting<string[]>("cand_generic", []);
+}
+export async function setGenericCandidate(hireId: string, on: boolean) {
+  const cur = new Set(await genericCandidates());
+  if (on) cur.add(hireId);
+  else cur.delete(hireId);
+  await setSetting("cand_generic", [...cur]);
+}
+
 export async function setOwnerCredit(hireId: string, who: string | null) {
   const cur = await ownerCredits();
   if (who) cur[hireId] = who;
@@ -66,12 +88,13 @@ export async function finderShares(
   const out = new Map<string, FinderShare>();
   const live = hires.filter((h) => h.status === "paid" || h.status === "hired");
   if (!live.length) return out;
-  const [{ data: staff }, { data: pointed }, paid, referrers, credits] = await Promise.all([
+  const [{ data: staff }, { data: pointed }, paid, referrers, credits, amounts] = await Promise.all([
     db().from("staff").select("id, email, full_name, active"),
     db().from("activity_log").select("actor, at, details").eq("action", "candidate_pointed").in("details->>candidate_id", [...new Set(live.map((h) => h.candidate_id))]),
     finderPaid(),
     allReferrers(),
     ownerCredits(),
+    ownerAmounts(),
   ]);
   const people = ((staff ?? []) as StaffRow[]).filter((s) => !isCheckAccount(s.email));
   const byEmail = new Map(people.map((s) => [s.email.toLowerCase(), s]));
@@ -132,6 +155,8 @@ export async function finderShares(
     if (!who || isOwnerEmail(who.email)) continue;
     out.set(h.id, { hireId: h.id, staffId: who.id, cents: Math.round((h.amount_cents * FINDER_PCT) / 100), how, paidAt: null });
   }
+  // Hand-set amounts win over the standard share, until it's paid.
+  for (const f of out.values()) if (!f.paidAt && amounts[f.hireId] != null) f.cents = amounts[f.hireId];
   return out;
 }
 
